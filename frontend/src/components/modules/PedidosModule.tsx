@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { useStore, OrderStatus } from '../../lib/store';
+import { useState, useEffect } from 'react';
+import jsPDF from 'jspdf';
+import { useStore, OrderStatus, Cliente, Producto, Status } from '../../lib/store';
 import { PageHeader } from '../PageHeader';
-import { StatusBadge } from '../StatusBadge';
 import { Pagination } from '../Pagination';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Button } from '../ui/button';
@@ -9,21 +9,94 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Label } from '../ui/label';
 import { Input } from '../ui/input';
-import { Plus, Edit, Eye, Search, FileText, Package, Trash2 } from 'lucide-react';
+import { Plus, Edit, Eye, Search, FileText, Trash2 } from 'lucide-react';
 import { Textarea } from '../ui/textarea';
+import { toast } from 'sonner';
+import { orderService } from '../../services/orderService';
+import { userService } from '../../services/userService';
+import { productService } from '../../services/productService';
 
 export function PedidosModule() {
-  const { pedidos, clientes, productos, addPedido, updatePedidoEstado, updateStock } = useStore();
+  const { pedidos, clientes, productos, setPedidos, setClientes, setProductos, updatePedidoEstado } = useStore();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
-  const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
   const [selectedPedido, setSelectedPedido] = useState<any>(null);
   const [newStatus, setNewStatus] = useState<OrderStatus>('pendiente');
   const [motivoAnulacion, setMotivoAnulacion] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    refreshPedidos();
+    refreshDependencies();
+  }, []);
+
+  const refreshDependencies = async () => {
+    try {
+      const uRes = await userService.getAll({ id_rol: 2, limit: 100 });
+      const mappedClientes: Cliente[] = uRes.data.map((u: any) => ({
+        id: u.id_usuario.toString(),
+        nombre: `${u.nombres || u.nombre || ''} ${u.apellidos || u.apellido || ''}`.trim() || 'Sin Nombre',
+        nombres: u.nombres || u.nombre || '',
+        apellidos: u.apellidos || u.apellido || '',
+        email: u.email,
+        telefono: u.telefono || '',
+        documento: u.documento || '',
+        numeroDocumento: u.documento || '',
+        estado: (u.estado ? 'activo' : 'inactivo') as Status,
+        totalCompras: Number(u.total_ventas) || 0,
+        fechaRegistro: u.fecha_registro || new Date().toISOString()
+      }));
+      setClientes(mappedClientes);
+
+      const pRes = await productService.getAll({ limit: 100 });
+      const mappedProductos: Producto[] = pRes.data.map((p: any) => ({
+        id: p.id_producto.toString(),
+        sku: p.sku || '',
+        nombre: p.nombre,
+        descripcion: p.descripcion || '',
+        categoriaId: p.id_categoria?.toString() || '1',
+        marca: p.marca || '',
+        precioCompra: Number(p.precio_compra) || 0,
+        precioVenta: Number(p.precio_venta) || 0,
+        stock: Number(p.stock_actual) || 0,
+        stockMinimo: Number(p.stock_min) || 0,
+        stockMaximo: Number(p.stock_max) || 100,
+        estado: (p.estado ? 'activo' : 'inactivo') as Status,
+        fechaCreacion: p.fecha_creacion || new Date().toISOString()
+      }));
+      setProductos(mappedProductos);
+    } catch (error) {
+      console.error('Error loading dependencies', error);
+      toast.error('Error al cargar dependencias');
+    }
+  };
+
+  const refreshPedidos = async () => {
+    try {
+      const dbOrders = await orderService.getAll();
+      const mappedOrders = dbOrders.map((o: any) => ({
+        id: o.id_pedido.toString(),
+        clienteId: o.id_usuario_cliente ? o.id_usuario_cliente.toString() : 'N/A',
+        clienteNombre: o.nombre_usuario || 'Sin Nombre',
+        fecha: (o.fecha_pedido && typeof o.fecha_pedido === 'string') ? o.fecha_pedido.split('T')[0] : 'N/A',
+        productos: [], 
+        subtotal: o.total ? Math.round(Number(o.total) / 1.19) : 0, 
+        iva: o.total ? Math.round(Number(o.total) - Math.round(Number(o.total) / 1.19)) : 0, 
+        costoEnvio: 12000,
+        total: Number(o.total),
+        estado: o.estado as OrderStatus,
+        direccionEnvio: o.direccion || 'N/A',
+      }));
+      setPedidos(mappedOrders);
+    } catch (error) {
+      console.error('Error fetching orders', error);
+      toast.error('Ocurrió un error cargando los pedidos desde la DB');
+    }
+  };
   
   const [formData, setFormData] = useState({
     clienteId: '',
@@ -69,39 +142,43 @@ export function PedidosModule() {
     setFormData({ ...formData, productos: newProductos });
   };
 
-  const handleSave = () => {
-    // Validate stock
-    for (const item of formData.productos) {
-      const producto = productos.find(p => p.id === item.productoId);
-      if (!producto || producto.stock < item.cantidad) {
-        alert(`Stock insuficiente para ${producto?.nombre || 'producto'}`);
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      if (!formData.clienteId) {
+        toast.error('Debe seleccionar un cliente.');
+        setIsSaving(false);
         return;
       }
+      if (formData.productos.length === 0 || !formData.productos[0].productoId) {
+        toast.error('Debes agregar al menos un producto válido.');
+        setIsSaving(false);
+        return;
+      }
+
+      // Format payload for endpoint
+      const payload = {
+        id_cliente: Number(formData.clienteId),
+        direccion: formData.direccionEnvio || 'N/A',
+        ciudad: 'Bello', // default city just in case
+        metodo_pago: 'efectivo',
+        items: formData.productos.map(p => ({
+          id_producto: Number(p.productoId),
+          cantidad: p.cantidad
+        }))
+      };
+
+      await orderService.createDirect(payload);
+      toast.success('Pedido creado en la Base de Datos exitosamente.');
+      await refreshPedidos();
+      await refreshDependencies(); // Para refrescar los stocks
+      setIsDialogOpen(false);
+    } catch (error: any) {
+      console.error('Error creating order', error);
+      toast.error(error.message || 'Ocurrió un error al crear el pedido.');
+    } finally {
+      setIsSaving(false);
     }
-
-    const subtotal = formData.productos.reduce((sum, p) => sum + (p.cantidad * p.precioUnitario), 0);
-    const iva = Math.round(subtotal * 0.19); // IVA del 19%
-    const costoEnvio = 12000; // Costo fijo de envío para pedidos
-    const total = subtotal + iva + costoEnvio;
-    
-    addPedido({
-      clienteId: formData.clienteId,
-      fecha: new Date().toISOString().split('T')[0],
-      productos: formData.productos,
-      subtotal,
-      iva,
-      costoEnvio,
-      total,
-      estado: 'pendiente',
-      direccionEnvio: formData.direccionEnvio,
-    });
-
-    // Reduce stock
-    formData.productos.forEach(p => {
-      updateStock(p.productoId, -p.cantidad);
-    });
-
-    setIsDialogOpen(false);
   };
 
   const handleOpenStatusDialog = (pedido: any) => {
@@ -111,32 +188,144 @@ export function PedidosModule() {
     setIsStatusDialogOpen(true);
   };
 
-  const handleViewDetail = (pedido: any) => {
-    setSelectedPedido(pedido);
-    setDetailDialogOpen(true);
+  const handleViewDetail = async (pedido: any) => {
+    try {
+      // Necesitamos cargar los items profundamente mediante la api
+      const fullOrder = await orderService.getById(Number(pedido.id));
+      setSelectedPedido({
+        ...pedido,
+        productos: (fullOrder.items || []).map((i: any) => ({
+          productoId: i.id_producto.toString(),
+          cantidad: i.cantidad,
+          precioUnitario: i.precio_unitario || 0,
+        }))
+      });
+      setDetailDialogOpen(true);
+    } catch (error) {
+      console.error(error);
+      toast.error('Error obteniendo el detalle completo del pedido');
+    }
   };
 
-  const handleViewPDF = (pedido: any) => {
-    setSelectedPedido(pedido);
-    setPdfDialogOpen(true);
+  const handleViewPDF = async (pedido: any) => {
+    try {
+      const fullOrder = await orderService.getById(Number(pedido.id));
+      const orderData = {
+        ...pedido,
+        productos: (fullOrder.items || []).map((i: any) => ({
+          productoId: i.id_producto.toString(),
+          cantidad: i.cantidad,
+          precioUnitario: i.precio_unitario || 0,
+        }))
+      };
+
+      const doc = new jsPDF() as any;
+      const cliente = clientes.find((c: Cliente) => c.id === orderData.clienteId);
+      
+      // Header
+      doc.setFontSize(22);
+      doc.setTextColor(255, 105, 180); // Color rosa
+      doc.text('GLAMOUR ML', 105, 20, { align: 'center' });
+      
+      doc.setFontSize(10);
+      doc.setTextColor(100);
+      doc.text('NIT: 900.XXX.XXX-X | Medellín, Colombia', 105, 28, { align: 'center' });
+      
+      doc.setDrawColor(200);
+      doc.line(20, 35, 190, 35);
+      
+      // Pedido Info
+      doc.setFontSize(14);
+      doc.setTextColor(0);
+      doc.text('COMPROBANTE DE PEDIDO', 20, 45);
+      doc.setFontSize(10);
+      doc.text(`No. PEDIDO: ${orderData.id}`, 20, 52);
+      doc.text(`FECHA: ${orderData.fecha}`, 20, 57);
+      doc.text(`ESTADO: ${orderData.estado.toUpperCase()}`, 20, 62);
+      
+      // Cliente Info
+      doc.setFontSize(12);
+      doc.text('DATOS DEL CLIENTE', 120, 45);
+      doc.setFontSize(10);
+      doc.text(`NOMBRE: ${(orderData as any).clienteNombre || cliente?.nombre || 'N/A'}`, 120, 52);
+      doc.text(`DIRECCIÓN: ${orderData.direccionEnvio}`, 120, 57);
+      doc.text(`TEL: ${cliente?.telefono || 'N/A'}`, 120, 62);
+      
+      // Header de la tabla de productos
+      doc.setFillColor(255, 105, 180);
+      doc.rect(20, 70, 170, 8, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(9);
+      doc.text('PRODUCTO', 22, 75.5);
+      doc.text('CANT.', 100, 75.5);
+      doc.text('PRECIO', 130, 75.5);
+      doc.text('SUBTOTAL', 160, 75.5);
+      
+      doc.setTextColor(0);
+      let listY = 85;
+
+      const safeCurrency = (val: any) => {
+        if (typeof val !== 'number' || isNaN(val)) return formatCurrency(0);
+        return formatCurrency(val);
+      };
+
+      // Fila de productos
+      (orderData.productos || []).forEach((p: any) => {
+        const prod = productos.find((pr: Producto) => pr.id === p.productoId);
+        const prodName = doc.splitTextToSize(prod?.nombre || 'Producto Desconocido', 70);
+        
+        doc.text(prodName, 22, listY);
+        doc.text(String(p.cantidad || 0), 100, listY);
+        doc.text(safeCurrency(p.precioUnitario), 130, listY);
+        doc.text(safeCurrency((p.cantidad || 0) * (p.precioUnitario || 0)), 160, listY);
+        
+        listY += (prodName.length * 5) + 3;
+      });
+      
+      // Totales
+      const finalY = listY + 10;
+      doc.text(`TOTAL: ${safeCurrency(orderData.total)}`, 140, finalY);
+      
+      // Footer
+      doc.setFontSize(8);
+      doc.setTextColor(150);
+      doc.text('Este documento es un comprobante de pedido.', 105, 280, { align: 'center' });
+      
+      doc.save(`pedido_${orderData.id}.pdf`);
+      toast.success('El PDF ha sido generado y la descarga ha iniciado');
+    } catch (error: any) {
+      console.error('Error generando PDF:', error);
+      toast.error('Ocurrió un error al intentar generar el PDF');
+    }
   };
 
-  const handleUpdateStatus = () => {
+  const handleUpdateStatus = async () => {
     if (newStatus === 'cancelado' && !motivoAnulacion) {
-      alert('Debe especificar un motivo de cancelación');
+      toast.error('Debe especificar un motivo de cancelación');
       return;
     }
 
-    updatePedidoEstado(selectedPedido.id, newStatus, motivoAnulacion || undefined);
-    setIsStatusDialogOpen(false);
+    try {
+      await orderService.updateStatus(Number(selectedPedido.id), newStatus, motivoAnulacion);
+      toast.success('Estado actualizado correctamente');
+      await refreshPedidos();
+      await refreshDependencies(); // <--- Refresh stock if cancelled
+      setIsStatusDialogOpen(false);
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.message || 'Error al actualizar el estado del pedido');
+    }
   };
 
   const getStatusColor = (status: OrderStatus) => {
     const colors: Record<OrderStatus, { bg: string; text: string; label: string }> = {
       'pendiente': { bg: 'bg-blue-500/10', text: 'text-blue-600', label: 'Pendiente' },
       'preparado': { bg: 'bg-yellow-500/10', text: 'text-yellow-600', label: 'Preparado' },
+      'procesando': { bg: 'bg-indigo-500/10', text: 'text-indigo-600', label: 'Procesando' },
+      'enviado': { bg: 'bg-purple-500/10', text: 'text-purple-600', label: 'Enviado' },
       'entregado': { bg: 'bg-success/10', text: 'text-success', label: 'Entregado' },
       'cancelado': { bg: 'bg-danger/10', text: 'text-danger', label: 'Cancelado' },
+      'carrito': { bg: 'bg-gray-500/10', text: 'text-gray-600', label: 'Carrito' },
     };
     return colors[status] || colors['pendiente'];
   };
@@ -176,16 +365,6 @@ export function PedidosModule() {
 
   const getAllStatuses = (): OrderStatus[] => {
     return ['pendiente', 'preparado', 'entregado', 'cancelado'];
-  };
-
-  const getStatusLabel = (status: OrderStatus): string => {
-    const labels: Record<OrderStatus, string> = {
-      'pendiente': 'Pendiente',
-      'preparado': 'Preparado',
-      'entregado': 'Entregado',
-      'cancelado': 'Cancelado',
-    };
-    return labels[status] || status;
   };
 
   return (
@@ -244,11 +423,10 @@ export function PedidosModule() {
                 </TableRow>
               ) : (
                 paginatedPedidos.map((pedido) => {
-                const cliente = clientes.find(c => c.id === pedido.clienteId);
                 return (
                   <TableRow key={pedido.id} className="border-border hover:bg-surface/50">
                     <TableCell className="text-foreground-secondary">{pedido.id.slice(0, 8)}</TableCell>
-                    <TableCell className="text-foreground">{cliente?.nombre || 'N/A'}</TableCell>
+                    <TableCell className="text-foreground">{(pedido as any).clienteNombre || 'Sin Nombre'}</TableCell>
                     <TableCell className="text-foreground-secondary">{pedido.fecha}</TableCell>
                     <TableCell className="text-foreground">{formatCurrency(pedido.total)}</TableCell>
                     <TableCell className="text-foreground-secondary max-w-[200px] truncate">{pedido.direccionEnvio}</TableCell>
@@ -328,7 +506,7 @@ export function PedidosModule() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label className="text-foreground">Cliente</Label>
-                <Select value={formData.clienteId} onValueChange={(value) => setFormData({ ...formData, clienteId: value })}>
+                <Select value={formData.clienteId} onValueChange={(value: string) => setFormData({ ...formData, clienteId: value })}>
                   <SelectTrigger className="bg-input-background border-border text-foreground">
                     <SelectValue />
                   </SelectTrigger>
@@ -363,7 +541,7 @@ export function PedidosModule() {
                 <div key={index} className="grid grid-cols-12 gap-2 items-end p-3 bg-surface rounded-lg">
                   <div className="col-span-6 space-y-1">
                     <Label className="text-foreground-secondary" style={{ fontSize: '12px' }}>Producto</Label>
-                    <Select value={prod.productoId} onValueChange={(value) => updateProductLine(index, 'productoId', value)}>
+                    <Select value={prod.productoId} onValueChange={(value: string) => updateProductLine(index, 'productoId', value)}>
                       <SelectTrigger className="bg-input-background border-border text-foreground h-9">
                         <SelectValue />
                       </SelectTrigger>
@@ -381,8 +559,11 @@ export function PedidosModule() {
                     <Input
                       type="number"
                       min="1"
-                      value={prod.cantidad}
-                      onChange={(e) => updateProductLine(index, 'cantidad', parseInt(e.target.value))}
+                      value={isNaN(prod.cantidad) ? '' : prod.cantidad}
+                      onChange={(e) => {
+                        const val = e.target.value === '' ? NaN : parseInt(e.target.value);
+                        updateProductLine(index, 'cantidad', val);
+                      }}
                       className="bg-input-background border-border text-foreground h-9"
                     />
                   </div>
@@ -390,8 +571,11 @@ export function PedidosModule() {
                     <Label className="text-foreground-secondary" style={{ fontSize: '12px' }}>Precio</Label>
                     <Input
                       type="number"
-                      value={prod.precioUnitario}
-                      onChange={(e) => updateProductLine(index, 'precioUnitario', parseFloat(e.target.value))}
+                      value={isNaN(prod.precioUnitario) ? '' : prod.precioUnitario}
+                      onChange={(e) => {
+                        const val = e.target.value === '' ? NaN : parseFloat(e.target.value);
+                        updateProductLine(index, 'precioUnitario', val);
+                      }}
                       className="bg-input-background border-border text-foreground h-9"
                     />
                   </div>
@@ -426,9 +610,13 @@ export function PedidosModule() {
             <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="border-border text-foreground hover:bg-surface">
               Cancelar
             </Button>
-            <Button onClick={handleSave} className="bg-primary hover:bg-primary/90 text-primary-foreground">
-              Crear Pedido
-            </Button>
+            <Button 
+        onClick={handleSave} 
+        disabled={isSaving}
+        className="bg-primary hover:bg-primary/90 text-primary-foreground"
+      >
+        {isSaving ? 'Creando...' : 'Crear Pedido'}
+      </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -505,7 +693,7 @@ export function PedidosModule() {
 
       {/* Detail Dialog */}
       <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
-        <DialogContent className="bg-card border-border max-w-2xl">
+        <DialogContent className="bg-card border-border max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-foreground">Detalle del Pedido</DialogTitle>
           </DialogHeader>
@@ -622,201 +810,6 @@ export function PedidosModule() {
         </DialogContent>
       </Dialog>
 
-      {/* PDF Dialog */}
-      <Dialog open={pdfDialogOpen} onOpenChange={setPdfDialogOpen}>
-        <DialogContent className="bg-card border-border max-w-3xl max-h-[90vh]">
-          <DialogHeader>
-            <DialogTitle className="text-foreground">Comprobante de Pedido - PDF</DialogTitle>
-          </DialogHeader>
-          
-          {selectedPedido && (
-            <div className="space-y-6 py-6 px-4">
-              {/* Header del PDF */}
-              <div className="text-center border-b border-border pb-6">
-                <h2 className="text-primary" style={{ fontSize: '24px', fontWeight: 600 }}>GLAMOUR ML</h2>
-                <p className="text-foreground-secondary mt-1">Medellín, Colombia</p>
-                <p className="text-foreground-secondary" style={{ fontSize: '14px' }}>NIT: 900.XXX.XXX-X</p>
-                <div className="mt-4 inline-block bg-primary/10 px-4 py-2 rounded-lg">
-                  <p className="text-primary" style={{ fontWeight: 600 }}>COMPROBANTE DE PEDIDO</p>
-                  <p className="text-foreground-secondary" style={{ fontSize: '14px' }}>No. {selectedPedido.id}</p>
-                </div>
-              </div>
-
-              {/* Información del Cliente y Pedido */}
-              <div className="grid grid-cols-2 gap-6">
-                <div className="bg-surface p-4 rounded-lg">
-                  <p className="text-foreground-secondary mb-2" style={{ fontSize: '12px', fontWeight: 600 }}>DATOS DEL CLIENTE</p>
-                  <div className="space-y-1">
-                    <p className="text-foreground">{clientes.find(c => c.id === selectedPedido.clienteId)?.nombre || 'N/A'}</p>
-                    <p className="text-foreground-secondary" style={{ fontSize: '14px' }}>
-                      {clientes.find(c => c.id === selectedPedido.clienteId)?.documento || 'N/A'}
-                    </p>
-                    <p className="text-foreground-secondary" style={{ fontSize: '14px' }}>
-                      {clientes.find(c => c.id === selectedPedido.clienteId)?.telefono || 'N/A'}
-                    </p>
-                  </div>
-                </div>
-                <div className="bg-surface p-4 rounded-lg">
-                  <p className="text-foreground-secondary mb-2" style={{ fontSize: '12px', fontWeight: 600 }}>INFORMACIÓN DEL PEDIDO</p>
-                  <div className="space-y-1">
-                    <p className="text-foreground-secondary" style={{ fontSize: '14px' }}>
-                      <span className="text-foreground" style={{ fontWeight: 500 }}>Fecha:</span> {selectedPedido.fecha}
-                    </p>
-                    <p className="text-foreground-secondary" style={{ fontSize: '14px' }}>
-                      <span className="text-foreground" style={{ fontWeight: 500 }}>Estado:</span>{' '}
-                      <span className={getStatusColor(selectedPedido.estado).text}>
-                        {getStatusColor(selectedPedido.estado).label}
-                      </span>
-                    </p>
-                    <div className="pt-2">
-                      <p className="text-foreground-secondary" style={{ fontSize: '12px', fontWeight: 600 }}>Dirección de Envío:</p>
-                      <p className="text-foreground" style={{ fontSize: '14px' }}>{selectedPedido.direccionEnvio}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Estado del Pedido - Timeline */}
-              <div className="bg-surface p-4 rounded-lg">
-                <p className="text-foreground mb-3" style={{ fontSize: '12px', fontWeight: 600 }}>SEGUIMIENTO DEL PEDIDO</p>
-                <div className="flex items-center justify-between">
-                  {getAllStatuses().filter(s => s !== 'anulado').map((status, index) => {
-                    const statusInfo = getStatusColor(status);
-                    const currentIndex = getAllStatuses().indexOf(selectedPedido.estado);
-                    const thisIndex = getAllStatuses().indexOf(status);
-                    const isActive = thisIndex <= currentIndex;
-                    const isAnulado = selectedPedido.estado === 'anulado';
-                    
-                    return (
-                      <div key={status} className="flex items-center flex-1">
-                        <div className="flex flex-col items-center flex-1">
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                            isActive && !isAnulado ? statusInfo.bg + ' border-2 ' + statusInfo.text.replace('text-', 'border-') : 'bg-surface border border-border'
-                          }`}>
-                            <Package className={`w-5 h-5 ${isActive && !isAnulado ? statusInfo.text : 'text-foreground-secondary'}`} />
-                          </div>
-                          <p className={`text-center mt-2 ${isActive && !isAnulado ? statusInfo.text : 'text-foreground-secondary'}`} style={{ fontSize: '10px', fontWeight: 500 }}>
-                            {statusInfo.label}
-                          </p>
-                        </div>
-                        {index < 3 && (
-                          <div className={`h-0.5 flex-1 ${isActive && !isAnulado && thisIndex < currentIndex ? statusInfo.bg.replace('/10', '') : 'bg-border'}`}></div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-                {selectedPedido.estado === 'anulado' && (
-                  <div className="mt-4 bg-danger/10 border border-danger/30 rounded-lg p-3 text-center">
-                    <p className="text-danger" style={{ fontSize: '14px', fontWeight: 600 }}>
-                      ⚠️ PEDIDO ANULADO
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Detalle de Productos */}
-              <div>
-                <div className="bg-primary text-primary-foreground px-4 py-2 rounded-t-lg">
-                  <div className="grid grid-cols-12 gap-4">
-                    <p className="col-span-5" style={{ fontSize: '12px', fontWeight: 600 }}>PRODUCTO</p>
-                    <p className="col-span-2 text-center" style={{ fontSize: '12px', fontWeight: 600 }}>CANT.</p>
-                    <p className="col-span-2 text-right" style={{ fontSize: '12px', fontWeight: 600 }}>PRECIO</p>
-                    <p className="col-span-3 text-right" style={{ fontSize: '12px', fontWeight: 600 }}>SUBTOTAL</p>
-                  </div>
-                </div>
-                <div className="border border-t-0 border-border rounded-b-lg">
-                  {selectedPedido.productos.map((p: any, i: number) => {
-                    const producto = productos.find(prod => prod.id === p.productoId);
-                    return (
-                      <div 
-                        key={i} 
-                        className={`grid grid-cols-12 gap-4 px-4 py-3 ${
-                          i !== selectedPedido.productos.length - 1 ? 'border-b border-border' : ''
-                        }`}
-                      >
-                        <p className="col-span-5 text-foreground">{producto?.nombre || 'N/A'}</p>
-                        <p className="col-span-2 text-center text-foreground-secondary">{p.cantidad}</p>
-                        <p className="col-span-2 text-right text-foreground-secondary">{formatCurrency(p.precioUnitario)}</p>
-                        <p className="col-span-3 text-right text-foreground" style={{ fontWeight: 500 }}>
-                          {formatCurrency(p.cantidad * p.precioUnitario)}
-                        </p>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Resumen del Pedido */}
-              <div className="bg-surface p-4 rounded-lg border border-border">
-                <p className="text-foreground mb-4" style={{ fontSize: '14px', fontWeight: 600 }}>RESUMEN DEL PEDIDO</p>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-foreground-secondary" style={{ fontSize: '14px' }}>Subtotal:</span>
-                    <span className="text-foreground" style={{ fontSize: '14px', fontWeight: 500 }}>
-                      {formatCurrency(selectedPedido.subtotal)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-foreground-secondary" style={{ fontSize: '14px' }}>IVA (19%):</span>
-                    <span className="text-foreground" style={{ fontSize: '14px', fontWeight: 500 }}>
-                      {formatCurrency(selectedPedido.iva)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-foreground-secondary" style={{ fontSize: '14px' }}>Costo de Envío:</span>
-                    <span className="text-foreground" style={{ fontSize: '14px', fontWeight: 500 }}>
-                      {formatCurrency(selectedPedido.costoEnvio)}
-                    </span>
-                  </div>
-                  <div className="border-t border-border pt-3 mt-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-foreground" style={{ fontSize: '18px', fontWeight: 700 }}>TOTAL A PAGAR:</span>
-                      <span className="text-primary" style={{ fontSize: '26px', fontWeight: 700 }}>
-                        {formatCurrency(selectedPedido.total)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {selectedPedido.motivoAnulacion && (
-                <div className="bg-danger/10 border-2 border-danger rounded-lg p-4">
-                  <p className="text-danger" style={{ fontSize: '12px', fontWeight: 700 }}>
-                    MOTIVO DE ANULACIÓN
-                  </p>
-                  <p className="text-foreground mt-2" style={{ fontSize: '14px' }}>
-                    {selectedPedido.motivoAnulacion}
-                  </p>
-                </div>
-              )}
-
-              {/* Footer */}
-              <div className="text-center text-foreground-secondary pt-4 border-t border-border">
-                <p style={{ fontSize: '12px' }}>Gracias por tu pedido</p>
-                <p style={{ fontSize: '12px' }}>GLAMOUR ML - Cosméticos de calidad</p>
-              </div>
-            </div>
-          )}
-
-          <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => setPdfDialogOpen(false)} 
-              className="border-border text-foreground hover:bg-surface"
-            >
-              Cerrar
-            </Button>
-            <Button 
-              className="bg-primary hover:bg-primary/90 text-primary-foreground"
-              onClick={() => window.print()}
-            >
-              <FileText className="w-4 h-4 mr-2" />
-              Imprimir
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

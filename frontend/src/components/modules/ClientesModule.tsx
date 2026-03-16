@@ -43,16 +43,23 @@ export function ClientesModule() {
         q: searchQuery.length >= 2 ? searchQuery : undefined 
       });
       
-      const mapped = response.data.map((u: any) => ({
-        id: u.id_usuario.toString(),
-        nombre: `${u.nombres || ''} ${u.apellidos || ''}`.trim(),
-        email: u.email,
-        telefono: u.telefono || '',
-        documento: u.documento || '',
-        estado: (u.estado ? 'activo' : 'inactivo') as Status,
-        totalCompras: 0, // El backend deberá devolver esto más adelante
-        fechaRegistro: u.fecha_registro || new Date().toISOString(),
-      }));
+      const mapped: Cliente[] = response.data.map((u: any) => {
+        const nombres = u.nombres || u.nombre || '';
+        const apellidos = u.apellidos || u.apellido || '';
+        return {
+          id: u.id_usuario.toString(),
+          nombre: `${nombres} ${apellidos}`.trim() || 'Sin Nombre',
+          nombres: nombres,
+          apellidos: apellidos,
+          email: u.email,
+          telefono: u.telefono || '',
+          documento: u.documento || '',
+          numeroDocumento: u.documento || '',
+          estado: (u.estado ? 'activo' : 'inactivo') as Status,
+          totalCompras: Number(u.total_ventas) || 0,
+          fechaRegistro: u.fecha_registro || new Date().toISOString(),
+        };
+      });
       setClientes(mapped);
     } catch (error: any) {
       toast.error('Error al cargar clientes', { description: error.message });

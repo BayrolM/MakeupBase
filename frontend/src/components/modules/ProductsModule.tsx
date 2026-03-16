@@ -1,17 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useStore, Producto } from '../../lib/store';
 import { PageHeader } from '../PageHeader';
-import { StatusBadge } from '../StatusBadge';
 import { StatusSwitch } from '../StatusSwitch';
 import { Pagination } from '../Pagination';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Button } from '../ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Textarea } from '../ui/textarea';
-import { Plus, Pencil, Trash2, Eye, Search, AlertTriangle, X } from 'lucide-react';
+import { Plus, Pencil, Trash2, Eye, Search, X, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { productService } from '../../services/productService';
 
@@ -37,8 +36,14 @@ export function ProductsModule() {
     stock: '',
     stockMinimo: '',
     stockMaximo: '',
+    imagenUrl: '',
     estado: 'activo' as 'activo' | 'inactivo',
   });
+
+  // Load products on mount
+  useEffect(() => {
+    refreshProductsLocal();
+  }, []);
 
   // Check if current user is admin
   const isAdmin = currentUser?.rol === 'admin';
@@ -59,6 +64,7 @@ export function ProductsModule() {
         stock: prod.stock_actual || 0,
         stockMinimo: prod.stock_min || 0,
         stockMaximo: prod.stock_max || 100,
+        imagenUrl: prod.imagen_url || '',
         estado: prod.estado ? 'activo' as const : 'inactivo' as const,
         fechaCreacion: new Date().toISOString(),
       }));
@@ -89,6 +95,7 @@ export function ProductsModule() {
         stock: product.stock.toString(),
         stockMinimo: product.stockMinimo.toString(),
         stockMaximo: product.stockMaximo.toString(),
+        imagenUrl: product.imagenUrl || '',
         estado: product.estado,
       });
     } else {
@@ -104,6 +111,7 @@ export function ProductsModule() {
         stock: '0',
         stockMinimo: '0',
         stockMaximo: '100',
+        imagenUrl: '',
         estado: 'activo',
       });
     }
@@ -129,6 +137,7 @@ export function ProductsModule() {
         stock_actual: Number(formData.stock),
         stock_min: Number(formData.stockMinimo),
         stock_max: Number(formData.stockMaximo),
+        imagen_url: formData.imagenUrl,
         estado: formData.estado === 'activo',
       };
 
@@ -251,7 +260,9 @@ export function ProductsModule() {
               {paginatedProducts.map((product) => (
                 <TableRow key={product.id} className="border-border">
                   <TableCell>{product.sku}</TableCell>
-                  <TableCell>{product.nombre}</TableCell>
+                  <TableCell>
+                    <span>{product.nombre}</span>
+                  </TableCell>
                   <TableCell>{product.marca}</TableCell>
                   <TableCell>{categorias.find(c => c.id === product.categoriaId)?.nombre || 'Sin cat.'}</TableCell>
                   <TableCell>{formatCurrency(product.precioVenta)}</TableCell>
@@ -263,7 +274,7 @@ export function ProductsModule() {
                   <TableCell>
                     <StatusSwitch 
                       status={product.estado} 
-                      onChange={(newStatus) => {
+                      onChange={(newStatus: 'activo' | 'inactivo') => {
                         if (!isAdmin) return;
                         productService.update(Number(product.id), { estado: newStatus === 'activo' }).then(refreshProductsLocal);
                       }}
@@ -320,7 +331,7 @@ export function ProductsModule() {
             </div>
             <div className="space-y-2">
               <Label>Categoría</Label>
-              <Select value={formData.categoriaId} onValueChange={v => setFormData({...formData, categoriaId: v})}>
+              <Select value={formData.categoriaId} onValueChange={(v: string) => setFormData({...formData, categoriaId: v})}>
                 <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
                 <SelectContent>
                   {categorias.map(c => <SelectItem key={c.id} value={c.id}>{c.nombre}</SelectItem>)}
@@ -330,6 +341,25 @@ export function ProductsModule() {
             <div className="space-y-2">
               <Label>Precio Venta</Label>
               <Input type="number" value={formData.precioVenta} onChange={e => setFormData({...formData, precioVenta: e.target.value})} />
+            </div>
+            <div className="space-y-2 col-span-2">
+              <Label>Descripción (Opcional)</Label>
+              <Textarea 
+                value={formData.descripcion} 
+                onChange={e => setFormData({...formData, descripcion: e.target.value})} 
+                placeholder="Escribe una breve descripción del producto..."
+                className="bg-input-background border-border text-foreground"
+                rows={3}
+              />
+            </div>
+            <div className="space-y-2 col-span-2">
+              <Label>URL de la Imagen</Label>
+              <Input value={formData.imagenUrl} onChange={e => setFormData({...formData, imagenUrl: e.target.value})} placeholder="https://ejemplo.com/imagen.jpg" />
+              {formData.imagenUrl && (
+                <div className="mt-2 w-20 h-20 rounded-lg border border-border overflow-hidden">
+                  <img src={formData.imagenUrl} alt="Vista previa" className="w-full h-full object-cover" />
+                </div>
+              )}
             </div>
           </div>
           <DialogFooter>
@@ -344,12 +374,53 @@ export function ProductsModule() {
         <DialogContent className="bg-card border-border">
           <DialogHeader><DialogTitle>Detalles del Producto</DialogTitle></DialogHeader>
           {selectedProduct && (
-            <div className="space-y-4 py-4">
-              <p><strong>SKU:</strong> {selectedProduct.sku}</p>
-              <p><strong>Nombre:</strong> {selectedProduct.nombre}</p>
-              <p><strong>Precio:</strong> {formatCurrency(selectedProduct.precioVenta)}</p>
-              <p><strong>Stock:</strong> {selectedProduct.stock}</p>
-              <p><strong>Descripción:</strong> {selectedProduct.descripcion || 'N/A'}</p>
+            <div className="space-y-6 py-4">
+              <div className="flex justify-center">
+                {selectedProduct.imagenUrl ? (
+                  <div className="w-48 h-48 rounded-xl border border-border overflow-hidden shadow-sm">
+                    <img 
+                      src={selectedProduct.imagenUrl} 
+                      alt={selectedProduct.nombre} 
+                      className="w-full h-full object-cover" 
+                    />
+                  </div>
+                ) : (
+                  <div className="w-48 h-48 rounded-xl bg-surface border border-border flex flex-col items-center justify-center text-foreground-secondary gap-2">
+                    <AlertTriangle className="w-8 h-8 opacity-20" />
+                    <span className="text-sm">Sin imagen disponible</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                <div className="space-y-1">
+                  <p className="text-xs font-medium text-foreground-secondary uppercase tracking-wider">SKU</p>
+                  <p className="text-foreground font-semibold">{selectedProduct.sku}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs font-medium text-foreground-secondary uppercase tracking-wider">Nombre</p>
+                  <p className="text-foreground font-semibold">{selectedProduct.nombre}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs font-medium text-foreground-secondary uppercase tracking-wider">Precio de Venta</p>
+                  <p className="text-primary text-lg font-bold">{formatCurrency(selectedProduct.precioVenta)}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs font-medium text-foreground-secondary uppercase tracking-wider">Stock Actual</p>
+                  <p className={`font-bold ${getStockStatus(selectedProduct)?.color || 'text-foreground'}`}>
+                    {selectedProduct.stock} unidades
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-2 border-t border-border pt-4">
+                <p className="text-xs font-medium text-foreground-secondary uppercase tracking-wider">Descripción</p>
+                <div className="bg-surface/50 p-4 rounded-lg border border-border/50">
+                  <p className="text-foreground-secondary leading-relaxed">
+                    {selectedProduct.descripcion || 'Este producto no cuenta con una descripción detallada todavía.'}
+                  </p>
+                </div>
+              </div>
             </div>
           )}
           <DialogFooter><Button onClick={() => setIsDetailDialogOpen(false)}>Cerrar</Button></DialogFooter>

@@ -12,10 +12,13 @@ import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Skeleton } from '../ui/skeleton';
 import { Plus, Eye, Pencil, Trash2, Search, AlertTriangle, X, UserCheck } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
+
+import { userService } from '../../services/userService';
+import { Cliente } from '../../lib/store';
 
 export function ClientesViewModule() {
-  const { users, ventas, pedidos, addUser, updateUser, deleteUser, currentUser } = useStore();
+  const { users, clientes, setClientes, ventas, pedidos, currentUser } = useStore();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -27,8 +30,8 @@ export function ClientesViewModule() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [formData, setFormData] = useState({
-    nombre: '',
-    apellido: '',
+    nombres: '',
+    apellidos: '',
     tipoDocumento: 'CC' as TipoDocumento,
     numeroDocumento: '',
     fechaNacimiento: '',
@@ -43,8 +46,45 @@ export function ClientesViewModule() {
 
   const isAdmin = currentUser?.rol === 'admin';
 
-  // Filter only clients (cliente role)
-  const clientes = users.filter(user => user.rol === 'cliente');
+  const fetchClientes = async () => {
+    try {
+      const response = await userService.getAll({ 
+        id_rol: 2,
+        q: searchQuery.length >= 2 ? searchQuery : undefined 
+      });
+      
+      const mapped: Cliente[] = response.data.map((u: any) => {
+        const nombres = u.nombres || u.nombre || '';
+        const apellidos = u.apellidos || u.apellido || '';
+        return {
+          id: u.id_usuario.toString(),
+          nombre: `${nombres} ${apellidos}`.trim() || 'Sin Nombre',
+          nombres: nombres,
+          apellidos: apellidos,
+          email: u.email,
+          telefono: u.telefono || '',
+          documento: u.documento || '',
+          numeroDocumento: u.documento || '',
+          id_rol: u.id_rol,
+          rol: 'cliente' as const,
+          estado: (u.estado ? 'activo' : 'inactivo'),
+          totalCompras: Number(u.total_ventas) || 0,
+          fechaRegistro: u.fecha_registro || new Date().toISOString(),
+          tipoDocumento: u.tipo_documento || 'CC',
+          direccion: u.direccion || '',
+          ciudad: u.ciudad || '',
+          pais: u.pais || 'Colombia'
+        };
+      });
+      setClientes(mapped);
+    } catch (error: any) {
+      toast.error('Error al cargar clientes', { description: error.message });
+    }
+  };
+
+  useEffect(() => {
+    fetchClientes();
+  }, [searchQuery]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -57,8 +97,8 @@ export function ClientesViewModule() {
     if (cliente) {
       setEditingCliente(cliente);
       setFormData({
-        nombre: cliente.nombre,
-        apellido: cliente.apellido,
+        nombres: cliente.nombres,
+        apellidos: cliente.apellidos,
         tipoDocumento: cliente.tipoDocumento,
         numeroDocumento: cliente.numeroDocumento,
         fechaNacimiento: cliente.fechaNacimiento || '',
@@ -73,8 +113,8 @@ export function ClientesViewModule() {
     } else {
       setEditingCliente(null);
       setFormData({
-        nombre: '',
-        apellido: '',
+        nombres: '',
+        apellidos: '',
         tipoDocumento: 'CC',
         numeroDocumento: '',
         fechaNacimiento: '',
@@ -91,22 +131,22 @@ export function ClientesViewModule() {
   };
 
   const validateForm = () => {
-    if (!formData.nombre.trim()) {
+    if (!formData.nombres.trim()) {
       toast.error('Campo obligatorio', { description: 'El nombre es obligatorio.' });
       return false;
     }
 
-    if (!formData.apellido.trim()) {
+    if (!formData.apellidos.trim()) {
       toast.error('Campo obligatorio', { description: 'El apellido es obligatorio.' });
       return false;
     }
 
-    if (formData.nombre.trim().length > 100) {
+    if (formData.nombres.trim().length > 100) {
       toast.error('Nombre demasiado largo', { description: 'El nombre no debe superar 100 caracteres.' });
       return false;
     }
 
-    if (formData.apellido.trim().length > 100) {
+    if (formData.apellidos.trim().length > 100) {
       toast.error('Apellido demasiado largo', { description: 'El apellido no debe superar 100 caracteres.' });
       return false;
     }
@@ -165,33 +205,32 @@ export function ClientesViewModule() {
 
     try {
       const clienteData = {
-        nombre: formData.nombre.trim(),
-        apellido: formData.apellido.trim(),
-        tipoDocumento: formData.tipoDocumento,
-        numeroDocumento: formData.numeroDocumento.trim(),
-        fechaNacimiento: formData.fechaNacimiento || undefined,
+        nombres: formData.nombres.trim(),
+        apellidos: formData.apellidos.trim(),
+        tipo_documento: formData.tipoDocumento,
+        documento: formData.numeroDocumento.trim(),
         email: formData.email.trim(),
-        passwordHash: formData.passwordHash || editingCliente?.passwordHash || 'hashed_password',
+        password_hash: formData.passwordHash || undefined,
         telefono: formData.telefono.trim(),
         direccion: formData.direccion.trim() || undefined,
         ciudad: formData.ciudad.trim() || undefined,
-        pais: formData.pais.trim() || undefined,
-        rol: 'cliente' as const,
-        estado: formData.estado,
+        id_rol: 2,
+        estado: formData.estado === 'activo',
       };
 
       if (editingCliente) {
-        updateUser(editingCliente.id, clienteData);
+        await userService.update(editingCliente.id, clienteData);
         toast.success('Cliente actualizado correctamente', {
-          description: `${clienteData.nombre} ${clienteData.apellido} ha sido actualizado exitosamente.`,
+          description: `${clienteData.nombres} ${clienteData.apellidos} ha sido actualizado exitosamente.`,
         });
       } else {
-        addUser(clienteData);
+        await userService.create(clienteData as any);
         toast.success('Cliente registrado exitosamente', {
-          description: `${clienteData.nombre} ${clienteData.apellido} ha sido agregado al sistema.`,
+          description: `${clienteData.nombres} ${clienteData.apellidos} ha sido agregado al sistema.`,
         });
       }
 
+      await fetchClientes();
       setIsDialogOpen(false);
       setIsSaving(false);
     } catch (error) {
@@ -237,10 +276,11 @@ export function ClientesViewModule() {
     setIsDeleting(true);
 
     try {
-      deleteUser(selectedCliente.id);
-      toast.success('Cliente eliminado correctamente', {
-        description: `${selectedCliente.nombre} ${selectedCliente.apellido} ha sido eliminado del sistema.`,
+      await userService.deactivate(selectedCliente.id);
+      toast.success('Cliente desactivado correctamente', {
+        description: `${selectedCliente.nombres} ${selectedCliente.apellidos} ha sido desactivado del sistema.`,
       });
+      await fetchClientes();
       setIsDeleteDialogOpen(false);
       setSelectedCliente(null);
       setIsDeleting(false);
@@ -266,9 +306,9 @@ export function ClientesViewModule() {
 
     const query = searchQuery.toLowerCase();
     return (
-      cliente.nombre.toLowerCase().includes(query) ||
-      cliente.apellido.toLowerCase().includes(query) ||
-      (cliente.nombre + ' ' + cliente.apellido).toLowerCase().includes(query) ||
+      cliente.nombres.toLowerCase().includes(query) ||
+      cliente.apellidos.toLowerCase().includes(query) ||
+      (cliente.nombres + ' ' + cliente.apellidos).toLowerCase().includes(query) ||
       cliente.email.toLowerCase().includes(query) ||
       cliente.numeroDocumento.includes(query)
     );
@@ -414,7 +454,7 @@ export function ClientesViewModule() {
               ) : (
                 paginatedClientes.map((cliente) => (
                   <TableRow key={cliente.id} className="border-border hover:bg-surface/50">
-                    <TableCell className="text-foreground">{cliente.nombre} {cliente.apellido}</TableCell>
+                    <TableCell className="text-foreground">{cliente.nombres} {cliente.apellidos}</TableCell>
                     <TableCell className="text-foreground-secondary">{cliente.tipoDocumento}</TableCell>
                     <TableCell className="text-foreground">{cliente.numeroDocumento}</TableCell>
                     <TableCell className="text-foreground-secondary">{cliente.email}</TableCell>
@@ -423,7 +463,14 @@ export function ClientesViewModule() {
                     <TableCell>
                       <StatusSwitch
                         status={cliente.estado}
-                        onChange={(newStatus) => updateUser(cliente.id, { estado: newStatus })}
+                        onChange={async (newStatus) => {
+                          try {
+                            await userService.update(cliente.id, { estado: newStatus === 'activo' });
+                            await fetchClientes();
+                          } catch (e) {
+                            toast.error('Error al cambiar estado');
+                          }
+                        }}
                       />
                     </TableCell>
                     <TableCell>
@@ -499,8 +546,8 @@ export function ClientesViewModule() {
                 </Label>
                 <Input
                   id="nombre"
-                  value={formData.nombre}
-                  onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+                  value={formData.nombres}
+                  onChange={(e) => setFormData({ ...formData, nombres: e.target.value })}
                   className="bg-input-background border-border text-foreground"
                   placeholder="Ej: Juan"
                   disabled={isSaving}
@@ -514,8 +561,8 @@ export function ClientesViewModule() {
                 </Label>
                 <Input
                   id="apellido"
-                  value={formData.apellido}
-                  onChange={(e) => setFormData({ ...formData, apellido: e.target.value })}
+                  value={formData.apellidos}
+                  onChange={(e) => setFormData({ ...formData, apellidos: e.target.value })}
                   className="bg-input-background border-border text-foreground"
                   placeholder="Ej: Pérez"
                   disabled={isSaving}
@@ -717,7 +764,7 @@ export function ClientesViewModule() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-foreground-secondary" style={{ fontSize: '13px', fontWeight: 500 }}>Nombre Completo</Label>
-                  <p className="text-foreground mt-1" style={{ fontSize: '15px' }}>{selectedCliente.nombre} {selectedCliente.apellido}</p>
+                  <p className="text-foreground mt-1" style={{ fontSize: '15px' }}>{selectedCliente.nombres} {selectedCliente.apellidos}</p>
                 </div>
                 <div>
                   <Label className="text-foreground-secondary" style={{ fontSize: '13px', fontWeight: 500 }}>Email</Label>
@@ -771,7 +818,7 @@ export function ClientesViewModule() {
 
           <div className="py-4">
             <p className="text-foreground text-center">
-              ¿Estás seguro de que deseas eliminar el cliente <span style={{ fontWeight: 600 }}>{selectedCliente?.nombre} {selectedCliente?.apellido}</span>?
+              ¿Estás seguro de que deseas eliminar el cliente <span style={{ fontWeight: 600 }}>{selectedCliente?.nombres} {selectedCliente?.apellidos}</span>?
             </p>
             <p className="text-foreground-secondary text-center mt-2" style={{ fontSize: '14px' }}>
               Esta acción no se puede deshacer.

@@ -1,6 +1,5 @@
 import { useStore } from '../../lib/store';
 import { Heart, ShoppingCart, Eye } from 'lucide-react';
-import { StatusBadge } from '../StatusBadge';
 
 interface ProductCardProps {
   producto: any;
@@ -29,16 +28,26 @@ export function ProductCard({ producto, onViewDetail }: ProductCardProps) {
   return (
     <div className="bg-card border border-border rounded-lg overflow-hidden hover:border-primary/50 transition-all group">
       {/* Image */}
-      <div className="relative aspect-square bg-surface flex items-center justify-center p-6">
-        <div className="text-primary/30 text-center">
-          <div className="text-4xl mb-2">💄</div>
-          <p className="text-xs text-foreground-secondary">{producto.sku}</p>
-        </div>
+      <div className="relative aspect-square bg-surface flex items-center justify-center overflow-hidden">
+        {producto.imagenUrl ? (
+          <img 
+            src={producto.imagenUrl} 
+            alt={producto.nombre} 
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+          />
+        ) : (
+          <div className="text-primary/30 text-center">
+            <div className="text-4xl mb-2">💄</div>
+            <p className="text-xs text-foreground-secondary">{producto.sku}</p>
+          </div>
+        )}
         
         {/* Stock Badge */}
-        {producto.stock <= producto.stockMinimo && (
+        {producto.stock <= producto.stockMinimo && producto.stock > 0 && (
           <div className="absolute top-2 left-2">
-            <StatusBadge status="inactivo" size="sm" />
+            <div className="bg-warning/90 text-warning-foreground px-2 py-1 rounded text-[10px] font-bold">
+              ÚLTIMAS UNIDADES
+            </div>
           </div>
         )}
       </div>

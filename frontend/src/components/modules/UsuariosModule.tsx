@@ -28,8 +28,8 @@ export function UsuariosModule() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [formData, setFormData] = useState({
-    nombre: '',
-    apellido: '',
+    nombres: '',
+    apellidos: '',
     tipoDocumento: 'CC' as TipoDocumento,
     numeroDocumento: '',
     fechaNacimiento: '',
@@ -54,8 +54,8 @@ export function UsuariosModule() {
       // Mapear campos del backend (nombres, id_usuario) a los del frontend (nombre, id)
       const mapped = response.data.map(u => ({
         id: u.id_usuario.toString(),
-        nombre: u.nombres || u.nombre,
-        apellido: u.apellidos || u.apellido,
+        nombres: u.nombres || u.nombre,
+        apellidos: u.apellidos || u.apellido,
         tipoDocumento: u.tipo_documento || 'CC',
         numeroDocumento: u.documento || u.numeroDocumento,
         email: u.email,
@@ -90,8 +90,8 @@ export function UsuariosModule() {
     if (user) {
       setEditingUser(user);
       setFormData({
-        nombre: user.nombre,
-        apellido: user.apellido,
+        nombres: user.nombres,
+        apellidos: user.apellidos,
         tipoDocumento: user.tipoDocumento,
         numeroDocumento: user.numeroDocumento,
         fechaNacimiento: user.fechaNacimiento || '',
@@ -107,8 +107,8 @@ export function UsuariosModule() {
     } else {
       setEditingUser(null);
       setFormData({
-        nombre: '',
-        apellido: '',
+        nombres: '',
+        apellidos: '',
         tipoDocumento: 'CC',
         numeroDocumento: '',
         fechaNacimiento: '',
@@ -126,22 +126,22 @@ export function UsuariosModule() {
   };
 
   const validateForm = () => {
-    if (!formData.nombre.trim()) {
+    if (!formData.nombres.trim()) {
       toast.error('Campo obligatorio', { description: 'El nombre es obligatorio.' });
       return false;
     }
 
-    if (!formData.apellido.trim()) {
+    if (!formData.apellidos.trim()) {
       toast.error('Campo obligatorio', { description: 'El apellido es obligatorio.' });
       return false;
     }
 
-    if (formData.nombre.trim().length > 100) {
+    if (formData.nombres.trim().length > 100) {
       toast.error('Nombre demasiado largo', { description: 'El nombre no debe superar 100 caracteres.' });
       return false;
     }
 
-    if (formData.apellido.trim().length > 100) {
+    if (formData.apellidos.trim().length > 100) {
       toast.error('Apellido demasiado largo', { description: 'El apellido no debe superar 100 caracteres.' });
       return false;
     }
@@ -216,8 +216,8 @@ export function UsuariosModule() {
     try {
       const userData = {
         id_rol: formData.rol === 'admin' ? 1 : 2, // Admin: 1, Cliente: 2 (según base de datos)
-        nombres: formData.nombre.trim(),
-        apellidos: formData.apellido.trim(),
+        nombres: formData.nombres.trim(),
+        apellidos: formData.apellidos.trim(),
         telefono: formData.telefono.trim(),
         direccion: formData.direccion.trim() || undefined,
         ciudad: formData.ciudad.trim() || undefined,
@@ -315,9 +315,9 @@ export function UsuariosModule() {
 
     const query = searchQuery.toLowerCase();
     return (
-      user.nombre.toLowerCase().includes(query) ||
-      user.apellido.toLowerCase().includes(query) ||
-      (user.nombre + ' ' + user.apellido).toLowerCase().includes(query) ||
+      user.nombres.toLowerCase().includes(query) ||
+      user.apellidos.toLowerCase().includes(query) ||
+      (user.nombres + ' ' + user.apellidos).toLowerCase().includes(query) ||
       user.email.toLowerCase().includes(query) ||
       user.numeroDocumento.includes(query)
     );
@@ -487,7 +487,7 @@ export function UsuariosModule() {
               ) : (
                 paginatedUsers.map((user) => (
                   <TableRow key={user.id} className="border-border hover:bg-surface/50">
-                    <TableCell className="text-foreground">{user.nombre} {user.apellido}</TableCell>
+                    <TableCell className="text-foreground">{user.nombres} {user.apellidos}</TableCell>
                     <TableCell className="text-foreground-secondary">{user.tipoDocumento}</TableCell>
                     <TableCell className="text-foreground">{user.numeroDocumento}</TableCell>
                     <TableCell className="text-foreground-secondary">{user.email}</TableCell>
@@ -583,8 +583,8 @@ export function UsuariosModule() {
                 </Label>
                 <Input
                   id="nombre"
-                  value={formData.nombre}
-                  onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+                  value={formData.nombres}
+                  onChange={(e) => setFormData({ ...formData, nombres: e.target.value })}
                   className="bg-input-background border-border text-foreground"
                   placeholder="Ej: Juan"
                   disabled={isSaving}
@@ -598,8 +598,8 @@ export function UsuariosModule() {
                 </Label>
                 <Input
                   id="apellido"
-                  value={formData.apellido}
-                  onChange={(e) => setFormData({ ...formData, apellido: e.target.value })}
+                  value={formData.apellidos}
+                  onChange={(e) => setFormData({ ...formData, apellidos: e.target.value })}
                   className="bg-input-background border-border text-foreground"
                   placeholder="Ej: Pérez"
                   disabled={isSaving}
@@ -855,7 +855,7 @@ export function UsuariosModule() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-foreground-secondary" style={{ fontSize: '13px', fontWeight: 500 }}>Nombre Completo</Label>
-                  <p className="text-foreground mt-1" style={{ fontSize: '15px' }}>{selectedUser.nombre} {selectedUser.apellido}</p>
+                                    <p className="text-foreground mt-1" style={{ fontSize: '15px' }}>{selectedUser.nombres} {selectedUser.apellidos}</p>
                 </div>
                 <div>
                   <Label className="text-foreground-secondary" style={{ fontSize: '13px', fontWeight: 500 }}>Email</Label>
@@ -939,7 +939,7 @@ export function UsuariosModule() {
 
           <div className="py-4">
             <p className="text-foreground text-center">
-              ¿Estás seguro de que deseas eliminar el usuario <span style={{ fontWeight: 600 }}>{selectedUser?.nombre} {selectedUser?.apellido}</span>?
+                            ¿Estás seguro de que deseas eliminar el usuario <span style={{ fontWeight: 600 }}>{selectedUser?.nombres} {selectedUser?.apellidos}</span>?
             </p>
             <p className="text-foreground-secondary text-center mt-2" style={{ fontSize: '14px' }}>
               Esta acción no se puede deshacer.

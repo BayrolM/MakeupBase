@@ -137,6 +137,9 @@ export const login = async (req, res) => {
     }
 
     console.log("🎟️ Generando JWT...");
+    if (!user.id_rol) {
+        console.error("❌ ERROR: El usuario no tiene id_rol:", user);
+    }
     const token = jwt.sign(
       {
         id_usuario: user.id_usuario,
@@ -147,14 +150,14 @@ export const login = async (req, res) => {
       { expiresIn: "7d" }
     );
 
-    console.log("✅ Login exitoso para usuario:", email);
+    console.log("✅ Login exitoso para usuario:", email, "Rol:", user.id_rol);
     return res.json({ token });
   } catch (error) {
     console.error("💥 ERROR en login:", error);
     console.error("📋 Stack trace:", error.stack);
     return res.status(500).json({
       message: "Error en el servidor",
-      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+      error: error.message,
     });
   }
 };

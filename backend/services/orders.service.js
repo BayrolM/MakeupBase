@@ -9,7 +9,7 @@ export const crearOrden = async (id_usuario, datosEnvio) => {
   // Obtener el carrito actual
   const carrito = await sql`
     SELECT * FROM pedidos 
-    WHERE id_usuario = ${id_usuario} AND estado = 'carrito'
+    WHERE id_usuario_cliente = ${id_usuario} AND estado = 'carrito'
     LIMIT 1
   `;
 
@@ -43,45 +43,103 @@ export const crearOrden = async (id_usuario, datosEnvio) => {
   // Calcular total
   const total = items.reduce((sum, item) => sum + parseFloat(item.subtotal), 0);
 
-  // Actualizar el pedido de 'carrito' a 'pendiente'
-  await sql`
-    UPDATE pedidos 
-    SET estado = 'pendiente',
-        direccion = ${direccion},
-        ciudad = ${ciudad},
-        total = ${total},
-        fecha_pedido = NOW()
-    WHERE id_pedido = ${id_pedido}
-  `;
-
-  // Crear registro de venta
-  const venta = await sql`
-    INSERT INTO ventas (id_pedido, id_cliente, fecha_venta, metodo_pago, total, estado)
-    VALUES (${id_pedido}, ${id_usuario}, NOW(), ${metodo_pago}, ${total}, true)
-    RETURNING *
-  `;
-
-  // Copiar items del pedido a detalle_ventas
-  for (const item of items) {
+  // Usar transacción para asegurar que todo se guarde bien
+  return await sql.begin(async (sql) => {
+    // 1. Actualizar el pedido de 'carrito' a 'pendiente'
     await sql`
-      INSERT INTO detalle_ventas (id_venta, id_producto, cantidad, precio_unitario)
-      VALUES (${venta[0].id_venta}, ${item.id_producto}, ${item.cantidad}, ${item.precio_unitario})
+      UPDATE pedidos 
+      SET estado = 'pendiente',
+          direccion = ${direccion},
+          ciudad = ${ciudad},
+          total = ${total},
+          fecha_pedido = NOW()
+      WHERE id_pedido = ${id_pedido}
     `;
 
-    // Reducir stock
-    await sql`
-      UPDATE productos 
-      SET stock_actual = stock_actual - ${item.cantidad}
-      WHERE id_producto = ${item.id_producto}
-    `;
+    // 2. Reducir stock
+    for (const item of items) {
+      console.log(`📦 Reduciendo stock (Carrito) para Producto ID ${item.id_producto}: ${item.stock_actual} -> ${item.stock_actual - item.cantidad}`);
+      await sql`
+        UPDATE productos 
+        SET stock_actual = stock_actual - ${item.cantidad}
+        WHERE id_producto = ${item.id_producto}
+      `;
+    }
+
+    return {
+      id_pedido,
+      total,
+      estado: 'pendiente',
+    };
+  });
+};
+
+/**
+ * Crear una nueva orden directamente desde el panel (sin pasar por carrito)
+ */
+export const crearOrdenDirecta = async (id_cliente, id_empleado, datosEnvio) => {
+  const { direccion, ciudad, metodo_pago, items } = datosEnvio;
+
+  if (!items || items.length === 0) {
+    throw new Error('El pedido debe contener al menos un producto');
   }
 
-  return {
-    id_pedido,
-    id_venta: venta[0].id_venta,
-    total,
-    estado: 'pendiente',
-  };
+  // Verificar stock y calcular subtotales de todos los productos
+  let total = 0;
+  const itemsValidados = [];
+  
+  for (const item of items) {
+    const p = await sql`SELECT precio_venta, stock_actual FROM productos WHERE id_producto = ${item.id_producto}`;
+    if (p.length === 0) throw new Error(`Producto ID ${item.id_producto} no encontrado`);
+    
+    if (p[0].stock_actual < item.cantidad) {
+      throw new Error(`Stock insuficiente para el producto ID ${item.id_producto}`);
+    }
+    
+    const subtotal = p[0].precio_venta * item.cantidad;
+    total += subtotal;
+    
+    itemsValidados.push({
+      ...item,
+      precio_unitario: p[0].precio_venta,
+      subtotal
+    });
+  }
+
+  // Usar transacción para asegurar que todo se guarde bien
+  return await sql.begin(async (sql) => {
+    // 1. Crear el Pedido directamente en estado 'pendiente'
+    const [pedido] = await sql`
+      INSERT INTO pedidos (id_usuario_cliente, id_usuario_empleado, fecha_pedido, direccion, ciudad, subtotal, iva, total, metodo_pago, estado)
+      VALUES (${id_cliente}, ${id_empleado}, NOW(), ${direccion}, ${ciudad}, ${total}, 0, ${total}, ${metodo_pago}, 'pendiente')
+      RETURNING id_pedido
+    `;
+    const id_pedido = pedido.id_pedido;
+
+    // 2. Insertar los detalles del pedido
+    for (const item of itemsValidados) {
+      await sql`
+        INSERT INTO detalle_pedido (id_pedido, id_producto, cantidad, precio_unitario, subtotal)
+        VALUES (${id_pedido}, ${item.id_producto}, ${item.cantidad}, ${item.precio_unitario}, ${item.subtotal})
+      `;
+    }
+
+    // 3. Reducir stock
+    for (const item of itemsValidados) {
+      console.log(`📦 Reduciendo stock (Directo) para Producto ID ${item.id_producto}: ${item.stock_actual} -> ${item.stock_actual - item.cantidad}`);
+      await sql`
+        UPDATE productos 
+        SET stock_actual = stock_actual - ${item.cantidad}
+        WHERE id_producto = ${item.id_producto}
+      `;
+    }
+
+    return {
+      id_pedido,
+      total,
+      estado: 'pendiente',
+    };
+  });
 };
 
 /**
@@ -103,22 +161,23 @@ export const obtenerOrdenes = async (id_usuario, rol = null, estado = null) => {
     ordenes = await sql`
       SELECT
         p.id_pedido,
-        p.id_usuario,
+        p.id_usuario_cliente,
         p.fecha_pedido,
         p.direccion,
         p.ciudad,
         p.total,
         p.estado,
+        p.motivo_anulacion,
         v.id_venta,
         v.metodo_pago,
-        CONCAT(u.nombres, ' ', u.apellidos) as nombre_usuario,
+        CONCAT(COALESCE(u.nombre, ''), ' ', COALESCE(u.apellido, '')) as nombre_usuario,
         u.email as email_usuario
       FROM pedidos p
       LEFT JOIN ventas v ON p.id_pedido = v.id_pedido
-      LEFT JOIN usuarios u ON p.id_usuario = u.id_usuario
+      LEFT JOIN usuarios u ON p.id_usuario_cliente = u.id_usuario
       WHERE p.estado != 'carrito'
       ${estadoFilter}
-      ORDER BY p.id_pedido ASC
+      ORDER BY p.id_pedido DESC
     `;
   } else {
     // Usuario normal solo ve sus propias órdenes
@@ -128,19 +187,20 @@ export const obtenerOrdenes = async (id_usuario, rol = null, estado = null) => {
     ordenes = await sql`
       SELECT
         p.id_pedido,
-        p.id_usuario,
+        p.id_usuario_cliente,
         p.fecha_pedido,
         p.direccion,
         p.ciudad,
         p.total,
         p.estado,
+        p.motivo_anulacion,
         v.id_venta,
         v.metodo_pago,
-        CONCAT(u.nombres, ' ', u.apellidos) as nombre_usuario
+        CONCAT(COALESCE(u.nombre, ''), ' ', COALESCE(u.apellido, '')) as nombre_usuario
       FROM pedidos p
       LEFT JOIN ventas v ON p.id_pedido = v.id_pedido
-      LEFT JOIN usuarios u ON p.id_usuario = u.id_usuario
-      WHERE p.id_usuario = ${id_usuario}
+      LEFT JOIN usuarios u ON p.id_usuario_cliente = u.id_usuario
+      WHERE p.id_usuario_cliente = ${id_usuario}
         AND p.estado != 'carrito'
       ORDER BY p.id_pedido ASC
     `;
@@ -172,19 +232,20 @@ export const obtenerDetalleOrden = async (
     orden = await sql`
       SELECT 
         p.id_pedido,
-        p.id_usuario,
+        p.id_usuario_cliente,
         p.fecha_pedido,
         p.direccion,
         p.ciudad,
         p.total,
         p.estado,
+        p.motivo_anulacion,
         v.id_venta,
         v.metodo_pago,
-        CONCAT(u.nombres, ' ', u.apellidos) as nombre_usuario,
+        CONCAT(COALESCE(u.nombre, ''), ' ', COALESCE(u.apellido, '')) as nombre_usuario,
         u.email as email_usuario
       FROM pedidos p
       LEFT JOIN ventas v ON p.id_pedido = v.id_pedido
-      LEFT JOIN usuarios u ON p.id_usuario = u.id_usuario
+      LEFT JOIN usuarios u ON p.id_usuario_cliente = u.id_usuario
       WHERE p.id_pedido = ${id_pedido}
     `;
   } else {
@@ -193,7 +254,7 @@ export const obtenerDetalleOrden = async (
     orden = await sql`
       SELECT 
         p.id_pedido,
-        p.id_usuario,
+        p.id_usuario_cliente,
         p.fecha_pedido,
         p.direccion,
         p.ciudad,
@@ -204,7 +265,7 @@ export const obtenerDetalleOrden = async (
       FROM pedidos p
       LEFT JOIN ventas v ON p.id_pedido = v.id_pedido
       WHERE p.id_pedido = ${id_pedido} 
-        AND p.id_usuario = ${id_usuario}
+        AND p.id_usuario_cliente = ${id_usuario}
     `;
   }
 
@@ -233,4 +294,68 @@ export const obtenerDetalleOrden = async (
     ...orden[0],
     items,
   };
+};
+
+/**
+ * Actualizar el estado de un pedido
+ */
+export const actualizarEstadoPedido = async (id_pedido, estado, motivo = null) => {
+  return await sql.begin(async (sql) => {
+    // 1. Obtener datos del pedido
+    const [pedido] = await sql`SELECT * FROM pedidos WHERE id_pedido = ${id_pedido}`;
+    if (!pedido) throw new Error('Pedido no encontrado');
+
+    // 2. Si es cancelación, devolver el stock
+    if (estado === 'cancelado') {
+      const items = await sql`SELECT id_producto, cantidad FROM detalle_pedido WHERE id_pedido = ${id_pedido}`;
+      for (const item of items) {
+        await sql`
+          UPDATE productos 
+          SET stock_actual = stock_actual + ${item.cantidad} 
+          WHERE id_producto = ${item.id_producto}
+        `;
+      }
+
+      // Anular la venta asociada si existe
+      await sql`UPDATE ventas SET estado = false WHERE id_pedido = ${id_pedido}`;
+    }
+
+    // 3. Si el nuevo estado es 'entregado', crear la venta si no existe
+    if (estado === 'entregado') {
+      const ventaExistente = await sql`SELECT id_venta FROM ventas WHERE id_pedido = ${id_pedido} AND estado = true`;
+      
+      if (ventaExistente.length === 0) {
+        // Crear la venta
+        const [nuevaVenta] = await sql`
+          INSERT INTO ventas (
+            id_pedido, id_usuario_cliente, id_usuario_empleado, 
+            fecha_venta, subtotal, iva, total, metodo_pago, estado
+          ) VALUES (
+            ${id_pedido}, ${pedido.id_usuario_cliente}, ${pedido.id_usuario_empleado || null}, 
+            NOW(), ${pedido.subtotal}, ${pedido.iva}, ${pedido.total}, ${pedido.metodo_pago}, true
+          ) RETURNING id_venta
+        `;
+
+        // Copiar detalles del pedido a detalles de venta
+        const items = await sql`SELECT * FROM detalle_pedido WHERE id_pedido = ${id_pedido}`;
+        for (const item of items) {
+          await sql`
+            INSERT INTO detalle_ventas (id_venta, id_producto, cantidad, precio_unitario, subtotal)
+            VALUES (${nuevaVenta.id_venta}, ${item.id_producto}, ${item.cantidad}, ${item.precio_unitario}, ${item.subtotal})
+          `;
+        }
+      }
+    }
+
+    // 4. Actualizar el estado del pedido
+    const [updatedPedido] = await sql`
+      UPDATE pedidos 
+      SET estado = ${estado},
+          motivo_anulacion = ${motivo}
+      WHERE id_pedido = ${id_pedido}
+      RETURNING *
+    `;
+
+    return updatedPedido;
+  });
 };

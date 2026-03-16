@@ -2,7 +2,7 @@ import { createContext, useContext, useState, ReactNode, useMemo } from 'react';
 
 // Types
 export type UserRole = 'admin' | 'vendedor' | 'cliente';
-export type OrderStatus = 'pendiente' | 'preparado' | 'entregado' | 'cancelado';
+export type OrderStatus = 'pendiente' | 'preparado' | 'procesando' | 'enviado' | 'entregado' | 'cancelado' | 'carrito';
 export type Status = 'activo' | 'inactivo';
 export type TipoDocumento = 'CC' | 'TI' | 'CE' | 'PAS' | 'NIT' | 'OTRO';
 
@@ -23,8 +23,8 @@ export interface Rol {
 
 export interface User {
   id: string;
-  nombre: string;
-  apellido: string;
+  nombres: string;
+  apellidos: string;
   tipoDocumento: TipoDocumento;
   numeroDocumento: string;
   fechaNacimiento?: string;
@@ -43,12 +43,19 @@ export interface User {
 export interface Cliente {
   id: string;
   nombre: string;
+  nombres: string;
+  apellidos: string;
   email: string;
   telefono: string;
   documento: string;
+  numeroDocumento: string;
   estado: Status;
   totalCompras: number;
   fechaRegistro: string;
+  tipoDocumento?: TipoDocumento;
+  direccion?: string;
+  ciudad?: string;
+  pais?: string;
 }
 
 export interface Proveedor {
@@ -81,7 +88,7 @@ export interface Producto {
   stock: number;
   stockMinimo: number;
   stockMaximo: number;
-  imagen?: string;
+  imagenUrl?: string;
   estado: Status;
   fechaCreacion: string;
 }
@@ -226,630 +233,23 @@ interface StoreActions {
   setCompras: (compras: Compra[]) => void;
   setUsers: (users: User[]) => void;
   setClientes: (clientes: Cliente[]) => void;
+  setVentas: (ventas: Venta[]) => void;
+  setPedidos: (pedidos: Pedido[]) => void;
 }
 
 const StoreContext = createContext<(StoreState & StoreActions) | undefined>(undefined);
 
-// Mock Data
-const mockUsers: User[] = [
-  {
-    id: '1',
-    nombre: 'Administrador General',
-    apellido: 'Admin',
-    tipoDocumento: 'CC',
-    numeroDocumento: '1234567890',
-    fechaNacimiento: '1980-01-01',
-    email: 'admin@glamour.com',
-    passwordHash: 'hashed_password_admin',
-    telefono: '3001234567',
-    direccion: 'Calle 50 #45-30, Medellín',
-    ciudad: 'Medellín',
-    pais: 'Colombia',
-    rol: 'admin',
-    estado: 'activo',
-    fechaCreacion: '2024-01-01',
-  },
-  {
-    id: '2',
-    nombre: 'Melissa López Patiño',
-    apellido: 'López',
-    tipoDocumento: 'CC',
-    numeroDocumento: '0987654321',
-    fechaNacimiento: '1985-05-15',
-    email: 'melissa@glamourml.com',
-    passwordHash: 'hashed_password_melissa',
-    telefono: '3001234568',
-    rol: 'admin',
-    estado: 'activo',
-    fechaCreacion: '2024-01-15',
-  },
-  {
-    id: '3',
-    nombre: 'Juan Vendedor',
-    apellido: 'Vendedor',
-    tipoDocumento: 'CC',
-    numeroDocumento: '1122334455',
-    fechaNacimiento: '1990-07-20',
-    email: 'juan.vendedor@glamourml.com',
-    passwordHash: 'hashed_password_juan',
-    telefono: '3009876543',
-    rol: 'vendedor',
-    estado: 'activo',
-    fechaCreacion: '2024-02-20',
-  },
-  {
-    id: '4',
-    nombre: 'María Vendedora',
-    apellido: 'Vendedora',
-    tipoDocumento: 'CC',
-    numeroDocumento: '5544332211',
-    fechaNacimiento: '1995-03-10',
-    email: 'maria.vendedora@glamourml.com',
-    passwordHash: 'hashed_password_maria',
-    telefono: '3005554433',
-    rol: 'vendedor',
-    estado: 'activo',
-    fechaCreacion: '2024-03-10',
-  },
-  {
-    id: '5',
-    nombre: 'Carlos Cliente',
-    apellido: 'Cliente',
-    tipoDocumento: 'CC',
-    numeroDocumento: '6677889900',
-    fechaNacimiento: '2000-04-05',
-    email: 'carlos.cliente@mail.com',
-    passwordHash: 'hashed_password_carlos',
-    telefono: '3112223344',
-    rol: 'cliente',
-    estado: 'activo',
-    fechaCreacion: '2024-04-05',
-  },
-  {
-    id: '6',
-    nombre: 'Laura Vendedora',
-    apellido: 'Vendedora',
-    tipoDocumento: 'CC',
-    numeroDocumento: '0099887766',
-    fechaNacimiento: '1988-01-30',
-    email: 'laura.vendedora@glamourml.com',
-    passwordHash: 'hashed_password_laura',
-    telefono: '3158889999',
-    rol: 'vendedor',
-    estado: 'inactivo',
-    fechaCreacion: '2024-01-30',
-  },
-];
-
-const mockClientes: Cliente[] = [
-  {
-    id: 'c1',
-    nombre: 'Andrea Gómez',
-    email: 'andrea.gomez@mail.com',
-    telefono: '3101234567',
-    documento: '1234567890',
-    estado: 'activo',
-    totalCompras: 4,
-    fechaRegistro: '2024-01-10',
-  },
-  {
-    id: 'c2',
-    nombre: 'Carlos Pérez',
-    email: 'carlos.perez@mail.com',
-    telefono: '3149876543',
-    documento: '9876543210',
-    estado: 'activo',
-    totalCompras: 2,
-    fechaRegistro: '2024-02-15',
-  },
-  {
-    id: 'c3',
-    nombre: 'Laura Martínez',
-    email: 'laura.martinez@mail.com',
-    telefono: '3005554433',
-    documento: '5554443333',
-    estado: 'inactivo',
-    totalCompras: 1,
-    fechaRegistro: '2024-03-20',
-  },
-  {
-    id: 'c4',
-    nombre: 'José Ramírez',
-    email: 'jose.ramirez@mail.com',
-    telefono: '3122223333',
-    documento: '2223334444',
-    estado: 'activo',
-    totalCompras: 6,
-    fechaRegistro: '2023-12-05',
-  },
-  {
-    id: 'c5',
-    nombre: 'Valentina Ruiz',
-    email: 'valentina.ruiz@mail.com',
-    telefono: '3154445566',
-    documento: '4445556666',
-    estado: 'activo',
-    totalCompras: 3,
-    fechaRegistro: '2024-01-25',
-  },
-];
-
-const mockProveedores: Proveedor[] = [
-  {
-    id: 'p1',
-    nombre: 'Cosmetix S.A.',
-    nit: '900123456-1',
-    email: 'contacto@cosmetix.co',
-    telefono: '6041234567',
-    direccion: 'Calle 50 #45-30, Medellín',
-    estado: 'activo',
-    fechaRegistro: '2023-01-10',
-  },
-  {
-    id: 'p2',
-    nombre: 'Belleza Proveedores',
-    nit: '900987654-2',
-    email: 'ventas@belleza.com',
-    telefono: '6049876543',
-    direccion: 'Carrera 70 #33-10, Medellín',
-    estado: 'activo',
-    fechaRegistro: '2023-02-15',
-  },
-  {
-    id: 'p3',
-    nombre: 'BulkCosmetics',
-    nit: '901333222-3',
-    email: 'orders@bulkcos.com',
-    telefono: '6045556677',
-    direccion: 'Avenida 80 #50-20, Bogotá',
-    estado: 'activo',
-    fechaRegistro: '2023-03-20',
-  },
-  {
-    id: 'p4',
-    nombre: 'Proveedores Global',
-    nit: '902222111-4',
-    email: 'admin@globalprov.com',
-    telefono: '6042223344',
-    direccion: 'Calle 10 #20-30, Cali',
-    estado: 'inactivo',
-    fechaRegistro: '2022-12-05',
-  },
-  {
-    id: 'p5',
-    nombre: 'Distribuciones X',
-    nit: '903555444-5',
-    email: 'contacto@distx.com',
-    telefono: '6047778899',
-    direccion: 'Carrera 43A #14-20, Medellín',
-    estado: 'activo',
-    fechaRegistro: '2023-05-10',
-  },
-];
-
-const mockCategorias: Categoria[] = [
-  { id: 'cat1', nombre: 'Maquillaje', descripcion: 'Productos de maquillaje', estado: 'activo' },
-  { id: 'cat2', nombre: 'Cuidado de la Piel', descripcion: 'Productos para el cuidado facial y corporal', estado: 'activo' },
-  { id: 'cat3', nombre: 'Fragancias', descripcion: 'Perfumes y colonias', estado: 'activo' },
-  { id: 'cat4', nombre: 'Cabello', descripcion: 'Productos para el cuidado del cabello', estado: 'activo' },
-  { id: 'cat5', nombre: 'Accesorios', descripcion: 'Brochas, esponjas y otros accesorios', estado: 'activo' },
-];
-
-const mockProductos: Producto[] = [
-  {
-    id: 'prod1',
-    sku: 'GLM-001',
-    nombre: 'Labial Mate Rosa',
-    descripcion: 'Labial de larga duración color rosa intenso',
-    categoriaId: 'cat1',
-    marca: 'Maybelline',
-    precioCompra: 15000,
-    precioVenta: 35000,
-    stock: 45,
-    stockMinimo: 10,
-    stockMaximo: 100,
-    estado: 'activo',
-    fechaCreacion: '2024-01-10',
-  },
-  {
-    id: 'prod2',
-    sku: 'GLM-002',
-    nombre: 'Base Líquida Natural',
-    descripcion: 'Base de maquillaje tono natural',
-    categoriaId: 'cat1',
-    marca: "L'Oréal",
-    precioCompra: 25000,
-    precioVenta: 55000,
-    stock: 30,
-    stockMinimo: 8,
-    stockMaximo: 80,
-    estado: 'activo',
-    fechaCreacion: '2024-01-15',
-  },
-  {
-    id: 'prod3',
-    sku: 'GLM-003',
-    nombre: 'Sérum Vitamina C',
-    descripcion: 'Sérum facial antioxidante',
-    categoriaId: 'cat2',
-    marca: 'Natura',
-    precioCompra: 35000,
-    precioVenta: 75000,
-    stock: 8,
-    stockMinimo: 5,
-    stockMaximo: 50,
-    estado: 'activo',
-    fechaCreacion: '2024-02-01',
-  },
-  {
-    id: 'prod4',
-    sku: 'GLM-004',
-    nombre: 'Perfume Floral',
-    descripcion: 'Fragancia floral 50ml',
-    categoriaId: 'cat3',
-    marca: 'Avon',
-    precioCompra: 45000,
-    precioVenta: 95000,
-    stock: 20,
-    stockMinimo: 5,
-    stockMaximo: 60,
-    estado: 'activo',
-    fechaCreacion: '2024-02-10',
-  },
-  {
-    id: 'prod5',
-    sku: 'GLM-005',
-    nombre: 'Shampoo Hidratante',
-    descripcion: 'Shampoo para cabello seco 400ml',
-    categoriaId: 'cat4',
-    marca: 'Vogue',
-    precioCompra: 18000,
-    precioVenta: 42000,
-    stock: 50,
-    stockMinimo: 15,
-    stockMaximo: 120,
-    estado: 'activo',
-    fechaCreacion: '2024-01-20',
-  },
-];
-
-const mockCompras: Compra[] = [
-  {
-    id: 'comp1',
-    proveedorId: 'p1',
-    fecha: '2024-09-15',
-    productos: [
-      { productoId: 'prod1', cantidad: 50, precioUnitario: 15000 },
-      { productoId: 'prod2', cantidad: 30, precioUnitario: 25000 },
-    ],
-    total: 1500000,
-    estado: 'confirmada',
-    confirmada: true,
-  },
-  {
-    id: 'comp2',
-    proveedorId: 'p2',
-    fecha: '2024-09-20',
-    productos: [
-      { productoId: 'prod3', cantidad: 20, precioUnitario: 35000 },
-    ],
-    total: 700000,
-    estado: 'confirmada',
-    confirmada: true,
-  },
-  {
-    id: 'comp3',
-    proveedorId: 'p3',
-    fecha: '2024-10-01',
-    productos: [
-      { productoId: 'prod4', cantidad: 25, precioUnitario: 45000 },
-    ],
-    total: 1125000,
-    estado: 'pendiente',
-    confirmada: false,
-  },
-  {
-    id: 'comp4',
-    proveedorId: 'p5',
-    fecha: '2024-10-05',
-    productos: [
-      { productoId: 'prod5', cantidad: 60, precioUnitario: 18000 },
-    ],
-    total: 1080000,
-    estado: 'confirmada',
-    confirmada: true,
-  },
-  {
-    id: 'comp5',
-    proveedorId: 'p1',
-    fecha: '2024-10-08',
-    productos: [
-      { productoId: 'prod1', cantidad: 40, precioUnitario: 15000 },
-      { productoId: 'prod3', cantidad: 15, precioUnitario: 35000 },
-    ],
-    total: 1125000,
-    estado: 'pendiente',
-    confirmada: false,
-  },
-];
-
-const mockVentas: Venta[] = [
-  {
-    id: 'v1',
-    clienteId: 'c1',
-    pedidoId: 'ped1', // Venta que proviene del pedido ped1
-    fecha: '2024-10-01',
-    productos: [
-      { productoId: 'prod1', cantidad: 1, precioUnitario: 35000 },
-    ],
-    subtotal: 35000,
-    iva: 6650,
-    costoEnvio: 10000,
-    total: 51650,
-    estado: 'activo',
-    metodoPago: 'Transferencia',
-  },
-  {
-    id: 'v2',
-    clienteId: 'c2',
-    // pedidoId no definido - Venta directa
-    fecha: '2024-09-28',
-    productos: [
-      { productoId: 'prod2', cantidad: 1, precioUnitario: 55000 },
-    ],
-    subtotal: 55000,
-    iva: 10450,
-    costoEnvio: 10000,
-    total: 75450,
-    estado: 'activo',
-    metodoPago: 'Efectivo',
-  },
-  {
-    id: 'v3',
-    clienteId: 'c4',
-    pedidoId: 'ped3', // Venta que proviene del pedido ped3
-    fecha: '2024-10-07',
-    productos: [
-      { productoId: 'prod2', cantidad: 2, precioUnitario: 55000 },
-    ],
-    subtotal: 110000,
-    iva: 20900,
-    costoEnvio: 10000,
-    total: 140900,
-    estado: 'activo',
-    metodoPago: 'Transferencia',
-  },
-  {
-    id: 'v4',
-    clienteId: 'c5',
-    // pedidoId no definido - Venta directa
-    fecha: '2024-10-05',
-    productos: [
-      { productoId: 'prod1', cantidad: 3, precioUnitario: 35000 },
-    ],
-    subtotal: 105000,
-    iva: 19950,
-    costoEnvio: 10000,
-    total: 134950,
-    estado: 'activo',
-    metodoPago: 'Efectivo',
-  },
-  {
-    id: 'v5',
-    clienteId: 'c1',
-    // pedidoId no definido - Venta directa
-    fecha: '2024-10-08',
-    productos: [
-      { productoId: 'prod2', cantidad: 1, precioUnitario: 55000 },
-      { productoId: 'prod3', cantidad: 1, precioUnitario: 75000 },
-    ],
-    subtotal: 130000,
-    iva: 24700,
-    costoEnvio: 10000,
-    total: 164700,
-    estado: 'anulada',
-    metodoPago: 'Efectivo',
-    motivoAnulacion: 'Cliente solicitó cancelación por cambio de producto',
-  },
-];
-
-const mockPedidos: Pedido[] = [
-  {
-    id: 'ped1',
-    clienteId: 'c1',
-    fecha: '2024-10-01',
-    productos: [
-      { productoId: 'prod1', cantidad: 1, precioUnitario: 35000 },
-    ],
-    subtotal: 35000,
-    iva: 6650,
-    costoEnvio: 12000,
-    total: 53650,
-    estado: 'entregado',
-    direccionEnvio: 'Calle 50 #30-20, Medellín',
-  },
-  {
-    id: 'ped2',
-    clienteId: 'c2',
-    fecha: '2024-10-05',
-    productos: [
-      { productoId: 'prod3', cantidad: 1, precioUnitario: 75000 },
-    ],
-    subtotal: 75000,
-    iva: 14250,
-    costoEnvio: 12000,
-    total: 101250,
-    estado: 'preparado',
-    direccionEnvio: 'Carrera 70 #45-10, Medellín',
-  },
-  {
-    id: 'ped3',
-    clienteId: 'c4',
-    fecha: '2024-10-07',
-    productos: [
-      { productoId: 'prod2', cantidad: 2, precioUnitario: 55000 },
-    ],
-    subtotal: 110000,
-    iva: 20900,
-    costoEnvio: 12000,
-    total: 142900,
-    estado: 'preparado',
-    direccionEnvio: 'Avenida 80 #20-30, Envigado',
-  },
-  {
-    id: 'ped4',
-    clienteId: 'c5',
-    fecha: '2024-10-09',
-    productos: [
-      { productoId: 'prod4', cantidad: 1, precioUnitario: 95000 },
-    ],
-    subtotal: 95000,
-    iva: 18050,
-    costoEnvio: 12000,
-    total: 125050,
-    estado: 'pendiente',
-    direccionEnvio: 'Calle 10 Sur #25-15, Sabaneta',
-  },
-  {
-    id: 'ped5',
-    clienteId: 'c3',
-    fecha: '2024-09-20',
-    productos: [
-      { productoId: 'prod5', cantidad: 1, precioUnitario: 42000 },
-    ],
-    subtotal: 42000,
-    iva: 7980,
-    costoEnvio: 12000,
-    total: 61980,
-    estado: 'cancelado',
-    direccionEnvio: 'Carrera 43A #12-50, Bello',
-    motivoAnulacion: 'Cliente solicitó cancelación',
-  },
-];
-
-const mockDevoluciones: Devolucion[] = [
-  {
-    id: 'dev1',
-    ventaId: 'v1',
-    clienteId: 'c1',
-    fecha: '2024-10-05',
-    motivo: 'Producto defectuoso',
-    productos: [{ productoId: 'prod1', cantidad: 1 }],
-    estado: 'aprobada',
-    evidencias: [],
-    totalDevuelto: 35000,
-  },
-  {
-    id: 'dev2',
-    ventaId: 'v2',
-    clienteId: 'c2',
-    fecha: '2024-10-02',
-    motivo: 'No cumplió expectativas',
-    productos: [{ productoId: 'prod2', cantidad: 1 }],
-    estado: 'pendiente',
-    evidencias: [],
-    totalDevuelto: 55000,
-  },
-  {
-    id: 'dev3',
-    ventaId: 'v3',
-    clienteId: 'c4',
-    fecha: '2024-10-08',
-    motivo: 'Color incorrecto',
-    productos: [{ productoId: 'prod4', cantidad: 1 }],
-    estado: 'aprobada',
-    evidencias: [],
-    totalDevuelto: 95000,
-  },
-  {
-    id: 'dev4',
-    ventaId: 'v4',
-    clienteId: 'c5',
-    fecha: '2024-10-09',
-    motivo: 'Alergia al producto',
-    productos: [{ productoId: 'prod1', cantidad: 1 }],
-    estado: 'pendiente',
-    evidencias: [],
-    totalDevuelto: 35000,
-  },
-  {
-    id: 'dev5',
-    ventaId: 'v5',
-    clienteId: 'c1',
-    fecha: '2024-10-10',
-    motivo: 'Empaque dañado',
-    productos: [{ productoId: 'prod3', cantidad: 1 }],
-    estado: 'rechazada',
-    evidencias: [],
-    totalDevuelto: 0,
-  },
-];
-
-const mockRoles: Rol[] = [
-  {
-    id: 'r1',
-    nombre: 'Administrador',
-    descripcion: 'Tiene acceso completo a todas las funciones del sistema',
-    estado: 'activo',
-    permisos: {
-      usuarios: { ver: true, crear: true, editar: true, eliminar: true },
-      productos: { ver: true, crear: true, editar: true, eliminar: true },
-      ventas: { ver: true, crear: true, editar: true, eliminar: true },
-      compras: { ver: true, crear: true, editar: true, eliminar: true },
-      pedidos: { ver: true, crear: true, editar: true, eliminar: true },
-      clientes: { ver: true, crear: true, editar: true, eliminar: true },
-      proveedores: { ver: true, crear: true, editar: true, eliminar: true },
-      devoluciones: { ver: true, crear: true, editar: true, eliminar: true },
-      configuracion: { ver: true, crear: true, editar: true, eliminar: true },
-    },
-  },
-  {
-    id: 'r2',
-    nombre: 'Vendedor',
-    descripcion: 'Puede realizar ventas y gestionar pedidos',
-    estado: 'activo',
-    permisos: {
-      usuarios: { ver: false, crear: false, editar: false, eliminar: false },
-      productos: { ver: true, crear: false, editar: false, eliminar: false },
-      ventas: { ver: true, crear: true, editar: true, eliminar: false },
-      compras: { ver: false, crear: false, editar: false, eliminar: false },
-      pedidos: { ver: true, crear: true, editar: true, eliminar: false },
-      clientes: { ver: true, crear: true, editar: true, eliminar: false },
-      proveedores: { ver: false, crear: false, editar: false, eliminar: false },
-      devoluciones: { ver: true, crear: true, editar: false, eliminar: false },
-      configuracion: { ver: false, crear: false, editar: false, eliminar: false },
-    },
-  },
-  {
-    id: 'r3',
-    nombre: 'Cliente',
-    descripcion: 'Usuario del sistema de comercio electrónico',
-    estado: 'activo',
-    permisos: {
-      usuarios: { ver: false, crear: false, editar: false, eliminar: false },
-      productos: { ver: true, crear: false, editar: false, eliminar: false },
-      ventas: { ver: false, crear: false, editar: false, eliminar: false },
-      compras: { ver: false, crear: false, editar: false, eliminar: false },
-      pedidos: { ver: true, crear: true, editar: false, eliminar: false },
-      clientes: { ver: false, crear: false, editar: false, eliminar: false },
-      proveedores: { ver: false, crear: false, editar: false, eliminar: false },
-      devoluciones: { ver: true, crear: true, editar: false, eliminar: false },
-      configuracion: { ver: false, crear: false, editar: false, eliminar: false },
-    },
-  },
-];
-
 export function StoreProvider({ children }: { children: ReactNode }) {
-  const [users, setUsers] = useState<User[]>(mockUsers);
-  const [clientes, setClientes] = useState<Cliente[]>(mockClientes);
+  const [users, setUsers] = useState<User[]>([]);
+  const [clientes, setClientes] = useState<Cliente[]>([]);
   const [proveedores, setProveedores] = useState<Proveedor[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [productos, setProductos] = useState<Producto[]>([]);
   const [compras, setCompras] = useState<Compra[]>([]);
-  const [ventas, setVentas] = useState<Venta[]>(mockVentas);
-  const [pedidos, setPedidos] = useState<Pedido[]>(mockPedidos);
-  const [devoluciones, setDevoluciones] = useState<Devolucion[]>(mockDevoluciones);
-  const [roles, setRoles] = useState<Rol[]>(mockRoles);
+  const [ventas, setVentas] = useState<Venta[]>([]);
+  const [pedidos, setPedidos] = useState<Pedido[]>([]);
+  const [devoluciones, setDevoluciones] = useState<Devolucion[]>([]);
+  const [roles, setRoles] = useState<Rol[]>([]);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [userType, setUserType] = useState<'admin' | 'cliente'>('cliente');
   const [favoritos, setFavoritos] = useState<string[]>([]);
@@ -1069,6 +469,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setCompras: (newCompras: Compra[]) => setCompras(newCompras),
     setUsers: (newUsers: User[]) => setUsers(newUsers),
     setClientes: (newClientes: Cliente[]) => setClientes(newClientes),
+    setVentas: (newVentas: Venta[]) => setVentas(newVentas),
+    setPedidos: (newPedidos: Pedido[]) => setPedidos(newPedidos),
   }), [
     users, clientes, proveedores, categorias, productos, compras, 
     ventas, pedidos, devoluciones, roles, currentUser, userType, 

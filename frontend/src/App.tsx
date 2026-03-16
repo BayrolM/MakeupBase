@@ -2,6 +2,7 @@ import {
   StoreProvider,
   useStore,
   UserRole,
+  Cliente,
 } from "./lib/store";
 import { ThemeProvider } from "./lib/theme-context";
 import { AppSidebar } from "./components/AppSidebar";
@@ -39,6 +40,7 @@ import { productService } from "./services/productService";
 import { categoryService } from "./services/categoryService";
 import { providerService } from "./services/providerService";
 import { purchaseService } from "./services/purchaseService";
+import { userService } from "./services/userService";
 
 type Route =
   | "dashboard"
@@ -73,6 +75,7 @@ function AppContent() {
     setCategorias,
     setProveedores,
     setCompras,
+    setClientes,
   } = useStore();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -130,18 +133,40 @@ function AppContent() {
       }));
       setProveedores(mappedProviders);
 
-      const purchasesResponse = await purchaseService.getAll();
-      const mappedPurchases = purchasesResponse.data.map((purch: any) => ({
+      const purchasesData = await purchaseService.getAll();
+      const purchasesArray = Array.isArray(purchasesData) ? purchasesData : (purchasesData as any).data || [];
+      const mappedPurchases = purchasesArray.map((purch: any) => ({
         id: purch.id_compra.toString(),
         proveedorId: purch.id_proveedor.toString(),
         fecha: purch.fecha_compra,
         total: Number(purch.total),
-        estado: purch.estado ? 'confirmada' as const : 'anulada' as const,
-        confirmada: purch.estado,
+        estado: (purch.estado === true || purch.estado === 1) ? 'confirmada' as const : 'anulada' as const,
+        confirmada: !!purch.estado,
         observaciones: purch.observaciones || '',
         productos: [],
       }));
       setCompras(mappedPurchases);
+
+      // Cargar clientes REALES de la base de datos
+      const clientsData = await userService.getAll({ id_rol: 2 });
+      const mappedClients: Cliente[] = clientsData.data.map(c => {
+        const nombres = c.nombres || c.nombre || '';
+        const apellidos = c.apellidos || c.apellido || '';
+        return {
+          id: c.id_usuario.toString(),
+          nombre: `${nombres} ${apellidos}`.trim() || 'Sin Nombre',
+          nombres: nombres,
+          apellidos: apellidos,
+          email: c.email,
+          telefono: c.telefono || '',
+          documento: c.documento || '',
+          numeroDocumento: c.documento || '',
+          estado: c.estado ? 'activo' as const : 'inactivo' as const,
+          totalCompras: Number(c.total_ventas) || 0,
+          fechaRegistro: c.get_fecha_creacion || c.fecha_creacion || new Date().toISOString(),
+        };
+      });
+      setClientes(mappedClients);
     } catch (error) {
       console.error('Error cargando datos privados:', error);
     }
@@ -154,8 +179,8 @@ function AppContent() {
         const profile = await authService.getProfile();
         const user = {
           id: profile.id_usuario.toString(),
-          nombre: profile.nombres,
-          apellido: profile.apellidos,
+          nombres: profile.nombres,
+          apellidos: profile.apellidos,
           email: profile.email,
           telefono: profile.telefono,
           direccion: profile.direccion || '',
@@ -208,8 +233,8 @@ function AppContent() {
       // Transformar al formato del frontend
       const user = {
         id: profile.id_usuario.toString(),
-        nombre: profile.nombres,
-        apellido: profile.apellidos,
+        nombres: profile.nombres,
+        apellidos: profile.apellidos,
         email: profile.email,
         telefono: profile.telefono,
         direccion: profile.direccion || '',
@@ -237,7 +262,7 @@ function AppContent() {
       }
 
       toast.success('¡Bienvenido!', {
-        description: `Has iniciado sesión como ${user.nombre}`,
+        description: `Has iniciado sesión como ${user.nombres}`,
       });
 
       return true;

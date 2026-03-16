@@ -7,15 +7,15 @@ export const obtenerCarrito = async (id_usuario) => {
   // Buscar o crear un pedido en estado 'carrito'
   let pedido = await sql`
     SELECT * FROM pedidos 
-    WHERE id_usuario = ${id_usuario} AND estado = 'carrito'
+    WHERE id_usuario_cliente = ${id_usuario} AND estado = 'carrito'
     LIMIT 1
   `;
 
   if (pedido.length === 0) {
     // Crear un nuevo carrito
     pedido = await sql`
-      INSERT INTO pedidos (id_usuario, fecha_pedido, direccion, ciudad, total, estado)
-      VALUES (${id_usuario}, NOW(), '', '', 0, 'carrito')
+      INSERT INTO pedidos (id_usuario_cliente, fecha_pedido, direccion, ciudad, subtotal, iva, total, metodo_pago, estado)
+      VALUES (${id_usuario}, NOW(), '', '', 0, 0, 0, 'efectivo', 'carrito')
       RETURNING *
     `;
   }
@@ -54,14 +54,14 @@ export const agregarAlCarrito = async (id_usuario, id_producto, cantidad) => {
   // Obtener o crear carrito
   let pedido = await sql`
     SELECT * FROM pedidos 
-    WHERE id_usuario = ${id_usuario} AND estado = 'carrito'
+    WHERE id_usuario_cliente = ${id_usuario} AND estado = 'carrito'
     LIMIT 1
   `;
 
   if (pedido.length === 0) {
     pedido = await sql`
-      INSERT INTO pedidos (id_usuario, fecha_pedido, direccion, ciudad, total, estado)
-      VALUES (${id_usuario}, NOW(), '', '', 0, 'carrito')
+      INSERT INTO pedidos (id_usuario_cliente, fecha_pedido, direccion, ciudad, subtotal, iva, total, metodo_pago, estado)
+      VALUES (${id_usuario}, NOW(), '', '', 0, 0, 0, 'efectivo', 'carrito')
       RETURNING *
     `;
   }
@@ -126,7 +126,7 @@ export const actualizarItemCarrito = async (
     INNER JOIN pedidos ped ON dp.id_pedido = ped.id_pedido
     INNER JOIN productos p ON dp.id_producto = p.id_producto
     WHERE dp.id_detalle_pedido = ${id_detalle_pedido} 
-      AND ped.id_usuario = ${id_usuario}
+      AND ped.id_usuario_cliente = ${id_usuario}
       AND ped.estado = 'carrito'
   `;
 
@@ -157,7 +157,7 @@ export const eliminarItemCarrito = async (id_usuario, id_detalle_pedido) => {
     FROM detalle_pedido dp
     INNER JOIN pedidos ped ON dp.id_pedido = ped.id_pedido
     WHERE dp.id_detalle_pedido = ${id_detalle_pedido} 
-      AND ped.id_usuario = ${id_usuario}
+      AND ped.id_usuario_cliente = ${id_usuario}
       AND ped.estado = 'carrito'
   `;
 

@@ -1,4 +1,4 @@
-import sql from '../config/db.js';
+import sql from "../config/db.js";
 
 /**
  * Filtros aceptados (query): q, marca, categoria, minPrice, maxPrice, estado
@@ -21,19 +21,19 @@ export const listarProductos = async (filters = {}) => {
 
   // Parsear estado si existe
   let estadoVal;
-  if (typeof estado !== 'undefined') {
+  if (typeof estado !== "undefined") {
     // Convertir a boolean para PostgreSQL
     estadoVal =
-      estado === '1' || estado === 1 || estado === 'true' || estado === true;
+      estado === "1" || estado === 1 || estado === "true" || estado === true;
   }
 
   const whereFragment = sql`
     WHERE 1=1
     ${
       q
-        ? sql`AND (p.nombre ILIKE ${'%' + q + '%'} OR p.sku ILIKE ${
-            '%' + q + '%'
-          } OR p.descripcion ILIKE ${'%' + q + '%'})`
+        ? sql`AND (p.nombre ILIKE ${"%" + q + "%"} OR p.sku ILIKE ${
+            "%" + q + "%"
+          } OR p.descripcion ILIKE ${"%" + q + "%"})`
         : sql``
     }
     ${marca ? sql`AND p.id_marca = ${marca}` : sql``}
@@ -41,9 +41,9 @@ export const listarProductos = async (filters = {}) => {
     ${minPrice ? sql`AND p.precio_venta >= ${minPrice}` : sql``}
     ${maxPrice ? sql`AND p.precio_venta <= ${maxPrice}` : sql``}
     ${
-      typeof estado !== 'undefined'
+      typeof estado !== "undefined"
         ? sql`AND p.estado = ${estadoVal}`
-        : sql`AND p.estado = true`
+        : sql``
     }
   `;
 
@@ -57,7 +57,7 @@ export const listarProductos = async (filters = {}) => {
     SELECT
       p.id_producto, p.sku, p.nombre, p.descripcion, p.id_marca, p.id_categoria,
       p.costo_promedio, p.precio_venta, p.stock_actual, p.stock_max, p.stock_min,
-      p.estado, m.nombre as nombre_marca, c.nombre as nombre_categoria
+      p.imagen_url, p.estado, m.nombre as nombre_marca, c.nombre as nombre_categoria
     FROM productos p
     LEFT JOIN marcas m ON p.id_marca = m.id_marca
     LEFT JOIN categorias c ON p.id_categoria = c.id_categoria
@@ -74,7 +74,7 @@ export const obtenerProductoPorId = async (id) => {
       SELECT
         p.id_producto, p.sku, p.nombre, p.descripcion, p.id_marca, p.id_categoria,
         p.costo_promedio, p.precio_venta, p.stock_actual, p.stock_max, p.stock_min,
-        p.estado
+        p.imagen_url, p.estado
       FROM productos p
       WHERE p.id_producto = ${id}
     `;
@@ -93,14 +93,15 @@ export const crearProducto = async (data) => {
     stock_actual = 0,
     stock_max = 0,
     stock_min = 0,
+    imagen_url,
     estado = 1,
   } = data;
 
   const result = await sql`
       INSERT INTO productos
-        (sku, nombre, id_marca, id_categoria, descripcion, costo_promedio, precio_venta, stock_actual, stock_max, stock_min, estado)
+        (sku, nombre, id_marca, id_categoria, descripcion, costo_promedio, precio_venta, stock_actual, stock_max, stock_min, imagen_url, estado)
       VALUES
-        (${sku}, ${nombre}, ${id_marca}, ${id_categoria}, ${descripcion}, ${costo_promedio}, ${precio_venta}, ${stock_actual}, ${stock_max}, ${stock_min}, ${estado})
+        (${sku}, ${nombre}, ${id_marca}, ${id_categoria}, ${descripcion}, ${costo_promedio}, ${precio_venta}, ${stock_actual}, ${stock_max}, ${stock_min}, ${imagen_url}, ${estado})
       RETURNING id_producto
     `;
 
@@ -119,6 +120,7 @@ export const actualizarProducto = async (id, data) => {
     stock_actual,
     stock_max,
     stock_min,
+    imagen_url,
     estado,
   } = data;
 
@@ -134,14 +136,14 @@ export const actualizarProducto = async (id, data) => {
   if (stock_actual !== undefined) updateData.stock_actual = stock_actual;
   if (stock_max !== undefined) updateData.stock_max = stock_max;
   if (stock_min !== undefined) updateData.stock_min = stock_min;
+  if (imagen_url !== undefined) updateData.imagen_url = imagen_url;
   if (estado !== undefined) updateData.estado = estado;
 
   if (Object.keys(updateData).length === 0) return false;
 
   await sql`
     UPDATE productos SET
-      ${sql(updateData)},
-      updated_at = NOW()
+      ${sql(updateData)}
     WHERE id_producto = ${id}
   `;
 
@@ -149,7 +151,7 @@ export const actualizarProducto = async (id, data) => {
 };
 
 export const eliminarProducto = async (id) => {
-  await sql`UPDATE productos SET estado = 0 WHERE id_producto = ${id}`;
+  await sql`UPDATE productos SET estado = false WHERE id_producto = ${id}`;
   return true;
 };
 
@@ -157,7 +159,7 @@ export const productosDestacados = async (limit = 10) => {
   const items = await sql`
       SELECT
         id_producto, sku, nombre, descripcion, id_marca, id_categoria,
-        costo_promedio, precio_venta, stock_actual, stock_max, stock_min, estado
+        costo_promedio, precio_venta, stock_actual, stock_max, stock_min, imagen_url, estado
       FROM productos
       WHERE estado = 1
       ORDER BY stock_actual DESC, precio_venta DESC

@@ -25,6 +25,17 @@ export interface CreateOrderData {
   }>;
 }
 
+export interface CreateDirectOrderData {
+  id_cliente: number;
+  direccion: string;
+  ciudad: string;
+  metodo_pago: string;
+  items: Array<{
+    id_producto: number;
+    cantidad: number;
+  }>;
+}
+
 export const orderService = {
   /**
    * Crear nueva orden
@@ -35,6 +46,18 @@ export const orderService = {
       return response.data.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.message || "Error al crear orden");
+    }
+  },
+
+  /**
+   * Crear nueva orden directa (Administrativo)
+   */
+  async createDirect(orderData: CreateDirectOrderData): Promise<Order> {
+    try {
+      const response = await api.post("/orders/admin", orderData);
+      return response.data.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || "Error al crear orden directa");
     }
   },
 
@@ -65,4 +88,16 @@ export const orderService = {
       );
     }
   },
+  
+  /**
+   * Actualizar estado de orden
+   */
+  async updateStatus(id: number, estado: string, motivo?: string): Promise<any> {
+    try {
+      const response = await api.put(`/orders/${id}/status`, { estado, motivo });
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || "Error al actualizar estado");
+    }
+  }
 };

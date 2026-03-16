@@ -76,20 +76,15 @@ export function AppSidebar({ onNavigate, currentRoute, onLogout }: AppSidebarPro
     <Sidebar className="border-r border-sidebar-border" style={{ width: '280px' }}>
       <SidebarHeader className="border-b border-sidebar-border p-6">
         <div className="flex items-center justify-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center">
-            <div className="text-primary-foreground flex flex-col items-center justify-center">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="mb-0.5">
-                <path d="M12 3L4 9V21H20V9L12 3Z" fill="currentColor" opacity="0.3"/>
-                <path d="M12 3L4 9M12 3L20 9M12 3V21M4 9V21H20V9M4 9H20" stroke="currentColor" strokeWidth="1.5"/>
-              </svg>
-            </div>
+          <div className="w-13 h-13 rounded-full overflow-hidden flex items-center justify-center bg-black">
+            <img src="/logo.png" alt="Glamour ML Logo" className="w-20 h-20 object-cover" />
           </div>
           <div className="flex flex-col">
-            <span className="text-foreground" style={{ fontSize: '18px', fontWeight: 600, lineHeight: 1 }}>
+            <span className="text-foreground" style={{ fontSize: '18px', fontWeight: 500, lineHeight: 1 }}>
               GLAMOUR ML
             </span>
             <span className="text-foreground-secondary" style={{ fontSize: '11px', opacity: 0.7 }}>
-              {userType === 'admin' ? 'Panel Administrativo' : 'Portal Cliente'}
+              {userType === 'admin' ? 'Panel Admin' : 'Cliente'}
             </span>
           </div>
         </div>
@@ -133,12 +128,11 @@ export function AppSidebar({ onNavigate, currentRoute, onLogout }: AppSidebarPro
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-foreground truncate" style={{ fontSize: '14px', fontWeight: 500 }}>
-              {currentUser?.nombre || 'Usuario'}
+              {currentUser?.nombres || 'Usuario'}
             </p>
             <p className="text-foreground-secondary truncate" style={{ fontSize: '12px' }}>
               {currentUser?.rol === 'admin' ? 'Administrador' : 
                currentUser?.rol === 'vendedor' ? 'Vendedor' : 
-               currentUser?.rol === 'bodeguero' ? 'Bodeguero' : 
                currentUser?.rol === 'cliente' ? 'Cliente' : 'Sin rol'}
             </p>
           </div>

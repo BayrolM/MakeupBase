@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Slider } from '../ui/slider';
-import { Search, Filter, X } from 'lucide-react';
+import { Search, Filter } from 'lucide-react';
 
 export function CatalogoView() {
   const { productos, categorias } = useStore();
@@ -13,7 +13,6 @@ export function CatalogoView() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [priceRange, setPriceRange] = useState([0, 150000]);
-  const [inStockOnly, setInStockOnly] = useState(false);
   const [showFilters, setShowFilters] = useState(true);
 
   const formatCurrency = (value: number) => {
@@ -44,7 +43,7 @@ export function CatalogoView() {
     }
     
     // Stock filter
-    if (inStockOnly && p.stock === 0) {
+    if (p.stock === 0) {
       return false;
     }
     
@@ -55,7 +54,6 @@ export function CatalogoView() {
     setSearchQuery('');
     setSelectedCategory('all');
     setPriceRange([0, 150000]);
-    setInStockOnly(false);
   };
 
   return (
@@ -144,19 +142,7 @@ export function CatalogoView() {
                     </div>
                   </div>
 
-                  {/* Stock Filter */}
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="inStock"
-                      checked={inStockOnly}
-                      onChange={(e) => setInStockOnly(e.target.checked)}
-                      className="w-4 h-4 rounded border-border text-primary focus:ring-primary"
-                    />
-                    <label htmlFor="inStock" className="text-foreground cursor-pointer" style={{ fontSize: '14px' }}>
-                      Solo productos en stock
-                    </label>
-                  </div>
+                  {/* Stock Filter Removido ya que ahora es automático */}
                 </div>
               </div>
             </div>
@@ -218,11 +204,19 @@ export function CatalogoView() {
           
           {selectedProduct && (
             <div className="grid md:grid-cols-2 gap-6 py-4">
-              <div className="aspect-square bg-surface rounded-lg flex items-center justify-center p-12">
-                <div className="text-primary/30 text-center">
-                  <div className="text-6xl mb-4">💄</div>
-                  <p className="text-sm text-foreground-secondary">{selectedProduct.sku}</p>
-                </div>
+              <div className="aspect-square bg-surface rounded-lg flex items-center justify-center overflow-hidden border border-border">
+                {selectedProduct.imagenUrl ? (
+                  <img 
+                    src={selectedProduct.imagenUrl} 
+                    alt={selectedProduct.nombre} 
+                    className="w-full h-full object-cover" 
+                  />
+                ) : (
+                  <div className="text-primary/30 text-center">
+                    <div className="text-6xl mb-4">💄</div>
+                    <p className="text-sm text-foreground-secondary">{selectedProduct.sku}</p>
+                  </div>
+                )}
               </div>
               
               <div className="space-y-4">

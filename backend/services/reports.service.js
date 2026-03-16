@@ -108,13 +108,13 @@ export const obtenerReporteVentas = async (filtros = {}) => {
   }
 
   if (id_usuario) {
-    whereConditions = sql`${whereConditions} AND v.id_cliente = ${id_usuario}`;
+    whereConditions = sql`${whereConditions} AND v.id_usuario_cliente = ${id_usuario}`;
   }
 
   const ventas = await sql`
     SELECT
       v.id_venta,
-      CONCAT(u.nombres, ' ', u.apellidos) as nombre_usuario,
+      CONCAT(u.nombre, ' ', u.apellido) as nombre_usuario,
       pr.nombre as nombre_producto,
       dv.cantidad,
       dv.subtotal,
@@ -126,7 +126,7 @@ export const obtenerReporteVentas = async (filtros = {}) => {
     FROM detalle_ventas dv
     INNER JOIN ventas v ON dv.id_venta = v.id_venta
     INNER JOIN productos pr ON dv.id_producto = pr.id_producto
-    INNER JOIN usuarios u ON v.id_cliente = u.id_usuario
+    INNER JOIN usuarios u ON v.id_usuario_cliente = u.id_usuario
     LEFT JOIN pedidos p ON v.id_pedido = p.id_pedido
     ${whereConditions}
     ORDER BY v.id_venta ASC
@@ -186,7 +186,7 @@ export const obtenerReporteUsuarios = async () => {
     SELECT
       u.id_usuario,
       u.documento,
-      CONCAT(u.nombres, ' ', u.apellidos) as nombre_completo,
+      CONCAT(u.nombre, ' ', u.apellido) as nombre_completo,
       u.email,
       u.telefono,
       u.ciudad,
@@ -213,8 +213,8 @@ export const obtenerDetalleVenta = async (id_venta) => {
       v.total,
       v.estado,
       u.id_usuario,
-      u.nombres,
-      u.apellidos,
+      u.nombre,
+      u.apellido,
       u.email,
       u.telefono,
       u.documento,
@@ -223,7 +223,7 @@ export const obtenerDetalleVenta = async (id_venta) => {
       p.ciudad,
       p.estado as estado_pedido
     FROM ventas v
-    INNER JOIN usuarios u ON v.id_cliente = u.id_usuario
+    INNER JOIN usuarios u ON v.id_usuario_cliente = u.id_usuario
     LEFT JOIN pedidos p ON v.id_pedido = p.id_pedido
     WHERE v.id_venta = ${id_venta}
   `;

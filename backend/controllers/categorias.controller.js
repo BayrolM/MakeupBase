@@ -47,12 +47,19 @@ export const actualizar = async (req, res) => {
     const { id } = req.params;
     const { nombre, descripcion, estado } = req.body;
     
+    // Construir objeto de actualización parcial
+    const updateData = {};
+    if (nombre !== undefined) updateData.nombre = nombre;
+    if (descripcion !== undefined) updateData.descripcion = descripcion;
+    if (estado !== undefined) updateData.estado = estado;
+
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({ ok: false, message: "No hay campos para actualizar." });
+    }
+
     const result = await sql`
       UPDATE categorias
-      SET 
-        nombre = ${nombre},
-        descripcion = ${descripcion},
-        estado = ${estado !== undefined ? estado : true}
+      SET ${sql(updateData)}
       WHERE id_categoria = ${id}
       RETURNING *
     `;
@@ -71,16 +78,28 @@ export const actualizar = async (req, res) => {
 export const eliminar = async (req, res) => {
   try {
     const { id } = req.params;
-    // En lugar de eliminar, cambiamos el estado
+    
+    // Intentamos eliminar físicamente el registro
     const result = await sql`
-      UPDATE categorias SET estado = false WHERE id_categoria = ${id} RETURNING *
+      DELETE FROM categorias WHERE id_categoria = ${id} RETURNING *
     `;
+    
     if (result.length === 0) {
       return res.status(404).json({ ok: false, message: "Categoría no encontrada." });
     }
-    return res.json({ ok: true, message: "Categoría desactivada." });
+    
+    return res.json({ ok: true, message: "Categoría eliminada permanentemente." });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ ok: false, message: "Error al desactivar la categoría." });
+    
+    // Si el error es por restricción de llave foránea (productos asociados)
+    if (error.code === '23503') {
+      return res.status(400).json({ 
+        ok: false, 
+        message: "No se puede eliminar la categoría porque tiene productos asociados. Prueba a desactivarla mejor." 
+      });
+    }
+    
+    return res.status(500).json({ ok: false, message: "Error al eliminar la categoría de la base de datos." });
   }
 };

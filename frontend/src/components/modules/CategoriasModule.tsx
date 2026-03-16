@@ -6,11 +6,10 @@ import { StatusSwitch } from '../StatusSwitch';
 import { Pagination } from '../Pagination';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Button } from '../ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Plus, Eye, Pencil, Trash2, Search, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { categoryService } from '../../services/categoryService';
@@ -33,6 +32,10 @@ export function CategoriasModule() {
   });
 
   const isAdmin = currentUser?.rol === 'admin';
+
+  useEffect(() => {
+    refreshCategoriesLocal();
+  }, []);
 
   const refreshCategoriesLocal = async () => {
     try {

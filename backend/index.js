@@ -12,6 +12,7 @@ import categoriasRoutes from './routes/categorias.routes.js';
 import proveedoresRoutes from './routes/proveedores.routes.js';
 import marcasRoutes from './routes/marcas.routes.js';
 import comprasRoutes from './routes/compras.routes.js';
+import ventasRoutes from './routes/ventas.routes.js';
 import sql from './config/db.js';
 
 dotenv.config();
@@ -40,6 +41,7 @@ app.use('/api/categorias', categoriasRoutes);
 app.use('/api/proveedores', proveedoresRoutes);
 app.use('/api/marcas', marcasRoutes);
 app.use('/api/compras', comprasRoutes);
+app.use('/api/ventas', ventasRoutes);
 
 // Ruta de prueba general
 app.get('/', (req, res) => {
@@ -116,11 +118,22 @@ app.get('/debug/usuarios/:email', async (req, res) => {
 const PORT = process.env.PORT || 3000;
 
 // Solo iniciar el servidor si no estamos en Vercel
-if (process.env.NODE_ENV !== 'production') {
-  app.listen(PORT, () => {
-    console.log(`Servidor corriendo en el puerto ${PORT}`);
-  });
-}
+app.listen(PORT, () => {
+  console.log(`🚀 Servidor corriendo en el puerto ${PORT}`);
+});
+
+// Mantener el proceso vivo y capturar errores fatales
+setInterval(() => {
+  // console.log('💓 Heartbeat');
+}, 50000);
+
+process.on('uncaughtException', (err) => {
+  console.error('💥 UNCAUGHT EXCEPTION:', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('💥 UNHANDLED REJECTION:', reason);
+});
 
 // Exportar para Vercel
 export default app;

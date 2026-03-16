@@ -1,56 +1,34 @@
+import { useState, useEffect } from 'react';
 import { useStore } from '../lib/store';
 import { PageHeader } from './PageHeader';
 import { ThemeToggle } from './ThemeToggle';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { TrendingUp, Package, ShoppingCart, RotateCcw, AlertTriangle } from 'lucide-react';
+import { TrendingUp, Package, ShoppingCart, RotateCcw, AlertTriangle, Loader2 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { reportService, DashboardData } from '../services/reportService';
+import { toast } from 'sonner';
 
 export function Dashboard() {
-  const { ventas, productos, pedidos, devoluciones } = useStore();
+  const { pedidos, productos } = useStore();
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Calculate KPIs
-  const totalVentas = ventas.reduce((sum, v) => sum + v.total, 0);
-  const totalPedidos = pedidos.length;
-  const totalDevoluciones = devoluciones.length;
-  const tasaDevoluciones = ventas.length > 0 ? ((devoluciones.length / ventas.length) * 100).toFixed(1) : '0';
-  
-  // Products with critical stock
-  const productosStockCritico = productos.filter(p => p.stock <= p.stockMinimo);
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
 
-  // Top products by sales
-  const productSales = new Map<string, number>();
-  ventas.forEach(venta => {
-    venta.productos.forEach(p => {
-      const current = productSales.get(p.productoId) || 0;
-      productSales.set(p.productoId, current + p.cantidad);
-    });
-  });
-  
-  const topProductos = productos
-    .map(p => ({
-      ...p,
-      cantidadVendida: productSales.get(p.id) || 0,
-    }))
-    .sort((a, b) => b.cantidadVendida - a.cantidadVendida)
-    .slice(0, 5);
-
-  // Sales by month (mock data for chart)
-  const salesByMonth = [
-    { mes: 'Jun', ventas: 2800000 },
-    { mes: 'Jul', ventas: 3200000 },
-    { mes: 'Ago', ventas: 2900000 },
-    { mes: 'Sep', ventas: 3500000 },
-    { mes: 'Oct', ventas: totalVentas },
-  ];
-
-  // Orders by status
-  const ordersByStatus = [
-    { estado: 'Creado', cantidad: pedidos.filter(p => p.estado === 'creado').length },
-    { estado: 'En proceso', cantidad: pedidos.filter(p => p.estado === 'en_proceso').length },
-    { estado: 'Despachado', cantidad: pedidos.filter(p => p.estado === 'despachado').length },
-    { estado: 'Entregado', cantidad: pedidos.filter(p => p.estado === 'entregado').length },
-    { estado: 'Anulado', cantidad: pedidos.filter(p => p.estado === 'anulado').length },
-  ];
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      const res = await reportService.getDashboard();
+      setData(res);
+    } catch (error: any) {
+      console.error(error);
+      toast.error('Error al cargar datos del dashboard');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('es-CO', {
@@ -59,6 +37,38 @@ export function Dashboard() {
       minimumFractionDigits: 0,
     }).format(value);
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-10 h-10 text-primary animate-spin mx-auto mb-4" />
+          <p className="text-foreground-secondary">Cargando datos reales...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!data) return null;
+
+  // Process data for charts
+  const salesByMonth = [...data.ventas_por_mes]
+    .reverse()
+    .map(v => ({
+      mes: v.mes,
+      ventas: parseFloat(v.total)
+    }));
+
+  const ordersByStatus = [
+    { estado: 'Pendiente', cantidad: pedidos.filter(p => p.estado === 'pendiente').length },
+    { estado: 'Preparado', cantidad: pedidos.filter(p => p.estado === 'preparado').length },
+    { estado: 'Procesando', cantidad: pedidos.filter(p => p.estado === 'procesando').length },
+    { estado: 'Enviado', cantidad: pedidos.filter(p => p.estado === 'enviado').length },
+    { estado: 'Entregado', cantidad: pedidos.filter(p => p.estado === 'entregado').length },
+    { estado: 'Cancelado', cantidad: pedidos.filter(p => p.estado === 'cancelado').length },
+  ];
+
+  const productosStockCriticoList = productos.filter(p => p.stock <= p.stockMinimo);
 
   return (
     <div className="min-h-screen bg-background relative">
@@ -82,10 +92,10 @@ export function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-foreground" style={{ fontSize: '28px', fontWeight: 600 }}>
-                {formatCurrency(totalVentas)}
+                {formatCurrency(data.resumen.total_ventas)}
               </div>
               <p className="text-success" style={{ fontSize: '12px', marginTop: '4px' }}>
-                +12.5% vs mes anterior
+                Total acumulado de ventas activas
               </p>
             </CardContent>
           </Card>
@@ -93,16 +103,16 @@ export function Dashboard() {
           <Card className="bg-card border-border">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-foreground-secondary" style={{ fontSize: '14px', fontWeight: 500 }}>
-                Pedidos Activos
+                Pedidos Registrados
               </CardTitle>
               <ShoppingCart className="w-5 h-5 text-primary" />
             </CardHeader>
             <CardContent>
               <div className="text-foreground" style={{ fontSize: '28px', fontWeight: 600 }}>
-                {totalPedidos}
+                {data.resumen.total_ordenes}
               </div>
               <p className="text-foreground-secondary" style={{ fontSize: '12px', marginTop: '4px' }}>
-                {pedidos.filter(p => p.estado === 'en_proceso').length} en proceso
+                {pedidos.filter(p => p.estado === 'pendiente' || p.estado === 'procesando').length} pendientes por entregar
               </p>
             </CardContent>
           </Card>
@@ -110,16 +120,16 @@ export function Dashboard() {
           <Card className="bg-card border-border">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-foreground-secondary" style={{ fontSize: '14px', fontWeight: 500 }}>
-                Devoluciones
+                Usuarios Activos
               </CardTitle>
               <RotateCcw className="w-5 h-5 text-warning" />
             </CardHeader>
             <CardContent>
               <div className="text-foreground" style={{ fontSize: '28px', fontWeight: 600 }}>
-                {totalDevoluciones}
+                {data.resumen.total_usuarios}
               </div>
               <p className="text-warning" style={{ fontSize: '12px', marginTop: '4px' }}>
-                Tasa: {tasaDevoluciones}%
+                Clientes y empleados registrados
               </p>
             </CardContent>
           </Card>
@@ -133,7 +143,7 @@ export function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-foreground" style={{ fontSize: '28px', fontWeight: 600 }}>
-                {productosStockCritico.length}
+                {data.resumen.productos_bajo_stock}
               </div>
               <p className="text-danger" style={{ fontSize: '12px', marginTop: '4px' }}>
                 Productos requieren reposición
@@ -203,8 +213,8 @@ export function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {topProductos.map((producto, index) => (
-                  <div key={producto.id} className="flex items-center justify-between p-3 rounded-lg bg-surface">
+                {data.productos_mas_vendidos.map((producto, index) => (
+                  <div key={producto.id_producto} className="flex items-center justify-between p-3 rounded-lg bg-surface">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary" style={{ fontSize: '14px', fontWeight: 600 }}>
                         {index + 1}
@@ -220,10 +230,7 @@ export function Dashboard() {
                     </div>
                     <div className="text-right">
                       <p className="text-foreground" style={{ fontSize: '14px', fontWeight: 600 }}>
-                        {producto.cantidadVendida} und
-                      </p>
-                      <p className="text-foreground-secondary" style={{ fontSize: '12px' }}>
-                        Stock: {producto.stock}
+                        {producto.total_vendido} und
                       </p>
                     </div>
                   </div>
@@ -239,7 +246,7 @@ export function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {productosStockCritico.length === 0 ? (
+                {productosStockCriticoList.length === 0 ? (
                   <div className="text-center py-8">
                     <Package className="w-12 h-12 text-foreground-secondary mx-auto mb-2 opacity-50" />
                     <p className="text-foreground-secondary" style={{ fontSize: '14px' }}>
@@ -247,7 +254,7 @@ export function Dashboard() {
                     </p>
                   </div>
                 ) : (
-                  productosStockCritico.slice(0, 5).map((producto) => (
+                  productosStockCriticoList.slice(0, 5).map((producto) => (
                     <div key={producto.id} className="flex items-center justify-between p-3 rounded-lg bg-surface border border-danger/20">
                       <div>
                         <p className="text-foreground" style={{ fontSize: '14px', fontWeight: 500 }}>

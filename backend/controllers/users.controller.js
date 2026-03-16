@@ -87,7 +87,7 @@ export const listarUsuarios = async (req, res) => {
 
     // Construir WHERE
     const whereClause = whereConditions.length > 0 
-      ? sql`WHERE ${sql.join(whereConditions, sql` AND `)}` 
+      ? sql`WHERE ${whereConditions.reduce((acc, condition) => sql`${acc} AND ${condition}`)}` 
       : sql``;
 
     // Consulta principal
@@ -295,8 +295,8 @@ export const actualizarUsuario = async (req, res) => {
                 id_rol = ${
                   id_rol !== undefined ? id_rol : usuarioExiste[0].id_rol
                 },
-                nombres = ${nombres || usuarioExiste[0].nombres},
-                apellidos = ${apellidos || usuarioExiste[0].apellidos},
+                nombre = ${nombres || usuarioExiste[0].nombre},
+                apellido = ${apellidos || usuarioExiste[0].apellido},
                 telefono = ${
                   telefono !== undefined ? telefono : usuarioExiste[0].telefono
                 },

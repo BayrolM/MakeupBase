@@ -88,12 +88,9 @@ export function RegisterPage({ onRegister, onNavigateToLogin }: RegisterPageProp
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo */}
-        <div className="flex items-center justify-center gap-3 mb-8">
-          <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" className="text-primary-foreground">
-              <path d="M12 3L4 9V21H20V9L12 3Z" fill="currentColor" opacity="0.3"/>
-              <path d="M12 3L4 9M12 3L20 9M12 3V21M4 9V21H20V9M4 9H20" stroke="currentColor" strokeWidth="1.5"/>
-            </svg>
+        <div className="flex items-center justify-center gap-3 mb-5">
+          <div className="w-24 h-24 rounded-full overflow-hidden flex items-center justify-center bg-black">
+            <img src="/logo.png" alt="Glamour ML Logo" className="w-full h-full object-cover" />
           </div>
         </div>
         

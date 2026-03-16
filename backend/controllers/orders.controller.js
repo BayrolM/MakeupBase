@@ -38,6 +38,47 @@ export const crearOrden = async (req, res) => {
   }
 };
 
+// Controlador para que un administrador cree una orden de forma directa
+export const crearOrdenDirecta = async (req, res) => {
+  try {
+    // Verificar que sea admin, bodeguero o vendedor (idealmente)
+    // Para simplificar, confiaremos en auth middleware, pero podemos validar req.user.rol
+    if (req.user.rol === 2) {
+      return res.status(403).json({ ok: false, message: "No autorizado para crear órdenes directas" });
+    }
+
+    const { id_cliente, direccion, ciudad, metodo_pago, items } = req.body;
+    
+    if (!id_cliente || !items || items.length === 0) {
+      return res.status(400).json({
+        ok: false,
+        message: "Faltan datos requeridos (id_cliente, items).",
+      });
+    }
+
+    const orden = await ordersService.crearOrdenDirecta(id_cliente, req.user.id_usuario, {
+      direccion: direccion || 'N/A',
+      ciudad: ciudad || 'N/A',
+      metodo_pago: metodo_pago || 'efectivo',
+      items,
+    });
+
+    return res.status(201).json({
+      ok: true,
+      message: "Orden creada exitosamente",
+      data: orden,
+    });
+  } catch (error) {
+    console.error("❌ ERROR CREATING DIRECT ORDER:", error);
+    if (error.message.includes("Stock") || error.message.includes("no encontrado")) {
+      return res.status(400).json({ ok: false, message: error.message });
+    }
+    // Return specific error if it's a DB constraint to help debug
+    const errorMessage = error.detail || error.message || "Error en el servidor";
+    return res.status(500).json({ ok: false, message: errorMessage });
+  }
+};
+
 // Controlador para obtener todas las órdenes de un usuario
 export const obtenerOrdenes = async (req, res) => {
   try {
@@ -75,6 +116,28 @@ export const obtenerDetalleOrden = async (req, res) => {
   } catch (error) {
     console.error(error);
     if (error.message === "Orden no encontrada") {
+      return res.status(404).json({ ok: false, message: error.message });
+    }
+    return res.status(500).json({ ok: false, message: "Error en el servidor" });
+  }
+};
+
+// Controlador para actualizar el estado de una orden
+export const actualizarEstado = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { estado, motivo } = req.body;
+
+    if (!estado) {
+      return res.status(400).json({ ok: false, message: "El estado es requerido" });
+    }
+
+    const orden = await ordersService.actualizarEstadoPedido(parseInt(id, 10), estado, motivo);
+
+    return res.json({ ok: true, message: "Estado actualizado exitosamente", data: orden });
+  } catch (error) {
+    console.error(error);
+    if (error.message === "Pedido no encontrado") {
       return res.status(404).json({ ok: false, message: error.message });
     }
     return res.status(500).json({ ok: false, message: "Error en el servidor" });

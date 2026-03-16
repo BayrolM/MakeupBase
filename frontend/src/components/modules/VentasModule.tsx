@@ -1,7 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useStore } from '../../lib/store';
 import { PageHeader } from '../PageHeader';
-import { StatusBadge } from '../StatusBadge';
 import { Pagination } from '../Pagination';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Button } from '../ui/button';
@@ -10,21 +9,106 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Label } from '../ui/label';
 import { Input } from '../ui/input';
 import { Plus, Eye, Trash2, FileText, Search, X } from 'lucide-react';
+import { toast } from 'sonner';
+import jsPDF from 'jspdf';
+import { saleService } from '../../services/saleService';
+import { userService } from '../../services/userService';
+import { productService } from '../../services/productService';
+import { Cliente, Producto, Status } from '../../lib/store';
 
 export function VentasModule() {
-  const { ventas, clientes, productos, pedidos, addVenta, updateStock, updateVenta } = useStore();
+  const { ventas, clientes, productos, setVentas, setClientes, setProductos } = useStore();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
-  const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
   const [selectedVenta, setSelectedVenta] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [isAnnulDialogOpen, setIsAnnulDialogOpen] = useState(false);
+  const [saleToAnnul, setSaleToAnnul] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    refreshVentas();
+    refreshDependencies();
+  }, []);
+
+  const refreshDependencies = async () => {
+    try {
+      // Fetch clients (rol 2)
+      const uRes = await userService.getAll({ id_rol: 2, limit: 100 });
+      const mappedClientes: Cliente[] = uRes.data.map(u => {
+        const nombres = u.nombres || u.nombre || '';
+        const apellidos = u.apellidos || u.apellido || '';
+        return {
+          id: u.id_usuario.toString(),
+          nombre: `${nombres} ${apellidos}`.trim() || 'Sin Nombre',
+          nombres: nombres,
+          apellidos: apellidos,
+          email: u.email,
+          telefono: u.telefono || '',
+          documento: u.documento || '',
+          numeroDocumento: u.documento || '',
+          estado: (u.estado ? 'activo' : 'inactivo') as Status,
+          totalCompras: Number(u.total_ventas) || 0,
+          fechaRegistro: u.fecha_registro || new Date().toISOString()
+        };
+      });
+      setClientes(mappedClientes);
+
+      // Fetch products
+      const pRes = await productService.getAll({ limit: 100 });
+      const mappedProductos: Producto[] = pRes.data.map(p => ({
+        id: p.id_producto.toString(),
+        sku: p.sku,
+        nombre: p.nombre,
+        descripcion: p.descripcion || '',
+        categoriaId: p.id_categoria.toString(),
+        marca: p.id_marca.toString(), // O el nombre si lo tienes
+        precioCompra: Number(p.costo_promedio),
+        precioVenta: Number(p.precio_venta),
+        stock: p.stock_actual,
+        stockMinimo: p.stock_min,
+        stockMaximo: p.stock_max,
+        estado: p.estado ? 'activo' : 'inactivo',
+        fechaCreacion: new Date().toISOString()
+      }));
+      setProductos(mappedProductos);
+    } catch (e) {
+      console.error('Error fetching dependencies:', e);
+    }
+  };
+
+  const refreshVentas = async () => {
+    try {
+      const data = await saleService.getAll();
+      const mapped = data.map((v: any) => ({
+        id: v.id_venta.toString(),
+        clienteId: v.id_usuario_cliente.toString(),
+        clienteNombre: `${v.nombre_cliente || ''} ${v.apellido_cliente || ''}`.trim() || 'Sin Nombre',
+        pedidoId: v.id_pedido?.toString() || '',
+        fecha: new Date(v.fecha_venta).toLocaleDateString(),
+        productos: (v.productos || []).map((p: any) => ({
+          productoId: p.id_producto.toString(),
+          cantidad: p.cantidad,
+          precioUnitario: Number(p.precio_unitario)
+        })),
+        subtotal: Number(v.subtotal),
+        iva: Number(v.iva),
+        costoEnvio: 0,
+        total: Number(v.total),
+        estado: v.estado ? 'activo' : 'anulada',
+        metodoPago: v.metodo_pago
+      }));
+      setVentas(mapped);
+    } catch (e) {
+      console.error(e);
+    }
+  };
   
   const [formData, setFormData] = useState({
     clienteId: '',
-    pedidoId: '', // Opcional - si viene de un pedido
+    pedidoId: '', 
     metodoPago: 'Efectivo' as 'Efectivo' | 'Transferencia',
     productos: [{ productoId: '', cantidad: 1, precioUnitario: 0 }],
   });
@@ -32,7 +116,7 @@ export function VentasModule() {
   const handleOpenDialog = () => {
     setFormData({
       clienteId: clientes[0]?.id || '',
-      pedidoId: '', // Opcional - si viene de un pedido
+      pedidoId: '', 
       metodoPago: 'Efectivo',
       productos: [{ productoId: productos[0]?.id || '', cantidad: 1, precioUnitario: productos[0]?.precioVenta || 0 }],
     });
@@ -66,65 +150,152 @@ export function VentasModule() {
     setFormData({ ...formData, productos: newProductos });
   };
 
-  const handleSave = () => {
-    // Validate stock
-    for (const item of formData.productos) {
-      const producto = productos.find(p => p.id === item.productoId);
-      if (!producto || producto.stock < item.cantidad) {
-        alert(`Stock insuficiente para ${producto?.nombre || 'producto'}`);
-        return;
-      }
+  const handleSave = async () => {
+    const clienteIdNum = Number(formData.clienteId);
+    if (!formData.clienteId || isNaN(clienteIdNum)) {
+      toast.error('Debe seleccionar un cliente válido');
+      return;
     }
 
-    const subtotal = formData.productos.reduce((sum, p) => sum + (p.cantidad * p.precioUnitario), 0);
-    const iva = Math.round(subtotal * 0.19); // IVA del 19%
-    const costoEnvio = 10000; // Costo fijo de envío
-    const total = subtotal + iva + costoEnvio;
-    
-    addVenta({
-      clienteId: formData.clienteId,
-      fecha: new Date().toISOString().split('T')[0],
-      productos: formData.productos,
-      subtotal,
-      iva,
-      costoEnvio,
-      total,
-      estado: 'activo',
-      metodoPago: formData.metodoPago,
-    });
+    // Validar que haya productos y que tengan ID válido
+    const productosValidos = formData.productos.every(p => p.productoId && !isNaN(Number(p.productoId)));
+    if (!productosValidos) {
+      toast.error('Asegúrese de que todos los productos seleccionados sean válidos');
+      return;
+    }
 
-    // Reduce stock
-    formData.productos.forEach(p => {
-      updateStock(p.productoId, -p.cantidad);
-    });
+    setIsSaving(true);
+    try {
+      const subtotal = formData.productos.reduce((sum, p) => sum + (p.cantidad * p.precioUnitario), 0);
+      const iva = Math.round(subtotal * 0.19);
+      const total = subtotal + iva;
 
-    setIsDialogOpen(false);
+      const payload = {
+        id_usuario_cliente: clienteIdNum,
+        id_pedido: formData.pedidoId ? Number(formData.pedidoId) : null,
+        metodo_pago: formData.metodoPago,
+        productos: formData.productos,
+        subtotal,
+        iva,
+        total
+      };
+
+      await saleService.create(payload);
+      toast.success('Venta registrada con éxito');
+      await refreshVentas();
+      setIsDialogOpen(false);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Error al guardar la venta');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  const handleViewVenta = (venta: any) => {
-    setSelectedVenta(venta);
-    setViewDialogOpen(true);
-  };
 
   const handleViewDetail = (venta: any) => {
     setSelectedVenta(venta);
     setDetailDialogOpen(true);
   };
 
-  const handleViewPDF = (venta: any) => {
-    setSelectedVenta(venta);
-    setPdfDialogOpen(true);
+  const handleAnularVenta = async () => {
+    if (!saleToAnnul) return;
+    
+    try {
+      await saleService.annul(Number(saleToAnnul));
+      toast.success('Venta anulada correctamente');
+      await refreshVentas();
+      await refreshDependencies(); // Refresh stock
+      setIsAnnulDialogOpen(false);
+      setSaleToAnnul(null);
+    } catch (error: any) {
+      toast.error('Error al anular la venta');
+    }
   };
 
-  const handleToggleEstadoVenta = (ventaId: string, currentStatus: 'activo' | 'anulada') => {
-    if (currentStatus === 'anulada') {
-      // No permitir cambiar de anulada a activo
-      return;
+  const handleDownloadPDF = (venta: any) => {
+    try {
+      const doc = new jsPDF() as any;
+      const cliente = clientes.find((c: Cliente) => c.id === venta.clienteId);
+      
+      // Header
+      doc.setFontSize(22);
+      doc.setTextColor(255, 105, 180); // Color rosa
+      doc.text('GLAMOUR ML', 105, 20, { align: 'center' });
+      
+      doc.setFontSize(10);
+      doc.setTextColor(100);
+      doc.text('NIT: 900.XXX.XXX-X | Medellín, Colombia', 105, 28, { align: 'center' });
+      
+      doc.setDrawColor(200);
+      doc.line(20, 35, 190, 35);
+      
+      // Factura Info
+      doc.setFontSize(14);
+      doc.setTextColor(0);
+      doc.text('FACTURA DE VENTA', 20, 45);
+      doc.setFontSize(10);
+      doc.text(`No. FACTURA: ${venta.id}`, 20, 52);
+      doc.text(`FECHA: ${venta.fecha}`, 20, 57);
+      doc.text(`MÉTODO DE PAGO: ${venta.metodoPago || 'N/A'}`, 20, 62);
+      
+      // Cliente Info
+      doc.setFontSize(12);
+      doc.text('DATOS DEL CLIENTE', 120, 45);
+      doc.setFontSize(10);
+      doc.text(`NOMBRE: ${cliente?.nombre || 'N/A'}`, 120, 52);
+      doc.text(`DOC: ${cliente?.documento || cliente?.numeroDocumento || 'N/A'}`, 120, 57);
+      doc.text(`TEL: ${cliente?.telefono || 'N/A'}`, 120, 62);
+      
+      // Header de la tabla de productos
+      doc.setFillColor(255, 105, 180);
+      doc.rect(20, 70, 170, 8, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(9);
+      doc.text('PRODUCTO', 22, 75.5);
+      doc.text('CANT.', 100, 75.5);
+      doc.text('PRECIO', 130, 75.5);
+      doc.text('SUBTOTAL', 160, 75.5);
+      
+      doc.setTextColor(0);
+      let listY = 85;
+
+      const safeCurrency = (val: any) => {
+        if (typeof val !== 'number' || isNaN(val)) return formatCurrency(0);
+        return formatCurrency(val);
+      };
+
+      // Fila de productos
+      (venta.productos || []).forEach((p: any) => {
+        const prod = productos.find((pr: Producto) => pr.id === p.productoId);
+        const prodName = doc.splitTextToSize(prod?.nombre || 'Producto Desconocido', 70);
+        
+        doc.text(prodName, 22, listY);
+        doc.text(String(p.cantidad || 0), 100, listY);
+        doc.text(safeCurrency(p.precioUnitario), 130, listY);
+        doc.text(safeCurrency((p.cantidad || 0) * (p.precioUnitario || 0)), 160, listY);
+        
+        listY += (prodName.length * 5) + 3;
+      });
+      
+      // Totales
+      const finalY = listY + 10;
+      doc.text(`SUBTOTAL: ${safeCurrency(venta.subtotal)}`, 140, finalY);
+      doc.text(`IVA (19%): ${safeCurrency(venta.iva)}`, 140, finalY + 7);
+      doc.setFontSize(14);
+      doc.setTextColor(255, 105, 180);
+      doc.text(`TOTAL: ${safeCurrency(venta.total)}`, 140, finalY + 15);
+      
+      // Footer
+      doc.setFontSize(8);
+      doc.setTextColor(150);
+      doc.text('¡Gracias por su compra!', 105, 280, { align: 'center' });
+      
+      doc.save(`factura_${venta.id}.pdf`);
+      toast.success('El PDF ha sido generado y la descarga ha iniciado');
+    } catch (error: any) {
+      console.error('Error generando PDF:', error);
+      toast.error('Ocurrió un error al intentar generar el PDF');
     }
-    
-    // Cambiar de activo a anulada
-    const newStatus = 'anulada';
-    updateVenta(ventaId, { estado: newStatus });
   };
 
   const formatCurrency = (value: number) => {
@@ -175,11 +346,6 @@ export function VentasModule() {
       <div className="p-8">
         <div className="bg-card border border-border rounded-lg overflow-hidden">
           <div className="p-4 border-b border-border space-y-4">
-            <div className="flex items-center justify-between">
-              <p className="text-foreground" style={{ fontSize: '16px', fontWeight: 500 }}>
-                Total de ventas: {filteredVentas.length} | Monto total: {formatCurrency(ventas.reduce((sum, v) => sum + v.total, 0))}
-              </p>
-            </div>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground-secondary" />
               <Input
@@ -195,6 +361,7 @@ export function VentasModule() {
             <TableHeader>
               <TableRow className="border-border hover:bg-transparent">
                 <TableHead className="text-foreground-secondary">ID</TableHead>
+                <TableHead className="text-foreground-secondary">ID Pedido</TableHead>
                 <TableHead className="text-foreground-secondary">Cliente</TableHead>
                 <TableHead className="text-foreground-secondary">Fecha</TableHead>
                 <TableHead className="text-foreground-secondary">Total</TableHead>
@@ -205,12 +372,12 @@ export function VentasModule() {
             </TableHeader>
             <TableBody>
               {paginatedVentas.map((venta) => {
-                const cliente = clientes.find(c => c.id === venta.clienteId);
                 const isAnulada = venta.estado === 'anulada';
                 return (
                   <TableRow key={venta.id} className="border-border hover:bg-surface/50">
                     <TableCell className="text-foreground-secondary">{venta.id.slice(0, 8)}</TableCell>
-                    <TableCell className="text-foreground">{cliente?.nombre || 'N/A'}</TableCell>
+                    <TableCell className="text-foreground-secondary" style={{ fontSize: '12px' }}>{venta.pedidoId ? `#${venta.pedidoId}` : '- Venta Directa -'}</TableCell>
+                    <TableCell className="text-foreground">{(venta as any).clienteNombre || 'Sin Nombre'}</TableCell>
                     <TableCell className="text-foreground-secondary">{venta.fecha}</TableCell>
                     <TableCell className="text-foreground">{formatCurrency(venta.total)}</TableCell>
                     <TableCell className="text-foreground-secondary">{venta.metodoPago}</TableCell>
@@ -228,9 +395,9 @@ export function VentasModule() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => handleViewPDF(venta)}
+                          onClick={() => handleDownloadPDF(venta)}
                           className="h-8 w-8 p-0 text-foreground-secondary hover:text-primary hover:bg-primary/10"
-                          title="Ver PDF"
+                          title="Descargar PDF"
                         >
                           <FileText className="w-4 h-4" />
                         </Button>
@@ -247,7 +414,10 @@ export function VentasModule() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => handleToggleEstadoVenta(venta.id, venta.estado)}
+                            onClick={() => {
+                              setSaleToAnnul(venta.id);
+                              setIsAnnulDialogOpen(true);
+                            }}
                             className="h-8 w-8 p-0 text-danger hover:text-danger/80 hover:bg-danger/10"
                             title="Anular Venta"
                           >
@@ -291,7 +461,7 @@ export function VentasModule() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label className="text-foreground">Cliente</Label>
-                <Select value={formData.clienteId} onValueChange={(value) => setFormData({ ...formData, clienteId: value })}>
+                                <Select value={formData.clienteId} onValueChange={(value: string) => setFormData({ ...formData, clienteId: value })}>
                   <SelectTrigger className="bg-input-background border-border text-foreground">
                     <SelectValue />
                   </SelectTrigger>
@@ -305,7 +475,7 @@ export function VentasModule() {
 
               <div className="space-y-2">
                 <Label className="text-foreground">Método de Pago</Label>
-                <Select value={formData.metodoPago} onValueChange={(value) => setFormData({ ...formData, metodoPago: value })}>
+                                <Select value={formData.metodoPago} onValueChange={(value: 'Efectivo' | 'Transferencia') => setFormData({ ...formData, metodoPago: value })}>
                   <SelectTrigger className="bg-input-background border-border text-foreground">
                     <SelectValue />
                   </SelectTrigger>
@@ -329,7 +499,7 @@ export function VentasModule() {
                 <div key={index} className="grid grid-cols-12 gap-2 items-end p-3 bg-surface rounded-lg">
                   <div className="col-span-5 space-y-1">
                     <Label className="text-foreground-secondary" style={{ fontSize: '12px' }}>Producto</Label>
-                    <Select value={prod.productoId} onValueChange={(value) => updateProductLine(index, 'productoId', value)}>
+                                        <Select value={prod.productoId} onValueChange={(value: string) => updateProductLine(index, 'productoId', value)}>
                       <SelectTrigger className="bg-input-background border-border text-foreground h-9">
                         <SelectValue />
                       </SelectTrigger>
@@ -397,11 +567,11 @@ export function VentasModule() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="border-border text-foreground hover:bg-surface">
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="border-border text-foreground hover:bg-surface" disabled={isSaving}>
               Cancelar
             </Button>
-            <Button onClick={handleSave} className="bg-primary hover:bg-primary/90 text-primary-foreground">
-              Confirmar Venta
+            <Button onClick={handleSave} className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSaving}>
+              {isSaving ? 'Guardando...' : 'Confirmar Venta'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -409,7 +579,7 @@ export function VentasModule() {
 
       {/* Detail Dialog */}
       <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
-        <DialogContent className="bg-card border-border max-w-2xl">
+        <DialogContent className="bg-card border-border max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-foreground">Detalle de Venta</DialogTitle>
             <DialogDescription className="sr-only">Información completa de la venta seleccionada</DialogDescription>
@@ -421,6 +591,10 @@ export function VentasModule() {
                 <div className="space-y-1">
                   <p className="text-foreground-secondary" style={{ fontSize: '12px' }}>ID de Venta</p>
                   <p className="text-foreground">{selectedVenta.id}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-foreground-secondary" style={{ fontSize: '12px' }}>ID de Pedido</p>
+                  <p className="text-foreground">{selectedVenta.pedidoId ? `#${selectedVenta.pedidoId}` : 'Venta Directa'}</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-foreground-secondary" style={{ fontSize: '12px' }}>Estado</p>
@@ -531,160 +705,29 @@ export function VentasModule() {
         </DialogContent>
       </Dialog>
 
-      {/* PDF Dialog */}
-      <Dialog open={pdfDialogOpen} onOpenChange={setPdfDialogOpen}>
-        <DialogContent className="bg-card border-border max-w-3xl max-h-[90vh]">
+      {/* Annul Confirmation Dialog */}
+      <Dialog open={isAnnulDialogOpen} onOpenChange={setIsAnnulDialogOpen}>
+        <DialogContent className="bg-card border-border">
           <DialogHeader>
-            <DialogTitle className="text-foreground">Comprobante de Venta - PDF</DialogTitle>
-            <DialogDescription className="sr-only">Vista de impresión del comprobante de venta</DialogDescription>
+            <DialogTitle className="text-foreground">Anular Venta</DialogTitle>
+            <DialogDescription className="text-foreground-secondary">
+              ¿Estás seguro que deseas anular esta venta? Esta acción devolverá el stock a los productos y marcará la venta como anulada permanentemente.
+            </DialogDescription>
           </DialogHeader>
-          
-          {selectedVenta && (
-            <div className="space-y-6 py-6 px-4">
-              {/* Header del PDF */}
-              <div className="text-center border-b border-border pb-6">
-                <h2 className="text-primary" style={{ fontSize: '24px', fontWeight: 600 }}>GLAMOUR ML</h2>
-                <p className="text-foreground-secondary mt-1">Medellín, Colombia</p>
-                <p className="text-foreground-secondary" style={{ fontSize: '14px' }}>NIT: 900.XXX.XXX-X</p>
-                <div className="mt-4 inline-block bg-primary/10 px-4 py-2 rounded-lg">
-                  <p className="text-primary" style={{ fontWeight: 600 }}>FACTURA DE VENTA</p>
-                  <p className="text-foreground-secondary" style={{ fontSize: '14px' }}>No. {selectedVenta.id}</p>
-                </div>
-              </div>
-
-              {/* Información del Cliente */}
-              <div className="grid grid-cols-2 gap-6">
-                <div className="bg-surface p-4 rounded-lg">
-                  <p className="text-foreground-secondary mb-2" style={{ fontSize: '12px', fontWeight: 600 }}>DATOS DEL CLIENTE</p>
-                  <div className="space-y-1">
-                    <p className="text-foreground">{clientes.find(c => c.id === selectedVenta.clienteId)?.nombre || 'N/A'}</p>
-                    <p className="text-foreground-secondary" style={{ fontSize: '14px' }}>
-                      {clientes.find(c => c.id === selectedVenta.clienteId)?.documento || 'N/A'}
-                    </p>
-                    <p className="text-foreground-secondary" style={{ fontSize: '14px' }}>
-                      {clientes.find(c => c.id === selectedVenta.clienteId)?.telefono || 'N/A'}
-                    </p>
-                  </div>
-                </div>
-                <div className="bg-surface p-4 rounded-lg">
-                  <p className="text-foreground-secondary mb-2" style={{ fontSize: '12px', fontWeight: 600 }}>INFORMACIÓN DE VENTA</p>
-                  <div className="space-y-1">
-                    <p className="text-foreground-secondary" style={{ fontSize: '14px' }}>
-                      <span className="text-foreground" style={{ fontWeight: 500 }}>Fecha:</span> {selectedVenta.fecha}
-                    </p>
-                    <p className="text-foreground-secondary" style={{ fontSize: '14px' }}>
-                      <span className="text-foreground" style={{ fontWeight: 500 }}>Método de Pago:</span> {selectedVenta.metodoPago}
-                    </p>
-                    <p className="text-foreground-secondary" style={{ fontSize: '14px' }}>
-                      <span className="text-foreground" style={{ fontWeight: 500 }}>Estado:</span>{' '}
-                      <span className={selectedVenta.estado === 'activo' ? 'text-success' : 'text-danger'}>
-                        {selectedVenta.estado === 'activo' ? 'Activa' : 'Anulada'}
-                      </span>
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Detalle de Productos */}
-              <div>
-                <div className="bg-primary text-primary-foreground px-4 py-2 rounded-t-lg">
-                  <div className="grid grid-cols-12 gap-4">
-                    <p className="col-span-5" style={{ fontSize: '12px', fontWeight: 600 }}>PRODUCTO</p>
-                    <p className="col-span-2 text-center" style={{ fontSize: '12px', fontWeight: 600 }}>CANT.</p>
-                    <p className="col-span-2 text-right" style={{ fontSize: '12px', fontWeight: 600 }}>PRECIO</p>
-                    <p className="col-span-3 text-right" style={{ fontSize: '12px', fontWeight: 600 }}>SUBTOTAL</p>
-                  </div>
-                </div>
-                <div className="border border-t-0 border-border rounded-b-lg">
-                  {selectedVenta.productos.map((p: any, i: number) => {
-                    const producto = productos.find(prod => prod.id === p.productoId);
-                    return (
-                      <div 
-                        key={i} 
-                        className={`grid grid-cols-12 gap-4 px-4 py-3 ${
-                          i !== selectedVenta.productos.length - 1 ? 'border-b border-border' : ''
-                        }`}
-                      >
-                        <p className="col-span-5 text-foreground">{producto?.nombre || 'N/A'}</p>
-                        <p className="col-span-2 text-center text-foreground-secondary">{p.cantidad}</p>
-                        <p className="col-span-2 text-right text-foreground-secondary">{formatCurrency(p.precioUnitario)}</p>
-                        <p className="col-span-3 text-right text-foreground" style={{ fontWeight: 500 }}>
-                          {formatCurrency(p.cantidad * p.precioUnitario)}
-                        </p>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Resumen de la Transacción */}
-              <div className="bg-surface p-4 rounded-lg border border-border">
-                <p className="text-foreground mb-4" style={{ fontSize: '14px', fontWeight: 600 }}>RESUMEN DE LA TRANSACCIÓN</p>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-foreground-secondary" style={{ fontSize: '14px' }}>Subtotal:</span>
-                    <span className="text-foreground" style={{ fontSize: '14px', fontWeight: 500 }}>
-                      {formatCurrency(selectedVenta.subtotal)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-foreground-secondary" style={{ fontSize: '14px' }}>IVA (19%):</span>
-                    <span className="text-foreground" style={{ fontSize: '14px', fontWeight: 500 }}>
-                      {formatCurrency(selectedVenta.iva)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-foreground-secondary" style={{ fontSize: '14px' }}>Costo de Envío:</span>
-                    <span className="text-foreground" style={{ fontSize: '14px', fontWeight: 500 }}>
-                      {formatCurrency(selectedVenta.costoEnvio)}
-                    </span>
-                  </div>
-                  <div className="border-t border-border pt-3 mt-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-foreground" style={{ fontSize: '18px', fontWeight: 700 }}>TOTAL A PAGAR:</span>
-                      <span className="text-primary" style={{ fontSize: '26px', fontWeight: 700 }}>
-                        {formatCurrency(selectedVenta.total)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {selectedVenta.estado === 'anulada' && (
-                <div className="bg-danger/10 border-2 border-danger rounded-lg p-4 text-center">
-                  <p className="text-danger" style={{ fontSize: '16px', fontWeight: 700 }}>
-                    ⚠️ FACTURA ANULADA
-                  </p>
-                  {selectedVenta.motivoAnulacion && (
-                    <p className="text-foreground mt-2" style={{ fontSize: '14px' }}>
-                      Motivo: {selectedVenta.motivoAnulacion}
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {/* Footer */}
-              <div className="text-center text-foreground-secondary pt-4 border-t border-border">
-                <p style={{ fontSize: '12px' }}>Gracias por su compra</p>
-                <p style={{ fontSize: '12px' }}>GLAMOUR ML - Cosméticos de calidad</p>
-              </div>
-            </div>
-          )}
-
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:gap-0">
             <Button 
               variant="outline" 
-              onClick={() => setPdfDialogOpen(false)} 
+              onClick={() => setIsAnnulDialogOpen(false)}
               className="border-border text-foreground hover:bg-surface"
             >
-              Cerrar
+              Cancelar
             </Button>
             <Button 
-              className="bg-primary hover:bg-primary/90 text-primary-foreground"
-              onClick={() => window.print()}
+              variant="destructive" 
+              onClick={handleAnularVenta}
+              className="bg-danger hover:bg-danger/90 text-white"
             >
-              <FileText className="w-4 h-4 mr-2" />
-              Imprimir
+              Confirmar Anulación
             </Button>
           </DialogFooter>
         </DialogContent>
