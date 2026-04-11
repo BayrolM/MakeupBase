@@ -92,6 +92,15 @@ export const anular = async (req, res) => {
     const { id } = req.params;
 
     await sql.begin(async (sql) => {
+      // 0. Verificar que la venta exista y no esté ya anulada
+      const [venta] = await sql`SELECT estado FROM ventas WHERE id_venta = ${id}`;
+      if (!venta) throw new Error("Venta no encontrada.");
+      
+      // Verificación robusta del estado (cubre boolean, bit o int)
+      if (venta.estado === false || venta.estado === 0 || venta.estado === '0') {
+        throw new Error("La venta ya ha sido anulada previamente.");
+      }
+
       // 1. Obtener detalles para devolver stock
       const detalles = await sql`
         SELECT id_producto, cantidad FROM detalle_ventas WHERE id_venta = ${id}
@@ -113,7 +122,6 @@ export const anular = async (req, res) => {
 
     return res.json({ ok: true, message: "Venta anulada y stock devuelto." });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ ok: false, message: "Error al anular la venta." });
+    return res.status(500).json({ ok: false, message: error.message || "Error al anular la venta." });
   }
 };

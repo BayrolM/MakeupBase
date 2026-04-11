@@ -77,6 +77,13 @@ export interface Categoria {
   estado: Status;
 }
 
+export interface Marca {
+  id: string;
+  nombre: string;
+  descripcion: string;
+  estado: Status;
+}
+
 export interface Producto {
   id: string;
   nombre: string;
@@ -157,6 +164,7 @@ interface StoreState {
   clientes: Cliente[];
   proveedores: Proveedor[];
   categorias: Categoria[];
+  marcas: Marca[];
   productos: Producto[];
   compras: Compra[];
   ventas: Venta[];
@@ -238,6 +246,7 @@ interface StoreActions {
   setClientes: (clientes: Cliente[]) => void;
   setVentas: (ventas: Venta[]) => void;
   setPedidos: (pedidos: Pedido[]) => void;
+  setMarcas: (marcas: Marca[]) => void;
 }
 
 const StoreContext = createContext<(StoreState & StoreActions) | undefined>(undefined);
@@ -247,6 +256,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [proveedores, setProveedores] = useState<Proveedor[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const [marcas, setMarcas] = useState<Marca[]>([]);
   const [productos, setProductos] = useState<Producto[]>([]);
   const [compras, setCompras] = useState<Compra[]>([]);
   const [ventas, setVentas] = useState<Venta[]>([]);
@@ -282,6 +292,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     clientes,
     proveedores,
     categorias,
+    marcas,
     productos,
     compras,
     ventas,
@@ -504,8 +515,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setClientes: (newClientes: Cliente[]) => setClientes(newClientes),
     setVentas: (newVentas: Venta[]) => setVentas(newVentas),
     setPedidos: (newPedidos: Pedido[]) => setPedidos(newPedidos),
+    setMarcas: (newMarcas: Marca[]) => setMarcas(newMarcas),
   }), [
-    users, clientes, proveedores, categorias, productos, compras, 
+    users, clientes, proveedores, categorias, marcas, productos, compras,
     ventas, pedidos, devoluciones, roles, currentUser, userType, 
     favoritos, carrito
   ]);

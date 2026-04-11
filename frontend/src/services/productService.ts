@@ -91,7 +91,7 @@ export const productService = {
   },
 
   /**
-   * Eliminar producto (soft delete)
+   * Eliminar producto (soft delete si tiene asociaciones, hard delete si no)
    */
   async delete(id: number): Promise<void> {
     try {

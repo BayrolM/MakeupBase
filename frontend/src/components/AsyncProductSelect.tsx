@@ -1,13 +1,6 @@
 import * as React from "react";
-import { Check, ChevronsUpDown, Search } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-import { Button } from "./ui/button";
-import {
-  Command,
-  CommandGroup,
-  CommandItem,
-  CommandList,
-} from "./ui/command";
+import * as ReactDOM from "react-dom";
+import { Check, ChevronsUpDown } from "lucide-react";
 import { productService } from "../services/productService";
 import { Producto } from "../lib/store";
 
@@ -21,31 +14,43 @@ export function AsyncProductSelect({
   disabled?: boolean;
 }) {
   const [open, setOpen] = React.useState(false);
-  const [query, setQuery] = React.useState("");
+  const [inputValue, setInputValue] = React.useState("");
   const [options, setOptions] = React.useState<Producto[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [selectedProducto, setSelectedProducto] = React.useState<Producto | null>(null);
+  const [selectedIndex, setSelectedIndex] = React.useState(-1);
+  const [dropdownPos, setDropdownPos] = React.useState<{ top: number; left: number; width: number } | null>(null);
+  const wrapperRef = React.useRef<HTMLDivElement>(null);
+  const listRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
-    const timer = setTimeout(() => {
-      searchProducts(query);
-    }, 400);
+    const syncSelected = async () => {
+      if (!value) { setSelectedProducto(null); setInputValue(""); return; }
+      const found = options.find(o => o.id === value);
+      if (found) { setSelectedProducto(found); setInputValue(found.nombre); }
+    };
+    syncSelected();
+  }, [value, options]);
+
+  React.useEffect(() => {
+    if (!inputValue || (selectedProducto && inputValue === selectedProducto.nombre)) {
+      if (options.length === 0) searchProducts("");
+      return;
+    }
+    const timer = setTimeout(() => searchProducts(inputValue), 400);
     return () => clearTimeout(timer);
-  }, [query]);
+  }, [inputValue]);
 
   const searchProducts = async (searchQuery: string) => {
     setLoading(true);
     try {
-      const res = await productService.getAll({ 
-        q: searchQuery, 
-        limit: 15 
-      });
+      const res = await productService.getAll({ q: searchQuery, limit: 10 });
       const mapped: Producto[] = res.data.map((p: any) => ({
         id: p.id_producto.toString(),
         nombre: p.nombre,
         descripcion: p.descripcion || "",
         categoriaId: p.id_categoria.toString(),
-        marca: p.id_marca.toString(),
+        marca: p.nombre_marca || p.id_marca?.toString() || "Genérica",
         precioCompra: Number(p.costo_promedio),
         precioVenta: Number(p.precio_venta),
         stock: p.stock_actual,
@@ -55,11 +60,7 @@ export function AsyncProductSelect({
         estado: p.estado ? "activo" : "inactivo",
         fechaCreacion: new Date().toISOString(),
       }));
-      setOptions(mapped);
-      
-      const current = mapped.find((m) => m.id === value);
-      if (current) setSelectedProducto(current);
-      
+      setOptions(mapped.filter(p => p.estado === "activo" && p.stock > 0));
     } catch (e) {
       console.error(e);
     } finally {
@@ -67,65 +68,152 @@ export function AsyncProductSelect({
     }
   };
 
+  const openDropdown = () => {
+    if (disabled || !wrapperRef.current) return;
+    const rect = wrapperRef.current.getBoundingClientRect();
+    setDropdownPos({ top: rect.bottom + window.scrollY + 4, left: rect.left + window.scrollX, width: rect.width });
+    setOpen(true);
+  };
+
+  const closeDropdown = () => {
+    setOpen(false);
+    setSelectedIndex(-1);
+    setInputValue(selectedProducto ? selectedProducto.nombre : "");
+  };
+
+  const selectProduct = (prod: Producto) => {
+    onChange(prod.id, prod);
+    setSelectedProducto(prod);
+    setInputValue(prod.nombre);
+    setOpen(false);
+    setSelectedIndex(-1);
+  };
+
+  // Scroll automático al ítem activo
+  React.useEffect(() => {
+    if (!open || selectedIndex < 0 || !listRef.current) return;
+    const items = listRef.current.querySelectorAll<HTMLElement>("[data-option]");
+    items[selectedIndex]?.scrollIntoView({ block: "nearest" });
+  }, [selectedIndex, open]);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (disabled) return;
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        if (!open) { openDropdown(); setSelectedIndex(0); }
+        else setSelectedIndex(prev => prev < options.length - 1 ? prev + 1 : 0);
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        if (!open) { openDropdown(); setSelectedIndex(options.length - 1); }
+        else setSelectedIndex(prev => prev > 0 ? prev - 1 : options.length - 1);
+        break;
+      case "Enter":
+        e.preventDefault();
+        if (open && selectedIndex >= 0 && options[selectedIndex]) selectProduct(options[selectedIndex]);
+        else { openDropdown(); setSelectedIndex(0); }
+        break;
+      case "Escape":
+        e.preventDefault();
+        closeDropdown();
+        break;
+      case "Tab":
+        if (open) closeDropdown();
+        break;
+    }
+  };
+
+  React.useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+        setOpen(false);
+        setSelectedIndex(-1);
+        setInputValue(selectedProducto ? selectedProducto.nombre : "");
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [selectedProducto]);
+
+  const dropdown = open && dropdownPos
+    ? ReactDOM.createPortal(
+        <div
+          ref={listRef}
+          style={{
+            position: "absolute",
+            top: dropdownPos.top,
+            left: dropdownPos.left,
+            width: dropdownPos.width,
+            zIndex: 99999,
+            pointerEvents: "all",
+            cursor: "default",
+            userSelect: "none",
+          }}
+          className="bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in duration-200"
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          <div className="max-h-[250px] overflow-y-auto py-2 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+            {loading && (
+              <div className="px-4 py-3 text-sm text-gray-500 flex items-center gap-2">
+                <div className="w-3 h-3 border-2 border-[#c47b96]/30 border-t-[#c47b96] rounded-full animate-spin" />
+                Buscando...
+              </div>
+            )}
+            {!loading && options.length === 0 && (
+              <div className="px-4 py-3 text-sm text-center text-gray-500 italic">No se encontraron productos.</div>
+            )}
+            {!loading && options.map((prod, index) => (
+              <div
+                key={prod.id}
+                data-option
+                style={{ cursor: "pointer" }}
+                onMouseEnter={() => setSelectedIndex(index)}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => selectProduct(prod)}
+                className={`relative flex items-center rounded-lg px-3 py-2.5 text-sm transition-all mx-1 mb-0.5 ${
+                  value === prod.id
+                    ? "bg-[#c47b96] text-white font-semibold shadow-sm"
+                    : index === selectedIndex
+                      ? "bg-gray-100 text-gray-900 font-medium"
+                      : "text-gray-700 font-medium"
+                }`}
+              >
+                <Check className={`mr-3 h-4 w-4 shrink-0 ${value === prod.id ? "opacity-100" : "opacity-0"}`} />
+                <span className="truncate">{prod.nombre}</span>
+              </div>
+            ))}
+          </div>
+        </div>,
+        document.body
+      )
+    : null;
+
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
+    <div className="relative w-full" ref={wrapperRef}>
+      <div className="relative flex items-center">
+        <input
+          type="text"
           role="combobox"
           aria-expanded={open}
-          className="w-full justify-between bg-white border-gray-200 text-gray-800 rounded-xl hover:bg-gray-50 h-[42px]"
+          aria-haspopup="listbox"
+          aria-autocomplete="list"
+          className={`flex w-full items-center justify-between bg-white border border-gray-200 text-gray-800 rounded-xl px-4 h-11 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-[#c47b96]/20 focus:border-[#c47b96] ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+          placeholder="Escribe el nombre o marca del producto..."
+          value={inputValue}
+          onKeyDown={handleKeyDown}
+          onChange={(e) => { setInputValue(e.target.value); openDropdown(); setSelectedIndex(0); }}
+          onFocus={openDropdown}
           disabled={disabled}
+        />
+        <div
+          className="absolute right-3 cursor-pointer text-gray-400 hover:text-gray-600"
+          onClick={() => open ? closeDropdown() : openDropdown()}
         >
-          {value
-            ? selectedProducto?.nombre || options.find((p) => p.id === value)?.nombre || "Producto seleccionado"
-            : "Buscar producto por nombre..."}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="p-0 border-gray-200 rounded-xl" style={{ width: "100%", minWidth: "var(--radix-popover-trigger-width)" }}>
-        <Command shouldFilter={false} className="border-none rounded-xl">
-          <div className="flex items-center px-3 border-b border-gray-100">
-            <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-            <input
-              className="flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-gray-400 disabled:cursor-not-allowed disabled:opacity-50"
-              placeholder="Escribe para buscar..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-          </div>
-          <CommandList>
-            {loading && <div className="p-4 text-sm text-center text-gray-500">Buscando...</div>}
-            {!loading && options.length === 0 && (
-              <div className="p-4 text-sm text-center text-gray-500">No se encontraron productos.</div>
-            )}
-            <CommandGroup>
-              {!loading && options.map((prod) => (
-                <CommandItem
-                  key={prod.id}
-                  value={prod.id}
-                  onSelect={(currentValue: string) => {
-                    onChange(currentValue === value ? "" : currentValue, currentValue === value ? undefined : prod);
-                    setSelectedProducto(prod);
-                    setOpen(false);
-                  }}
-                  className="cursor-pointer"
-                >
-                  <Check
-                    className={`mr-2 h-4 w-4 ${
-                      value === prod.id ? "opacity-100" : "opacity-0"
-                    }`}
-                  />
-                  <div className="flex flex-col">
-                    <span>{prod.nombre}</span>
-                    <span className="text-gray-400 text-xs">Stock: {prod.stock}</span>
-                  </div>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+          <ChevronsUpDown className="h-4 w-4 opacity-50" />
+        </div>
+      </div>
+      {dropdown}
+    </div>
   );
 }

@@ -136,6 +136,12 @@ export const login = async (req, res) => {
       return res.status(400).json({ message: "Credenciales incorrectas" });
     }
 
+    // Verificar que el usuario esté activo
+    if (user.estado === false || user.estado === 0) {
+      console.log("❌ Usuario inactivo:", email);
+      return res.status(403).json({ code: "USER_INACTIVE", message: "Tu cuenta está inactiva. Contacta al administrador." });
+    }
+
     console.log("🎟️ Generando JWT...");
     if (!user.id_rol) {
         console.error("❌ ERROR: El usuario no tiene id_rol:", user);

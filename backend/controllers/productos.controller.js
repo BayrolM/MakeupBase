@@ -96,6 +96,9 @@ export const actualizar = async (req, res) => {
     return res.json({ ok: true, message: "Producto actualizado" });
   } catch (err) {
     console.error(err);
+    if (err.code === 'PRODUCT_HAS_ACTIVE_ASSOCIATIONS') {
+      return res.status(400).json({ ok: false, message: err.message });
+    }
     return res.status(500).json({ ok: false, message: "Error interno" });
   }
 };
@@ -104,10 +107,25 @@ export const actualizar = async (req, res) => {
 export const eliminar = async (req, res) => {
   try {
     const { id } = req.params;
-    await productosService.eliminarProducto(parseInt(id, 10));
-    return res.json({ ok: true, message: "Producto eliminado (estado=0)" });
+    const idNum = parseInt(id, 10);
+
+    if (isNaN(idNum)) {
+      return res.status(400).json({ ok: false, message: "ID de producto inválido" });
+    }
+
+    // Verificar que el producto existe
+    const producto = await productosService.obtenerProductoPorId(idNum);
+    if (!producto) {
+      return res.status(404).json({ ok: false, message: "Producto no encontrado" });
+    }
+
+    const result = await productosService.eliminarProducto(idNum);
+    return res.json({ ok: true, ...result });
   } catch (err) {
     console.error(err);
+    if (err.code === 'PRODUCT_HAS_ACTIVE_ASSOCIATIONS') {
+      return res.status(400).json({ ok: false, message: err.message });
+    }
     return res.status(500).json({ ok: false, message: "Error interno" });
   }
 };

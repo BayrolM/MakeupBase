@@ -73,6 +73,20 @@ export const userService = {
       );
     }
   },
+
+  /**
+   * Eliminar permanentemente un usuario (Admin)
+   */
+  async deletePermanent(id: string | number): Promise<any> {
+    try {
+      const response = await api.delete(`/users/${id}/permanent`);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(
+        error.response?.data?.message || "Error al eliminar el usuario",
+      );
+    }
+  },
   /**
    * Crear un nuevo usuario (Admin)
    */

@@ -7,6 +7,7 @@ import {
   crearUsuario,
   actualizarUsuario,
   desactivarUsuario,
+  eliminarUsuario,
   changePassword,
 } from "../controllers/users.controller.js";
 import { authRequired } from "../middleware/auth.middleware.js";
@@ -25,5 +26,6 @@ router.post("/", authRequired, adminRequired, crearUsuario);
 router.get("/:id", authRequired, adminRequired, obtenerUsuario);
 router.put("/:id", authRequired, adminRequired, actualizarUsuario);
 router.delete("/:id", authRequired, adminRequired, desactivarUsuario);
+router.delete("/:id/permanent", authRequired, adminRequired, eliminarUsuario);
 
 export default router;

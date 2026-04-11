@@ -1,13 +1,6 @@
 import * as React from "react";
-import { Check, ChevronsUpDown, Search } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-import { Button } from "./ui/button";
-import {
-  Command,
-  CommandGroup,
-  CommandItem,
-  CommandList,
-} from "./ui/command";
+import * as ReactDOM from "react-dom";
+import { Check, ChevronsUpDown } from "lucide-react";
 import { userService } from "../services/userService";
 
 export function AsyncClientSelect({
@@ -20,47 +13,43 @@ export function AsyncClientSelect({
   disabled?: boolean;
 }) {
   const [open, setOpen] = React.useState(false);
-  const [query, setQuery] = React.useState("");
+  const [inputValue, setInputValue] = React.useState("");
   const [options, setOptions] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [selectedCliente, setSelectedCliente] = React.useState<any | null>(null);
+  const [selectedIndex, setSelectedIndex] = React.useState(-1);
+  const [dropdownPos, setDropdownPos] = React.useState<{ top: number; left: number; width: number } | null>(null);
+  const wrapperRef = React.useRef<HTMLDivElement>(null);
+  const listRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
-    const fetchSelected = async () => {
-      if (value && !selectedCliente && !options.find((o) => o.id === value)) {
-        // Here we could fetch the single client if needed.
-        // For simplicity, we just trigger a search if an ID exists.
-      }
+    const syncSelected = async () => {
+      if (!value) { setSelectedCliente(null); setInputValue(""); return; }
+      const found = options.find(o => o.id === value);
+      if (found) { setSelectedCliente(found); setInputValue(found.nombre); }
     };
-    fetchSelected();
-  }, [value]);
+    syncSelected();
+  }, [value, options]);
 
   React.useEffect(() => {
-    const timer = setTimeout(() => {
-      searchClients(query);
-    }, 400);
+    if (!inputValue || (selectedCliente && inputValue === selectedCliente.nombre)) {
+      if (options.length === 0) searchClients("");
+      return;
+    }
+    const timer = setTimeout(() => searchClients(inputValue), 400);
     return () => clearTimeout(timer);
-  }, [query]);
+  }, [inputValue]);
 
   const searchClients = async (searchQuery: string) => {
     setLoading(true);
     try {
-      const res = await userService.getAll({ 
-        id_rol: 2, 
-        q: searchQuery, 
-        limit: 15 
-      });
+      const res = await userService.getAll({ id_rol: 2, q: searchQuery, limit: 10 });
       const mapped = res.data.map((u: any) => ({
         id: u.id_usuario.toString(),
         nombre: `${u.nombres || u.nombre || ""} ${u.apellidos || u.apellido || ""}`.trim(),
         documento: u.documento,
       }));
       setOptions(mapped);
-      
-      // Keep track of the currently selected if it is among options
-      const current = mapped.find((m: any) => m.id === value);
-      if (current) setSelectedCliente(current as any);
-      
     } catch (e) {
       console.error(e);
     } finally {
@@ -68,62 +57,152 @@ export function AsyncClientSelect({
     }
   };
 
+  const openDropdown = () => {
+    if (disabled || !wrapperRef.current) return;
+    const rect = wrapperRef.current.getBoundingClientRect();
+    setDropdownPos({ top: rect.bottom + window.scrollY + 4, left: rect.left + window.scrollX, width: rect.width });
+    setOpen(true);
+  };
+
+  const closeDropdown = () => {
+    setOpen(false);
+    setSelectedIndex(-1);
+    setInputValue(selectedCliente ? selectedCliente.nombre : "");
+  };
+
+  const selectClient = (client: any) => {
+    onChange(client.id);
+    setSelectedCliente(client);
+    setInputValue(client.nombre);
+    setOpen(false);
+    setSelectedIndex(-1);
+  };
+
+  // Scroll automático al ítem activo
+  React.useEffect(() => {
+    if (!open || selectedIndex < 0 || !listRef.current) return;
+    const items = listRef.current.querySelectorAll<HTMLElement>("[data-option]");
+    items[selectedIndex]?.scrollIntoView({ block: "nearest" });
+  }, [selectedIndex, open]);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (disabled) return;
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        if (!open) { openDropdown(); setSelectedIndex(0); }
+        else setSelectedIndex(prev => prev < options.length - 1 ? prev + 1 : 0);
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        if (!open) { openDropdown(); setSelectedIndex(options.length - 1); }
+        else setSelectedIndex(prev => prev > 0 ? prev - 1 : options.length - 1);
+        break;
+      case "Enter":
+        e.preventDefault();
+        if (open && selectedIndex >= 0 && options[selectedIndex]) selectClient(options[selectedIndex]);
+        else { openDropdown(); setSelectedIndex(0); }
+        break;
+      case "Escape":
+        e.preventDefault();
+        closeDropdown();
+        break;
+      case "Tab":
+        if (open) closeDropdown();
+        break;
+    }
+  };
+
+  React.useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+        setOpen(false);
+        setSelectedIndex(-1);
+        setInputValue(selectedCliente ? selectedCliente.nombre : "");
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [selectedCliente]);
+
+  const dropdown = open && dropdownPos
+    ? ReactDOM.createPortal(
+        <div
+          ref={listRef}
+          style={{
+            position: "absolute",
+            top: dropdownPos.top,
+            left: dropdownPos.left,
+            width: dropdownPos.width,
+            zIndex: 99999,
+            pointerEvents: "all",
+            cursor: "default",
+            userSelect: "none",
+          }}
+          className="bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in duration-200"
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          <div className="max-h-[250px] overflow-y-auto py-2 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+            {loading && (
+              <div className="px-4 py-3 text-sm text-gray-500 flex items-center gap-2">
+                <div className="w-3 h-3 border-2 border-[#c47b96]/30 border-t-[#c47b96] rounded-full animate-spin" />
+                Buscando...
+              </div>
+            )}
+            {!loading && options.length === 0 && (
+              <div className="px-4 py-3 text-sm text-center text-gray-500 italic">No se encontraron resultados.</div>
+            )}
+            {!loading && options.map((client, index) => (
+              <div
+                key={client.id}
+                data-option
+                style={{ cursor: "pointer" }}
+                onMouseEnter={() => setSelectedIndex(index)}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => selectClient(client)}
+                className={`relative flex items-center rounded-lg px-3 py-2.5 text-sm transition-all mx-1 mb-0.5 ${
+                  value === client.id
+                    ? "bg-[#c47b96] text-white font-semibold shadow-sm"
+                    : index === selectedIndex
+                      ? "bg-gray-100 text-gray-900 font-medium"
+                      : "text-gray-700 font-medium"
+                }`}
+              >
+                <Check className={`mr-3 h-4 w-4 shrink-0 ${value === client.id ? "opacity-100" : "opacity-0"}`} />
+                <span className="truncate">{client.nombre}</span>
+              </div>
+            ))}
+          </div>
+        </div>,
+        document.body
+      )
+    : null;
+
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
+    <div className="relative w-full" ref={wrapperRef}>
+      <div className="relative flex items-center">
+        <input
+          type="text"
           role="combobox"
           aria-expanded={open}
-          className="w-full justify-between bg-white border-gray-200 text-gray-800 rounded-xl hover:bg-gray-50 h-11"
+          aria-haspopup="listbox"
+          aria-autocomplete="list"
+          className={`flex w-full items-center justify-between bg-white border border-gray-200 text-gray-800 rounded-xl px-4 h-11 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-[#c47b96]/20 focus:border-[#c47b96] ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+          placeholder="Escribe nombre o documento..."
+          value={inputValue}
+          onKeyDown={handleKeyDown}
+          onChange={(e) => { setInputValue(e.target.value); openDropdown(); setSelectedIndex(0); }}
+          onFocus={openDropdown}
           disabled={disabled}
+        />
+        <div
+          className="absolute right-3 cursor-pointer text-gray-400 hover:text-gray-600"
+          onClick={() => open ? closeDropdown() : openDropdown()}
         >
-          {value
-            ? selectedCliente?.nombre || options.find((client) => client.id === value)?.nombre || "Cliente seleccionado"
-            : "Buscar cliente..."}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="p-0 border-gray-200 rounded-xl" style={{ width: "100%", minWidth: "var(--radix-popover-trigger-width)" }}>
-        <Command shouldFilter={false} className="border-none rounded-xl">
-          <div className="flex items-center px-3 border-b border-gray-100">
-            <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
-            <input
-              className="flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-gray-400 disabled:cursor-not-allowed disabled:opacity-50"
-              placeholder="Buscar por nombre o documento..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-          </div>
-          <CommandList>
-            {loading && <div className="p-4 text-sm text-center text-gray-500">Buscando...</div>}
-            {!loading && options.length === 0 && (
-              <div className="p-4 text-sm text-center text-gray-500">No se encontraron clientes.</div>
-            )}
-            <CommandGroup>
-              {!loading && options.map((client) => (
-                <CommandItem
-                  key={client.id}
-                  value={client.id}
-                  onSelect={(currentValue: string) => {
-                    onChange(currentValue === value ? "" : currentValue);
-                    setSelectedCliente(client);
-                    setOpen(false);
-                  }}
-                  className="cursor-pointer"
-                >
-                  <Check
-                    className={`mr-2 h-4 w-4 ${
-                      value === client.id ? "opacity-100" : "opacity-0"
-                    }`}
-                  />
-                  {client.nombre} - <span className="text-gray-400 text-xs ml-2">{client.documento}</span>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+          <ChevronsUpDown className="h-4 w-4 opacity-50" />
+        </div>
+      </div>
+      {dropdown}
+    </div>
   );
 }

@@ -1,22 +1,23 @@
 import { useState, useEffect } from 'react';
 import { useStore, TipoDocumento, UserRole, Status } from '../../lib/store';
-import { PageHeader } from '../PageHeader';
-import { StatusBadge } from '../StatusBadge';
 import { StatusSwitch } from '../StatusSwitch';
 import { Pagination } from '../Pagination';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Button } from '../ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '../ui/dialog';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Plus, Eye, Pencil, Trash2, Search, AlertTriangle, X } from 'lucide-react';
+import {
+  Plus, Eye, Pencil, Trash2, Search, X, UserPlus,
+  Users, Hash, Mail, Phone, Shield, Activity,
+  AlertCircle, CheckCircle2, User,
+} from 'lucide-react';
 import { toast } from 'sonner';
-
 import { userService } from '../../services/userService';
 
 export function UsuariosModule() {
-  const { users, setUsers, ventas, pedidos, currentUser } = useStore();
+  const { users, setUsers, pedidos, currentUser } = useStore();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -43,30 +44,84 @@ export function UsuariosModule() {
     estado: 'activo' as 'activo' | 'inactivo',
   });
 
+  // Errores en tiempo real
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  const validateField = (name: string, value: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    switch (name) {
+      case 'nombres':
+      case 'apellidos': {
+        const label = name === 'nombres' ? 'El nombre' : 'El apellido';
+        if (!value.trim()) return `${label} es obligatorio`;
+        if (value.trim().length > 80) return `${label} no puede superar 80 caracteres`;
+        return '';
+      }
+      case 'numeroDocumento':
+        if (!value.trim()) return 'El documento es obligatorio';
+        if (value.trim().length > 10) return 'Máximo 10 caracteres';
+        return '';
+      case 'email':
+        if (!value.trim()) return 'El email es obligatorio';
+        if (!emailRegex.test(value.trim())) return 'Formato de email inválido';
+        if (value.trim().length > 100) return 'Máximo 100 caracteres';
+        return '';
+      case 'passwordHash':
+        if (!editingUser) {
+          if (!value) return 'La contraseña es obligatoria';
+          if (value.length < 8) return 'Mínimo 8 caracteres';
+        }
+        return '';
+      case 'telefono':
+        if (!value.trim()) return 'El teléfono es obligatorio';
+        if (value.trim().length > 20) return 'Máximo 20 caracteres';
+        return '';
+      case 'direccion':
+        if (value.trim() && value.trim().length < 3) return 'Mínimo 3 caracteres';
+        if (value.trim().length > 30) return 'Máximo 30 caracteres';
+        return '';
+      case 'ciudad':
+        if (value.trim().length > 50) return 'Máximo 50 caracteres';
+        return '';
+      default:
+        return '';
+    }
+  };
+
+  const handleFieldChange = (name: string, value: string) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
+    const error = validateField(name, value);
+    // Validación de unicidad de email en tiempo real
+    if (name === 'email' && !error) {
+      const emailExists = users.some(u => u.email.toLowerCase() === value.trim().toLowerCase() && (!editingUser || u.id !== editingUser.id));
+      setFieldErrors(prev => ({ ...prev, [name]: emailExists ? 'Este email ya está registrado' : '' }));
+    } else {
+      setFieldErrors(prev => ({ ...prev, [name]: error }));
+    }
+  };
+
   const isAdmin = currentUser?.rol === 'admin';
 
   const fetchUsers = async () => {
     try {
       const response = await userService.getAll({
         q: searchQuery.length >= 2 ? searchQuery : undefined,
-        limit: 100 // Cargar suficientes para el store inicial
+        limit: 100,
       });
-      // Mapear campos del backend (nombres, id_usuario) a los del frontend (nombre, id)
-      const mapped = response.data.map(u => ({
+      const mapped = response.data.map((u: any) => ({
         id: u.id_usuario.toString(),
         nombres: u.nombres || u.nombre,
         apellidos: u.apellidos || u.apellido,
         tipoDocumento: u.tipo_documento || 'CC',
         numeroDocumento: u.documento || u.numeroDocumento,
         email: u.email,
-        passwordHash: '', // El backend no devuelve el hash por seguridad
+        passwordHash: '',
         telefono: u.telefono,
         direccion: u.direccion,
         ciudad: u.ciudad,
-        rol: (Number(u.id_rol) === 1 ? 'admin' : 
-             Number(u.id_rol) === 2 ? 'cliente' : 'vendedor') as UserRole,
+        rol: (Number(u.id_rol) === 1 ? 'admin' : Number(u.id_rol) === 2 ? 'cliente' : 'vendedor') as UserRole,
         estado: (u.estado ? 'activo' : 'inactivo') as Status,
-        fechaCreacion: u.fecha_registro || new Date().toISOString()
+        fechaCreacion: u.fecha_registro || new Date().toISOString(),
       }));
       setUsers(mapped);
     } catch (error: any) {
@@ -74,170 +129,78 @@ export function UsuariosModule() {
     }
   };
 
-  useEffect(() => {
-    fetchUsers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchQuery]);
+  useEffect(() => { fetchUsers(); }, [searchQuery]);
 
   const handleOpenDialog = (user?: any) => {
-    if (!isAdmin) {
-      toast.error('Acceso denegado', {
-        description: 'Solo los administradores pueden crear o editar usuarios.',
-      });
+    if (!isAdmin) { toast.error('Solo los administradores pueden gestionar usuarios.'); return; }
+    if (user && user.estado === 'inactivo') {
+      toast.error('Usuario inactivo', { description: 'Debes activar el usuario antes de poder editarlo.' });
       return;
     }
-
     if (user) {
       setEditingUser(user);
       setFormData({
-        nombres: user.nombres,
-        apellidos: user.apellidos,
-        tipoDocumento: user.tipoDocumento,
-        numeroDocumento: user.numeroDocumento,
-        fechaNacimiento: user.fechaNacimiento || '',
-        email: user.email,
-        passwordHash: user.passwordHash,
-        telefono: user.telefono,
-        direccion: user.direccion || '',
-        ciudad: user.ciudad || '',
-        pais: user.pais || 'Colombia',
-        rol: user.rol,
-        estado: user.estado,
+        nombres: user.nombres, apellidos: user.apellidos,
+        tipoDocumento: user.tipoDocumento, numeroDocumento: user.numeroDocumento,
+        fechaNacimiento: user.fechaNacimiento || '', email: user.email,
+        passwordHash: '', telefono: user.telefono,
+        direccion: user.direccion || '', ciudad: user.ciudad || '',
+        pais: user.pais || 'Colombia', rol: user.rol, estado: user.estado,
       });
     } else {
       setEditingUser(null);
       setFormData({
-        nombres: '',
-        apellidos: '',
-        tipoDocumento: 'CC',
-        numeroDocumento: '',
-        fechaNacimiento: '',
-        email: '',
-        passwordHash: '',
-        telefono: '',
-        direccion: '',
-        ciudad: '',
-        pais: 'Colombia',
-        rol: 'cliente',
-        estado: 'activo',
+        nombres: '', apellidos: '', tipoDocumento: 'CC', numeroDocumento: '',
+        fechaNacimiento: '', email: '', passwordHash: '', telefono: '',
+        direccion: '', ciudad: '', pais: 'Colombia', rol: 'cliente', estado: 'activo',
       });
     }
+    setFieldErrors({});
     setIsDialogOpen(true);
   };
 
   const validateForm = () => {
-    if (!formData.nombres.trim()) {
-      toast.error('Campo obligatorio', { description: 'El nombre es obligatorio.' });
+    const fields = ['nombres', 'apellidos', 'numeroDocumento', 'email', 'telefono', 'direccion', 'ciudad'];
+    if (!editingUser) fields.push('passwordHash');
+    const newErrors: Record<string, string> = {};
+    fields.forEach(f => {
+      const err = validateField(f, (formData as any)[f] || '');
+      if (err) newErrors[f] = err;
+    });
+    // Unicidad email
+    const emailExists = users.some(u => u.email.toLowerCase() === formData.email.trim().toLowerCase() && (!editingUser || u.id !== editingUser.id));
+    if (emailExists) newErrors.email = 'Este email ya está registrado';
+    // Unicidad documento
+    const docExists = users.some(u => u.numeroDocumento === formData.numeroDocumento.trim() && (!editingUser || u.id !== editingUser.id));
+    if (docExists) newErrors.numeroDocumento = 'Ya existe un usuario con este documento';
+
+    setFieldErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
+      toast.error('Corrige los errores antes de continuar');
       return false;
     }
-
-    if (!formData.apellidos.trim()) {
-      toast.error('Campo obligatorio', { description: 'El apellido es obligatorio.' });
-      return false;
-    }
-
-    if (formData.nombres.trim().length > 100) {
-      toast.error('Nombre demasiado largo', { description: 'El nombre no debe superar 100 caracteres.' });
-      return false;
-    }
-
-    if (formData.apellidos.trim().length > 100) {
-      toast.error('Apellido demasiado largo', { description: 'El apellido no debe superar 100 caracteres.' });
-      return false;
-    }
-
-    if (!formData.numeroDocumento.trim()) {
-      toast.error('Campo obligatorio', { description: 'El número de documento es obligatorio.' });
-      return false;
-    }
-
-    if (formData.numeroDocumento.trim().length > 30) {
-      toast.error('Documento demasiado largo', { description: 'El número de documento no debe superar 30 caracteres.' });
-      return false;
-    }
-
-    const docExists = users.some(
-      u => u.numeroDocumento === formData.numeroDocumento.trim() && (!editingUser || u.id !== editingUser.id)
-    );
-    if (docExists) {
-      toast.error('Documento duplicado', { description: 'Ya existe un usuario con este número de documento.' });
-      return false;
-    }
-
-    if (!formData.email.trim()) {
-      toast.error('Campo obligatorio', { description: 'El correo electrónico es obligatorio.' });
-      return false;
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email.trim())) {
-      toast.error('Email inválido', { description: 'Por favor ingresa un correo electrónico válido.' });
-      return false;
-    }
-
-    if (formData.email.trim().length > 150) {
-      toast.error('Email demasiado largo', { description: 'El correo electrónico no debe superar 150 caracteres.' });
-      return false;
-    }
-
-    const emailExists = users.some(
-      u => u.email.toLowerCase() === formData.email.trim().toLowerCase() && (!editingUser || u.id !== editingUser.id)
-    );
-    if (emailExists) {
-      toast.error('Email duplicado', { description: 'Ya existe un usuario con este correo electrónico.' });
-      return false;
-    }
-
-    if (!editingUser && !formData.passwordHash.trim()) {
-      toast.error('Campo obligatorio', { description: 'La contraseña es obligatoria para nuevos usuarios.' });
-      return false;
-    }
-
-    if (!formData.telefono.trim()) {
-      toast.error('Campo obligatorio', { description: 'El teléfono es obligatorio.' });
-      return false;
-    }
-
-    if (formData.telefono.trim().length > 20) {
-      toast.error('Teléfono demasiado largo', { description: 'El teléfono no debe superar 20 caracteres.' });
-      return false;
-    }
-
     return true;
   };
 
   const handleSave = async () => {
-    if (!validateForm()) {
-      return;
-    }
-
+    if (!validateForm()) return;
     setIsSaving(true);
-
     try {
       const userData = {
-        id_rol: formData.rol === 'admin' ? 1 : 2, // Admin: 1, Cliente: 2 (según base de datos)
-        nombres: formData.nombres.trim(),
-        apellidos: formData.apellidos.trim(),
+        id_rol: formData.rol === 'admin' ? 1 : 2,
+        nombres: formData.nombres.trim(), apellidos: formData.apellidos.trim(),
         telefono: formData.telefono.trim(),
         direccion: formData.direccion.trim() || undefined,
         ciudad: formData.ciudad.trim() || undefined,
-        estado: formData.estado === 'activo'
+        estado: formData.estado === 'activo',
       };
-
       if (editingUser) {
         await userService.update(editingUser.id, userData);
         toast.success('Usuario actualizado correctamente');
       } else {
-        await userService.create({
-          ...userData,
-          tipo_documento: formData.tipoDocumento,
-          documento: formData.numeroDocumento,
-          email: formData.email,
-          password_hash: formData.passwordHash
-        });
+        await userService.create({ ...userData, tipo_documento: formData.tipoDocumento, documento: formData.numeroDocumento, email: formData.email, password_hash: formData.passwordHash });
         toast.success('Usuario creado correctamente');
       }
-
       await fetchUsers();
       setIsDialogOpen(false);
     } catch (error: any) {
@@ -247,34 +210,24 @@ export function UsuariosModule() {
     }
   };
 
-  const handleOpenDetailDialog = (user: any) => {
-    setSelectedUser(user);
-    setIsDetailDialogOpen(true);
-  };
-
   const handleOpenDeleteDialog = (user: any) => {
-    if (!isAdmin) {
-      toast.error('Acceso denegado', {
-        description: 'Solo los administradores pueden eliminar usuarios.',
-      });
+    if (!isAdmin) { toast.error('Solo los administradores pueden eliminar usuarios.'); return; }
+    // Un admin no puede eliminar a otro admin
+    if (user.rol === 'admin') {
+      toast.error('No permitido', { description: 'No se puede eliminar a un usuario administrador.' });
       return;
     }
-
     const userExists = users.find(u => u.id === user.id);
-    if (!userExists) {
-      toast.error('Usuario no encontrado', {
-        description: 'El usuario que intentas eliminar no existe o ya fue eliminado.',
-      });
-      return;
-    }
+    if (!userExists) { toast.error('Usuario no encontrado o ya eliminado.'); return; }
 
-    // Check dependencies
-    const ventasCount = ventas.filter(v => v.clienteId === user.id).length;
-    const pedidosCount = pedidos.filter(p => p.clienteId === user.id).length;
-
-    if (ventasCount > 0 || pedidosCount > 0) {
-      toast.error('No se puede eliminar un usuario con transacciones asociadas', {
-        description: `Este usuario tiene ${ventasCount + pedidosCount} transacción(es) asociada(s). Desactívalo en lugar de eliminarlo.`,
+    // Bloquear si tiene pedidos activos (no entregado ni cancelado)
+    const pedidosActivos = pedidos.filter(p =>
+      p.clienteId === user.id &&
+      !['entregado', 'cancelado'].includes(p.estado)
+    );
+    if (pedidosActivos.length > 0) {
+      toast.error('No se puede eliminar este usuario', {
+        description: `Tiene ${pedidosActivos.length} pedido(s) activo(s). Deben estar entregados o cancelados primero.`,
       });
       return;
     }
@@ -285,517 +238,369 @@ export function UsuariosModule() {
 
   const handleConfirmDelete = async () => {
     if (!selectedUser) return;
-
     setIsDeleting(true);
-
     try {
-      await userService.deactivate(selectedUser.id);
-      toast.success('Usuario desactivado correctamente');
+      await userService.deletePermanent(selectedUser.id);
+      toast.success('Usuario eliminado correctamente');
       await fetchUsers();
       setIsDeleteDialogOpen(false);
       setSelectedUser(null);
     } catch (error: any) {
-      toast.error('No se pudo desactivar el usuario', { description: error.message });
+      toast.error('No se pudo eliminar el usuario', { description: error.message });
     } finally {
       setIsDeleting(false);
     }
   };
 
-  const handleSearchChange = (value: string) => {
-    setSearchQuery(value.trim());
-  };
-
-  const handleClearSearch = () => {
-    setSearchQuery('');
-    setCurrentPage(1);
-  };
-
   const filteredUsers = users.filter(user => {
     if (!searchQuery || searchQuery.length < 2) return true;
-
-    const query = searchQuery.toLowerCase();
+    const q = searchQuery.toLowerCase();
     return (
-      user.nombres.toLowerCase().includes(query) ||
-      user.apellidos.toLowerCase().includes(query) ||
-      (user.nombres + ' ' + user.apellidos).toLowerCase().includes(query) ||
-      user.email.toLowerCase().includes(query) ||
-      user.numeroDocumento.includes(query)
+      user.nombres.toLowerCase().includes(q) ||
+      user.apellidos.toLowerCase().includes(q) ||
+      (user.nombres + ' ' + user.apellidos).toLowerCase().includes(q) ||
+      user.email.toLowerCase().includes(q) ||
+      user.numeroDocumento.includes(q)
     );
   });
 
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
-  const paginatedUsers = filteredUsers.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  const paginatedUsers = filteredUsers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  const getRolLabel = (rol: string) => {
-    const labels: Record<string, string> = {
-      admin: 'Administrador',
-      vendedor: 'Vendedor',
-      cliente: 'Cliente',
-      bodeguero: 'Bodeguero',
-    };
-    return labels[rol] || rol;
-  };
+  const getRolLabel = (rol: string) => ({ admin: 'Administrador', vendedor: 'Vendedor', cliente: 'Cliente', bodeguero: 'Bodeguero' }[rol] || rol);
+  const getTipoDocumentoLabel = (tipo: string) => ({ CC: 'Cédula de Ciudadanía', TI: 'Tarjeta de Identidad', CE: 'Cédula de Extranjería', PAS: 'Pasaporte', NIT: 'NIT', OTRO: 'Otro' }[tipo] || tipo);
 
-  const getTipoDocumentoLabel = (tipo: string) => {
-    const labels: Record<string, string> = {
-      CC: 'Cédula de Ciudadanía',
-      TI: 'Tarjeta de Identidad',
-      CE: 'Cédula de Extranjería',
-      PAS: 'Pasaporte',
-      NIT: 'NIT',
-      OTRO: 'Otro',
+  const getRolBadge = (rol: string) => {
+    const map: Record<string, { bg: string; text: string }> = {
+      admin: { bg: 'bg-purple-50', text: 'text-purple-700' },
+      vendedor: { bg: 'bg-blue-50', text: 'text-blue-700' },
+      cliente: { bg: 'bg-emerald-50', text: 'text-emerald-700' },
+      bodeguero: { bg: 'bg-amber-50', text: 'text-amber-700' },
     };
-    return labels[tipo] || tipo;
+    return map[rol] || { bg: 'bg-gray-100', text: 'text-gray-600' };
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <PageHeader
-        title="Usuarios"
-        subtitle="Gestión completa de usuarios del sistema"
-        actionButton={{
-          label: 'Nuevo Usuario',
-          icon: Plus,
-          onClick: () => handleOpenDialog(),
-        }}
-      />
+    <div className="min-h-screen bg-[#f6f3f5]">
+      {/* HEADER */}
+      <div className="px-8 pt-8 pb-5">
+        <div className="relative overflow-hidden rounded-2xl shadow-xl">
+          <div
+            className="relative px-6 py-8"
+            style={{
+              background: `
+                radial-gradient(ellipse at 80% 8%, rgba(140,70,90,0.6) 0%, transparent 50%),
+                radial-gradient(ellipse at 12% 65%, rgba(80,25,40,0.55) 0%, transparent 50%),
+                radial-gradient(ellipse at 55% 92%, rgba(110,45,65,0.45) 0%, transparent 45%),
+                linear-gradient(158deg, #2e1020 0%, #3d1828 38%, #4a2035 62%, #2e1020 100%)
+              `,
+            }}
+          >
+            <div className="relative flex flex-wrap gap-6 justify-between items-center z-10">
+              <div className="space-y-2">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-white/10 rounded-xl backdrop-blur-sm border border-white/20">
+                    <Users className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h1 className="text-3xl font-bold tracking-tight" style={{ color: "#fffff2" }}>Usuarios</h1>
+                    <p className="text-sm mt-0.5" style={{ color: "#fffff2" }}>Gestión de usuarios del sistema</p>
+                  </div>
+                </div>
+              </div>
+              {isAdmin && (
+                <button
+                  onClick={() => handleOpenDialog()}
+                  style={{ backgroundColor: "#7b1347ff", color: "#ffffff" }}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium shadow-sm hover:opacity-90 active:opacity-80 transition-opacity duration-150 cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                  Nuevo Usuario
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
 
-      <div className="p-8">
-        <div className="bg-card border border-border rounded-lg overflow-hidden">
-          <div className="p-4 border-b border-border space-y-4">
-            <div className="flex items-center gap-2">
+      <div className="px-8 pb-8">
+        <div className="bg-white/80 backdrop-blur-sm border border-white/50 rounded-2xl overflow-hidden shadow-xl">
+          {/* Barra de búsqueda */}
+          <div className="p-4 border-b border-gray-100 bg-white">
+            <div className="flex items-center gap-4">
               <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground-secondary" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   value={searchQuery}
-                  onChange={(e) => handleSearchChange(e.target.value)}
-                  className="w-full h-10 pl-10 pr-10 bg-input-background border border-border rounded-lg text-foreground placeholder:text-foreground-secondary focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="Buscar por nombre, apellido, email o documento..."
-                  maxLength={100}
+                  onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+                  className="w-full h-10 pl-10 pr-4 bg-white border border-gray-200 rounded-lg text-gray-800 placeholder:text-gray-400 focus:outline-none focus:border-[#c47b96] focus:ring-2 focus:ring-[#c47b96]/20 transition-all duration-150"
+                  placeholder="Buscar por nombre, email o documento..."
                 />
-                {searchQuery && (
-                  <button
-                    onClick={handleClearSearch}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground-secondary hover:text-foreground transition-colors"
-                    title="Limpiar búsqueda"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
               </div>
-            </div>
-
-            {searchQuery && searchQuery.length >= 2 && (
-              <div className="flex items-center gap-2 text-foreground-secondary" style={{ fontSize: '14px' }}>
-                <span>Resultados para: <span className="text-foreground" style={{ fontWeight: 600 }}>"{searchQuery}"</span></span>
-                <span className="text-foreground-secondary">·</span>
-                <span className="text-primary" style={{ fontWeight: 500 }}>{filteredUsers.length} {filteredUsers.length === 1 ? 'resultado' : 'resultados'}</span>
-                <button
-                  onClick={handleClearSearch}
-                  className="text-primary hover:text-primary/80 transition-colors ml-2"
-                  style={{ fontSize: '13px', fontWeight: 500 }}
-                >
-                  Limpiar
-                </button>
-              </div>
-            )}
-
-            {searchQuery && searchQuery.length === 1 && (
-              <div className="p-3 rounded-lg bg-info/10 border border-info/30">
-                <p className="text-info" style={{ fontSize: '13px' }}>
-                  Escribe al menos 2 caracteres para comenzar la búsqueda
-                </p>
-              </div>
-            )}
-
-            <div>
-              <p className="text-foreground-secondary" style={{ fontSize: '14px' }}>
-                <>
-                  Mostrando {filteredUsers.length} de {users.length} usuarios
-                  {searchQuery && searchQuery.length >= 2 && ` · Filtrado en tiempo real`}
-                </>
-              </p>
             </div>
           </div>
 
+          {/* Tabla */}
           <Table>
             <TableHeader>
-              <TableRow className="border-border hover:bg-transparent">
-                <TableHead className="text-foreground-secondary">Nombre Completo</TableHead>
-                <TableHead className="text-foreground-secondary">Tipo Doc</TableHead>
-                <TableHead className="text-foreground-secondary">Documento</TableHead>
-                <TableHead className="text-foreground-secondary">Email</TableHead>
-                <TableHead className="text-foreground-secondary">Teléfono</TableHead>
-                <TableHead className="text-foreground-secondary">Rol</TableHead>
-                <TableHead className="text-foreground-secondary">Estado</TableHead>
-                <TableHead className="text-foreground-secondary text-right">Acciones</TableHead>
+              <TableRow className="bg-gradient-to-r from-gray-50 to-gray-100/50 border-b-2 border-gray-200">
+                <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-3">
+                  <div className="flex items-center gap-1.5"><Hash className="w-3.5 h-3.5" /> ID</div>
+                </TableHead>
+                <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-3">
+                  <div className="flex items-center gap-1.5"><User className="w-3.5 h-3.5" /> Nombre</div>
+                </TableHead>
+                <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-3">
+                  <div className="flex items-center gap-1.5"><Hash className="w-3.5 h-3.5" /> Documento</div>
+                </TableHead>
+                <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-3">
+                  <div className="flex items-center gap-1.5"><Mail className="w-3.5 h-3.5" /> Email</div>
+                </TableHead>
+                <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-3">
+                  <div className="flex items-center gap-1.5"><Phone className="w-3.5 h-3.5" /> Teléfono</div>
+                </TableHead>
+                <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-3">
+                  <div className="flex items-center gap-1.5"><Shield className="w-3.5 h-3.5" /> Rol</div>
+                </TableHead>
+                <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-3">
+                  <div className="flex items-center gap-1.5"><Activity className="w-3.5 h-3.5" /> Estado</div>
+                </TableHead>
+                <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider text-right py-3">Acciones</TableHead>
               </TableRow>
             </TableHeader>
+
             <TableBody>
-              {users.length === 0 ? (
+              {paginatedUsers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-16">
-                    <div className="flex flex-col items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-surface flex items-center justify-center">
-                        <AlertTriangle className="w-6 h-6 text-foreground-secondary" />
+                  <TableCell colSpan={8} className="text-center py-20">
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#fff0f5] to-[#fce8f0] flex items-center justify-center">
+                        <Users className="w-10 h-10 text-[#c47b96]" />
                       </div>
-                      <p className="text-foreground" style={{ fontSize: '16px', fontWeight: 600 }}>
-                        No hay usuarios registrados
-                      </p>
-                      <p className="text-foreground-secondary" style={{ fontSize: '14px' }}>
-                        Comienza agregando tu primer usuario al sistema
-                      </p>
-                      {isAdmin && (
-                        <Button
-                          onClick={() => handleOpenDialog()}
-                          className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2 mt-4"
-                        >
-                          <Plus className="w-4 h-4" />
-                          Nuevo Usuario
-                        </Button>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : filteredUsers.length === 0 && searchQuery.length >= 2 ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="text-center py-16">
-                    <div className="flex flex-col items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-surface flex items-center justify-center">
-                        <Search className="w-6 h-6 text-foreground-secondary" />
+                      <div>
+                        <p className="text-gray-700 font-semibold text-lg">
+                          {searchQuery ? `No se encontraron resultados para "${searchQuery}"` : 'No hay usuarios registrados'}
+                        </p>
+                        <p className="text-gray-400 text-sm mt-1">
+                          {searchQuery ? 'Intenta con otros términos de búsqueda' : 'Los usuarios aparecerán aquí'}
+                        </p>
                       </div>
-                      <p className="text-foreground" style={{ fontSize: '16px', fontWeight: 600 }}>
-                        No se encontraron resultados
-                      </p>
-                      <p className="text-foreground-secondary" style={{ fontSize: '14px' }}>
-                        No hay usuarios que coincidan con "{searchQuery}"
-                      </p>
-                      <Button
-                        onClick={handleClearSearch}
-                        variant="outline"
-                        className="mt-2 border-border text-foreground hover:bg-surface"
-                      >
-                        <X className="w-4 h-4 mr-2" />
-                        Limpiar búsqueda
-                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
               ) : (
-                paginatedUsers.map((user) => (
-                  <TableRow key={user.id} className="border-border hover:bg-surface/50">
-                    <TableCell className="text-foreground">{user.nombres} {user.apellidos}</TableCell>
-                    <TableCell className="text-foreground-secondary">{user.tipoDocumento}</TableCell>
-                    <TableCell className="text-foreground">{user.numeroDocumento}</TableCell>
-                    <TableCell className="text-foreground-secondary">{user.email}</TableCell>
-                    <TableCell className="text-foreground">{user.telefono}</TableCell>
-                    <TableCell>
-                      <span className="px-2 py-1 rounded text-xs bg-primary/10 text-primary">
-                        {getRolLabel(user.rol)}
-                      </span>
-                    </TableCell>
-                     <TableCell>
-                      <StatusSwitch
-                        status={user.estado}
-                        onChange={async (newStatus) => {
-                          try {
-                            await userService.update(user.id, { estado: newStatus === 'activo' });
-                            await fetchUsers();
-                          } catch (e: any) {
-                            toast.error('Error al cambiar estado');
-                          }
-                        }}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center justify-end gap-1">
-                        <button
-                          onClick={() => handleOpenDetailDialog(user)}
-                          className="h-8 w-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-150"
-                          title="Ver detalles"
-                        >
-                          <Eye className="w-5 h-5" />
-                        </button>
-                        <button
-                          onClick={() => handleOpenDialog(user)}
-                          className="h-8 w-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-all duration-150"
-                          title="Editar usuario"
-                        >
-                          <Pencil className="w-5 h-5" />
-                        </button>
-                        <button
-                          onClick={() => handleOpenDeleteDialog(user)}
-                          className="h-8 w-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-rose-50 hover:text-rose-600 transition-all duration-150"
-                          title="Eliminar usuario"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
+                paginatedUsers.map((user) => {
+                  const rolBadge = getRolBadge(user.rol);
+                  return (
+                    <TableRow key={user.id} className="border-b border-gray-100 transition-all duration-200 hover:bg-gradient-to-r hover:from-[#fff0f5]/40 hover:to-transparent group">
+                      <TableCell className="py-2.5">
+                        <span className="font-mono text-[11px] font-semibold text-gray-400">#{user.id}</span>
+                      </TableCell>
+                      <TableCell className="py-2.5">
+                        <div className="flex items-center gap-2">    
+                          <span className="text-gray-800 font-semibold text-sm">{user.nombres} {user.apellidos}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="py-2.5">
+                        <span className="text-gray-500 text-sm font-mono">{user.tipoDocumento} {user.numeroDocumento}</span>
+                      </TableCell>
+                      <TableCell className="py-2.5">
+                        <span className="text-gray-600 text-sm">{user.email}</span>
+                      </TableCell>
+                      <TableCell className="py-2.5">
+                        <span className="text-gray-600 text-sm">{user.telefono}</span>
+                      </TableCell>
+                      <TableCell className="py-2.5">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold ${rolBadge.bg} ${rolBadge.text}`}>
+                          {getRolLabel(user.rol)}
+                        </span>
+                      </TableCell>
+                      <TableCell className="py-2.5">
+                        {(() => {
+                          const pedidosActivos = pedidos.filter(p =>
+                            p.clienteId === user.id &&
+                            !['entregado', 'cancelado'].includes(p.estado)
+                          );
+                          const tieneActivos = pedidosActivos.length > 0;
+                          return (
+                            <div title={tieneActivos ? `Tiene ${pedidosActivos.length} pedido(s) activo(s)` : undefined}>
+                              <StatusSwitch
+                                status={user.estado}
+                                onChange={async (newStatus) => {
+                                  if (tieneActivos) {
+                                    toast.error('No se puede desactivar', { description: `Tiene ${pedidosActivos.length} pedido(s) activo(s) pendientes.` });
+                                    return;
+                                  }
+                                  try {
+                                    await userService.update(user.id, { estado: newStatus === 'activo' });
+                                    await fetchUsers();
+                                  } catch {
+                                    toast.error('Error al cambiar estado');
+                                  }
+                                }}
+                              />
+                            </div>
+                          );
+                        })()}
+                      </TableCell>
+                      <TableCell className="py-2.5">
+                        <div className="flex items-center justify-end gap-1">
+                          <button onClick={() => { setSelectedUser(user); setIsDetailDialogOpen(true); }} title="Ver detalles" className="h-8 w-8 flex items-center justify-center rounded-lg transition-all duration-150 cursor-pointer text-gray-400 hover:bg-indigo-50 hover:text-indigo-600">
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          {isAdmin && (
+                            <button onClick={() => handleOpenDialog(user)} title="Editar" className="h-8 w-8 flex items-center justify-center rounded-lg transition-all duration-150 cursor-pointer text-gray-400 hover:bg-blue-50 hover:text-blue-600">
+                              <Pencil className="w-4 h-4" />
+                            </button>
+                          )}
+                          {isAdmin && (
+                            <button onClick={() => handleOpenDeleteDialog(user)} title="Desactivar" className="h-8 w-8 flex items-center justify-center rounded-lg transition-all duration-150 cursor-pointer text-gray-400 hover:bg-rose-50 hover:text-rose-600">
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               )}
             </TableBody>
           </Table>
         </div>
 
         {filteredUsers.length > 0 && (
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            totalItems={filteredUsers.length}
-            itemsPerPage={itemsPerPage}
-            onPageChange={setCurrentPage}
-            onItemsPerPageChange={(newItemsPerPage) => {
-              setItemsPerPage(newItemsPerPage);
-              setCurrentPage(1);
-            }}
-          />
+          <div className="mt-6">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={filteredUsers.length}
+              itemsPerPage={itemsPerPage}
+              onPageChange={setCurrentPage}
+              onItemsPerPageChange={(n) => { setItemsPerPage(n); setCurrentPage(1); }}
+            />
+          </div>
         )}
       </div>
 
       {/* Create/Edit Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={(open: boolean) => {
-        if (!open && !isSaving) {
-          setIsDialogOpen(false);
-        }
-      }}>
-        <DialogContent className="bg-card border-border max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-foreground">
-              {editingUser ? 'Editar Usuario' : 'Nuevo Usuario'}
-            </DialogTitle>
-            <DialogDescription className="text-foreground-secondary">
-              {editingUser
-                ? 'Modifica la información del usuario existente'
-                : 'Completa los campos para registrar un nuevo usuario'}
-            </DialogDescription>
-          </DialogHeader>
+      <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open && !isSaving) setIsDialogOpen(false); }}>
+        <DialogContent className="bg-white border border-gray-100 max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl p-0">
+          <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100 sticky top-0 bg-white z-10">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center justify-center text-white font-bold text-lg flex-shrink-0" style={{ width: 44, height: 44, borderRadius: 12, background: "linear-gradient(135deg,#c47b96,#e092b2)", boxShadow: "0 2px 8px rgba(196,123,150,0.3)" }}>
+                {editingUser ? <Pencil className="w-5 h-5" /> : <UserPlus className="w-5 h-5" />}
+              </div>
+              <div>
+                <DialogTitle className="text-base font-bold text-gray-900 leading-tight">
+                  {editingUser ? 'Editar Usuario' : 'Nuevo Usuario'}
+                </DialogTitle>
+                <DialogDescription className="text-xs text-gray-400 mt-0.5">
+                  {editingUser ? 'Modifica la información del usuario' : 'Completa los campos para registrar un nuevo usuario'}
+                </DialogDescription>
+              </div>
+            </div>
+            <button onClick={() => { if (!isSaving) setIsDialogOpen(false); }} className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
 
-          <div className="space-y-4 py-4">
+          <div className="px-6 py-5 space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="nombre" className="text-foreground">
-                  Nombre <span className="text-danger">*</span>
-                </Label>
-                <Input
-                  id="nombre"
-                  value={formData.nombres}
-                  onChange={(e) => setFormData({ ...formData, nombres: e.target.value })}
-                  className="bg-input-background border-border text-foreground"
-                  placeholder="Ej: Juan"
-                  disabled={isSaving}
-                  maxLength={100}
-                />
+                <Label className="text-gray-700 font-semibold text-sm">Nombre <span className="text-rose-500">*</span></Label>
+                <Input value={formData.nombres} onChange={(e) => handleFieldChange('nombres', e.target.value)} className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] h-11 ${fieldErrors.nombres ? 'border-rose-400' : ''}`} placeholder="Ej: Juan" disabled={isSaving} maxLength={80} />
+                {fieldErrors.nombres && <p className="text-rose-500 text-xs mt-1">{fieldErrors.nombres}</p>}
               </div>
-
               <div className="space-y-2">
-                <Label htmlFor="apellido" className="text-foreground">
-                  Apellido <span className="text-danger">*</span>
-                </Label>
-                <Input
-                  id="apellido"
-                  value={formData.apellidos}
-                  onChange={(e) => setFormData({ ...formData, apellidos: e.target.value })}
-                  className="bg-input-background border-border text-foreground"
-                  placeholder="Ej: Pérez"
-                  disabled={isSaving}
-                  maxLength={100}
-                />
+                <Label className="text-gray-700 font-semibold text-sm">Apellido <span className="text-rose-500">*</span></Label>
+                <Input value={formData.apellidos} onChange={(e) => handleFieldChange('apellidos', e.target.value)} className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] h-11 ${fieldErrors.apellidos ? 'border-rose-400' : ''}`} placeholder="Ej: Pérez" disabled={isSaving} maxLength={80} />
+                {fieldErrors.apellidos && <p className="text-rose-500 text-xs mt-1">{fieldErrors.apellidos}</p>}
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="tipoDocumento" className="text-foreground">
-                  Tipo de Documento <span className="text-danger">*</span>
-                </Label>
-                <Select
-                  value={formData.tipoDocumento}
-                  onValueChange={(value: TipoDocumento) => setFormData({ ...formData, tipoDocumento: value })}
-                  disabled={isSaving}
-                >
-                  <SelectTrigger className="bg-input-background border-border text-foreground">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card border-border">
-                    <SelectItem value="CC" className="text-foreground">Cédula de Ciudadanía</SelectItem>
-                    <SelectItem value="TI" className="text-foreground">Tarjeta de Identidad</SelectItem>
-                    <SelectItem value="CE" className="text-foreground">Cédula de Extranjería</SelectItem>
-                    <SelectItem value="PAS" className="text-foreground">Pasaporte</SelectItem>
-                    <SelectItem value="NIT" className="text-foreground">NIT</SelectItem>
-                    <SelectItem value="OTRO" className="text-foreground">Otro</SelectItem>
+                <Label className="text-gray-700 font-semibold text-sm">Tipo de Documento <span className="text-rose-500">*</span></Label>
+                <Select value={formData.tipoDocumento} onValueChange={(v: TipoDocumento) => setFormData({ ...formData, tipoDocumento: v })} disabled={isSaving}>
+                  <SelectTrigger className="bg-gray-50 border-gray-200 text-gray-800 rounded-xl h-11"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="CC">Cédula de Ciudadanía</SelectItem>
+                    <SelectItem value="TI">Tarjeta de Identidad</SelectItem>
+                    <SelectItem value="CE">Cédula de Extranjería</SelectItem>
+                    <SelectItem value="PAS">Pasaporte</SelectItem>
+                    <SelectItem value="NIT">NIT</SelectItem>
+                    <SelectItem value="OTRO">Otro</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-
               <div className="space-y-2">
-                <Label htmlFor="numeroDocumento" className="text-foreground">
-                  Número de Documento <span className="text-danger">*</span>
-                </Label>
-                <Input
-                  id="numeroDocumento"
-                  value={formData.numeroDocumento}
-                  onChange={(e) => setFormData({ ...formData, numeroDocumento: e.target.value })}
-                  className="bg-input-background border-border text-foreground"
-                  placeholder="Ej: 1234567890"
-                  disabled={isSaving}
-                  maxLength={30}
-                />
+                <Label className="text-gray-700 font-semibold text-sm">Número de Documento <span className="text-rose-500">*</span></Label>
+                <Input value={formData.numeroDocumento} onChange={(e) => handleFieldChange('numeroDocumento', e.target.value)} className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] h-11 ${fieldErrors.numeroDocumento ? 'border-rose-400' : ''}`} placeholder="Ej: 1234567890" disabled={isSaving} maxLength={10} />
+                {fieldErrors.numeroDocumento && <p className="text-rose-500 text-xs mt-1">{fieldErrors.numeroDocumento}</p>}
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="fechaNacimiento" className="text-foreground">
-                  Fecha de Nacimiento
-                </Label>
-                <Input
-                  id="fechaNacimiento"
-                  type="date"
-                  value={formData.fechaNacimiento}
-                  onChange={(e) => setFormData({ ...formData, fechaNacimiento: e.target.value })}
-                  className="bg-input-background border-border text-foreground"
-                  disabled={isSaving}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="telefono" className="text-foreground">
-                  Teléfono <span className="text-danger">*</span>
-                </Label>
-                <Input
-                  id="telefono"
-                  value={formData.telefono}
-                  onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
-                  className="bg-input-background border-border text-foreground"
-                  placeholder="Ej: 3001234567"
-                  disabled={isSaving}
-                  maxLength={20}
-                />
+                <Label className="text-gray-700 font-semibold text-sm">Teléfono <span className="text-rose-500">*</span></Label>
+                <Input value={formData.telefono} onChange={(e) => handleFieldChange('telefono', e.target.value)} className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] h-11 ${fieldErrors.telefono ? 'border-rose-400' : ''}`} placeholder="Ej: 3001234567" disabled={isSaving} maxLength={20} />
+                {fieldErrors.telefono && <p className="text-rose-500 text-xs mt-1">{fieldErrors.telefono}</p>}
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-foreground">
-                Email <span className="text-danger">*</span>
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="bg-input-background border-border text-foreground"
-                placeholder="Ej: usuario@correo.com"
-                disabled={isSaving}
-                maxLength={150}
-              />
+              <Label className="text-gray-700 font-semibold text-sm">Email <span className="text-rose-500">*</span></Label>
+              <Input type="email" value={formData.email} onChange={(e) => handleFieldChange('email', e.target.value)} className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] h-11 ${fieldErrors.email ? 'border-rose-400' : ''}`} placeholder="Ej: usuario@correo.com" disabled={isSaving} maxLength={100} />
+              {fieldErrors.email && <p className="text-rose-500 text-xs mt-1">{fieldErrors.email}</p>}
             </div>
 
             {!editingUser && (
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-foreground">
-                  Contraseña <span className="text-danger">*</span>
-                </Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={formData.passwordHash}
-                  onChange={(e) => setFormData({ ...formData, passwordHash: e.target.value })}
-                  className="bg-input-background border-border text-foreground"
-                  placeholder="Ingresa una contraseña segura"
-                  disabled={isSaving}
-                  maxLength={255}
-                />
+                <Label className="text-gray-700 font-semibold text-sm">Contraseña <span className="text-rose-500">*</span></Label>
+                <Input type="password" value={formData.passwordHash} onChange={(e) => handleFieldChange('passwordHash', e.target.value)} className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] h-11 ${fieldErrors.passwordHash ? 'border-rose-400' : ''}`} placeholder="Mínimo 8 caracteres" disabled={isSaving} maxLength={225} />
+                {fieldErrors.passwordHash && <p className="text-rose-500 text-xs mt-1">{fieldErrors.passwordHash}</p>}
               </div>
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="direccion" className="text-foreground">
-                Dirección
-              </Label>
-              <Input
-                id="direccion"
-                value={formData.direccion}
-                onChange={(e) => setFormData({ ...formData, direccion: e.target.value })}
-                className="bg-input-background border-border text-foreground"
-                placeholder="Ej: Calle 50 #30-20"
-                disabled={isSaving}
-                maxLength={200}
-              />
+              <Label className="text-gray-700 font-semibold text-sm">Dirección</Label>
+              <Input value={formData.direccion} onChange={(e) => handleFieldChange('direccion', e.target.value)} className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] h-11 ${fieldErrors.direccion ? 'border-rose-400' : ''}`} placeholder="Ej: Calle 50 #30-20" disabled={isSaving} maxLength={30} />
+              {fieldErrors.direccion && <p className="text-rose-500 text-xs mt-1">{fieldErrors.direccion}</p>}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="ciudad" className="text-foreground">
-                  Ciudad
-                </Label>
-                <Input
-                  id="ciudad"
-                  value={formData.ciudad}
-                  onChange={(e) => setFormData({ ...formData, ciudad: e.target.value })}
-                  className="bg-input-background border-border text-foreground"
-                  placeholder="Ej: Medellín"
-                  disabled={isSaving}
-                  maxLength={100}
-                />
+                <Label className="text-gray-700 font-semibold text-sm">Ciudad</Label>
+                <Input value={formData.ciudad} onChange={(e) => handleFieldChange('ciudad', e.target.value)} className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] h-11 ${fieldErrors.ciudad ? 'border-rose-400' : ''}`} placeholder="Ej: Medellín" disabled={isSaving} maxLength={50} />
+                {fieldErrors.ciudad && <p className="text-rose-500 text-xs mt-1">{fieldErrors.ciudad}</p>}
               </div>
-
               <div className="space-y-2">
-                <Label htmlFor="pais" className="text-foreground">
-                  País
-                </Label>
-                <Input
-                  id="pais"
-                  value={formData.pais}
-                  onChange={(e) => setFormData({ ...formData, pais: e.target.value })}
-                  className="bg-input-background border-border text-foreground"
-                  placeholder="Ej: Colombia"
-                  disabled={isSaving}
-                  maxLength={100}
-                />
+                <Label className="text-gray-700 font-semibold text-sm">País</Label>
+                <Input value={formData.pais} onChange={(e) => setFormData({ ...formData, pais: e.target.value })} className="bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] h-11" placeholder="Ej: Colombia" disabled={isSaving} maxLength={100} />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="rol" className="text-foreground">
-                  Rol <span className="text-danger">*</span>
-                </Label>
-                <Select
-                  value={formData.rol}
-                  onValueChange={(value: 'admin' | 'vendedor' | 'cliente' | 'bodeguero') => setFormData({ ...formData, rol: value })}
-                  disabled={isSaving}
-                >
-                  <SelectTrigger className="bg-input-background border-border text-foreground">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card border-border">
-                    <SelectItem value="admin" className="text-foreground">Administrador</SelectItem>
-                    <SelectItem value="vendedor" className="text-foreground">Vendedor</SelectItem>
-                    <SelectItem value="bodeguero" className="text-foreground">Bodeguero</SelectItem>
-                    <SelectItem value="cliente" className="text-foreground">Cliente</SelectItem>
+                <Label className="text-gray-700 font-semibold text-sm">Rol <span className="text-rose-500">*</span></Label>
+                <Select value={formData.rol} onValueChange={(v: any) => setFormData({ ...formData, rol: v })} disabled={isSaving}>
+                  <SelectTrigger className="bg-gray-50 border-gray-200 text-gray-800 rounded-xl h-11"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">Administrador</SelectItem>
+                    <SelectItem value="vendedor">Vendedor</SelectItem>
+                    <SelectItem value="bodeguero">Bodeguero</SelectItem>
+                    <SelectItem value="cliente">Cliente</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-
               {editingUser && (
                 <div className="space-y-2">
-                  <Label htmlFor="estado" className="text-foreground">Estado</Label>
-                  <Select
-                    value={formData.estado}
-                    onValueChange={(value: 'activo' | 'inactivo') => setFormData({ ...formData, estado: value })}
-                    disabled={isSaving}
-                  >
-                    <SelectTrigger className="bg-input-background border-border text-foreground">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-card border-border">
-                      <SelectItem value="activo" className="text-foreground">Activo</SelectItem>
-                      <SelectItem value="inactivo" className="text-foreground">Inactivo</SelectItem>
+                  <Label className="text-gray-700 font-semibold text-sm">Estado</Label>
+                  <Select value={formData.estado} onValueChange={(v: any) => setFormData({ ...formData, estado: v })} disabled={isSaving}>
+                    <SelectTrigger className="bg-gray-50 border-gray-200 text-gray-800 rounded-xl h-11"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="activo">Activo</SelectItem>
+                      <SelectItem value="inactivo">Inactivo</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -803,173 +608,118 @@ export function UsuariosModule() {
             </div>
 
             {!editingUser && (
-              <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
-                <p className="text-foreground-secondary" style={{ fontSize: '13px' }}>
-                  <span className="text-primary" style={{ fontWeight: 600 }}>Nota:</span> El usuario se creará con estado "Activo" por defecto.
-                </p>
+              <div className="p-3 rounded-xl bg-[#fff0f5] border border-[#f0d5e0]">
+                <p className="text-[#c47b96] text-xs font-medium">El usuario se creará con estado "Activo" por defecto.</p>
               </div>
             )}
           </div>
 
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsDialogOpen(false)}
-              className="border-border text-foreground hover:bg-surface"
-              disabled={isSaving}
-            >
-              Cancelar
-            </Button>
-            <Button
-              onClick={handleSave}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground"
-              disabled={isSaving}
-            >
+          <div className="flex justify-end gap-3 px-6 pb-6 pt-4 border-t border-gray-100 sticky bottom-0 bg-white z-10">
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg px-5 h-10 text-sm" disabled={isSaving}>Cancelar</Button>
+            <Button onClick={handleSave} disabled={isSaving} className="rounded-lg font-semibold px-6 h-10 text-sm border-0" style={{ backgroundColor: "#c47b96", color: "#ffffff" }}>
               {isSaving ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin mr-2" />
-                  {editingUser ? 'Actualizando...' : 'Creando...'}
-                </>
-              ) : (
-                <>
-                  {editingUser ? '💾 Actualizar' : '✨ Crear Usuario'}
-                </>
-              )}
+                <div className="flex items-center gap-2"><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />{editingUser ? 'Actualizando...' : 'Creando...'}</div>
+              ) : (editingUser ? 'Actualizar Usuario' : 'Crear Usuario')}
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 
       {/* Detail Dialog */}
       <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
-        <DialogContent className="bg-card border-border max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-foreground">Detalles del Usuario</DialogTitle>
-            <DialogDescription className="sr-only">
-              Información completa del usuario seleccionado
-            </DialogDescription>
-          </DialogHeader>
-
+        <DialogContent className="bg-white border border-gray-100 max-w-2xl rounded-2xl shadow-2xl p-0">
           {selectedUser && (
-            <div className="space-y-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-foreground-secondary" style={{ fontSize: '13px', fontWeight: 500 }}>Nombre Completo</Label>
-                                    <p className="text-foreground mt-1" style={{ fontSize: '15px' }}>{selectedUser.nombres} {selectedUser.apellidos}</p>
-                </div>
-                <div>
-                  <Label className="text-foreground-secondary" style={{ fontSize: '13px', fontWeight: 500 }}>Email</Label>
-                  <p className="text-foreground mt-1" style={{ fontSize: '15px' }}>{selectedUser.email}</p>
-                </div>
-                <div>
-                  <Label className="text-foreground-secondary" style={{ fontSize: '13px', fontWeight: 500 }}>Tipo de Documento</Label>
-                  <p className="text-foreground mt-1" style={{ fontSize: '15px' }}>{getTipoDocumentoLabel(selectedUser.tipoDocumento)}</p>
-                </div>
-                <div>
-                  <Label className="text-foreground-secondary" style={{ fontSize: '13px', fontWeight: 500 }}>Número de Documento</Label>
-                  <p className="text-foreground mt-1" style={{ fontSize: '15px' }}>{selectedUser.numeroDocumento}</p>
-                </div>
-                {selectedUser.fechaNacimiento && (
+            <>
+              <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center justify-center text-white font-bold text-lg flex-shrink-0" style={{ width: 44, height: 44, borderRadius: 12, background: "linear-gradient(135deg,#c47b96,#e092b2)", boxShadow: "0 2px 8px rgba(196,123,150,0.3)" }}>
+                    <User className="w-5 h-5" />
+                  </div>
                   <div>
-                    <Label className="text-foreground-secondary" style={{ fontSize: '13px', fontWeight: 500 }}>Fecha de Nacimiento</Label>
-                    <p className="text-foreground mt-1" style={{ fontSize: '15px' }}>{new Date(selectedUser.fechaNacimiento).toLocaleDateString('es-CO')}</p>
-                  </div>
-                )}
-                <div>
-                  <Label className="text-foreground-secondary" style={{ fontSize: '13px', fontWeight: 500 }}>Teléfono</Label>
-                  <p className="text-foreground mt-1" style={{ fontSize: '15px' }}>{selectedUser.telefono}</p>
-                </div>
-                {selectedUser.direccion && (
-                  <div className="col-span-2">
-                    <Label className="text-foreground-secondary" style={{ fontSize: '13px', fontWeight: 500 }}>Dirección</Label>
-                    <p className="text-foreground mt-1" style={{ fontSize: '15px' }}>{selectedUser.direccion}</p>
-                  </div>
-                )}
-                {selectedUser.ciudad && (
-                  <div>
-                    <Label className="text-foreground-secondary" style={{ fontSize: '13px', fontWeight: 500 }}>Ciudad</Label>
-                    <p className="text-foreground mt-1" style={{ fontSize: '15px' }}>{selectedUser.ciudad}</p>
-                  </div>
-                )}
-                {selectedUser.pais && (
-                  <div>
-                    <Label className="text-foreground-secondary" style={{ fontSize: '13px', fontWeight: 500 }}>País</Label>
-                    <p className="text-foreground mt-1" style={{ fontSize: '15px' }}>{selectedUser.pais}</p>
-                  </div>
-                )}
-                <div>
-                  <Label className="text-foreground-secondary" style={{ fontSize: '13px', fontWeight: 500 }}>Rol</Label>
-                  <p className="text-foreground mt-1" style={{ fontSize: '15px' }}>{getRolLabel(selectedUser.rol)}</p>
-                </div>
-                <div>
-                  <Label className="text-foreground-secondary" style={{ fontSize: '13px', fontWeight: 500 }}>Estado</Label>
-                  <div className="mt-1">
-                    <StatusBadge status={selectedUser.estado} size="sm" />
+                    <DialogTitle className="text-base font-bold text-gray-900 leading-tight">Detalle de Usuario</DialogTitle>
+                    <DialogDescription className="text-xs text-gray-400 mt-0.5">{selectedUser.nombres} {selectedUser.apellidos}</DialogDescription>
                   </div>
                 </div>
-                <div className="col-span-2">
-                  <Label className="text-foreground-secondary" style={{ fontSize: '13px', fontWeight: 500 }}>Fecha de Registro</Label>
-                  <p className="text-foreground mt-1" style={{ fontSize: '15px' }}>{new Date(selectedUser.fechaCreacion).toLocaleDateString('es-CO')}</p>
+                <button onClick={() => setIsDetailDialogOpen(false)} className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="px-6 py-5">
+                <div className="grid grid-cols-2 gap-4">
+                  {[
+                    { label: 'Nombre Completo', value: `${selectedUser.nombres} ${selectedUser.apellidos}` },
+                    { label: 'Email', value: selectedUser.email },
+                    { label: 'Tipo de Documento', value: getTipoDocumentoLabel(selectedUser.tipoDocumento) },
+                    { label: 'Número de Documento', value: selectedUser.numeroDocumento },
+                    { label: 'Teléfono', value: selectedUser.telefono },
+                    { label: 'Rol', value: getRolLabel(selectedUser.rol) },
+                  ].map(({ label, value }) => (
+                    <div key={label} className="bg-gray-50 rounded-xl p-3">
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">{label}</p>
+                      <p className="text-sm font-semibold text-gray-800">{value}</p>
+                    </div>
+                  ))}
+                  {selectedUser.ciudad && (
+                    <div className="bg-gray-50 rounded-xl p-3">
+                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Ciudad</p>
+                      <p className="text-sm font-semibold text-gray-800">{selectedUser.ciudad}</p>
+                    </div>
+                  )}
+                  <div className="bg-gray-50 rounded-xl p-3">
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Estado</p>
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold ${selectedUser.estado === 'activo' ? 'bg-emerald-50 text-emerald-700' : 'bg-[#fff0f5] text-[#c47b96]'}`}>
+                      {selectedUser.estado === 'activo' ? <CheckCircle2 className="w-3.5 h-3.5" /> : <AlertCircle className="w-3.5 h-3.5" />}
+                      {selectedUser.estado === 'activo' ? 'Activo' : 'Inactivo'}
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
+              <div className="flex justify-end px-6 pb-6 pt-4 border-t border-gray-100">
+                <Button onClick={() => setIsDetailDialogOpen(false)} className="rounded-lg font-semibold px-6 h-10 text-sm border-0" style={{ backgroundColor: "#c47b96", color: "#ffffff" }}>Cerrar</Button>
+              </div>
+            </>
           )}
-
-          <DialogFooter>
-            <Button onClick={() => setIsDetailDialogOpen(false)} className="bg-primary hover:bg-primary/90 text-primary-foreground">
-              Cerrar
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={isDeleteDialogOpen} onOpenChange={(open: boolean) => {
-        if (!open && !isDeleting) {
-          setIsDeleteDialogOpen(false);
-        }
-      }}>
-        <DialogContent className="bg-card border-border">
-          <DialogHeader>
-            <DialogTitle className="text-foreground">Eliminar Usuario</DialogTitle>
-            <DialogDescription className="sr-only">
-              Confirmación para eliminar el usuario del sistema
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="py-4">
-            <p className="text-foreground text-center">
-                            ¿Estás seguro de que deseas eliminar el usuario <span style={{ fontWeight: 600 }}>{selectedUser?.nombres} {selectedUser?.apellidos}</span>?
-            </p>
-            <p className="text-foreground-secondary text-center mt-2" style={{ fontSize: '14px' }}>
-              Esta acción no se puede deshacer.
-            </p>
+      <Dialog open={isDeleteDialogOpen} onOpenChange={(open) => { if (!open && !isDeleting) setIsDeleteDialogOpen(false); }}>
+        <DialogContent className="bg-white border border-gray-100 max-w-md rounded-2xl shadow-2xl p-0 overflow-hidden">
+          <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center justify-center flex-shrink-0" style={{ width: 44, height: 44, borderRadius: 12, background: "#fff1f2", boxShadow: "0 2px 8px rgba(239,68,68,0.12)" }}>
+                <AlertCircle className="w-5 h-5" style={{ color: "#ef4444" }} />
+              </div>
+              <div>
+                <DialogTitle className="text-base font-bold text-gray-900 leading-tight">Eliminar Usuario</DialogTitle>
+                <DialogDescription className="text-xs text-gray-400 mt-0.5">Esta acción es permanente y no se puede deshacer</DialogDescription>
+              </div>
+            </div>
+            <button onClick={() => setIsDeleteDialogOpen(false)} className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+              <X className="w-4 h-4" />
+            </button>
           </div>
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsDeleteDialogOpen(false)}
-              className="border-border text-foreground hover:bg-surface"
-              disabled={isDeleting}
-            >
-              Cancelar
-            </Button>
-            <Button
-              onClick={handleConfirmDelete}
-              className="bg-danger hover:bg-danger/90 text-white"
-              disabled={isDeleting}
-            >
+          <div style={{ padding: "20px 24px" }}>
+            <div style={{ background: "#fef2f2", borderRadius: "12px", padding: "16px", display: "flex", alignItems: "flex-start", gap: "12px", border: "1px solid #fecaca" }}>
+              <AlertCircle style={{ color: "#ef4444", width: 18, height: 18, flexShrink: 0, marginTop: 2 }} />
+              <div>
+                <p style={{ fontSize: "14px", color: "#374151", lineHeight: 1.5 }}>
+                  ¿Estás seguro que deseas eliminar permanentemente a <strong>{selectedUser?.nombres} {selectedUser?.apellidos}</strong>?
+                </p>
+                <p style={{ fontSize: "13px", color: "#9ca3af", marginTop: 4, lineHeight: 1.5 }}>
+                  El usuario será eliminado del sistema y no podrá recuperarse.
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="flex justify-end gap-3 px-6 pb-6 pt-2">
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)} className="border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg px-5 h-10 text-sm" disabled={isDeleting}>Cancelar</Button>
+            <Button onClick={handleConfirmDelete} disabled={isDeleting} style={{ backgroundColor: "#ef4444", color: "#ffffff" }} className="rounded-lg font-semibold px-6 h-10 text-sm border-0">
               {isDeleting ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                  Eliminando...
-                </>
-              ) : (
-                '🗑️ Eliminar Usuario'
-              )}
+                <div className="flex items-center gap-2"><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Eliminando...</div>
+              ) : 'Eliminar Usuario'}
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

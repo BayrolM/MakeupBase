@@ -17,20 +17,8 @@ import {
   TableRow,
 } from "../ui/table";
 import { Button } from "../ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "../ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
+import { Dialog, DialogContent, DialogTitle } from "../ui/dialog";
+// Removed unused Select imports
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import {
@@ -62,6 +50,9 @@ import { orderService } from "../../services/orderService";
 import { userService } from "../../services/userService";
 import { productService } from "../../services/productService";
 import { CONFIG } from "../../lib/constants";
+import { AsyncClientSelect } from "../AsyncClientSelect";
+import { AsyncProductSelect } from "../AsyncProductSelect";
+import { GenericCombobox } from "../GenericCombobox";
 
 export function PedidosModule() {
   const {
@@ -104,7 +95,6 @@ export function PedidosModule() {
     fecha_envio: new Date().toISOString().split("T")[0],
     fecha_estimada: "",
   });
-  const [hoveredCarrier, setHoveredCarrier] = useState<string | null>(null);
 
   useEffect(() => {
     refreshPedidos();
@@ -203,7 +193,9 @@ export function PedidosModule() {
   const [formData, setFormData] = useState({
     clienteId: "",
     direccionEnvio: "",
-    productos: [{ productoId: "", cantidad: 1, precioUnitario: 0 }],
+    productos: [
+      { productoId: "", cantidad: 1, precioUnitario: 0, maxStock: 0 },
+    ],
   });
 
   const handleOpenDialog = () => {
@@ -215,6 +207,7 @@ export function PedidosModule() {
           productoId: productos[0]?.id || "",
           cantidad: 1,
           precioUnitario: productos[0]?.precioVenta || 0,
+          maxStock: productos[0]?.stock || 0,
         },
       ],
     });
@@ -230,6 +223,7 @@ export function PedidosModule() {
           productoId: productos[0]?.id || "",
           cantidad: 1,
           precioUnitario: productos[0]?.precioVenta || 0,
+          maxStock: productos[0]?.stock || 0,
         },
       ],
     });
@@ -242,14 +236,20 @@ export function PedidosModule() {
     }
   };
 
-  const updateProductLine = (index: number, field: string, value: any) => {
+  const updateProductLine = (
+    index: number,
+    field: string,
+    value: any,
+    prodObj?: any,
+  ) => {
     const newProductos = [...formData.productos];
     if (field === "productoId") {
       const producto = productos.find((p) => p.id === value);
       newProductos[index] = {
         ...newProductos[index],
         productoId: value,
-        precioUnitario: producto?.precioVenta || 0,
+        precioUnitario: prodObj?.precioVenta || producto?.precioVenta || 0,
+        maxStock: prodObj?.stock || producto?.stock || 0,
       };
     } else {
       newProductos[index] = { ...newProductos[index], [field]: value };
@@ -366,6 +366,7 @@ export function PedidosModule() {
       return;
     }
 
+    setIsSaving(true);
     try {
       await orderService.updateStatus(
         Number(selectedPedido.id),
@@ -387,6 +388,8 @@ export function PedidosModule() {
     } catch (error: any) {
       console.error(error);
       toast.error(error.message || "Error al actualizar el estado del pedido");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -536,10 +539,6 @@ export function PedidosModule() {
   const handleSearchChange = (query: string) => {
     setSearchQuery(query);
     setCurrentPage(1);
-  };
-
-  const getAllStatuses = (): OrderStatus[] => {
-    return ["pendiente", "preparado", "enviado", "entregado", "cancelado"];
   };
 
   const handleOpenComprobante = (url: string) => {
@@ -710,7 +709,7 @@ export function PedidosModule() {
 
                     {/* Cliente */}
                     <TableCell className="py-2.5">
-                      <span className="text-gray-800 font-medium text-sm">
+                      <span className="text-gray-800 font-semibold text-sm">
                         {(pedido as any).clienteNombre || "Sin Nombre"}
                       </span>
                     </TableCell>
@@ -848,170 +847,301 @@ export function PedidosModule() {
 
       {/* Create Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="bg-card border-border max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-foreground">Nuevo Pedido</DialogTitle>
-          </DialogHeader>
+        <DialogContent className="bg-white border border-gray-100 max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl p-0">
+          {/* Encabezado con avatar */}
+          <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100 sticky top-0 bg-white z-10">
+            <div className="flex items-center gap-4">
+              <div
+                className="flex items-center justify-center text-white font-bold text-lg flex-shrink-0"
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 12,
+                  background: "linear-gradient(135deg,#c47b96,#e092b2)",
+                  boxShadow: "0 2px 8px rgba(196,123,150,0.3)",
+                }}
+              >
+                <Plus className="w-5 h-5" />
+              </div>
+              <div>
+                <DialogTitle className="text-base font-bold text-gray-900 leading-tight">
+                  Nuevo Pedido
+                </DialogTitle>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  Registra una nueva orden manualmente
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setIsDialogOpen(false)}
+              className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            >
+              <XCircle className="w-5 h-5" />
+            </button>
+          </div>
 
-          <div className="space-y-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-foreground">Cliente</Label>
-                <Select
-                  value={formData.clienteId}
-                  onValueChange={(value: string) =>
-                    setFormData({ ...formData, clienteId: value })
-                  }
+          <div
+            style={{
+              padding: "20px 24px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "16px",
+            }}
+          >
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: "16px",
+              }}
+            >
+              <div
+                style={{
+                  background: "#f9fafb",
+                  borderRadius: "12px",
+                  padding: "16px",
+                }}
+              >
+                <p
+                  style={{
+                    fontSize: "11px",
+                    fontWeight: 700,
+                    color: "#9ca3af",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.07em",
+                    marginBottom: "8px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                  }}
                 >
-                  <SelectTrigger className="bg-input-background border-border text-foreground">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card border-border">
-                    {clientes.map((c) => (
-                      <SelectItem
-                        key={c.id}
-                        value={c.id}
-                        className="text-foreground"
-                      >
-                        {c.nombre}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  <User className="w-3.5 h-3.5" /> Cliente{" "}
+                  <span style={{ color: "#f87171" }}>*</span>
+                </p>
+                <div style={{ background: "#ffffff", borderRadius: "8px" }}>
+                  <AsyncClientSelect
+                    value={formData.clienteId}
+                    onChange={(value: string) =>
+                      setFormData({ ...formData, clienteId: value })
+                    }
+                  />
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-foreground">Dirección de Envío</Label>
+              <div
+                style={{
+                  background: "#f9fafb",
+                  borderRadius: "12px",
+                  padding: "16px",
+                }}
+              >
+                <p
+                  style={{
+                    fontSize: "11px",
+                    fontWeight: 700,
+                    color: "#9ca3af",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.07em",
+                    marginBottom: "8px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                  }}
+                >
+                  <MapPin className="w-3.5 h-3.5" /> Dirección de Envío{" "}
+                  <span style={{ color: "#f87171" }}>*</span>
+                </p>
                 <Input
                   value={formData.direccionEnvio}
                   onChange={(e) =>
                     setFormData({ ...formData, direccionEnvio: e.target.value })
                   }
-                  className="bg-input-background border-border text-foreground"
+                  className="border-gray-200 text-gray-800 h-10 rounded-lg"
+                  style={{ background: "#ffffff" }}
                   placeholder="Calle 50 #30-20"
                 />
               </div>
             </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label className="text-foreground">Productos</Label>
+            <div
+              style={{
+                background: "#ffffff",
+                border: "1px solid #f3f4f6",
+                borderRadius: "12px",
+                // overflow: "hidden", // Removido para permitir que los dropdowns se vean por encima
+              }}
+            >
+              <div
+                className="flex items-center justify-between"
+                style={{
+                  background: "#f9fafb",
+                  padding: "12px 16px",
+                  borderBottom: "1px solid #f3f4f6",
+                }}
+              >
+                <p
+                  style={{
+                    fontSize: "11px",
+                    fontWeight: 700,
+                    color: "#9ca3af",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.07em",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    margin: 0,
+                  }}
+                >
+                  <Package className="w-3.5 h-3.5" /> Productos{" "}
+                  <span style={{ color: "#f87171" }}>*</span>
+                </p>
                 <Button
+                  type="button"
                   size="sm"
                   onClick={addProductLine}
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                  className="hover:opacity-90 rounded-lg font-bold text-xs h-7 px-3 border-0 flex items-center"
+                  style={{ backgroundColor: "#c47b96", color: "#ffffff" }}
                 >
-                  <Plus className="w-4 h-4 mr-1" /> Agregar
+                  <Plus className="w-3.5 h-3.5 mr-1" /> Añadir
                 </Button>
               </div>
 
-              {formData.productos.map((prod, index) => (
-                <div
-                  key={index}
-                  className="grid grid-cols-12 gap-2 items-end p-3 bg-surface rounded-lg"
-                >
-                  <div className="col-span-6 space-y-1">
-                    <Label
-                      className="text-foreground-secondary"
-                      style={{ fontSize: "12px" }}
-                    >
-                      Producto
-                    </Label>
-                    <Select
-                      value={prod.productoId}
-                      onValueChange={(value: string) =>
-                        updateProductLine(index, "productoId", value)
-                      }
-                    >
-                      <SelectTrigger className="bg-input-background border-border text-foreground h-9">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-card border-border">
-                        {productos
-                          .filter((p) => p.estado === "activo")
-                          .map((p) => (
-                            <SelectItem
-                              key={p.id}
-                              value={p.id}
-                              className="text-foreground"
-                            >
-                              {p.nombre} (Stock: {p.stock})
-                            </SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="col-span-3 space-y-1">
-                    <Label
-                      className="text-foreground-secondary"
-                      style={{ fontSize: "12px" }}
-                    >
-                      Cantidad
-                    </Label>
-                    <Input
-                      type="number"
-                      min="1"
-                      value={isNaN(prod.cantidad) ? "" : prod.cantidad}
-                      onChange={(e) => {
-                        const val =
-                          e.target.value === ""
-                            ? NaN
-                            : parseInt(e.target.value);
-                        updateProductLine(index, "cantidad", val);
-                      }}
-                      className="bg-input-background border-border text-foreground h-9"
-                    />
-                  </div>
-                  <div className="col-span-3 space-y-1">
-                    <Label
-                      className="text-foreground-secondary"
-                      style={{ fontSize: "12px" }}
-                    >
-                      Precio
-                    </Label>
-                    <Input
-                      type="number"
-                      value={
-                        isNaN(prod.precioUnitario) ? "" : prod.precioUnitario
-                      }
-                      onChange={(e) => {
-                        const val =
-                          e.target.value === ""
-                            ? NaN
-                            : parseFloat(e.target.value);
-                        updateProductLine(index, "precioUnitario", val);
-                      }}
-                      className="bg-input-background border-border text-foreground h-9"
-                    />
-                  </div>
-                  {formData.productos.length > 1 && (
-                    <div className="col-span-12 mt-2">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => removeProductLine(index)}
-                        className="h-7 w-7 p-0 text-foreground-secondary hover:text-primary hover:bg-primary/10"
-                        title="Eliminar producto"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              ))}
+              <div
+                style={{
+                  padding: "0 16px",
+                  maxHeight: "400px",
+                  overflowY: "auto",
+                }}
+              >
+                {formData.productos.map((prod, index) => (
+                  <div
+                    key={index}
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      padding: "16px 0",
+                      borderBottom:
+                        index < formData.productos.length - 1
+                          ? "1px solid #f3f4f6"
+                          : "none",
+                      position: "relative",
+                      zIndex: 100 - index,
+                    }}
+                  >
+                    <div className="grid grid-cols-12 gap-3 items-end">
+                      <div className="col-span-6">
+                        <p
+                          style={{
+                            fontSize: "10px",
+                            fontWeight: 700,
+                            color: "#9ca3af",
+                            textTransform: "uppercase",
+                            marginBottom: "6px",
+                          }}
+                        >
+                          Producto
+                        </p>
+                        <div
+                          style={{ background: "#ffffff", borderRadius: "8px" }}
+                        >
+                          <AsyncProductSelect
+                            value={prod.productoId}
+                            onChange={(val, prodObj) =>
+                              updateProductLine(
+                                index,
+                                "productoId",
+                                val,
+                                prodObj,
+                              )
+                            }
+                          />
+                        </div>
+                      </div>
+                      <div className="col-span-3">
+                        <p
+                          style={{
+                            fontSize: "10px",
+                            fontWeight: 700,
+                            color: "#9ca3af",
+                            textTransform: "uppercase",
+                            marginBottom: "6px",
+                          }}
+                        >
+                          Cant.
+                        </p>
+                        <Input
+                          type="number"
+                          min="1"
+                          value={isNaN(prod.cantidad) ? "" : prod.cantidad}
+                          onChange={(e) => {
+                            const val =
+                              e.target.value === ""
+                                ? NaN
+                                : parseInt(e.target.value);
+                            updateProductLine(index, "cantidad", val);
+                          }}
+                          className="border-gray-200 text-gray-800 h-9 rounded-lg"
+                        />
+                      </div>
+                      <div className="col-span-3">
+                        <p
+                          style={{
+                            fontSize: "10px",
+                            fontWeight: 700,
+                            color: "#9ca3af",
+                            textTransform: "uppercase",
+                            marginBottom: "6px",
+                          }}
+                        >
+                          Precio
+                        </p>
+                        <Input
+                          type="number"
+                          value={
+                            isNaN(prod.precioUnitario)
+                              ? ""
+                              : prod.precioUnitario
+                          }
+                          onChange={(e) => {
+                            const val =
+                              e.target.value === ""
+                                ? NaN
+                                : parseFloat(e.target.value);
+                            updateProductLine(index, "precioUnitario", val);
+                          }}
+                          className="border-gray-200 text-gray-800 h-9 rounded-lg"
+                        />
+                      </div>
 
-              <div className="bg-surface p-3 rounded-lg">
+                      {formData.productos.length > 1 && (
+                        <div className="absolute -top-1 -right-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => removeProductLine(index)}
+                            style={{
+                              height: "24px",
+                              width: "24px",
+                              padding: 0,
+                            }}
+                            className="bg-white border border-gray-200 rounded-full text-gray-400 hover:text-rose-500 hover:border-rose-200 transition-all shadow-sm"
+                            title="Eliminar producto"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="bg-gradient-to-r from-[#fff0f5] to-[#fce8f0] p-4 rounded-xl border border-[#f0d5e0]">
                 <div className="flex items-center justify-between">
-                  <span
-                    className="text-foreground"
-                    style={{ fontSize: "16px", fontWeight: 600 }}
-                  >
-                    Total:
+                  <span className="text-[#2e1020] font-semibold text-base">
+                    Total de la Orden
                   </span>
-                  <span
-                    className="text-primary"
-                    style={{ fontSize: "20px", fontWeight: 600 }}
-                  >
+                  <span className="text-[#c47b96] font-black text-2xl">
                     {formatCurrency(
                       formData.productos.reduce(
                         (sum, p) => sum + p.cantidad * p.precioUnitario,
@@ -1024,304 +1154,390 @@ export function PedidosModule() {
             </div>
           </div>
 
-          <DialogFooter>
+          <div className="flex justify-end gap-3 px-6 pb-6 pt-4 border-t border-gray-100 sticky bottom-0 bg-white z-10">
             <Button
               variant="outline"
               onClick={() => setIsDialogOpen(false)}
-              className="border-border text-foreground hover:bg-surface"
+              className="border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg px-5 h-10 text-sm"
+              disabled={isSaving}
             >
               Cancelar
             </Button>
             <Button
               onClick={handleSave}
               disabled={isSaving}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground"
+              className="rounded-lg font-semibold px-6 h-10 text-sm border-0"
+              style={{ backgroundColor: "#c47b96", color: "#ffffff" }}
             >
               {isSaving ? "Creando..." : "Crear Pedido"}
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 
       {/* Status Update Dialog Premium & Horizontal Layout Force */}
       <Dialog open={isStatusDialogOpen} onOpenChange={setIsStatusDialogOpen}>
-        <DialogContent
-          className="text-white border border-white/10 w-[95vw] sm:max-w-[800px] !max-w-[800px] p-0 overflow-hidden rounded-[2rem] shadow-[0_30px_60px_-12px_rgba(0,0,0,0.6)]"
-          style={{
-            background:
-              "linear-gradient(158deg, #2e1020 0%, #3d1828 38%, #4a2035 62%, #2e1020 100%) !important",
-            backgroundColor: "#2e1020",
-            maxWidth: "800px",
-            width: "95vw",
-          }}
-        >
-          {/* Header Accent Bar */}
-          <div className="h-1.5 w-full bg-gradient-to-r from-[#b06080] via-[#e0a0be] to-[#b06080]" />
+        <DialogContent className="bg-white border border-gray-100 max-w-4xl p-0 overflow-hidden rounded-2xl shadow-2xl">
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100 bg-white">
+            <div className="flex items-center gap-4">
+              <div
+                className="flex items-center justify-center text-white font-bold text-lg flex-shrink-0"
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 12,
+                  background: "linear-gradient(135deg,#c47b96,#e092b2)",
+                  boxShadow: "0 2px 8px rgba(196,123,150,0.3)",
+                }}
+              >
+                <ClipboardList className="w-5 h-5" />
+              </div>
+              <div>
+                <DialogTitle className="text-base font-bold text-gray-900 leading-tight">
+                  Gestionar Estado del Pedido
+                </DialogTitle>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  ID Transacción:{" "}
+                  <span className="text-[#c47b96] font-mono font-semibold">
+                    #{selectedPedido?.id?.slice(0, 8)?.toUpperCase()}
+                  </span>
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setIsStatusDialogOpen(false)}
+              className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            >
+              <XCircle className="w-5 h-5" />
+            </button>
+          </div>
 
-          <div className="p-0">
-            <DialogHeader className="p-8 pb-4 border-b border-white/5">
-              <div className="flex items-center gap-4">
-                <div
-                  className="p-3 rounded-2xl"
-                  style={{
-                    background: "rgba(224, 146, 178, 0.1)",
-                    border: "1px solid rgba(224, 146, 178, 0.2)",
-                  }}
-                >
-                  <ClipboardList className="w-6 h-6 text-[#e092b2]" />
-                </div>
+          <div className="flex flex-row gap-0">
+            {/* Columna Izquierda: Información Actual (45%) */}
+            <div className="w-[45%] p-8 border-r border-gray-100 bg-gray-50 flex flex-col justify-center">
+              <div className="space-y-6">
                 <div>
-                  <DialogTitle
-                    style={{
-                      fontFamily: "'DM Sans', sans-serif",
-                      fontSize: "22px",
-                      fontWeight: 600,
-                      color: "#e092b2",
-                    }}
-                  >
-                    Gestionar Estado del Pedido
-                  </DialogTitle>
-                  <p className="text-white/40 text-sm mt-0.5">
-                    ID Transacción:{" "}
-                    <span className="text-[#e092b2] font-mono">
-                      #{selectedPedido?.id?.slice(0, 8)?.toUpperCase()}
-                    </span>
-                  </p>
-                </div>
-              </div>
-            </DialogHeader>
-
-            <div className="flex flex-row gap-0">
-              {/* Columna Izquierda: Información Actual (45%) */}
-              <div className="w-[45%] p-8 border-r border-white/5 bg-black/10">
-                <div className="space-y-6">
-                  <div>
-                    <Label className="text-white/30 text-[10px] uppercase tracking-[0.2em] font-black mb-4 block">
-                      Información Actual
-                    </Label>
-                    {selectedPedido && (
-                      <div
-                        className="p-5 rounded-2xl border border-white/10"
-                        style={{ background: "rgba(255, 255, 255, 0.03)" }}
-                      >
-                        <div className="flex items-center justify-between mb-4">
-                          <p className="text-white/40 text-[10px] font-bold uppercase tracking-widest">
-                            Estado
-                          </p>
-                          <div
-                            className={`w-2.5 h-2.5 rounded-full ${getStatusColor(selectedPedido.estado).bg.replace("bg-", "bg-").split(" ")[0]} animate-pulse`}
-                            style={{ boxShadow: "0 0 12px currentColor" }}
-                          />
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <div className="p-2.5 rounded-xl bg-white/5 text-[#e092b2]">
-                            {getStatusColor(selectedPedido.estado).icon}
-                          </div>
-                          <span className="text-white font-black text-lg tracking-tight uppercase">
-                            {getStatusColor(selectedPedido.estado).label}
-                          </span>
-                        </div>
+                  <Label className="text-gray-500 text-[10px] uppercase tracking-[0.15em] font-bold mb-4 block">
+                    Información Actual
+                  </Label>
+                  {selectedPedido && (
+                    <div className="p-5 rounded-2xl bg-white border border-gray-200 shadow-sm">
+                      <div className="flex items-center justify-between mb-4">
+                        <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest">
+                          Estado
+                        </p>
+                        <div
+                          className={`w-2.5 h-2.5 rounded-full ${getStatusColor(selectedPedido.estado).bg.replace("bg-", "bg-").split(" ")[0]} animate-pulse`}
+                          style={{ boxShadow: "0 0 8px currentColor" }}
+                        />
                       </div>
-                    )}
-                  </div>
-
-                  <div className="p-5 rounded-2xl border border-white/5 bg-white/5 space-y-2">
-                    <p className="text-white/40 text-[10px] font-bold uppercase tracking-widest">
-                      Resumen
-                    </p>
-                    <p className="text-white/80 text-sm leading-relaxed">
-                      Este pedido se encuentra en la etapa de{" "}
-                      <span className="text-[#e092b2] font-bold">
-                        {getStatusColor(selectedPedido?.estado).label}
-                      </span>
-                      . Selecciona la siguiente acción para continuar con el
-                      flujo lógico.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Columna Derecha: Acciones (55%) */}
-              <div className="w-[55%] p-8 space-y-6 flex flex-col justify-center">
-                <div className="space-y-4">
-                  <div className="space-y-3">
-                    <Label className="text-white/80 text-xs uppercase tracking-wider font-semibold ml-1">
-                      Asignar Nuevo Estado
-                    </Label>
-                    <Select
-                      value={newStatus}
-                      onValueChange={(value: OrderStatus) =>
-                        setNewStatus(value)
-                      }
-                    >
-                      <SelectTrigger className="w-full h-12 bg-white/5 border-white/10 text-white rounded-xl focus:ring-[#e092b2]/20 focus:border-[#e092b2] transition-all duration-300">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent
-                        className="bg-[#1a0d14] border border-white/10 text-white rounded-xl shadow-2xl overflow-hidden"
-                        style={{ backgroundColor: "#1a0d14", opacity: 1 }}
-                      >
-                        {getAllStatuses().map((status) => {
-                          const statusInfo = getStatusColor(status);
-                          return (
-                            <SelectItem
-                              key={status}
-                              value={status}
-                              className="focus:bg-[#c47b96] focus:text-white cursor-pointer py-3 transition-colors border-b border-white/5 last:border-0"
-                            >
-                              <div className="flex items-center gap-3">
-                                <span className="text-[#e092b2]">
-                                  {statusInfo.icon}
-                                </span>
-                                <span className="text-sm font-medium">
-                                  {statusInfo.label}
-                                </span>
-                              </div>
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {newStatus === "cancelado" && (
-                    <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
-                      <Label className="text-rose-400 text-xs uppercase tracking-wider font-semibold flex items-center gap-2 ml-1">
-                        <AlertCircle className="w-3.5 h-3.5" />
-                        Motivo de Anulación *
-                      </Label>
-                      <Textarea
-                        value={motivoAnulacion}
-                        onChange={(e) => setMotivoAnulacion(e.target.value)}
-                        className="bg-white/5 border-white/10 text-white placeholder:text-white/20 rounded-xl focus:ring-rose-500/20 focus:border-rose-400 transition-all duration-300 resize-none min-h-[120px]"
-                        placeholder="Especifique con detalle por qué desea anular este pedido..."
-                      />
+                      <div className="flex items-center gap-3">
+                        <div className="p-2.5 rounded-xl bg-gray-50 text-gray-600 border border-gray-100">
+                          {getStatusColor(selectedPedido.estado).icon}
+                        </div>
+                        <span className="text-gray-900 font-black text-lg tracking-tight uppercase">
+                          {getStatusColor(selectedPedido.estado).label}
+                        </span>
+                      </div>
                     </div>
                   )}
                 </div>
 
-                <div className="flex flex-col gap-3 pt-4">
-                  <Button
-                    onClick={handleUpdateStatus}
-                    onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
-                      (e.currentTarget as HTMLElement).style.backgroundColor =
-                        "rgba(224, 146, 178, 0.9)";
-                      (e.currentTarget as HTMLElement).style.color = "#1a0d14";
-                      (e.currentTarget as HTMLElement).style.transform =
-                        "scale(1.02)";
-                    }}
-                    onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => {
-                      (e.currentTarget as HTMLElement).style.backgroundColor =
-                        "transparent";
-                      (e.currentTarget as HTMLElement).style.color = "#e092b2";
-                      (e.currentTarget as HTMLElement).style.transform =
-                        "scale(1)";
-                    }}
-                    className="w-full h-12 border transition-all duration-300"
-                    style={{
-                      backgroundColor: "transparent",
-                      borderColor: "#e092b2",
-                      color: "#e092b2",
-                      fontWeight: 700,
-                      borderRadius: "14px",
-                      transform: "scale(1)",
-                    }}
-                  >
-                    <div className="flex items-center justify-center gap-2">
-                      <CheckCircle2 className="w-4 h-4" />
-                      Guardar Cambios
-                    </div>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    onClick={() => setIsStatusDialogOpen(false)}
-                    className="text-white/40 hover:text-white hover:bg-white/5 transition-colors duration-200 text-xs"
-                  >
-                    Descartar y volver
-                  </Button>
+                <div className="p-5 rounded-2xl bg-white border border-gray-200 shadow-sm space-y-2">
+                  <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest">
+                    Resumen
+                  </p>
+                  <p className="text-gray-600 text-sm leading-relaxed">
+                    Este pedido se encuentra en la etapa de{" "}
+                    <span className="text-[#c47b96] font-bold">
+                      {getStatusColor(selectedPedido?.estado).label}
+                    </span>
+                    . Selecciona la siguiente acción para continuar con el flujo
+                    lógico.
+                  </p>
                 </div>
+              </div>
+            </div>
+
+            {/* Columna Derecha: Acciones (55%) */}
+            <div className="w-[55%] p-8 space-y-6 flex flex-col justify-center bg-white">
+              <div className="space-y-4">
+                <div className="space-y-3">
+                  <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest ml-1">
+                    Nuevo Estado
+                  </p>
+                  <GenericCombobox
+                    options={[
+                      { value: "pendiente", label: "Pendiente" },
+                      { value: "preparado", label: "Preparado" },
+                      { value: "enviado", label: "Enviado" },
+                      { value: "entregado", label: "Entregado" },
+                      { value: "cancelado", label: "Cancelado" },
+                    ]}
+                    value={newStatus}
+                    onChange={(v) => setNewStatus(v as OrderStatus)}
+                    placeholder="Seleccionar nuevo estado"
+                    disabled={isSaving}
+                  />
+                </div>
+
+                {newStatus === "cancelado" && (
+                  <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <Label className="text-red-500 text-xs uppercase tracking-wider font-semibold flex items-center gap-2 ml-1">
+                      <AlertCircle className="w-3.5 h-3.5" />
+                      Motivo de Anulación *
+                    </Label>
+                    <Textarea
+                      value={motivoAnulacion}
+                      onChange={(e) => setMotivoAnulacion(e.target.value)}
+                      className="bg-white border border-red-200 text-gray-900 placeholder:text-gray-400 rounded-xl focus:ring-red-500/20 focus:border-red-500 transition-all duration-300 resize-none min-h-[120px]"
+                      placeholder="Especifique con detalle por qué desea anular este pedido..."
+                      disabled={isSaving}
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-3 pt-4">
+                <Button
+                  onClick={handleUpdateStatus}
+                  disabled={isSaving}
+                  style={{ backgroundColor: "#c47b96", color: "#ffffff" }}
+                  className="w-full h-12 rounded-xl border-0 font-bold hover:opacity-90 transition-all duration-200"
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    {isSaving ? (
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <CheckCircle2 className="w-4 h-4" />
+                    )}
+                    {isSaving ? "Guardando..." : "Guardar Cambios"}
+                  </div>
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsStatusDialogOpen(false)}
+                  disabled={isSaving}
+                  className="w-full h-12 rounded-xl text-gray-600 border-gray-200 hover:bg-gray-50 transition-colors duration-200 font-semibold"
+                >
+                  Descartar y volver
+                </Button>
               </div>
             </div>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Detail Dialog - Original Vertical Layout with Premium Colors */}
+      {/* Detail Dialog */}
       <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
-        <DialogContent
-          className="text-white border border-white/10 w-[95vw] sm:max-w-[800px] !max-w-[800px] p-0 overflow-hidden rounded-[2rem] shadow-2xl"
-          style={{
-            background:
-              "linear-gradient(158deg, #2e1020 0%, #3d1828 38%, #4a2035 62%, #2e1020 100%)",
-            backgroundColor: "#2e1020",
-            maxWidth: "800px",
-            width: "95vw",
-          }}
-        >
-          {/* Header Accent Bar */}
-          <div className="h-1.5 w-full bg-gradient-to-r from-[#b06080] via-[#e0a0be] to-[#b06080]" />
-
+        <DialogContent className="bg-white border border-gray-100 max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl p-0">
           {selectedPedido && (
-            <div className="flex flex-col h-full max-h-[90vh] overflow-hidden">
-              {/* Header */}
-              <div className="p-8 border-b border-white/10 flex items-center justify-between bg-black/20">
+            <>
+              {/* Encabezado con avatar */}
+              <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100 sticky top-0 bg-white z-10">
                 <div className="flex items-center gap-4">
-                  <div className="p-3 bg-[#e092b2]/10 rounded-xl border border-[#e092b2]/20">
-                    <ShoppingBag className="w-6 h-6 text-[#e092b2]" />
+                  <div
+                    className="flex items-center justify-center text-white font-bold text-lg flex-shrink-0"
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: 12,
+                      background: "linear-gradient(135deg,#c47b96,#e092b2)",
+                      boxShadow: "0 2px 8px rgba(196,123,150,0.3)",
+                    }}
+                  >
+                    <ShoppingBag className="w-5 h-5" />
                   </div>
                   <div>
-                    <DialogTitle className="text-xl font-bold text-white leading-tight">
-                      Detalle del Pedido{" "}
-                      <span className="text-[#e092b2]">
-                        #{selectedPedido.id.slice(0, 8).toUpperCase()}
-                      </span>
+                    <DialogTitle className="text-base font-bold text-gray-900 leading-tight">
+                      Detalle del Pedido
                     </DialogTitle>
-                    <p className="text-white/40 text-[10px] uppercase font-bold tracking-widest mt-1">
-                      Información Completa de la Transacción
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      ORDEN #{selectedPedido.id.slice(0, 8).toUpperCase()}
                     </p>
                   </div>
                 </div>
                 <div
-                  className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase ${getStatusColor(selectedPedido.estado).text} bg-white/5 border border-current/20`}
+                  style={{ display: "flex", gap: "12px", alignItems: "center" }}
                 >
-                  {getStatusColor(selectedPedido.estado).label}
+                  <span
+                    style={{
+                      padding: "4px 10px",
+                      borderRadius: "999px",
+                      fontSize: "10px",
+                      fontWeight: 800,
+                      textTransform: "uppercase",
+                      background: [
+                        "entregado",
+                        "enviado",
+                        "preparado",
+                      ].includes(selectedPedido.estado)
+                        ? "#d1fae5"
+                        : selectedPedido.estado === "cancelado"
+                          ? "#fee2e2"
+                          : "#f3f4f6",
+                      color: ["entregado", "enviado", "preparado"].includes(
+                        selectedPedido.estado,
+                      )
+                        ? "#065f46"
+                        : selectedPedido.estado === "cancelado"
+                          ? "#991b1b"
+                          : "#4b5563",
+                    }}
+                  >
+                    {getStatusColor(selectedPedido.estado).label}
+                  </span>
+                  <button
+                    onClick={() => setDetailDialogOpen(false)}
+                    className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                  >
+                    <XCircle className="w-5 h-5" />
+                  </button>
                 </div>
               </div>
 
-              {/* Body - Scrollable */}
-              <div className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar">
+              {/* Cuerpo */}
+              <div
+                style={{
+                  padding: "20px 24px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "16px",
+                }}
+              >
                 {/* Info Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "16px",
+                  }}
+                >
                   {/* Client Info */}
-                  <div className="space-y-3">
-                    <Label className="text-white/30 text-[9px] uppercase font-bold tracking-widest">
-                      Titular de la Compra
-                    </Label>
-                    <div className="p-5 rounded-2xl bg-white/5 border border-white/10">
-                      <p className="text-white font-bold text-base">
+                  <div
+                    style={{
+                      background: "#f9fafb",
+                      borderRadius: "12px",
+                      padding: "16px",
+                    }}
+                  >
+                    <p
+                      style={{
+                        fontSize: "11px",
+                        fontWeight: 700,
+                        color: "#9ca3af",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.07em",
+                        marginBottom: "12px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                      }}
+                    >
+                      <User className="w-3.5 h-3.5" /> Titular de la Compra
+                    </p>
+                    <div
+                      style={{
+                        background: "#ffffff",
+                        borderRadius: "8px",
+                        padding: "12px",
+                        border: "1px solid #f3f4f6",
+                      }}
+                    >
+                      <p
+                        style={{
+                          fontSize: "14px",
+                          fontWeight: 700,
+                          color: "#1f2937",
+                          marginBottom: "4px",
+                        }}
+                      >
                         {clientes.find((c) => c.id === selectedPedido.clienteId)
                           ?.nombre || "Consumidor Final"}
                       </p>
-                      <div className="flex items-center gap-2 mt-2 text-white/40 text-[10px]">
-                        <User className="w-3.5 h-3.5" /> ID Cliente:{" "}
-                        {selectedPedido.clienteId}
-                      </div>
+                      <p
+                        style={{
+                          fontSize: "11px",
+                          color: "#6b7280",
+                          fontWeight: 600,
+                        }}
+                      >
+                        ID Cliente: {selectedPedido.clienteId}
+                      </p>
                     </div>
                   </div>
 
                   {/* Order Meta */}
-                  <div className="space-y-3">
-                    <Label className="text-white/30 text-[9px] uppercase font-bold tracking-widest">
-                      Resumen de Envío
-                    </Label>
-                    <div className="p-5 rounded-2xl bg-white/5 border border-white/10">
-                      <div className="flex items-center gap-2 text-xs text-white/80">
-                        <Calendar className="w-3.5 h-3.5 text-[#e092b2]" />
-                        <span>Fecha: {selectedPedido.fecha}</span>
+                  <div
+                    style={{
+                      background: "#f9fafb",
+                      borderRadius: "12px",
+                      padding: "16px",
+                    }}
+                  >
+                    <p
+                      style={{
+                        fontSize: "11px",
+                        fontWeight: 700,
+                        color: "#9ca3af",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.07em",
+                        marginBottom: "12px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                      }}
+                    >
+                      <MapPin className="w-3.5 h-3.5" /> Resumen de Envío
+                    </p>
+                    <div
+                      style={{
+                        background: "#ffffff",
+                        borderRadius: "8px",
+                        padding: "12px",
+                        border: "1px solid #f3f4f6",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "8px",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                        }}
+                      >
+                        <Calendar className="w-4 h-4 text-[#c47b96]" />
+                        <span
+                          style={{
+                            fontSize: "13px",
+                            color: "#374151",
+                            fontWeight: 600,
+                          }}
+                        >
+                          {selectedPedido.fecha}
+                        </span>
                       </div>
-                      <div className="flex items-center gap-2 mt-3 text-xs text-white/80">
-                        <MapPin className="w-3.5 h-3.5 text-[#e092b2]" />
-                        <span className="truncate">
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                        }}
+                      >
+                        <MapPin className="w-4 h-4 text-[#c47b96]" />
+                        <span
+                          style={{
+                            fontSize: "13px",
+                            color: "#374151",
+                            fontWeight: 600,
+                            textOverflow: "ellipsis",
+                            overflow: "hidden",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
                           {selectedPedido.direccionEnvio}
                         </span>
                       </div>
@@ -1330,14 +1546,50 @@ export function PedidosModule() {
                 </div>
 
                 {/* Products List */}
-                <div className="space-y-4">
-                  <Label className="text-white/30 text-[9px] uppercase font-bold tracking-widest flex items-center justify-between">
-                    <span>Productos Incluidos</span>
-                    <span className="text-[#e092b2]">
-                      {selectedPedido.productos.length} ítems
+                <div
+                  style={{
+                    background: "#ffffff",
+                    border: "1px solid #f3f4f6",
+                    borderRadius: "12px",
+                    // overflow: "hidden", // Removido
+                  }}
+                >
+                  <div
+                    style={{
+                      background: "#f9fafb",
+                      padding: "12px 16px",
+                      borderBottom: "1px solid #f3f4f6",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    <p
+                      style={{
+                        fontSize: "11px",
+                        fontWeight: 700,
+                        color: "#9ca3af",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.07em",
+                        margin: 0,
+                      }}
+                    >
+                      Productos Incluidos
+                    </p>
+                    <span
+                      style={{
+                        fontSize: "11px",
+                        fontWeight: 800,
+                        color: "#c47b96",
+                        background: "#fff1f2",
+                        padding: "2px 8px",
+                        borderRadius: "999px",
+                      }}
+                    >
+                      {selectedPedido.productos.length} ÍTEMS
                     </span>
-                  </Label>
-                  <div className="space-y-3">
+                  </div>
+                  <div style={{ padding: "0 16px" }}>
                     {selectedPedido.productos.map((p: any, i: number) => {
                       const producto = productos.find(
                         (prod) => prod.id === p.productoId,
@@ -1345,32 +1597,82 @@ export function PedidosModule() {
                       return (
                         <div
                           key={i}
-                          className="flex items-center justify-between p-4 rounded-xl bg-white/[0.03] border border-white/5 hover:bg-white/[0.07] transition-colors"
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            padding: "16px 0",
+                            borderBottom:
+                              i < selectedPedido.productos.length - 1
+                                ? "1px solid #f3f4f6"
+                                : "none",
+                          }}
                         >
-                          <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-lg bg-black/40 border border-white/10 flex items-center justify-center p-2">
+                          <div
+                            style={{
+                              display: "flex",
+                              gap: "16px",
+                              alignItems: "center",
+                            }}
+                          >
+                            <div
+                              style={{
+                                width: 48,
+                                height: 48,
+                                borderRadius: 8,
+                                background: "#f9fafb",
+                                border: "1px solid #f3f4f6",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                              }}
+                            >
                               {producto?.imagenUrl ? (
                                 <img
                                   src={producto.imagenUrl}
                                   alt={producto.nombre}
-                                  className="w-full h-full object-contain"
+                                  style={{
+                                    width: "100%",
+                                    height: "100%",
+                                    objectFit: "contain",
+                                    borderRadius: 8,
+                                  }}
                                 />
                               ) : (
-                                <Package className="w-6 h-6 text-white/10" />
+                                <Package className="w-5 h-5 text-gray-300" />
                               )}
                             </div>
                             <div>
-                              <p className="text-white font-bold text-sm leading-tight">
+                              <p
+                                style={{
+                                  fontSize: "14px",
+                                  fontWeight: 700,
+                                  color: "#1f2937",
+                                  marginBottom: 2,
+                                }}
+                              >
                                 {producto?.nombre || "Producto"}
                               </p>
-                              <p className="text-white/40 text-[10px] mt-1 font-mono">
+                              <p
+                                style={{
+                                  fontSize: "12px",
+                                  color: "#6b7280",
+                                  fontWeight: 500,
+                                }}
+                              >
                                 {p.cantidad} unid. x{" "}
                                 {formatCurrency(p.precioUnitario)}
                               </p>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <p className="text-white font-black text-sm">
+                          <div>
+                            <p
+                              style={{
+                                fontSize: "15px",
+                                fontWeight: 800,
+                                color: "#1f2937",
+                              }}
+                            >
                               {formatCurrency(p.cantidad * p.precioUnitario)}
                             </p>
                           </div>
@@ -1381,27 +1683,89 @@ export function PedidosModule() {
                 </div>
 
                 {/* Total Section */}
-                <div className="p-6 rounded-2xl bg-[#e092b2]/10 border border-[#e092b2]/20 flex items-center justify-between">
-                  <div>
-                    <p className="text-[#e092b2]/40 text-[9px] uppercase font-black tracking-widest">
-                      Monto Total Liquidado
-                    </p>
-                    <p className="text-3xl font-black text-white mt-1">
-                      {formatCurrency(selectedPedido.total)}
-                    </p>
-                  </div>
-                  <div className="p-4 bg-[#e092b2] rounded-2xl shadow-lg">
-                    <CheckCheck className="w-6 h-6 text-[#1a0d14]" />
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "flex-end",
+                    marginTop: 8,
+                  }}
+                >
+                  <div style={{ width: "100%", maxWidth: 300 }}>
+                    <div
+                      style={{
+                        background: "#fff5f7",
+                        borderRadius: "12px",
+                        padding: "16px",
+                        border: "1px solid #fce8f0",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          marginBottom: "4px",
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: "11px",
+                            fontWeight: 800,
+                            color: "#c47b96",
+                            textTransform: "uppercase",
+                            letterSpacing: "0.1em",
+                          }}
+                        >
+                          Monto Total Liquidado
+                        </span>
+                        <CheckCheck className="w-4 h-4 text-[#c47b96]" />
+                      </div>
+                      <div
+                        style={{
+                          fontSize: "28px",
+                          fontWeight: 800,
+                          color: "#1f2937",
+                          lineHeight: 1,
+                        }}
+                      >
+                        {formatCurrency(selectedPedido.total)}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
                 {/* Cancellation Info */}
                 {selectedPedido.motivoAnulacion && (
-                  <div className="p-5 rounded-2xl bg-rose-500/10 border border-rose-500/20 space-y-1">
-                    <p className="text-rose-400 font-bold text-[9px] uppercase tracking-widest">
+                  <div
+                    style={{
+                      padding: "16px",
+                      borderRadius: "12px",
+                      background: "#fef2f2",
+                      border: "1px solid #fecaca",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "4px",
+                    }}
+                  >
+                    <p
+                      style={{
+                        color: "#b91c1c",
+                        fontSize: "11px",
+                        fontWeight: 800,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.05em",
+                      }}
+                    >
                       Motivo de Anulación
                     </p>
-                    <p className="text-white/60 text-sm italic italic leading-relaxed">
+                    <p
+                      style={{
+                        color: "#dc2626",
+                        fontSize: "13px",
+                        fontStyle: "italic",
+                        lineHeight: 1.4,
+                      }}
+                    >
                       "{selectedPedido.motivoAnulacion}"
                     </p>
                   </div>
@@ -1409,387 +1773,318 @@ export function PedidosModule() {
               </div>
 
               {/* Footer */}
-              <div className="p-8 border-t border-white/10 bg-black/20 flex justify-end gap-3">
+              <div className="flex justify-end gap-3 px-6 pb-6 pt-4 border-t border-gray-100 sticky bottom-0 bg-white z-10">
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   onClick={() => setDetailDialogOpen(false)}
-                  className="text-white/40 hover:text-white hover:bg-white/5 transition-all text-xs border border-white/5"
+                  className="border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg px-5 h-10 text-sm"
                 >
                   Cerrar
                 </Button>
                 <Button
                   onClick={() => window.print()}
-                  className="bg-[#e092b2] hover:bg-[#c47b96] text-[#1a0d14] font-bold text-xs px-6 rounded-xl"
+                  className="rounded-lg font-semibold px-6 h-10 text-sm border-0"
+                  style={{ backgroundColor: "#c47b96", color: "#ffffff" }}
                 >
                   Imprimir Copia
                 </Button>
               </div>
-            </div>
+            </>
           )}
         </DialogContent>
       </Dialog>
 
+      {/* Comprobante Preview Dialog */}
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
-        <DialogContent className="bg-card border-border w-[90vw] sm:max-w-[700px] !max-w-[700px] rounded-2xl overflow-hidden p-6 shadow-2xl">
-          <DialogHeader className="mb-4">
-            <DialogTitle className="text-foreground text-xl font-bold flex items-center gap-2">
-              <Eye className="w-5 h-5 text-primary" />
-              Verificación de Comprobante
-            </DialogTitle>
-          </DialogHeader>
+        <DialogContent className="bg-white border border-gray-100 max-w-3xl rounded-2xl p-0 overflow-hidden shadow-2xl">
+          <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100">
+            <div className="flex items-center gap-4">
+              <div
+                className="flex items-center justify-center text-white font-bold text-lg flex-shrink-0"
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 12,
+                  background: "linear-gradient(135deg,#c47b96,#e092b2)",
+                  boxShadow: "0 2px 8px rgba(196,123,150,0.3)",
+                }}
+              >
+                <Eye className="w-5 h-5" />
+              </div>
+              <div>
+                <DialogTitle className="text-base font-bold text-gray-900 leading-tight">
+                  Verificación de Comprobante
+                </DialogTitle>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  Evidencia fotográfica adjunta
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setIsPreviewOpen(false)}
+              className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            >
+              <XCircle className="w-5 h-5" />
+            </button>
+          </div>
 
-          <div className="flex justify-center p-2 bg-surface rounded-xl overflow-hidden border border-border shadow-inner max-h-[70vh]">
+          <div className="p-6 flex justify-center bg-gray-50 border-t border-b border-gray-100">
             <img
               src={previewImageUrl}
               alt="Comprobante de pago"
-              className="max-w-full h-auto rounded-lg shadow-sm hover:scale-[1.01] transition-transform duration-300 object-contain"
+              className="max-w-full h-auto max-h-[60vh] rounded-lg shadow-sm object-contain"
             />
           </div>
 
-          <DialogFooter className="mt-6">
+          <div className="flex justify-end gap-3 px-6 pb-6 pt-4 bg-white">
             <Button
               onClick={() => setIsPreviewOpen(false)}
-              className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-8"
+              className="rounded-lg font-semibold px-6 h-10 text-sm border-0"
+              style={{ backgroundColor: "#c47b96", color: "#ffffff" }}
             >
               Cerrar Vista
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 
-      {/* Payment Confirmation Dialog Premium & Horizontal Layout Force */}
+      {/* Payment Confirmation Dialog */}
       <Dialog
         open={isPaymentConfirmOpen}
         onOpenChange={setIsPaymentConfirmOpen}
       >
-        <DialogContent
-          className="text-white border border-white/10 w-[95vw] sm:max-w-[550px] !max-w-[550px] rounded-[2rem] p-0 overflow-hidden shadow-2xl"
-          style={{
-            background:
-              "linear-gradient(158deg, #2e1020 0%, #3d1828 38%, #4a2035 62%, #2e1020 100%)",
-            boxShadow: "0 40px 100px -20px rgba(0, 0, 0, 0.7)",
-            maxWidth: "550px",
-            width: "95vw",
-          }}
-        >
-          {/* Header Accent Barb */}
-          <div className="h-2 w-full bg-gradient-to-r from-[#b06080] via-[#e0a0be] to-[#b06080]" />
-
-          <div className="p-10 text-center">
-            <DialogHeader className="mb-8">
-              <DialogTitle
-                className="text-center"
-                style={{
-                  fontFamily: "'DM Sans', sans-serif",
-                  fontSize: "24px",
-                  fontWeight: 800,
-                  color: "#e092b2",
-                  letterSpacing: "-0.02em",
-                }}
-              >
-                Confirmar Pago Manual
-              </DialogTitle>
-            </DialogHeader>
-
-            <div className="text-center space-y-6">
+        <DialogContent className="bg-white border border-gray-100 max-w-md rounded-2xl p-0 overflow-hidden shadow-2xl">
+          <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100 bg-white">
+            <div className="flex items-center gap-4">
               <div
-                className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto transition-transform hover:scale-110 duration-300"
+                className="flex items-center justify-center flex-shrink-0"
                 style={{
-                  background: "rgba(224, 146, 178, 0.1)",
-                  border: "1px solid rgba(224, 146, 178, 0.2)",
+                  width: 44,
+                  height: 44,
+                  borderRadius: 12,
+                  background: "#fff1f2",
+                  boxShadow: "0 2px 8px rgba(239,68,68,0.12)",
                 }}
               >
-                <CheckCircle2 className="w-8 h-8 text-[#e092b2]" />
+                <CheckCircle2
+                  className="w-5 h-5"
+                  style={{ color: "#ef4444" }}
+                />
               </div>
-
-              <div className="space-y-3">
-                <p className="text-white/80 text-sm leading-relaxed px-2">
-                  ¿Estás seguro que revisaste bien si se pagó este pedido? Esta
-                  acción es irreversible para el historial contable.
+              <div>
+                <DialogTitle className="text-base font-bold text-gray-900 leading-tight">
+                  Confirmar Pago Manual
+                </DialogTitle>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  ORDEN #{pedidoToConfirm?.id?.slice(0, 8).toUpperCase()}
                 </p>
-                <div className="inline-block px-3 py-1 bg-white/5 rounded-full border border-white/10">
-                  <span className="text-[#e092b2] font-mono text-xs">
-                    ORDEN #{pedidoToConfirm?.id?.slice(0, 8).toUpperCase()}
-                  </span>
-                </div>
               </div>
             </div>
+            <button
+              onClick={() => setIsPaymentConfirmOpen(false)}
+              className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            >
+              <XCircle className="w-5 h-5" />
+            </button>
+          </div>
 
-            <div className="flex flex-col gap-3 mt-8">
-              <Button
-                onClick={confirmPaymentToggle}
-                onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
-                  (e.currentTarget as HTMLElement).style.backgroundColor =
-                    "rgba(224, 146, 178, 0.9)";
-                  (e.currentTarget as HTMLElement).style.color = "#1a0d14";
-                  (e.currentTarget as HTMLElement).style.transform =
-                    "scale(1.02)";
-                }}
-                onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => {
-                  (e.currentTarget as HTMLElement).style.backgroundColor =
-                    "transparent";
-                  (e.currentTarget as HTMLElement).style.color = "#e092b2";
-                  (e.currentTarget as HTMLElement).style.transform = "scale(1)";
-                }}
-                className="w-full h-11 border transition-all duration-300"
-                disabled={isConfirmingPayment}
-                style={{
-                  backgroundColor: "transparent",
-                  borderColor: "#e092b2",
-                  color: "#e092b2",
-                  fontWeight: 600,
-                  borderRadius: "12px",
-                  transform: "scale(1)",
-                }}
-              >
-                {isConfirmingPayment ? "Procesando..." : "Sí, confirmar pago"}
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={() => setIsPaymentConfirmOpen(false)}
-                onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
-                  (e.currentTarget as HTMLElement).style.backgroundColor =
-                    "rgba(255, 255, 255, 0.08)";
-                  (e.currentTarget as HTMLElement).style.borderColor =
-                    "rgba(255, 255, 255, 0.3)";
-                  (e.currentTarget as HTMLElement).style.color = "#ffffff";
-                }}
-                onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => {
-                  (e.currentTarget as HTMLElement).style.backgroundColor =
-                    "transparent";
-                  (e.currentTarget as HTMLElement).style.borderColor =
-                    "rgba(255, 255, 255, 0.1)";
-                  (e.currentTarget as HTMLElement).style.color =
-                    "rgba(255, 255, 255, 0.4)";
-                }}
-                className="w-full h-11 border transition-all duration-300"
-                disabled={isConfirmingPayment}
-                style={{
-                  backgroundColor: "transparent",
-                  borderColor: "rgba(255, 255, 255, 0.1)",
-                  color: "rgba(255, 255, 255, 0.4)",
-                  borderRadius: "12px",
-                }}
-              >
-                Cancelar
-              </Button>
+          <div className="p-6">
+            <div className="bg-red-50 rounded-xl p-5 border border-red-100 flex items-start gap-4">
+              <CheckCircle2 className="w-6 h-6 text-red-500 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-gray-900 text-sm font-medium mb-1">
+                  ¿Estás seguro que revisaste bien si se pagó este pedido?
+                </p>
+                <p className="text-gray-500 text-xs leading-relaxed">
+                  Esta acción es irreversible para el historial contable y
+                  afecta los reportes financieros.
+                </p>
+              </div>
             </div>
+          </div>
+
+          <div className="flex justify-end gap-3 px-6 pb-6 pt-4 border-t border-gray-100">
+            <Button
+              variant="outline"
+              onClick={() => setIsPaymentConfirmOpen(false)}
+              disabled={isConfirmingPayment}
+              className="border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg px-5 h-10 text-sm"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={confirmPaymentToggle}
+              disabled={isConfirmingPayment}
+              className="rounded-lg text-white font-semibold px-6 h-10 text-sm border-0"
+              style={{ background: "#ef4444" }}
+            >
+              {isConfirmingPayment ? "Procesando..." : "Sí, confirmar pago"}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
       {/* Shipping Info Dialog - Premium & Minimalist */}
+      {/* Shipping Info Dialog */}
       <Dialog
         open={isShippingDialogOpen}
         onOpenChange={setIsShippingDialogOpen}
       >
-        <DialogContent
-          className="text-white border border-white/10 w-[90%] max-w-[450px] rounded-2xl p-0"
-          style={{
-            background:
-              "linear-gradient(158deg, #2e1020 0%, #3d1828 38%, #4a2035 62%, #2e1020 100%)",
-            boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
-          }}
-        >
-          {/* Header Accent Bar */}
-          <div className="h-1.5 w-full bg-gradient-to-r from-[#b06080] via-[#e0a0be] to-[#b06080]" />
-
-          <div className="p-8">
-            <DialogHeader className="mb-6">
-              <div className="flex items-center justify-center gap-3 mb-2">
-                <Truck className="w-6 h-6 text-[#e092b2]" />
-                <DialogTitle
-                  className="text-center"
-                  style={{
-                    fontFamily: "'DM Sans', sans-serif",
-                    fontSize: "20px",
-                    fontWeight: 600,
-                    color: "#e092b2",
-                  }}
-                >
+        <DialogContent className="bg-white border border-gray-100 max-w-md rounded-2xl p-0 shadow-2xl">
+          <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100 bg-white">
+            <div className="flex items-center gap-4">
+              <div
+                className="flex items-center justify-center text-white font-bold text-lg flex-shrink-0"
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 12,
+                  background: "linear-gradient(135deg,#c47b96,#e092b2)",
+                  boxShadow: "0 2px 8px rgba(196,123,150,0.3)",
+                }}
+              >
+                <Truck className="w-5 h-5" />
+              </div>
+              <div>
+                <DialogTitle className="text-base font-bold text-gray-900 leading-tight">
                   Información de Envío
                 </DialogTitle>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  ORDEN #
+                  {selectedPedido?.id?.slice(0, 8)?.toUpperCase() || "..."}
+                </p>
               </div>
-              <p className="text-white/60 text-center text-sm">
-                Completa los datos para despachar la orden{" "}
-                <span className="text-[#e092b2] font-mono">
-                  #{selectedPedido?.id?.slice(0, 8)?.toUpperCase() || "..."}
-                </span>
-              </p>
-            </DialogHeader>
+            </div>
+            <button
+              onClick={() => setIsShippingDialogOpen(false)}
+              className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            >
+              <XCircle className="w-5 h-5" />
+            </button>
+          </div>
 
-            <div className="space-y-5">
-              {/* Rediseño de Transportadora: Grilla de Tarjetas Interactivas */}
-              <div className="space-y-2">
-                <Label className="text-white/80 text-xs uppercase tracking-wider font-semibold">
-                  Selecciona Transportadora *
-                </Label>
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    "Servientrega",
-                    "Envia",
-                    "Coordinadora",
-                    "Interrapidisimo",
-                  ].map((carrier) => (
-                    <button
-                      key={carrier}
-                      type="button"
-                      onMouseEnter={() => setHoveredCarrier(carrier)}
-                      onMouseLeave={() => setHoveredCarrier(null)}
-                      onClick={() =>
-                        setShippingFormData((prev) => ({
-                          ...prev,
-                          transportadora: carrier,
-                        }))
-                      }
-                      className="relative flex flex-col items-center justify-center p-4 rounded-xl border transition-all duration-300"
+          <div className="p-6 space-y-6 bg-white">
+            {/* Transportadora */}
+            <div className="space-y-3">
+              <Label className="text-gray-700 text-xs uppercase tracking-wider font-semibold">
+                Selecciona Transportadora *
+              </Label>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  "Servientrega",
+                  "Envia",
+                  "Coordinadora",
+                  "Interrapidisimo",
+                ].map((carrier) => (
+                  <button
+                    key={carrier}
+                    type="button"
+                    onClick={() =>
+                      setShippingFormData((prev) => ({
+                        ...prev,
+                        transportadora: carrier,
+                      }))
+                    }
+                    className="relative flex items-center justify-center p-3 rounded-xl border transition-all duration-200"
+                    style={{
+                      background:
+                        shippingFormData.transportadora === carrier
+                          ? "#fff0f5"
+                          : "#f9fafb",
+                      borderColor:
+                        shippingFormData.transportadora === carrier
+                          ? "#c47b96"
+                          : "#f3f4f6",
+                    }}
+                  >
+                    <span
+                      className="text-sm font-semibold tracking-tight transition-colors"
                       style={{
-                        backgroundColor:
-                          shippingFormData.transportadora === carrier ||
-                          hoveredCarrier === carrier
-                            ? "rgba(224, 146, 178, 0.2)"
-                            : "rgba(255, 255, 255, 0.05)",
-                        borderColor:
-                          shippingFormData.transportadora === carrier ||
-                          hoveredCarrier === carrier
-                            ? "#e092b2"
-                            : "rgba(255, 255, 255, 0.1)",
-                        transform:
-                          hoveredCarrier === carrier
-                            ? "scale(1.05)"
-                            : "scale(1)",
-                        boxShadow:
-                          shippingFormData.transportadora === carrier ||
-                          hoveredCarrier === carrier
-                            ? "0 0 20px rgba(224, 146, 178, 0.2)"
-                            : "none",
+                        color:
+                          shippingFormData.transportadora === carrier
+                            ? "#c47b96"
+                            : "#6b7280",
                       }}
                     >
-                      <Truck
-                        className="w-6 h-6 mb-2 transition-colors duration-300"
-                        style={{
-                          color:
-                            shippingFormData.transportadora === carrier ||
-                            hoveredCarrier === carrier
-                              ? "#e092b2"
-                              : "rgba(255, 255, 255, 0.4)",
-                        }}
-                      />
-                      <span
-                        className="text-[12px] font-bold tracking-tight transition-colors duration-300"
-                        style={{
-                          color:
-                            shippingFormData.transportadora === carrier ||
-                            hoveredCarrier === carrier
-                              ? "#ffffff"
-                              : "rgba(255, 255, 255, 0.6)",
-                        }}
-                      >
-                        {carrier}
-                      </span>
-
-                      {/* Subrayado elegante si está seleccionado */}
-                      {shippingFormData.transportadora === carrier && (
-                        <div className="absolute bottom-2 w-8 h-1 bg-[#e092b2] rounded-full animate-in slide-in-from-bottom-1 duration-300" />
-                      )}
-                    </button>
-                  ))}
-                </div>
+                      {carrier}
+                    </span>
+                  </button>
+                ))}
               </div>
+            </div>
 
-              {/* Número de Guía */}
-              <div className="space-y-2">
-                <Label className="text-white/80 text-xs uppercase tracking-wider font-semibold">
-                  Número de Guía *
+            {/* Número de Guía */}
+            <div className="space-y-3">
+              <Label className="text-gray-700 text-xs uppercase tracking-wider font-semibold">
+                Número de Guía *
+              </Label>
+              <Input
+                value={shippingFormData.numero_guia}
+                onChange={(e) =>
+                  setShippingFormData({
+                    ...shippingFormData,
+                    numero_guia: e.target.value,
+                  })
+                }
+                placeholder="Ej: 1234567890"
+                className="h-11 rounded-xl bg-gray-50 border-gray-200 text-gray-900 focus:ring-[#c47b96]/20 focus:border-[#c47b96]"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              {/* Fecha de Envío */}
+              <div className="space-y-3">
+                <Label className="text-gray-700 text-xs uppercase tracking-wider font-semibold">
+                  Fecha de Envío
                 </Label>
                 <Input
-                  value={shippingFormData.numero_guia}
+                  type="date"
+                  value={shippingFormData.fecha_envio}
                   onChange={(e) =>
                     setShippingFormData({
                       ...shippingFormData,
-                      numero_guia: e.target.value,
+                      fecha_envio: e.target.value,
                     })
                   }
-                  placeholder="Ej: 1234567890"
-                  className="bg-white/5 border-white/10 text-white h-11 rounded-xl focus:ring-[#e092b2]/50"
+                  className="h-11 rounded-xl bg-gray-50 border-gray-200 text-gray-900 focus:ring-[#c47b96]/20 focus:border-[#c47b96] [color-scheme:light]"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                {/* Fecha de Envío */}
-                <div className="space-y-2">
-                  <Label className="text-white/80 text-xs uppercase tracking-wider font-semibold">
-                    Fecha de Envío
-                  </Label>
-                  <Input
-                    type="date"
-                    value={shippingFormData.fecha_envio}
-                    onChange={(e) =>
-                      setShippingFormData({
-                        ...shippingFormData,
-                        fecha_envio: e.target.value,
-                      })
-                    }
-                    className="bg-white/5 border-white/10 text-white h-11 rounded-xl [color-scheme:dark]"
-                  />
-                </div>
-
-                {/* Fecha Estimada */}
-                <div className="space-y-2">
-                  <Label className="text-white/80 text-xs uppercase tracking-wider font-semibold">
-                    Entrega Estimada
-                  </Label>
-                  <Input
-                    value={shippingFormData.fecha_estimada}
-                    onChange={(e) =>
-                      setShippingFormData({
-                        ...shippingFormData,
-                        fecha_estimada: e.target.value,
-                      })
-                    }
-                    placeholder="Ej: 3-5 días"
-                    className="bg-white/5 border-white/10 text-white h-11 rounded-xl"
-                  />
-                </div>
+              {/* Fecha Estimada */}
+              <div className="space-y-3">
+                <Label className="text-gray-700 text-xs uppercase tracking-wider font-semibold">
+                  Entrega Estimada
+                </Label>
+                <Input
+                  value={shippingFormData.fecha_estimada}
+                  onChange={(e) =>
+                    setShippingFormData({
+                      ...shippingFormData,
+                      fecha_estimada: e.target.value,
+                    })
+                  }
+                  placeholder="Ej: 3-5 días"
+                  className="h-11 rounded-xl bg-gray-50 border-gray-200 text-gray-900 focus:ring-[#c47b96]/20 focus:border-[#c47b96]"
+                />
               </div>
             </div>
+          </div>
 
-            <div className="flex flex-col gap-3 mt-8">
-              <Button
-                onClick={handleConfirmShipping}
-                disabled={isSaving}
-                onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
-                  (e.currentTarget as HTMLElement).style.backgroundColor =
-                    "rgba(224, 146, 178, 0.9)";
-                  (e.currentTarget as HTMLElement).style.color = "#1a0d14";
-                  (e.currentTarget as HTMLElement).style.transform =
-                    "scale(1.02)";
-                }}
-                onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => {
-                  (e.currentTarget as HTMLElement).style.backgroundColor =
-                    "transparent";
-                  (e.currentTarget as HTMLElement).style.color = "#e092b2";
-                  (e.currentTarget as HTMLElement).style.transform = "scale(1)";
-                }}
-                className="w-full h-11 border transition-all duration-300"
-                style={{
-                  backgroundColor: "transparent",
-                  borderColor: "#e092b2",
-                  color: "#e092b2",
-                  fontWeight: 600,
-                  borderRadius: "12px",
-                  transform: "scale(1)",
-                }}
-              >
-                {isSaving ? "Procesando..." : "Confirmar Envío"}
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={() => setIsShippingDialogOpen(false)}
-                className="w-full h-11 border border-white/10 text-white/40 hover:text-white hover:bg-white/5 transition-all duration-300 rounded-xl"
-              >
-                Cancelar
-              </Button>
-            </div>
+          <div className="flex justify-end gap-3 px-6 pb-6 pt-4 border-t border-gray-100 bg-white">
+            <Button
+              variant="outline"
+              onClick={() => setIsShippingDialogOpen(false)}
+              className="border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg px-5 h-10 text-sm"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleConfirmShipping}
+              disabled={isSaving}
+              className="rounded-lg font-semibold px-6 h-10 text-sm border-0"
+              style={{ backgroundColor: "#c47b96", color: "#ffffff" }}
+            >
+              {isSaving ? "Procesando..." : "Confirmar Envío"}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

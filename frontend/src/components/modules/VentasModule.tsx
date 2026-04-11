@@ -16,40 +16,31 @@ import { Button } from "../ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter,
 } from "../ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
-import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import {
   Plus,
-  Eye,
-  Trash2,
-  FileText,
   Search,
+  Trash2,
   X,
-  ShoppingBag,
-  DollarSign,
-  Calendar,
   User,
-  Hash,
   CreditCard,
-  CheckCircle2,
-  AlertCircle,
   Package,
+  AlertCircle,
+  FileText,
+  Calendar,
+  DollarSign,
+  CheckCircle2,
+  ShoppingBag,
+  Eye,
+  Hash,
   ClipboardList,
   CheckCheck,
   TrendingUp,
 } from "lucide-react";
+import { GenericCombobox } from "../GenericCombobox";
 import { toast } from "sonner";
 import { generateSalePDF } from "../../lib/pdfGenerator";
 import { saleService } from "../../services/saleService";
@@ -57,8 +48,7 @@ import { Cliente } from "../../lib/store";
 import { CONFIG } from "../../lib/constants";
 
 export function VentasModule() {
-  const { ventas, clientes, productos, setVentas } =
-    useStore();
+  const { ventas, clientes, productos, setVentas } = useStore();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [selectedVenta, setSelectedVenta] = useState<any>(null);
@@ -131,7 +121,9 @@ export function VentasModule() {
     clienteId: "",
     pedidoId: "",
     metodoPago: "Efectivo" as "Efectivo" | "Transferencia",
-    productos: [{ productoId: "", cantidad: 1, precioUnitario: 0, maxStock: 0 }],
+    productos: [
+      { productoId: "", cantidad: 1, precioUnitario: 0, maxStock: 0 },
+    ],
   });
 
   const handleOpenDialog = () => {
@@ -185,15 +177,15 @@ export function VentasModule() {
         productoId: value,
         precioUnitario: prodObj?.precioVenta || 0,
         maxStock: prodObj?.stock || 0,
-        cantidad: Math.min(newProductos[index].cantidad, prodObj?.stock || 0) || 1,
+        cantidad:
+          Math.min(newProductos[index].cantidad, prodObj?.stock || 0) || 1,
       };
     } else if (field === "cantidad") {
       const ms = newProductos[index].maxStock || 0;
-      const cantidadValida = ms > 0 ? Math.max(1, Math.min(value, ms)) : Math.max(1, value);
+      const cantidadValida =
+        ms > 0 ? Math.max(1, Math.min(value, ms)) : Math.max(1, value);
       if (ms > 0 && value > ms) {
-        toast.warning(
-          `Stock limitado. Máximo disponible: ${ms}`,
-        );
+        toast.warning(`Stock limitado. Máximo disponible: ${ms}`);
       }
       newProductos[index] = {
         ...newProductos[index],
@@ -260,6 +252,7 @@ export function VentasModule() {
   const handleAnularVenta = async () => {
     if (!saleToAnnul) return;
 
+    setIsSaving(true);
     try {
       await saleService.annul(Number(saleToAnnul));
       toast.success("Venta anulada correctamente");
@@ -267,7 +260,9 @@ export function VentasModule() {
       setIsAnnulDialogOpen(false);
       setSaleToAnnul(null);
     } catch (error: any) {
-      toast.error("Error al anular la venta");
+      toast.error(error.response?.data?.message || "Error al anular la venta");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -486,10 +481,7 @@ export function VentasModule() {
                       </TableCell>
                       <TableCell className="py-2.5">
                         <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#c47b96] to-[#e092b2] flex items-center justify-center text-white text-xs font-bold">
-                            {(venta as any).clienteNombre?.charAt(0) || "?"}
-                          </div>
-                          <span className="text-gray-800 font-medium text-sm">
+                          <span className="text-gray-800 font-semibold text-sm">
                             {(venta as any).clienteNombre || "Sin Nombre"}
                           </span>
                         </div>
@@ -576,150 +568,165 @@ export function VentasModule() {
 
       {/* Create Dialog - Premium */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="bg-white border border-gray-200 max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl">
-          <DialogHeader className="border-b border-gray-100 pb-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-br from-[#fff0f5] to-[#fce8f0] rounded-xl">
-                <ShoppingBag className="w-5 h-5 text-[#c47b96]" />
+        <DialogContent className="bg-white border border-gray-100 !w-[95vw] !max-w-[95vw] rounded-2xl shadow-2xl p-0 overflow-hidden">
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100 bg-white z-10">
+            <div className="flex items-center gap-4">
+              <div
+                className="flex items-center justify-center text-white font-bold text-lg flex-shrink-0"
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 12,
+                  background: "linear-gradient(135deg,#c47b96,#e092b2)",
+                  boxShadow: "0 2px 8px rgba(196,123,150,0.3)",
+                }}
+              >
+                <ShoppingBag className="w-5 h-5" />
               </div>
-              <DialogTitle className="text-[#2e1020] text-xl font-bold">
-                Nueva Venta
-              </DialogTitle>
+              <div>
+                <DialogTitle className="text-base font-bold text-gray-900 leading-tight">
+                  Nueva Venta
+                </DialogTitle>
+                <DialogDescription className="text-xs text-gray-400 mt-0.5">
+                  Formulario para crear una nueva venta
+                </DialogDescription>
+              </div>
             </div>
-            <DialogDescription className="sr-only">
-              Formulario para crear una nueva venta
-            </DialogDescription>
-          </DialogHeader>
+            <button
+              onClick={() => setIsDialogOpen(false)}
+              className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
 
-          <div className="space-y-6 py-4">
-            <div className="grid grid-cols-2 gap-5">
-              <div className="space-y-2">
-                <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">
-                  <User className="w-3.5 h-3.5 text-[#c47b96]" />
-                  Cliente
-                </Label>
-                <AsyncClientSelect
-                  value={formData.clienteId}
-                  onChange={(val) => setFormData({ ...formData, clienteId: val })}
+          <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: "16px" }}>
+            
+            {/* Fila superior: Cliente + Método de Pago */}
+            <div style={{ display: "grid", gridTemplateColumns: "3fr 2fr", gap: "16px" }}>
+              
+              {/* Cliente */}
+              <div style={{ background: "#f9fafb", borderRadius: "12px", padding: "16px" }}>
+                <p style={{ fontSize: "11px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
+                  <User className="w-3.5 h-3.5" /> Cliente <span style={{ color: "#f87171" }}>*</span>
+                </p>
+                <div style={{ background: "#ffffff", borderRadius: "8px" }}>
+                  <AsyncClientSelect
+                    value={formData.clienteId}
+                    onChange={(val) => setFormData({ ...formData, clienteId: val })}
+                  />
+                </div>
+              </div>
+
+              {/* Método de Pago */}
+              <div style={{ background: "#f9fafb", borderRadius: "12px", padding: "16px" }}>
+                <p style={{ fontSize: "11px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
+                  <CreditCard className="w-3.5 h-3.5" /> Método de Pago <span style={{ color: "#f87171" }}>*</span>
+                </p>
+                <GenericCombobox
+                  options={[
+                    { value: "Efectivo", label: "Efectivo" },
+                    { value: "Transferencia", label: "Transferencia" },
+                  ]}
+                  value={formData.metodoPago}
+                  onChange={(v) => setFormData({ ...formData, metodoPago: v as any })}
+                  placeholder="Seleccionar método"
+                  disabled={isSaving}
                 />
               </div>
-
-              <div className="space-y-2">
-                <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">
-                  <CreditCard className="w-3.5 h-3.5 text-[#c47b96]" />
-                  Método de Pago
-                </Label>
-                <Select
-                  value={formData.metodoPago}
-                  onValueChange={(value: "Efectivo" | "Transferencia") =>
-                    setFormData({ ...formData, metodoPago: value })
-                  }
-                >
-                  <SelectTrigger className="bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border-gray-200 rounded-xl">
-                    <SelectItem value="Efectivo" className="text-gray-800">
-                      Efectivo
-                    </SelectItem>
-                    <SelectItem value="Transferencia" className="text-gray-800">
-                      Transferencia
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">
-                  <Package className="w-3.5 h-3.5 text-[#c47b96]" />
-                  Productos
-                </Label>
+            {/* Sección de Productos */}
+            <div style={{ background: "#ffffff", border: "1px solid #f3f4f6", borderRadius: "12px" }}>
+              
+              {/* Header productos */}
+              <div className="flex items-center justify-between" style={{ background: "#f9fafb", padding: "12px 16px", borderBottom: "1px solid #f3f4f6" }}>
+                <p style={{ fontSize: "11px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", display: "flex", alignItems: "center", gap: "6px", margin: 0 }}>
+                  <Package className="w-3.5 h-3.5" /> Productos <span style={{ color: "#f87171" }}>*</span>
+                </p>
                 <Button
+                  type="button"
                   size="sm"
                   onClick={addProductLine}
-                  className="bg-gradient-to-r from-[#c47b96] to-[#e092b2] hover:shadow-lg transition-all rounded-xl text-white"
+                  className="hover:opacity-90 rounded-lg font-bold text-xs h-7 px-3 border-0 flex items-center"
+                  style={{ backgroundColor: "#c47b96", color: "#ffffff" }}
                 >
-                  <Plus className="w-4 h-4 mr-1.5" /> Agregar producto
+                  <Plus className="w-3.5 h-3.5 mr-1" /> Añadir
                 </Button>
               </div>
 
-              <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+              {/* Lista de productos */}
+              <div style={{ padding: "0 16px", maxHeight: "300px", overflowY: "auto" }}>
                 {formData.productos.map((prod, index) => (
                   <div
                     key={index}
-                    className="relative bg-gradient-to-br from-gray-50 to-white border border-gray-200 rounded-xl p-4 transition-all hover:shadow-md"
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      padding: "16px 0",
+                      borderBottom: index < formData.productos.length - 1 ? "1px solid #f3f4f6" : "none",
+                      position: "relative",
+                      zIndex: 100 - index,
+                    }}
                   >
                     <div className="grid grid-cols-12 gap-3 items-end">
-                      <div className="col-span-5 space-y-1.5">
-                        <Label className="text-gray-600 text-xs font-medium">
+                      <div className="col-span-6">
+                        <p style={{ fontSize: "10px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", marginBottom: "6px" }}>
                           Producto
-                        </Label>
-                        <AsyncProductSelect
-                          value={prod.productoId}
-                          onChange={(val, prodObj) =>
-                            updateProductLine(index, "productoId", val, prodObj)
-                          }
-                        />
+                        </p>
+                        <div style={{ background: "#ffffff", borderRadius: "8px" }}>
+                          <AsyncProductSelect
+                            value={prod.productoId}
+                            onChange={(val, prodObj) => updateProductLine(index, "productoId", val, prodObj)}
+                          />
+                        </div>
                       </div>
-                      <div className="col-span-2 space-y-1.5">
-                        <Label className="text-gray-600 text-xs font-medium">
-                          Cantidad
-                        </Label>
+                      <div className="col-span-2">
+                        <p style={{ fontSize: "10px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", marginBottom: "6px" }}>
+                          Cant.
+                        </p>
                         <Input
                           type="number"
                           min="1"
                           value={prod.cantidad}
-                          onChange={(e) =>
-                            updateProductLine(
-                              index,
-                              "cantidad",
-                              parseInt(e.target.value),
-                            )
-                          }
-                          className="bg-white border-gray-200 text-gray-800 h-10 rounded-lg"
+                          onChange={(e) => updateProductLine(index, "cantidad", parseInt(e.target.value))}
+                          className="border-gray-200 text-gray-800 h-9 rounded-lg"
                         />
                       </div>
-                      <div className="col-span-3 space-y-1.5">
-                        <Label className="text-gray-600 text-xs font-medium">
+                      <div className="col-span-2">
+                        <p style={{ fontSize: "10px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", marginBottom: "6px" }}>
                           Precio
-                        </Label>
+                        </p>
                         <Input
                           type="number"
                           value={prod.precioUnitario}
-                          onChange={(e) =>
-                            updateProductLine(
-                              index,
-                              "precioUnitario",
-                              parseFloat(e.target.value),
-                            )
-                          }
-                          className="bg-white border-gray-200 text-gray-800 h-10 rounded-lg"
+                          onChange={(e) => updateProductLine(index, "precioUnitario", parseFloat(e.target.value))}
+                          className="border-gray-200 text-gray-800 h-9 rounded-lg"
                         />
                       </div>
-                      <div className="col-span-2 space-y-1.5">
-                        <Label className="text-gray-600 text-xs font-medium">
+                      <div className="col-span-2">
+                        <p style={{ fontSize: "10px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", marginBottom: "6px" }}>
                           Total
-                        </Label>
-                        <div className="h-10 px-3 bg-gray-50 border border-gray-200 rounded-lg flex items-center">
-                          <span className="text-[#c47b96] text-sm font-bold">
-                            {formatCurrency(
-                              prod.cantidad * prod.precioUnitario,
-                            )}
+                        </p>
+                        <div style={{ height: "36px", padding: "0 12px", background: "#f9fafb", border: "1px solid #f3f4f6", borderRadius: "8px", display: "flex", alignItems: "center" }}>
+                          <span style={{ fontSize: "13px", fontWeight: 800, color: "#1f2937" }}>
+                            {formatCurrency(prod.cantidad * prod.precioUnitario)}
                           </span>
                         </div>
                       </div>
+
                       {formData.productos.length > 1 && (
-                        <div className="absolute -top-2 -right-2">
+                        <div className="absolute -top-1 -right-1">
                           <Button
                             size="sm"
                             variant="ghost"
                             onClick={() => removeProductLine(index)}
-                            className="h-7 w-7 p-0 bg-white border border-gray-200 rounded-full text-gray-400 hover:text-rose-500 hover:border-rose-200 transition-all shadow-sm"
+                            style={{ height: "24px", width: "24px", padding: 0 }}
+                            className="bg-white border border-gray-200 rounded-full text-gray-400 hover:text-rose-500 hover:border-rose-200 transition-all shadow-sm"
                             title="Eliminar producto"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            <Trash2 className="w-3 h-3" />
                           </Button>
                         </div>
                       )}
@@ -727,140 +734,300 @@ export function VentasModule() {
                   </div>
                 ))}
               </div>
-
-              <div className="bg-gradient-to-r from-[#fff0f5] to-[#fce8f0] p-4 rounded-xl border border-[#f0d5e0]">
-                <div className="flex items-center justify-between">
-                  <span className="text-[#2e1020] font-semibold text-base">
-                    Total de la Venta
-                  </span>
-                  <span className="text-[#c47b96] font-black text-2xl">
-                    {formatCurrency(
-                      formData.productos.reduce(
-                        (sum, p) => sum + p.cantidad * p.precioUnitario,
-                        0,
-                      ),
-                    )}
-                  </span>
-                </div>
-              </div>
             </div>
           </div>
 
-          <DialogFooter className="border-t border-gray-100 pt-4 gap-3">
-            <Button
-              variant="outline"
-              onClick={() => setIsDialogOpen(false)}
-              className="border-gray-200 text-gray-700 hover:bg-gray-50 rounded-xl"
-              disabled={isSaving}
-            >
-              Cancelar
-            </Button>
-            <Button
-              onClick={handleSave}
-              className="bg-gradient-to-r from-[#c47b96] to-[#e092b2] hover:shadow-lg transition-all rounded-xl text-white font-semibold"
-              disabled={isSaving}
-            >
-              {isSaving ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Guardando...
-                </div>
-              ) : (
-                "Confirmar Venta"
-              )}
-            </Button>
-          </DialogFooter>
+          {/* Footer: Total + Botones */}
+          <div className="flex items-center justify-between px-6 pb-6 pt-4 border-t border-gray-100 bg-white z-10">
+            {/* Total */}
+            <div className="bg-gradient-to-r from-[#fff0f5] to-[#fce8f0] rounded-xl border border-[#f0d5e0]" style={{ padding: "10px 20px", display: "flex", alignItems: "center", gap: "16px" }}>
+              <p style={{ fontSize: "11px", fontWeight: 700, color: "#c47b96", textTransform: "uppercase", letterSpacing: "0.07em", margin: 0 }}>
+                Total de la Venta
+              </p>
+              <span className="text-[#c47b96] font-black text-2xl">
+                {formatCurrency(formData.productos.reduce((sum, p) => sum + p.cantidad * p.precioUnitario, 0))}
+              </span>
+            </div>
+            {/* Botones */}
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setIsDialogOpen(false)}
+                className="border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg px-5 h-10 text-sm"
+                disabled={isSaving}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleSave}
+                disabled={isSaving}
+                className="rounded-lg font-semibold px-6 h-10 text-sm border-0"
+                style={{ backgroundColor: "#c47b96", color: "#ffffff" }}
+              >
+                {isSaving ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Guardando...
+                  </div>
+                ) : (
+                  "Confirmar Venta"
+                )}
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 
       {/* Detail Dialog - Premium */}
       <Dialog open={detailDialogOpen} onOpenChange={setDetailDialogOpen}>
-        <DialogContent
-          className="text-white border border-white/10 w-[95vw] sm:max-w-[700px] !max-w-[700px] p-0 overflow-hidden rounded-[2rem] shadow-2xl"
-          style={{
-            background:
-              "linear-gradient(158deg, #2e1020 0%, #3d1828 38%, #4a2035 62%, #2e1020 100%)",
-            backgroundColor: "#2e1020",
-          }}
-        >
-          {/* Header Accent Bar */}
-          <div className="h-1.5 w-full bg-gradient-to-r from-[#b06080] via-[#e0a0be] to-[#b06080]" />
-
+        <DialogContent className="bg-white border border-gray-100 max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl p-0">
           {selectedVenta && (
-            <div className="flex flex-col h-full max-h-[90vh] overflow-hidden">
-              {/* Header */}
-              <div className="p-8 border-b border-white/10 flex items-center justify-between bg-black/20">
+            <>
+              {/* Encabezado con avatar */}
+              <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100 sticky top-0 bg-white z-10">
                 <div className="flex items-center gap-4">
-                  <div className="p-3 bg-[#e092b2]/10 rounded-xl border border-[#e092b2]/20">
-                    <ShoppingBag className="w-6 h-6 text-[#e092b2]" />
+                  <div
+                    className="flex items-center justify-center text-white font-bold text-lg flex-shrink-0"
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: 12,
+                      background: "linear-gradient(135deg,#c47b96,#e092b2)",
+                      boxShadow: "0 2px 8px rgba(196,123,150,0.3)",
+                    }}
+                  >
+                    <ShoppingBag className="w-5 h-5" />
                   </div>
                   <div>
-                    <DialogTitle className="text-xl font-bold text-white leading-tight">
-                      Detalle de Venta{" "}
-                      <span className="text-[#e092b2]">
-                        #{selectedVenta.id.slice(0, 8).toUpperCase()}
-                      </span>
+                    <DialogTitle className="text-base font-bold text-gray-900 leading-tight">
+                      Detalle de Venta
                     </DialogTitle>
-                    <p className="text-white/40 text-[10px] uppercase font-bold tracking-widest mt-1">
-                      Información de Transacción
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      FACTURA #{selectedVenta.id.slice(0, 8).toUpperCase()}
                     </p>
                   </div>
                 </div>
                 <div
-                  className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase ${getStatusColor(selectedVenta.estado).text} bg-white/5 border border-current/20`}
+                  style={{ display: "flex", gap: "12px", alignItems: "center" }}
                 >
-                  {getStatusColor(selectedVenta.estado).label}
+                  <span
+                    style={{
+                      padding: "4px 10px",
+                      borderRadius: "999px",
+                      fontSize: "10px",
+                      fontWeight: 800,
+                      textTransform: "uppercase",
+                      background:
+                        selectedVenta.estado === "activo"
+                          ? "#d1fae5"
+                          : "#fee2e2",
+                      color:
+                        selectedVenta.estado === "activo"
+                          ? "#065f46"
+                          : "#991b1b",
+                    }}
+                  >
+                    {getStatusColor(selectedVenta.estado).label}
+                  </span>
+                  <button
+                    onClick={() => setDetailDialogOpen(false)}
+                    className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
 
-              {/* Body - Scrollable */}
-              <div className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar">
+              {/* Cuerpo */}
+              <div
+                style={{
+                  padding: "20px 24px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "16px",
+                }}
+              >
                 {/* Info Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "16px",
+                  }}
+                >
                   {/* Client Info */}
-                  <div className="space-y-3">
-                    <Label className="text-white/30 text-[9px] uppercase font-bold tracking-widest">
-                      Cliente
-                    </Label>
-                    <div className="p-5 rounded-2xl bg-white/5 border border-white/10">
-                      <p className="text-white font-bold text-base">
+                  <div
+                    style={{
+                      background: "#f9fafb",
+                      borderRadius: "12px",
+                      padding: "16px",
+                    }}
+                  >
+                    <p
+                      style={{
+                        fontSize: "11px",
+                        fontWeight: 700,
+                        color: "#9ca3af",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.07em",
+                        marginBottom: "12px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                      }}
+                    >
+                      <User className="w-3.5 h-3.5" /> Cliente
+                    </p>
+                    <div
+                      style={{
+                        background: "#ffffff",
+                        borderRadius: "8px",
+                        padding: "12px",
+                        border: "1px solid #f3f4f6",
+                      }}
+                    >
+                      <p
+                        style={{
+                          fontSize: "14px",
+                          fontWeight: 700,
+                          color: "#1f2937",
+                          marginBottom: "4px",
+                        }}
+                      >
                         {clientes.find((c) => c.id === selectedVenta.clienteId)
                           ?.nombre || "Consumidor Final"}
                       </p>
-                      <div className="flex items-center gap-2 mt-2 text-white/40 text-[10px]">
-                        <User className="w-3.5 h-3.5" /> ID Cliente:{" "}
-                        {selectedVenta.clienteId}
-                      </div>
+                      <p
+                        style={{
+                          fontSize: "11px",
+                          color: "#6b7280",
+                          fontWeight: 600,
+                        }}
+                      >
+                        ID Cliente: {selectedVenta.clienteId}
+                      </p>
                     </div>
                   </div>
 
                   {/* Sale Meta */}
-                  <div className="space-y-3">
-                    <Label className="text-white/30 text-[9px] uppercase font-bold tracking-widest">
-                      Datos de Venta
-                    </Label>
-                    <div className="p-5 rounded-2xl bg-white/5 border border-white/10">
-                      <div className="flex items-center gap-2 text-xs text-white/80">
-                        <Calendar className="w-3.5 h-3.5 text-[#e092b2]" />
-                        <span>Fecha: {selectedVenta.fecha}</span>
+                  <div
+                    style={{
+                      background: "#f9fafb",
+                      borderRadius: "12px",
+                      padding: "16px",
+                    }}
+                  >
+                    <p
+                      style={{
+                        fontSize: "11px",
+                        fontWeight: 700,
+                        color: "#9ca3af",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.07em",
+                        marginBottom: "12px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                      }}
+                    >
+                      <FileText className="w-3.5 h-3.5" /> Datos de Venta
+                    </p>
+                    <div
+                      style={{
+                        background: "#ffffff",
+                        borderRadius: "8px",
+                        padding: "12px",
+                        border: "1px solid #f3f4f6",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "8px",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                        }}
+                      >
+                        <Calendar className="w-4 h-4 text-[#c47b96]" />
+                        <span
+                          style={{
+                            fontSize: "13px",
+                            color: "#374151",
+                            fontWeight: 600,
+                          }}
+                        >
+                          {selectedVenta.fecha}
+                        </span>
                       </div>
-                      <div className="flex items-center gap-2 mt-3 text-xs text-white/80">
-                        <CreditCard className="w-3.5 h-3.5 text-[#e092b2]" />
-                        <span>Método: {selectedVenta.metodoPago}</span>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                        }}
+                      >
+                        <CreditCard className="w-4 h-4 text-[#c47b96]" />
+                        <span
+                          style={{
+                            fontSize: "13px",
+                            color: "#374151",
+                            fontWeight: 600,
+                          }}
+                        >
+                          {selectedVenta.metodoPago}
+                        </span>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Products List */}
-                <div className="space-y-4">
-                  <Label className="text-white/30 text-[9px] uppercase font-bold tracking-widest flex items-center justify-between">
-                    <span>Artículos Facturados</span>
-                    <span className="text-[#e092b2]">
-                      {selectedVenta.productos.length} ítems
+                <div
+                  style={{
+                    background: "#ffffff",
+                    border: "1px solid #f3f4f6",
+                    borderRadius: "12px",
+                    // overflow: "hidden", // Removido
+                  }}
+                >
+                  <div
+                    style={{
+                      background: "#f9fafb",
+                      padding: "12px 16px",
+                      borderBottom: "1px solid #f3f4f6",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    <p
+                      style={{
+                        fontSize: "11px",
+                        fontWeight: 700,
+                        color: "#9ca3af",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.07em",
+                        margin: 0,
+                      }}
+                    >
+                      Artículos Facturados
+                    </p>
+                    <span
+                      style={{
+                        fontSize: "11px",
+                        fontWeight: 800,
+                        color: "#c47b96",
+                        background: "#fff1f2",
+                        padding: "2px 8px",
+                        borderRadius: "999px",
+                      }}
+                    >
+                      {selectedVenta.productos.length} ÍTEMS
                     </span>
-                  </Label>
-                  <div className="space-y-3">
+                  </div>
+                  <div style={{ padding: "0 16px" }}>
                     {selectedVenta.productos.map((p: any, i: number) => {
                       const producto = productos.find(
                         (prod) => prod.id === p.productoId,
@@ -868,32 +1035,82 @@ export function VentasModule() {
                       return (
                         <div
                           key={i}
-                          className="flex items-center justify-between p-4 rounded-xl bg-white/[0.03] border border-white/5 hover:bg-white/[0.07] transition-colors"
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            padding: "16px 0",
+                            borderBottom:
+                              i < selectedVenta.productos.length - 1
+                                ? "1px solid #f3f4f6"
+                                : "none",
+                          }}
                         >
-                          <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-lg bg-black/40 border border-white/10 flex items-center justify-center p-2">
+                          <div
+                            style={{
+                              display: "flex",
+                              gap: "16px",
+                              alignItems: "center",
+                            }}
+                          >
+                            <div
+                              style={{
+                                width: 48,
+                                height: 48,
+                                borderRadius: 8,
+                                background: "#f9fafb",
+                                border: "1px solid #f3f4f6",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                              }}
+                            >
                               {producto?.imagenUrl ? (
                                 <img
                                   src={producto.imagenUrl}
                                   alt={producto.nombre}
-                                  className="w-full h-full object-contain"
+                                  style={{
+                                    width: "100%",
+                                    height: "100%",
+                                    objectFit: "contain",
+                                    borderRadius: 8,
+                                  }}
                                 />
                               ) : (
-                                <Package className="w-6 h-6 text-white/10" />
+                                <Package className="w-5 h-5 text-gray-300" />
                               )}
                             </div>
                             <div>
-                              <p className="text-white font-bold text-sm leading-tight">
+                              <p
+                                style={{
+                                  fontSize: "14px",
+                                  fontWeight: 700,
+                                  color: "#1f2937",
+                                  marginBottom: 2,
+                                }}
+                              >
                                 {producto?.nombre || "Producto"}
                               </p>
-                              <p className="text-white/40 text-[10px] mt-1 font-mono">
+                              <p
+                                style={{
+                                  fontSize: "12px",
+                                  color: "#6b7280",
+                                  fontWeight: 500,
+                                }}
+                              >
                                 {p.cantidad} unid. x{" "}
                                 {formatCurrency(p.precioUnitario)}
                               </p>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <p className="text-white font-black text-sm">
+                          <div>
+                            <p
+                              style={{
+                                fontSize: "15px",
+                                fontWeight: 800,
+                                color: "#1f2937",
+                              }}
+                            >
                               {formatCurrency(p.cantidad * p.precioUnitario)}
                             </p>
                           </div>
@@ -904,101 +1121,273 @@ export function VentasModule() {
                 </div>
 
                 {/* Summary Totals */}
-                <div className="pt-6 border-t border-white/10">
-                  <div className="ml-auto w-full max-w-[300px] space-y-4">
-                    <div className="space-y-2 text-xs font-medium">
-                      <div className="flex justify-between text-white/40">
-                        <span>Subtotal</span>
-                        <span className="font-mono">{formatCurrency(selectedVenta.subtotal)}</span>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "flex-end",
+                    marginTop: 8,
+                  }}
+                >
+                  <div style={{ width: "100%", maxWidth: 300 }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "8px",
+                        paddingBottom: "12px",
+                        borderBottom: "1px solid #f3f4f6",
+                        marginBottom: "12px",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: "13px",
+                            color: "#6b7280",
+                            fontWeight: 600,
+                          }}
+                        >
+                          Subtotal
+                        </span>
+                        <span
+                          style={{
+                            fontSize: "13px",
+                            color: "#374151",
+                            fontWeight: 700,
+                          }}
+                        >
+                          {formatCurrency(selectedVenta.subtotal)}
+                        </span>
                       </div>
-                      <div className="flex justify-between text-white/40">
-                        <span>IVA ({CONFIG.IVA * 100}%)</span>
-                        <span className="font-mono">{formatCurrency(selectedVenta.iva)}</span>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: "13px",
+                            color: "#6b7280",
+                            fontWeight: 600,
+                          }}
+                        >
+                          IVA ({CONFIG.IVA * 100}%)
+                        </span>
+                        <span
+                          style={{
+                            fontSize: "13px",
+                            color: "#374151",
+                            fontWeight: 700,
+                          }}
+                        >
+                          {formatCurrency(selectedVenta.iva)}
+                        </span>
                       </div>
                     </div>
-                    
-                    <div className="p-6 rounded-2xl bg-[#e092b2]/10 border border-[#e092b2]/20 shadow-lg">
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#e092b2]/60">Total Venta</span>
-                        <CheckCheck className="w-4 h-4 text-[#e092b2]" />
+                    <div
+                      style={{
+                        background: "#fff5f7",
+                        borderRadius: "12px",
+                        padding: "16px",
+                        border: "1px solid #fce8f0",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          marginBottom: "4px",
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: "11px",
+                            fontWeight: 800,
+                            color: "#c47b96",
+                            textTransform: "uppercase",
+                            letterSpacing: "0.1em",
+                          }}
+                        >
+                          Total Venta
+                        </span>
+                        <CheckCheck className="w-4 h-4 text-[#c47b96]" />
                       </div>
-                      <span className="text-3xl font-black text-white block tracking-tighter">
+                      <div
+                        style={{
+                          fontSize: "28px",
+                          fontWeight: 800,
+                          color: "#1f2937",
+                          lineHeight: 1,
+                        }}
+                      >
                         {formatCurrency(selectedVenta.total)}
-                      </span>
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 {selectedVenta.estado === "anulada" && (
-                   <div className="p-6 rounded-2xl bg-rose-600/10 border border-rose-500/20 flex items-center gap-4">
-                     <AlertCircle className="w-8 h-8 text-rose-500/60" />
-                     <div>
-                       <h4 className="text-rose-400 font-bold text-sm uppercase tracking-wider">Venta Anulada</h4>
-                       <p className="text-rose-100/40 text-xs italic">Esta transacción no tiene validez contable por anulación</p>
-                     </div>
-                   </div>
+                  <div
+                    style={{
+                      padding: "16px",
+                      borderRadius: "12px",
+                      background: "#fef2f2",
+                      border: "1px solid #fecaca",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "16px",
+                    }}
+                  >
+                    <AlertCircle className="w-8 h-8 text-rose-500" />
+                    <div>
+                      <h4
+                        style={{
+                          color: "#b91c1c",
+                          fontSize: "13px",
+                          fontWeight: 800,
+                          textTransform: "uppercase",
+                          marginBottom: 2,
+                        }}
+                      >
+                        Venta Anulada
+                      </h4>
+                      <p style={{ color: "#dc2626", fontSize: "12px" }}>
+                        Esta transacción ha sido revertida y no tiene validez
+                        contable.
+                      </p>
+                    </div>
+                  </div>
                 )}
               </div>
 
               {/* Footer */}
-              <div className="p-8 border-t border-white/10 bg-black/10 flex justify-end">
+              <div className="flex justify-end gap-3 px-6 pb-6 pt-4 border-t border-gray-100 sticky bottom-0 bg-white z-10">
                 <Button
                   onClick={() => setDetailDialogOpen(false)}
-                  variant="ghost"
-                  className="px-8 h-12 rounded-xl text-white/60 hover:text-white hover:bg-white/10 border border-white/10 transition-all font-bold uppercase text-[10px] tracking-widest"
+                  className="rounded-lg text-white font-semibold px-7 h-10 text-sm"
+                  style={{ backgroundColor: "#c47b96" }}
                 >
-                  Regresar al Listado
+                  Cerrar
                 </Button>
               </div>
-            </div>
+            </>
           )}
         </DialogContent>
       </Dialog>
 
       {/* Annul Confirmation Dialog */}
       <Dialog open={isAnnulDialogOpen} onOpenChange={setIsAnnulDialogOpen}>
-        <DialogContent
-          className="text-white border border-white/10 w-[90%] max-w-[400px] rounded-2xl p-0 overflow-hidden"
-          style={{
-            background:
-              "linear-gradient(158deg, #2e1020 0%, #3d1828 38%, #4a2035 62%, #2e1020 100%)",
-            boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
-          }}
-        >
-          <div className="h-1.5 w-full bg-gradient-to-r from-[#b06080] via-[#e0a0be] to-[#b06080]" />
-
-          <div className="p-8">
-            <DialogHeader className="mb-6">
-              <div className="flex items-center justify-center gap-3 mb-3">
-                <div className="p-2.5 bg-white/10 rounded-xl">
-                  <AlertCircle className="w-6 h-6 text-rose-400" />
-                </div>
-                <DialogTitle className="text-center text-xl font-bold text-white">
+        <DialogContent className="bg-white border border-gray-100 max-w-md rounded-2xl shadow-2xl p-0 overflow-hidden">
+          {/* Encabezado */}
+          <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100">
+            <div className="flex items-center gap-4">
+              <div
+                className="flex items-center justify-center flex-shrink-0"
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 12,
+                  background: "#fff1f2",
+                  boxShadow: "0 2px 8px rgba(239,68,68,0.12)",
+                }}
+              >
+                <AlertCircle className="w-5 h-5" style={{ color: "#ef4444" }} />
+              </div>
+              <div>
+                <DialogTitle className="text-base font-bold text-gray-900 leading-tight">
                   Anular Venta
                 </DialogTitle>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  Esta acción no se puede deshacer
+                </p>
               </div>
-              <DialogDescription className="text-white/60 text-center text-sm">
-                ¿Estás seguro que deseas anular esta venta? Esta acción
-                devolverá el stock a los productos y marcará la venta como
-                anulada permanentemente.
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="flex flex-col gap-3 mt-6">
-              <Button
-                onClick={handleAnularVenta}
-                className="w-full h-11 bg-gradient-to-r from-rose-500 to-rose-600 hover:shadow-lg transition-all rounded-xl text-white font-bold"
-              >
-                Confirmar Anulación
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={() => setIsAnnulDialogOpen(false)}
-                className="w-full h-11 border border-white/20 text-white/60 hover:text-white hover:bg-white/10 transition-all rounded-xl"
-              >
-                Cancelar
-              </Button>
             </div>
+            <button
+              onClick={() => setIsAnnulDialogOpen(false)}
+              className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Cuerpo */}
+          <div
+            style={{
+              padding: "20px 24px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "12px",
+            }}
+          >
+            {/* Tarjeta de advertencia */}
+            <div
+              style={{
+                background: "#fef2f2",
+                borderRadius: "12px",
+                padding: "16px",
+                display: "flex",
+                alignItems: "flex-start",
+                gap: "12px",
+              }}
+            >
+              <AlertCircle
+                style={{
+                  color: "#ef4444",
+                  width: 18,
+                  height: 18,
+                  flexShrink: 0,
+                  marginTop: 2,
+                }}
+              />
+              <div>
+                <p
+                  style={{
+                    fontSize: "14px",
+                    color: "#374151",
+                    lineHeight: 1.5,
+                  }}
+                >
+                  ¿Estás seguro que deseas anular esta venta?
+                </p>
+                <p
+                  style={{
+                    fontSize: "13px",
+                    color: "#9ca3af",
+                    marginTop: 4,
+                    lineHeight: 1.5,
+                  }}
+                >
+                  Esta acción devolverá el stock a los productos y marcará la
+                  venta como anulada permanentemente en los registros.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="flex justify-end gap-3 px-6 pb-6 pt-4 border-t border-gray-100">
+            <Button
+              variant="outline"
+              onClick={() => setIsAnnulDialogOpen(false)}
+              className="border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg px-5 h-10 text-sm"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleAnularVenta}
+              disabled={isSaving}
+              className="rounded-lg text-white font-semibold px-6 h-10 text-sm"
+              style={{ background: "#ef4444" }}
+            >
+              {isSaving ? "Procesando..." : "Confirmar Anulación"}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

@@ -120,6 +120,34 @@ export const actualizarProducto = async (id, data) => {
     estado,
   } = data;
 
+  // Si se intenta desactivar, verificar que no tenga asociaciones activas
+  if (estado === false || estado === 0) {
+    const [pedidosActivos] = await sql`
+      SELECT COUNT(1) as total
+      FROM detalle_pedido dp
+      JOIN pedidos p ON dp.id_pedido = p.id_pedido
+      WHERE dp.id_producto = ${id}
+        AND p.estado NOT IN ('entregado', 'cancelado')
+    `;
+    const [ventasActivas] = await sql`
+      SELECT COUNT(1) as total
+      FROM detalle_ventas dv
+      JOIN ventas v ON dv.id_venta = v.id_venta
+      WHERE dv.id_producto = ${id}
+        AND v.estado = true
+    `;
+    const totalActivos = parseInt(pedidosActivos.total) + parseInt(ventasActivas.total);
+    if (totalActivos > 0) {
+      const detalle = [];
+      if (parseInt(pedidosActivos.total) > 0) detalle.push(`${pedidosActivos.total} pedido(s) activo(s)`);
+      if (parseInt(ventasActivas.total) > 0) detalle.push(`${ventasActivas.total} venta(s) activa(s)`);
+      throw Object.assign(
+        new Error(`No se puede desactivar: el producto tiene ${detalle.join(' y ')}.`),
+        { code: 'PRODUCT_HAS_ACTIVE_ASSOCIATIONS', status: 400 }
+      );
+    }
+  }
+
   // Construir objeto de actualización
   const updateData = {};
   if (nombre !== undefined) updateData.nombre = nombre;
@@ -146,8 +174,42 @@ export const actualizarProducto = async (id, data) => {
 };
 
 export const eliminarProducto = async (id) => {
-  await sql`UPDATE productos SET estado = false WHERE id_producto = ${id}`;
-  return true;
+  // Verificar pedidos activos (no entregado ni cancelado) que contengan este producto
+  const [pedidosActivos] = await sql`
+    SELECT COUNT(1) as total
+    FROM detalle_pedido dp
+    JOIN pedidos p ON dp.id_pedido = p.id_pedido
+    WHERE dp.id_producto = ${id}
+      AND p.estado NOT IN ('entregado', 'cancelado')
+  `;
+
+  // Verificar ventas activas (no anuladas) que contengan este producto
+  const [ventasActivas] = await sql`
+    SELECT COUNT(1) as total
+    FROM detalle_ventas dv
+    JOIN ventas v ON dv.id_venta = v.id_venta
+    WHERE dv.id_producto = ${id}
+      AND v.estado = true
+  `;
+
+  const totalActivos = parseInt(pedidosActivos.total) + parseInt(ventasActivas.total);
+
+  if (totalActivos > 0) {
+    const detalle = [];
+    if (parseInt(pedidosActivos.total) > 0)
+      detalle.push(`${pedidosActivos.total} pedido(s) activo(s)`);
+    if (parseInt(ventasActivas.total) > 0)
+      detalle.push(`${ventasActivas.total} venta(s) activa(s)`);
+
+    throw Object.assign(
+      new Error(`No se puede eliminar ni desactivar: el producto tiene ${detalle.join(' y ')}.`),
+      { code: 'PRODUCT_HAS_ACTIVE_ASSOCIATIONS', status: 400 }
+    );
+  }
+
+  // Sin asociaciones activas → eliminar definitivamente
+  await sql`DELETE FROM productos WHERE id_producto = ${id}`;
+  return { hardDeleted: true, message: "Producto eliminado definitivamente" };
 };
 
 export const productosDestacados = async (limit = 10) => {

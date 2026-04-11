@@ -28,6 +28,8 @@ import { PerfilView } from "./components/client/PerfilView";
 import { CheckoutView } from "./components/client/CheckoutView";
 import { FloatingCart } from "./components/client/FloatingCart";
 import { Toaster, toast } from "sonner";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "./components/ui/dialog";
+import { Lock, X } from "lucide-react";
 import { authService } from "./services/authService";
 import { orderService } from "./services/orderService";
 import { productService } from "./services/productService";
@@ -35,6 +37,7 @@ import { categoryService } from "./services/categoryService";
 import { providerService } from "./services/providerService";
 import { purchaseService } from "./services/purchaseService";
 import { userService } from "./services/userService";
+import { marcaService } from "./services/marcaService";
 
 type Route =
   | "dashboard"
@@ -67,12 +70,14 @@ function AppContent() {
     setCurrentUser,
     setProductos,
     setCategorias,
+    setMarcas,
     setProveedores,
     setCompras,
     setClientes,
     setPedidos,
   } = useStore();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showInactiveModal, setShowInactiveModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [showAuthPage, setShowAuthPage] = useState(false);
   const [authPage, setAuthPage] = useState<AuthPage>("login");
@@ -91,6 +96,15 @@ function AppContent() {
         estado: cat.estado ? ("activo" as const) : ("inactivo" as const),
       }));
       setCategorias(mappedCategories);
+
+      const brandsData = await marcaService.getAll();
+      const mappedBrands = brandsData.map((brand: any) => ({
+        id: brand.id_marca.toString(),
+        nombre: brand.nombre,
+        descripcion: brand.descripcion || "",
+        estado: brand.estado ? ("activo" as const) : ("inactivo" as const),
+      }));
+      setMarcas(mappedBrands);
 
       const productsResponse = await productService.getAll({ limit: 100 });
       const mappedProducts = productsResponse.data.map((prod) => ({
@@ -308,6 +322,11 @@ function AppContent() {
 
       return true;
     } catch (error: any) {
+      // Cuenta inactiva — mostrar modal específico
+      if (error.response?.status === 403 && error.response?.data?.code === "USER_INACTIVE") {
+        setShowInactiveModal(true);
+        return false;
+      }
       toast.error("Error al iniciar sesión", {
         description: error.message || "Credenciales incorrectas",
       });
@@ -427,7 +446,82 @@ function AppContent() {
         break;
     }
 
-    return <>{authContent}</>;
+    return (
+      <>
+        {authContent}
+
+        {/* Modal: cuenta inactiva */}
+        <Dialog open={showInactiveModal} onOpenChange={setShowInactiveModal}>
+          <DialogContent className="bg-white border border-gray-100 max-w-md rounded-2xl shadow-2xl p-0 overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100">
+              <div className="flex items-center gap-4">
+                <div
+                  className="flex items-center justify-center flex-shrink-0"
+                  style={{
+                    width: 44, height: 44, borderRadius: 12,
+                    background: "linear-gradient(135deg,#c47b96,#e092b2)",
+                    boxShadow: "0 2px 8px rgba(196,123,150,0.3)",
+                  }}
+                >
+                  <Lock className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <DialogTitle className="text-base font-bold text-gray-900 leading-tight">
+                    Cuenta inactiva
+                  </DialogTitle>
+                  <DialogDescription className="text-xs text-gray-400 mt-0.5">
+                    No puedes iniciar sesión en este momento
+                  </DialogDescription>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowInactiveModal(false)}
+                className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: "12px" }}>
+              <div
+                style={{
+                  background: "#fff0f5",
+                  borderRadius: "12px",
+                  padding: "16px",
+                  border: "1px solid #f0d5e0",
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: "12px",
+                }}
+              >
+                <Lock style={{ color: "#c47b96", width: 18, height: 18, flexShrink: 0, marginTop: 2 }} />
+                <div>
+                  <p style={{ fontSize: "14px", color: "#374151", lineHeight: 1.5, fontWeight: 600, marginBottom: 4 }}>
+                    Tu cuenta ha sido desactivada
+                  </p>
+                  <p style={{ fontSize: "13px", color: "#6b7280", lineHeight: 1.5 }}>
+                    No tienes permiso para iniciar sesión. Si crees que esto es un error, comunícate con el administrador del sistema.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex justify-end px-6 pb-6 pt-2">
+              <button
+                onClick={() => setShowInactiveModal(false)}
+                className="rounded-lg font-semibold px-6 h-10 text-sm text-white transition-opacity hover:opacity-90"
+                style={{ backgroundColor: "#c47b96" }}
+              >
+                Entendido
+              </button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </>
+    );
   }
 
   const renderContent = () => {

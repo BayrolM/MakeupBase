@@ -312,8 +312,7 @@ export const obtenerUsuario = async (req, res) => {
 export const actualizarUsuario = async (req, res) => {
   try {
     const { id } = req.params;
-    const { id_rol, nombres, apellidos, telefono, direccion, ciudad, estado } =
-      req.body;
+    const { id_rol, nombres, apellidos, telefono, direccion, ciudad, estado, email, documento, tipo_documento } = req.body;
 
     // Verificar que el usuario existe
     const usuarioExiste = await sql`
@@ -334,8 +333,11 @@ export const actualizarUsuario = async (req, res) => {
                 id_rol = ${
                   id_rol !== undefined ? id_rol : usuarioExiste[0].id_rol
                 },
-                nombre = ${nombres || usuarioExiste[0].nombre},
-                apellido = ${apellidos || usuarioExiste[0].apellido},
+                nombre = ${nombres !== undefined ? nombres : usuarioExiste[0].nombre},
+                apellido = ${apellidos !== undefined ? apellidos : usuarioExiste[0].apellido},
+                email = ${email !== undefined ? email : usuarioExiste[0].email},
+                documento = ${documento !== undefined ? documento : usuarioExiste[0].documento},
+                tipo_documento = ${tipo_documento !== undefined ? tipo_documento : usuarioExiste[0].tipo_documento},
                 telefono = ${
                   telefono !== undefined ? telefono : usuarioExiste[0].telefono
                 },
@@ -390,6 +392,19 @@ export const desactivarUsuario = async (req, res) => {
       });
     }
 
+    // Verificar pedidos activos (no entregado ni cancelado)
+    const pedidosActivos = await sql`
+      SELECT COUNT(*) as total FROM pedidos
+      WHERE id_usuario_cliente = ${id}
+        AND estado NOT IN ('entregado', 'cancelado')
+    `;
+    if (parseInt(pedidosActivos[0].total) > 0) {
+      return res.status(400).json({
+        ok: false,
+        message: `El usuario tiene ${pedidosActivos[0].total} pedido(s) activo(s). No se puede desactivar hasta que estén entregados o cancelados.`,
+      });
+    }
+
     // Desactivar usuario
     await sql`
             UPDATE usuarios
@@ -407,5 +422,40 @@ export const desactivarUsuario = async (req, res) => {
       ok: false,
       message: 'Error al desactivar el usuario',
     });
+  }
+};
+
+/**
+ * Eliminar permanentemente un usuario (Admin) — solo si no tiene pedidos activos
+ */
+export const eliminarUsuario = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const usuarioExiste = await sql`SELECT * FROM usuarios WHERE id_usuario = ${id}`;
+    if (usuarioExiste.length === 0) {
+      return res.status(404).json({ ok: false, message: 'Usuario no encontrado' });
+    }
+
+    // Bloquear si tiene pedidos en estado activo
+    const pedidosActivos = await sql`
+      SELECT COUNT(*) as total FROM pedidos
+      WHERE id_usuario_cliente = ${id}
+        AND estado NOT IN ('entregado', 'cancelado')
+    `;
+    if (parseInt(pedidosActivos[0].total) > 0) {
+      return res.status(400).json({
+        ok: false,
+        message: `El usuario tiene ${pedidosActivos[0].total} pedido(s) activo(s). No se puede eliminar hasta que estén entregados o cancelados.`,
+      });
+    }
+
+    // Eliminar permanentemente
+    await sql`DELETE FROM usuarios WHERE id_usuario = ${id}`;
+
+    return res.json({ ok: true, message: 'Usuario eliminado permanentemente' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ ok: false, message: 'Error al eliminar el usuario' });
   }
 };

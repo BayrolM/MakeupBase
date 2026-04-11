@@ -46,6 +46,10 @@ export const authService = {
 
       throw new Error("No se recibió token del servidor");
     } catch (error: any) {
+      // Re-lanzar el error original para que el caller pueda inspeccionar el código
+      if (error.response?.status === 403) {
+        throw error;
+      }
       const message =
         error.response?.data?.message || "Error al iniciar sesión";
       throw new Error(message);
