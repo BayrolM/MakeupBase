@@ -59,14 +59,7 @@ export function InicioView({
   isPublic = false,
   onNavigate,
 }: InicioViewProps = {}) {
-  const {
-    productos,
-    categorias,
-    addToCarrito,
-    clientes,
-    currentUser,
-    pedidos,
-  } = useStore();
+  const { productos, categorias, addToCarrito } = useStore();
   const [activeSection, setActiveSection] = useState<Section>("inicio");
   const [api, setApi] = useState<CarouselApi>();
 
@@ -80,14 +73,6 @@ export function InicioView({
 
     return () => clearInterval(interval);
   }, [api]);
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("es-CO", {
-      style: "currency",
-      currency: "COP",
-      minimumFractionDigits: 0,
-    }).format(value);
-  };
 
   // Carousel Data
   const slides = [
@@ -132,21 +117,6 @@ export function InicioView({
 
   // Get featured categories (first 6)
   const categoriasDestacadas = categorias.slice(0, 6);
-
-  // Get user info
-  const currentCliente = clientes?.find(
-    (c: any) => c.email === currentUser?.email,
-  );
-  const myId = currentCliente?.id || currentUser?.id;
-  // Fallback to empty array if pedidos is undefined
-  const myPedidos = Array.isArray(pedidos)
-    ? pedidos.filter(
-        (p) =>
-          p.clienteId === myId &&
-          p.estado !== "entregado" &&
-          p.estado !== "cancelado",
-      )
-    : [];
 
   const handleAddToCart = (productoId: string) => {
     if (isPublic) {
