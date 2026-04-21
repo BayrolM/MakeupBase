@@ -79,111 +79,151 @@ export function PedidoFormDialog({
           </button>
         </div>
 
-        <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
-          {/* Fila superior: Cliente y Dirección */}
-          <div className="grid grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-[11px] font-bold text-gray-400 uppercase flex items-center gap-2">
-                <UserIcon className="w-3.5 h-3.5" /> Cliente <span className="text-red-500">*</span>
-              </label>
-              <AsyncClientSelect
-                value={formData.clienteId}
-                onChange={(val) => setFormData({ ...formData, clienteId: val })}
-              />
+        <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: "16px", maxHeight: "70vh", overflowY: "auto" }}>
+          {/* Fila superior: Cliente + Dirección de Envío */}
+          <div style={{ display: "grid", gridTemplateColumns: "3fr 2fr", gap: "16px" }}>
+            {/* Cliente */}
+            <div style={{ background: "#f9fafb", borderRadius: "12px", padding: "16px" }}>
+              <p style={{ fontSize: "11px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
+                <UserIcon className="w-3.5 h-3.5" /> Cliente <span style={{ color: "#f87171" }}>*</span>
+              </p>
+              <div style={{ background: "#ffffff", borderRadius: "8px" }}>
+                <AsyncClientSelect
+                  value={formData.clienteId}
+                  onChange={(val) => setFormData({ ...formData, clienteId: val })}
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <label className="text-[11px] font-bold text-gray-400 uppercase flex items-center gap-2">
-                <MapPin className="w-3.5 h-3.5" /> Dirección de Envío <span className="text-red-500">*</span>
-              </label>
+
+            {/* Dirección de Envío */}
+            <div style={{ background: "#f9fafb", borderRadius: "12px", padding: "16px" }}>
+              <p style={{ fontSize: "11px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
+                <MapPin className="w-3.5 h-3.5" /> Dirección de Envío <span style={{ color: "#f87171" }}>*</span>
+              </p>
               <Input
                 value={formData.direccionEnvio}
                 onChange={(e) => setFormData({ ...formData, direccionEnvio: e.target.value })}
                 placeholder="Ej: Carrera 50 # 10-20, Medellín"
-                className="rounded-xl h-10 border-gray-200"
+                className="rounded-lg h-10 border-gray-200 bg-white"
               />
             </div>
           </div>
 
           {/* Sección de Productos */}
-          <div className="border border-gray-100 rounded-2xl overflow-hidden bg-gray-50/30">
-            <div className="bg-gray-50 px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="text-[11px] font-bold text-gray-400 uppercase flex items-center gap-2">
-                <Package className="w-3.5 h-3.5" /> Items del Pedido
-              </h3>
+          <div style={{ background: "#ffffff", border: "1px solid #f3f4f6", borderRadius: "12px" }}>
+            {/* Header productos */}
+            <div className="flex items-center justify-between" style={{ background: "#f9fafb", padding: "12px 16px", borderBottom: "1px solid #f3f4f6" }}>
+              <p style={{ fontSize: "11px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", display: "flex", alignItems: "center", gap: "6px", margin: 0 }}>
+                <Package className="w-3.5 h-3.5" /> Productos <span style={{ color: "#f87171" }}>*</span>
+              </p>
               <Button
                 type="button"
                 size="sm"
                 onClick={onAddProduct}
-                className="h-8 bg-[#c47b96] hover:opacity-90 rounded-lg text-white font-bold text-xs border-0"
+                className="hover:opacity-90 rounded-lg font-bold text-xs h-7 px-3 border-0 flex items-center"
+                style={{ backgroundColor: "#c47b96", color: "#ffffff" }}
               >
-                <Plus className="w-3.5 h-3.5 mr-1" /> Añadir Producto
+                <Plus className="w-3.5 h-3.5 mr-1" /> Añadir
               </Button>
             </div>
 
-            <div className="p-4 space-y-4">
+            {/* Lista de productos */}
+            <div style={{ padding: "0 16px" }}>
               {formData.productos.map((prod: any, index: number) => (
-                <div key={index} className="grid grid-cols-12 gap-4 items-end bg-white p-4 rounded-xl shadow-sm border border-gray-50 relative">
-                  <div className="col-span-6">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase mb-1.5 block">Producto</label>
-                    <AsyncProductSelect
-                      value={prod.productoId}
-                      onChange={(val, prodObj) => onUpdateProduct(index, "productoId", val, prodObj)}
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase mb-1.5 block">Cantidad</label>
-                    <Input
-                      type="number"
-                      min="1"
-                      value={prod.cantidad}
-                      onChange={(e) => onUpdateProduct(index, "cantidad", e.target.value)}
-                      className="rounded-lg h-10"
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase mb-1.5 block">P. Unitario</label>
-                    <div className="h-10 px-3 bg-gray-50 border border-t-0 border-l-0 border-r-0 border-b-2 border-gray-100 flex items-center text-sm font-semibold text-gray-600">
-                      {formatCurrency(prod.precioUnitario)}
+                <div
+                  key={index}
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    padding: "16px 0",
+                    borderBottom: index < formData.productos.length - 1 ? "1px solid #f3f4f6" : "none",
+                    position: "relative",
+                    zIndex: 100 - index,
+                  }}
+                >
+                  <div className="grid grid-cols-12 gap-3 items-end">
+                    <div className="col-span-6">
+                      <p style={{ fontSize: "10px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", marginBottom: "6px" }}>
+                        Producto
+                      </p>
+                      <div style={{ background: "#ffffff", borderRadius: "8px" }}>
+                        <AsyncProductSelect
+                          value={prod.productoId}
+                          onChange={(val, prodObj) => onUpdateProduct(index, "productoId", val, prodObj)}
+                        />
+                      </div>
                     </div>
-                  </div>
-                  <div className="col-span-2">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase mb-1.5 block">Total</label>
-                    <div className="h-10 px-3 bg-[#fff0f5] border border-t-0 border-l-0 border-r-0 border-b-2 border-[#fad6e3] flex items-center text-sm font-black text-[#c47b96]">
-                      {formatCurrency(prod.cantidad * prod.precioUnitario)}
+                    <div className="col-span-2">
+                      <p style={{ fontSize: "10px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", marginBottom: "6px" }}>
+                        Cant.
+                      </p>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={prod.cantidad}
+                        onChange={(e) => onUpdateProduct(index, "cantidad", e.target.value)}
+                        className="border-gray-200 text-gray-800 h-9 rounded-lg"
+                      />
                     </div>
+                    <div className="col-span-2">
+                      <p style={{ fontSize: "10px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", marginBottom: "6px" }}>
+                        Precio
+                      </p>
+                      <div style={{ height: "36px", padding: "0 12px", background: "#f9fafb", border: "1px solid #f3f4f6", borderRadius: "8px", display: "flex", alignItems: "center" }}>
+                        <span style={{ fontSize: "13px", fontWeight: 600, color: "#4b5563" }}>
+                          {formatCurrency(prod.precioUnitario)}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="col-span-2">
+                      <p style={{ fontSize: "10px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", marginBottom: "6px" }}>
+                        Total
+                      </p>
+                      <div style={{ height: "36px", padding: "0 12px", background: "#f9fafb", border: "1px solid #f3f4f6", borderRadius: "8px", display: "flex", alignItems: "center" }}>
+                        <span style={{ fontSize: "13px", fontWeight: 800, color: "#1f2937" }}>
+                          {formatCurrency(prod.cantidad * prod.precioUnitario)}
+                        </span>
+                      </div>
+                    </div>
+
+                    {formData.productos.length > 1 && (
+                      <div className="absolute -top-1 -right-1">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => onRemoveProduct(index)}
+                          style={{ height: "24px", width: "24px", padding: 0 }}
+                          className="bg-white border border-gray-200 rounded-full text-gray-400 hover:text-rose-500 hover:border-rose-200 transition-all shadow-sm"
+                          title="Eliminar producto"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
-                  {formData.productos.length > 1 && (
-                    <button
-                      onClick={() => onRemoveProduct(index)}
-                      className="absolute -top-2 -right-2 w-6 h-6 bg-white shadow-md border border-gray-100 rounded-full flex items-center justify-center text-gray-400 hover:text-red-500 transition-colors"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
-                  )}
                 </div>
               ))}
             </div>
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-between px-6 pb-6 pt-4 border-t border-gray-100 bg-white">
-          <div className="flex items-center gap-6">
-            <div className="flex flex-col">
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Subtotal Productos</span>
-              <span className="text-xl font-black text-gray-700">{formatCurrency(subtotal)}</span>
-            </div>
-            <div className="w-px h-8 bg-gray-100" />
-            <div className="flex flex-col">
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Total Est. (inc. Envío)</span>
-              <span className="text-2xl font-black text-[#c47b96]">{formatCurrency(subtotal > 0 ? subtotal + 10000 : 0)}</span>
-            </div>
+        {/* Footer: Total + Botones */}
+        <div className="flex items-center justify-between px-6 pb-6 pt-4 border-t border-gray-100 bg-white z-10">
+          {/* Total */}
+          <div className="bg-gradient-to-r from-[#fff0f5] to-[#fce8f0] rounded-xl border border-[#f0d5e0]" style={{ padding: "10px 20px", display: "flex", alignItems: "center", gap: "16px" }}>
+            <p style={{ fontSize: "11px", fontWeight: 700, color: "#c47b96", textTransform: "uppercase", letterSpacing: "0.07em", margin: 0 }}>
+              Subtotal + Envío ({formatCurrency(10000)})
+            </p>
+            <span className="text-[#c47b96] font-black text-2xl">
+              {formatCurrency(subtotal > 0 ? subtotal + 10000 : 0)}
+            </span>
           </div>
+          {/* Botones */}
           <div className="flex gap-3">
             <Button
               variant="outline"
               onClick={() => onOpenChange(false)}
-              className="rounded-xl px-6 h-11 text-sm font-bold border-gray-200 text-gray-500 hover:bg-gray-50"
+              className="border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg px-5 h-10 text-sm"
               disabled={isSaving}
             >
               Cancelar
@@ -191,9 +231,17 @@ export function PedidoFormDialog({
             <Button
               onClick={onSave}
               disabled={isSaving}
-              className="rounded-xl px-8 h-11 text-sm font-bold bg-[#c47b96] text-white hover:opacity-90 border-0 shadow-lg shadow-[#c47b96]/20"
+              className="rounded-lg font-semibold px-6 h-10 text-sm border-0"
+              style={{ backgroundColor: "#c47b96", color: "#ffffff" }}
             >
-              {isSaving ? "Guardando..." : "Crear Pedido"}
+              {isSaving ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Guardando...
+                </div>
+              ) : (
+                "Crear Pedido"
+              )}
             </Button>
           </div>
         </div>
