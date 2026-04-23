@@ -10,6 +10,7 @@ import {
   cancelarOrden,
   confirmarPago,
   subirComprobante,
+  actualizarComprobanteUrl,
   cancelarOrdenPorCliente,
   actualizarDireccionPorCliente,
 } from "../controllers/orders.controller.js";
@@ -18,16 +19,22 @@ import { uploadComprobante } from '../middleware/upload.js';
 
 const router = Router();
 
-router.post("/", authRequired, crearOrden);
+// Rutas específicas PRIMERO (antes de /:id)
 router.post("/admin", authRequired, adminRequired, crearOrdenDirecta);
 router.get("/",  authRequired, obtenerOrdenes);
-router.get("/:id", authRequired, obtenerDetalleOrden);
+
+// Rutas específicas con paths conocidos
+router.put("/:id/comprobante_url", authRequired, actualizarComprobanteUrl);
+router.put("/:id/comprobante", uploadComprobante.single('comprobante'), subirComprobante);
 router.put("/:id/status", authRequired, adminRequired, actualizarEstado);
-router.put("/:id", authRequired, adminRequired, actualizarPedido);
-router.put("/:id/cancel", authRequired, cancelarOrden); // cliente puede cancelar su propio pedido
+router.put("/:id/cancel", authRequired, cancelarOrden);
 router.put("/:id/cancel-client", authRequired, cancelarOrdenPorCliente);
 router.put("/:id/direccion", authRequired, actualizarDireccionPorCliente);
 router.put("/:id/pago", authRequired, adminRequired, confirmarPago);
-router.put('/:id/comprobante', uploadComprobante.single('comprobante'), subirComprobante);
+
+// Ruta genérica al FINAL
+router.put("/:id", authRequired, adminRequired, actualizarPedido);
+router.post("/", authRequired, crearOrden);
+router.get("/:id", authRequired, obtenerDetalleOrden);
 
 export default router;

@@ -1,12 +1,13 @@
 import { Router } from "express";
 import { listar, obtener, crear, actualizar, eliminar } from "../controllers/proveedores.controller.js";
 import { authRequired } from "../middleware/auth.middleware.js";
+import { authOptional } from "../middleware/authOptional.middleware.js";
 import { adminRequired } from "../middleware/adminRequired.middleware.js";
 
 const router = Router();
 
-router.get("/", listar);
-router.get("/:id", obtener);
+router.get("/", authOptional, listar);
+router.get("/:id", authOptional, obtener);
 router.post("/", authRequired, adminRequired, crear);
 router.put("/:id", authRequired, adminRequired, actualizar);
 router.delete("/:id", authRequired, adminRequired, eliminar);

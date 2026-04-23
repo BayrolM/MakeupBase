@@ -252,3 +252,29 @@ export const subirComprobante = async (req, res) => {
     return res.status(500).json({ ok: false, message: 'Error al subir comprobante' });
   }
 };
+
+export const actualizarComprobanteUrl = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { url } = req.body;
+    
+    console.log('📝 updateComprobanteUrl - id:', id, 'url:', url);
+    
+    if (!url) {
+      return res.status(400).json({ ok: false, message: 'URL del comprobante requerida' });
+    }
+    
+    const orden = await ordersService.actualizarComprobante(parseInt(id, 10), url);
+    
+    console.log('✅ Comprobante actualizado:', orden);
+    
+    return res.json({ 
+      ok: true, 
+      message: 'Comprobante actualizado exitosamente', 
+      data: orden 
+    });
+  } catch (error) {
+    console.error('💥 Error:', error);
+    return res.status(500).json({ ok: false, message: 'Error al actualizar comprobante' });
+  }
+};
