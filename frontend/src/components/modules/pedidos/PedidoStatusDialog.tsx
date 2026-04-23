@@ -116,11 +116,11 @@ export function PedidoStatusDialog({
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-3 px-6 pb-6 pt-4 bg-gray-50/50">
+        <div className="flex gap-3 px-6 pb-6 pt-2 bg-white">
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
-            className="rounded-xl px-6 h-11 text-sm font-bold border-gray-200 text-gray-500 hover:bg-gray-50"
+            className="border-gray-200 text-gray-600 hover:bg-gray-50 rounded-xl h-11 font-bold text-sm flex-1"
             disabled={isSaving}
           >
             Cancelar
@@ -128,9 +128,10 @@ export function PedidoStatusDialog({
           <Button
             onClick={onUpdateStatus}
             disabled={isSaving}
-            className="rounded-xl px-8 h-11 text-sm font-bold bg-[#c47b96] text-white hover:opacity-90 border-0 shadow-lg shadow-[#c47b96]/20"
+            className="rounded-xl font-bold h-11 text-sm border-0 shadow-lg shadow-[#c47b96]/20 transition-all hover:scale-[1.02] active:scale-95 text-white flex-1"
+            style={{ backgroundColor: "#c47b96" }}
           >
-            {isSaving ? "Procesando..." : "Actualizar Estado"}
+            {isSaving ? "Procesando..." : "Confirmar Cambio"}
           </Button>
         </div>
       </DialogContent>

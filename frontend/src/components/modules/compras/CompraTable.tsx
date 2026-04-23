@@ -145,7 +145,7 @@ export function CompraTable({
                     <div className="flex items-center justify-end gap-1.5 opacity-90 transition-opacity">
                       <button
                         onClick={() => onViewDetail(compra)}
-                        className="h-8 w-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-150"
+                        className="h-8 w-8 flex items-center justify-center rounded-lg cursor-pointer text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-150"
                         title="Ver detalles"
                       >
                         <Eye className="w-4 h-4" />
@@ -153,7 +153,7 @@ export function CompraTable({
                       {isAdmin && compra.confirmada && onAnular && (
                         <button
                           onClick={() => onAnular(compra)}
-                          className="h-8 w-8 flex items-center justify-center rounded-lg text-rose-400 hover:bg-rose-50 hover:text-rose-600 transition-all duration-150"
+                          className="h-8 w-8 flex items-center justify-center rounded-lg cursor-pointer text-rose-400 hover:bg-rose-50 hover:text-rose-600 transition-all duration-150"
                           title="Anular compra"
                         >
                           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

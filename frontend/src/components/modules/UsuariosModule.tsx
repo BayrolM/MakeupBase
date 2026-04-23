@@ -95,20 +95,24 @@ export function UsuariosModule() {
 
   const handleOpenDialog = (user?: any) => {
     if (!isAdmin) { toast.error('Solo los administradores pueden gestionar usuarios.'); return; }
-    if (user && user.estado === 'inactivo') {
+    
+    // Check if user is actually a User object and not a MouseEvent
+    const actualUser = user && user.id ? user : null;
+
+    if (actualUser && actualUser.estado === 'inactivo') {
       toast.error('Usuario inactivo', { description: 'Debes activar el usuario antes de poder editarlo.' });
       return;
     }
     
-    if (user) {
-      setEditingUser(user);
+    if (actualUser) {
+      setEditingUser(actualUser);
       setFormData({
-        nombres: user.nombres, apellidos: user.apellidos,
-        tipoDocumento: user.tipoDocumento, numeroDocumento: user.numeroDocumento,
-        fechaNacimiento: user.fechaNacimiento || '', email: user.email,
-        passwordHash: '', telefono: user.telefono,
-        direccion: user.direccion || '', ciudad: user.ciudad || '',
-        pais: user.pais || 'Colombia', rol: user.rol, estado: user.estado,
+        nombres: actualUser.nombres, apellidos: actualUser.apellidos,
+        tipoDocumento: actualUser.tipoDocumento, numeroDocumento: actualUser.numeroDocumento,
+        fechaNacimiento: actualUser.fechaNacimiento || '', email: actualUser.email,
+        passwordHash: '', telefono: actualUser.telefono,
+        direccion: actualUser.direccion || '', ciudad: actualUser.ciudad || '',
+        pais: actualUser.pais || 'Colombia', rol: actualUser.rol, estado: actualUser.estado,
       });
     } else {
       setEditingUser(null);

@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '../../lib/store';
 import { Button } from '../ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
-import { CheckCircle, ArrowLeft, Loader2, Banknote, Smartphone, Upload } from 'lucide-react';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '../ui/dialog';
+import { CheckCircle, ArrowLeft, Loader2, Banknote, Smartphone, Upload, X, HelpCircle } from 'lucide-react';
 import { orderService } from '../../services/orderService';
 import { productService } from '../../services/productService';
 import { toast } from 'sonner';
@@ -360,28 +360,80 @@ export function CheckoutView({ onBack, onComplete }: CheckoutViewProps) {
 
         {/* Confirmation Dialog */}
         <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-          <DialogContent style={{ background: C.white, border: `1px solid ${C.accent}`, borderRadius: '16px' }} aria-describedby="confirm-payment-desc">
-            <DialogHeader>
-              <DialogTitle style={{ color: C.textDark }}>Confirmar pedido</DialogTitle>
-              <div id="confirm-payment-desc" className="sr-only">Confirmación de pago por transferencia bancaria.</div>
-            </DialogHeader>
-            <div style={{ padding: '16px 0' }}>
-              <p style={{ fontSize: '15px', color: C.textMuted, textAlign: 'center', lineHeight: 1.6 }}>
-                ¿Ya completaste la transferencia y adjuntaste el comprobante?
-              </p>
+          <DialogContent className="bg-white border-0 max-w-md rounded-2xl shadow-2xl p-0 overflow-hidden" aria-describedby="confirm-payment-desc">
+            <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100">
+              <div className="flex items-center gap-4">
+                <div 
+                  className="flex items-center justify-center flex-shrink-0" 
+                  style={{ 
+                    width: 44, 
+                    height: 44, 
+                    borderRadius: 12, 
+                    background: `linear-gradient(135deg, ${C.textDark} 0%, ${C.accentDeep} 100%)`, 
+                    boxShadow: "0 2px 8px rgba(196,123,150,0.3)" 
+                  }}
+                >
+                  <Banknote className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <DialogTitle className="text-base font-bold leading-tight" style={{ color: C.textDark }}>
+                    Confirmar pedido
+                  </DialogTitle>
+                  <DialogDescription className="text-xs text-gray-400 mt-0.5">
+                    Verificación de pago por transferencia
+                  </DialogDescription>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowConfirmDialog(false)} 
+                className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
-            <DialogFooter style={{ gap: '8px' }}>
-              <Button variant="outline" onClick={() => setShowConfirmDialog(false)} style={{ flex: 1, borderColor: C.accent, color: C.textDark }}>
+            
+            <div style={{ padding: "20px 24px" }}>
+              <div style={{ background: C.bgSoft, borderRadius: "12px", padding: "16px", display: "flex", alignItems: "flex-start", gap: "12px", border: `1px solid ${C.accent}` }}>
+                <HelpCircle style={{ color: C.accentDeep, width: 18, height: 18, flexShrink: 0, marginTop: 2 }} />
+                <div>
+                  <p style={{ fontSize: "14px", color: C.textDark, lineHeight: 1.5, fontWeight: 600 }}>
+                    ¿Has completado todos los pasos?
+                  </p>
+                  <p style={{ fontSize: "13px", color: C.textMuted, marginTop: 4, lineHeight: 1.5 }}>
+                    Confirma solo si ya realizaste la transferencia desde tu banco y has adjuntado el comprobante correctamente.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 px-6 pb-6 pt-2">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowConfirmDialog(false)} 
+                className="border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg px-5 h-10 text-sm font-semibold" 
+                disabled={isProcessing}
+              >
                 Cancelar
               </Button>
               <Button
                 onClick={handleConfirmPayment}
                 disabled={isProcessing}
-                style={{ flex: 1, background: `linear-gradient(135deg, ${C.textDark} 0%, ${C.accentDeep} 100%)`, color: C.white, border: 'none' }}
+                className="rounded-lg font-semibold px-6 h-10 text-sm border-0"
+                style={{ background: `linear-gradient(135deg, ${C.textDark} 0%, ${C.accentDeep} 100%)`, color: C.white }}
               >
-                {isProcessing ? (<><Loader2 className="w-4 h-4 animate-spin mr-2" />Procesando...</>) : '✅ Sí, confirmar'}
+                {isProcessing ? (
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Procesando...
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4" />
+                    Sí, confirmar
+                  </div>
+                )}
               </Button>
-            </DialogFooter>
+            </div>
           </DialogContent>
         </Dialog>
       </>

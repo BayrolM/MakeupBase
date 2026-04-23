@@ -1,5 +1,21 @@
-import { X, Mail, Phone, MapPin, CreditCard, Calendar, User, Building2, ShoppingBag, Activity } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "../../ui/dialog";
+import {
+  X,
+  Mail,
+  Phone,
+  MapPin,
+  CreditCard,
+  Calendar,
+  User,
+  Building2,
+  ShoppingBag,
+  Activity,
+} from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "../../ui/dialog";
 import { formatCurrency } from "../../../utils/productUtils";
 
 interface ClientDetailDialogProps {
@@ -8,7 +24,11 @@ interface ClientDetailDialogProps {
   cliente: any;
 }
 
-export function ClientDetailDialog({ open, onOpenChange, cliente }: ClientDetailDialogProps) {
+export function ClientDetailDialog({
+  open,
+  onOpenChange,
+  cliente,
+}: ClientDetailDialogProps) {
   if (!cliente) return null;
 
   return (
@@ -47,28 +67,38 @@ export function ClientDetailDialog({ open, onOpenChange, cliente }: ClientDetail
               <h3 className="text-[11px] font-bold text-[#c47b96] uppercase tracking-wider">
                 Información Personal
               </h3>
-              
+
               <div className="bg-gray-50 rounded-xl p-4 space-y-3">
                 <div className="flex items-center gap-3">
                   <User className="w-4 h-4 text-gray-400" />
                   <div>
-                    <p className="text-[10px] text-gray-400 font-semibold uppercase">Nombre Completo</p>
-                    <p className="text-sm font-bold text-gray-800">{cliente.nombres} {cliente.apellidos}</p>
+                    <p className="text-[10px] text-gray-400 font-semibold uppercase">
+                      Nombre Completo
+                    </p>
+                    <p className="text-sm font-bold text-gray-800">
+                      {cliente.nombres} {cliente.apellidos}
+                    </p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center gap-3">
                   <CreditCard className="w-4 h-4 text-gray-400" />
                   <div>
-                    <p className="text-[10px] text-gray-400 font-semibold uppercase">{cliente.tipoDocumento}</p>
-                    <p className="text-sm font-bold text-gray-800">{cliente.numeroDocumento}</p>
+                    <p className="text-[10px] text-gray-400 font-semibold uppercase">
+                      {cliente.tipoDocumento}
+                    </p>
+                    <p className="text-sm font-bold text-gray-800">
+                      {cliente.numeroDocumento}
+                    </p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
                   <Calendar className="w-4 h-4 text-gray-400" />
                   <div>
-                    <p className="text-[10px] text-gray-400 font-semibold uppercase">Fecha Registro</p>
+                    <p className="text-[10px] text-gray-400 font-semibold uppercase">
+                      Fecha Registro
+                    </p>
                     <p className="text-sm font-bold text-gray-800">
                       {new Date(cliente.fechaRegistro).toLocaleDateString()}
                     </p>
@@ -82,30 +112,41 @@ export function ClientDetailDialog({ open, onOpenChange, cliente }: ClientDetail
               <h3 className="text-[11px] font-bold text-[#c47b96] uppercase tracking-wider">
                 Contacto y Ubicación
               </h3>
-              
+
               <div className="bg-gray-50 rounded-xl p-4 space-y-3">
                 <div className="flex items-center gap-3">
                   <Mail className="w-4 h-4 text-gray-400" />
                   <div>
-                    <p className="text-[10px] text-gray-400 font-semibold uppercase">Email</p>
-                    <p className="text-sm font-bold text-gray-800 truncate max-w-[180px]">{cliente.email}</p>
+                    <p className="text-[10px] text-gray-400 font-semibold uppercase">
+                      Email
+                    </p>
+                    <p className="text-sm font-bold text-gray-800 truncate max-w-[180px]">
+                      {cliente.email}
+                    </p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
                   <Phone className="w-4 h-4 text-gray-400" />
                   <div>
-                    <p className="text-[10px] text-gray-400 font-semibold uppercase">Teléfono</p>
-                    <p className="text-sm font-bold text-gray-800">{cliente.telefono}</p>
+                    <p className="text-[10px] text-gray-400 font-semibold uppercase">
+                      Teléfono
+                    </p>
+                    <p className="text-sm font-bold text-gray-800">
+                      {cliente.telefono}
+                    </p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
                   <MapPin className="w-4 h-4 text-gray-400" />
                   <div>
-                    <p className="text-[10px] text-gray-400 font-semibold uppercase">Ubicación</p>
+                    <p className="text-[10px] text-gray-400 font-semibold uppercase">
+                      Ubicación
+                    </p>
                     <p className="text-sm font-bold text-gray-800">
-                      {cliente.direccion ? `${cliente.direccion}, ` : ""}{cliente.ciudad || "N/A"}
+                      {cliente.direccion ? `${cliente.direccion}, ` : ""}
+                      {cliente.ciudad || "N/A"}
                     </p>
                   </div>
                 </div>
@@ -121,22 +162,22 @@ export function ClientDetailDialog({ open, onOpenChange, cliente }: ClientDetail
             <div className="grid grid-cols-3 gap-4">
               <div className="bg-[#fff0f5] border border-pink-100 rounded-xl p-4 text-center">
                 <ShoppingBag className="w-5 h-5 text-[#c47b96] mx-auto mb-2" />
-                <p className="text-xl font-bold text-gray-800">{cliente.totalCompras || 0}</p>
-                <p className="text-[10px] text-gray-500 uppercase font-semibold">Ventas Totales</p>
-              </div>
-              
-              <div className="bg-gray-50 border border-gray-100 rounded-xl p-4 text-center">
-                <Activity className="w-5 h-5 text-gray-400 mx-auto mb-2" />
-                <p className="text-sm font-bold text-emerald-600 uppercase">Activo</p>
-                <p className="text-[10px] text-gray-500 uppercase font-semibold">Estado Actual</p>
+                <p className="text-xl font-bold text-gray-800">
+                  {cliente.totalCompras || 0}
+                </p>
+                <p className="text-[10px] text-gray-500 uppercase font-semibold">
+                  Ventas Totales
+                </p>
               </div>
 
               <div className="bg-gray-50 border border-gray-100 rounded-xl p-4 text-center">
-                <div className="w-5 h-5 bg-gray-200 rounded-full mx-auto mb-2 flex items-center justify-center text-[10px] font-bold text-gray-500">
-                  %
-                </div>
-                <p className="text-xl font-bold text-gray-800">N/A</p>
-                <p className="text-[10px] text-gray-500 uppercase font-semibold">Fidelidad</p>
+                <Activity className="w-5 h-5 text-gray-400 mx-auto mb-2" />
+                <p className="text-sm font-bold text-emerald-600 uppercase">
+                  Activo
+                </p>
+                <p className="text-[10px] text-gray-500 uppercase font-semibold">
+                  Estado Actual
+                </p>
               </div>
             </div>
           </div>

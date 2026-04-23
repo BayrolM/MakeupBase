@@ -250,11 +250,11 @@ export function ClientFormDialog({
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 px-6 pb-6 pt-2 bg-gray-50/50">
+        <div className="flex justify-end gap-3 px-6 pb-6 pt-5 bg-white border-t border-gray-100 sticky bottom-0 z-10 rounded-b-2xl">
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
-            className="border-gray-200 text-gray-600 hover:bg-white rounded-xl px-6 h-11 text-sm font-semibold"
+            className="bg-white border-gray-200 text-gray-600 hover:bg-gray-50 rounded-xl px-6 h-11 text-sm font-semibold"
             disabled={isSaving}
           >
             Cancelar

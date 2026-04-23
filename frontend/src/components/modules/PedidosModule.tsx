@@ -349,7 +349,12 @@ export function PedidosModule() {
           onEdit={handleOpenEdit}
           onStatusClick={(p) => { setSelectedPedido(p); setNewStatus(p.estado); setIsStatusDialogOpen(true); }}
           onConfirmPayment={(p) => { setPedidoToConfirm(p); setIsPaymentConfirmOpen(true); }}
-          onViewComprobante={(url) => { setPreviewImageUrl(`http://localhost:3000${url}`); setIsPreviewOpen(true); }}
+          onViewComprobante={(url) => { 
+            const baseUrl = (import.meta.env.VITE_API_URL || "http://localhost:3000/api").replace('/api', '');
+            const fullUrl = url.startsWith('http') ? url : `${baseUrl}${url}`;
+            setPreviewImageUrl(fullUrl); 
+            setIsPreviewOpen(true); 
+          }}
         />
 
         {totalPages > 1 && (

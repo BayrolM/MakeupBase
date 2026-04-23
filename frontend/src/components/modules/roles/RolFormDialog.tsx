@@ -30,26 +30,28 @@ export function RolFormDialog({
 }: RolFormDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-white border border-gray-100 max-w-4xl max-h-[90vh] overflow-y-auto rounded-3xl shadow-2xl p-0">
-        <div className="flex items-center justify-between px-8 pt-8 pb-6 border-b border-gray-100 sticky top-0 bg-white z-20">
+      <DialogContent className="bg-white border-0 max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl p-0">
+        <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100 sticky top-0 bg-white z-20">
           <div className="flex items-center gap-4">
-            <div className="flex items-center justify-center text-white font-bold text-lg flex-shrink-0" 
-              style={{ width: 44, height: 44, borderRadius: 14, background: "linear-gradient(135deg,#c47b96,#e092b2)", boxShadow: "0 4px 12px rgba(196,123,150,0.3)" }}>
+            <div className="flex items-center justify-center text-white font-bold text-lg flex-shrink-0 luxury-icon-gradient" 
+              style={{ width: 44, height: 44, borderRadius: 12 }}>
               {editingRol ? <Pencil className="w-5 h-5" /> : <Shield className="w-5 h-5" />}
             </div>
             <div>
-              <DialogTitle className="text-xl font-bold text-gray-900 leading-tight">
+              <DialogTitle className="text-base font-bold text-gray-900 leading-tight">
                 {editingRol ? 'Editar Rol Administrativo' : 'Crear Nuevo Rol'}
               </DialogTitle>
-              <DialogDescription className="text-sm text-gray-400 mt-0.5">Define los privilegios de acceso del sistema</DialogDescription>
+              <DialogDescription className="text-xs text-gray-400 mt-0.5">
+                Define los privilegios de acceso del sistema
+              </DialogDescription>
             </div>
           </div>
-          <button onClick={() => onOpenChange(false)} className="p-2 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
-            <X className="w-5 h-5" />
+          <button onClick={() => onOpenChange(false)} className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="px-8 py-6 space-y-8">
+        <div className="px-6 py-6 space-y-8">
           {/* Información Básica */}
           <div className="space-y-4">
             <div className="flex items-center gap-2 mb-2">
@@ -149,23 +151,22 @@ export function RolFormDialog({
           </div>
         </div>
 
-        <DialogFooter className="gap-2 px-8 pb-8 pt-6 border-t border-gray-100 bg-white sticky bottom-0 z-10">
+        <div className="flex justify-end gap-3 px-6 pb-6 pt-5 bg-white border-t border-gray-100 sticky bottom-0 z-10 rounded-b-2xl">
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
-            className="border-gray-200 text-gray-600 hover:bg-gray-50 flex-1 rounded-xl h-11 font-semibold"
+            className="bg-white border-gray-200 text-gray-600 hover:bg-gray-50 rounded-xl px-6 h-11 text-sm font-semibold"
           >
             Cancelar
           </Button>
-          <Button
+          <button
             onClick={onSave}
-            className="flex-1 rounded-xl h-11 font-bold border-0 shadow-lg shadow-[#c47b96]/20 transition-all hover:scale-[1.02] active:scale-95 text-white"
-            style={{ backgroundColor: "#c47b96" }}
+            className="rounded-xl font-bold px-8 h-11 text-sm border-0 luxury-button-modal shadow-lg shadow-[#c47b96]/20 flex items-center justify-center text-white"
           >
             <CheckCircle2 className="w-4 h-4 mr-2" />
             {editingRol ? 'Guardar Cambios' : 'Registrar Nuevo Rol'}
-          </Button>
-        </DialogFooter>
+          </button>
+        </div>
       </DialogContent>
     </Dialog>
   );

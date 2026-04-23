@@ -197,7 +197,7 @@ export function ProductTable({
                     <button
                       onClick={() => onViewDetail(product)}
                       title="Ver detalles"
-                      className="h-8 w-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-150"
+                      className="h-8 w-8 flex items-center justify-center rounded-lg cursor-pointer text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-150"
                     >
                       <Eye className="w-4 h-4" />
                     </button>
@@ -207,7 +207,7 @@ export function ProductTable({
                       title={!isAdmin ? "Acceso denegado" : "Editar producto"}
                       className={`h-8 w-8 flex items-center justify-center rounded-lg transition-all duration-150 ${
                         isAdmin
-                          ? "text-gray-400 hover:bg-blue-50 hover:text-blue-600"
+                          ? "cursor-pointer text-gray-400 hover:bg-blue-50 hover:text-blue-600"
                           : "text-gray-300 cursor-not-allowed"
                       }`}
                     >
@@ -219,7 +219,7 @@ export function ProductTable({
                       title={!isAdmin ? "Acceso denegado" : "Eliminar producto"}
                       className={`h-8 w-8 flex items-center justify-center rounded-lg transition-all duration-150 ${
                         isAdmin
-                          ? "text-gray-400 hover:bg-rose-50 hover:text-rose-600"
+                          ? "cursor-pointer text-gray-400 hover:bg-rose-50 hover:text-rose-600"
                           : "text-gray-300 cursor-not-allowed"
                       }`}
                     >
