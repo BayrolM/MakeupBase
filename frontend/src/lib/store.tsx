@@ -225,6 +225,7 @@ interface StoreActions {
   updateDevolucion: (id: string, devolucion: Partial<Devolucion>) => void;
   
   // Roles
+  setRoles: (roles: Rol[]) => void;
   addRol: (rol: Omit<Rol, 'id'>) => void;
   updateRol: (id: string, rolData: Partial<Rol>) => void;
   deleteRol: (id: string) => void;
@@ -429,6 +430,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setDevoluciones(prev => prev.map(d => d.id === id ? { ...d, ...devolucionData } : d));
     },
 
+    setRoles: (newRoles) => setRoles(newRoles),
     addRol: (rol) => {
       const newRol = { ...rol, id: generateId() };
       setRoles(prev => [...prev, newRol]);

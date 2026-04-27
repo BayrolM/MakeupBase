@@ -6,7 +6,9 @@ interface RolTableProps {
   roles: any[];
   users: any[];
   searchQuery: string;
+  estadoFilter: 'todos' | 'activo' | 'inactivo';
   onSearchChange: (query: string) => void;
+  onEstadoFilterChange: (estado: 'todos' | 'activo' | 'inactivo') => void;
   onViewDetail: (rol: any) => void;
   onEdit: (rol: any) => void;
   onDelete: (id: string) => void;
@@ -17,7 +19,9 @@ export function RolTable({
   roles,
   users,
   searchQuery,
+  estadoFilter,
   onSearchChange,
+  onEstadoFilterChange,
   onViewDetail,
   onEdit,
   onDelete,
@@ -29,16 +33,19 @@ export function RolTable({
 
   return (
     <div className="bg-white/80 backdrop-blur-sm border border-white/50 rounded-2xl overflow-hidden shadow-xl">
-      <div className="p-4 border-b border-gray-100 bg-white space-y-3">
-        <div className="flex items-center gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-              className="w-full h-10 pl-10 pr-10 bg-white border border-gray-200 rounded-lg text-gray-800 placeholder:text-gray-400 focus:outline-none focus:border-[#c47b96] focus:ring-2 focus:ring-[#c47b96]/20 transition-all duration-150"
-              placeholder="Buscar por nombre o descripción..."
-            />
+      <div className="p-4 border-b border-gray-100 bg-white">
+        <div className="flex justify-end">
+          <div className="w-full sm:w-48 relative shrink-0">
+            <select
+              value={estadoFilter}
+              onChange={(e) => onEstadoFilterChange(e.target.value as any)}
+              className="w-full h-11 pl-4 pr-10 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-800 focus:bg-white focus:outline-none focus:border-[#c47b96] focus:ring-2 focus:ring-[#c47b96]/20 transition-all appearance-none cursor-pointer shadow-sm"
+              style={{ backgroundImage: 'url("data:image/svg+xml,%3csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3e%3cpath stroke=\'%239ca3af\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'M6 8l4 4 4-4\'/%3e%3c/svg%3e")', backgroundPosition: 'right 1rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.2em 1.2em' }}
+            >
+              <option value="todos">Todos los estados</option>
+              <option value="activo">Solo Activos</option>
+              <option value="inactivo">Solo Inactivos</option>
+            </select>
           </div>
         </div>
       </div>
