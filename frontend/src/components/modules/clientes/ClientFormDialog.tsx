@@ -251,20 +251,54 @@ export function ClientFormDialog({
         </div>
 
         <div className="flex justify-end gap-3 px-6 pb-6 pt-5 bg-white border-t border-gray-100 sticky bottom-0 z-10 rounded-b-2xl">
-          <Button
-            variant="outline"
+          <button
             onClick={() => onOpenChange(false)}
-            className="bg-white border-gray-200 text-gray-600 hover:bg-gray-50 rounded-xl px-6 h-11 text-sm font-semibold"
             disabled={isSaving}
+            style={{
+              padding: "10px 22px",
+              borderRadius: "10px",
+              fontSize: "13px",
+              fontWeight: 700,
+              cursor: isSaving ? "not-allowed" : "pointer",
+              border: "1.5px solid #f0d5e0",
+              background: "#fff8fb",
+              color: "#c47b96",
+              transition: "all 0.2s",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "#fdf2f6"; e.currentTarget.style.borderColor = "#c47b96"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "#fff8fb"; e.currentTarget.style.borderColor = "#f0d5e0"; }}
           >
             Cancelar
-          </Button>
+          </button>
           <button
             onClick={onSave}
             disabled={isSaving}
-            className="rounded-xl font-bold px-8 h-11 text-sm border-0 luxury-button-modal shadow-lg shadow-[#c47b96]/20"
+            style={{
+              padding: "10px 28px",
+              borderRadius: "10px",
+              fontSize: "13px",
+              fontWeight: 700,
+              cursor: isSaving ? "not-allowed" : "pointer",
+              border: "none",
+              background: "linear-gradient(135deg, #c47b96 0%, #a85d77 100%)",
+              color: "#ffffff",
+              boxShadow: "0 4px 12px rgba(196,123,150,0.3)",
+              transition: "all 0.2s",
+              opacity: isSaving ? 0.7 : 1,
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 6px 16px rgba(196,123,150,0.4)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(196,123,150,0.3)"; }}
           >
-            {isSaving ? "Guardando..." : editingCliente ? "Actualizar Cliente" : "Registrar Cliente"}
+            {isSaving ? (
+              <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span style={{ width: 16, height: 16, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.6s linear infinite", display: "inline-block" }} />
+                <span>Guardando...</span>
+              </span>
+            ) : editingCliente ? (
+              "Actualizar Cliente"
+            ) : (
+              "Registrar Cliente"
+            )}
           </button>
         </div>
       </DialogContent>

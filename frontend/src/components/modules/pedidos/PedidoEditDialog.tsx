@@ -203,38 +203,58 @@ export function PedidoEditDialog({
         </div>
 
         {/* Footer - Sticky like ProductFormDialog */}
+        {/* Footer */}
         <div className="flex items-center justify-between px-6 pb-6 pt-4 border-t border-gray-100 sticky bottom-0 bg-white z-10">
-          <div className="flex items-center gap-8">
-            <div className="flex flex-col">
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
-                <Tag className="w-3 h-3" /> Subtotal Items
-              </span>
-              <span className="text-xl font-black text-gray-700">{formatCurrency(subtotal)}</span>
-            </div>
-            <div className="w-px h-10 bg-gray-100" />
-            <div className="flex flex-col bg-gray-50 px-4 py-2 rounded-xl border border-gray-100">
-              <span className="text-[10px] font-bold text-[#c47b96] uppercase tracking-widest flex items-center gap-1.5">
-                <DollarSign className="w-3 h-3" /> Total Estimado
-              </span>
-              <span className="text-2xl font-black text-[#c47b96]">
-                {formatCurrency(subtotal > 0 ? subtotal + 10000 : 0)}
-              </span>
-            </div>
+          {/* Total */}
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <span style={{ fontSize: "13px", fontWeight: 600, color: "#9ca3af" }}>Total:</span>
+            <span style={{ fontSize: "22px", fontWeight: 900, color: "#c47b96", letterSpacing: "-0.5px" }}>
+              {formatCurrency(subtotal)}
+            </span>
           </div>
 
+          {/* Botones */}
           <div className="flex gap-3">
-            <Button
-              variant="outline"
+            <button
               onClick={() => onOpenChange(false)}
-              className="border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg px-6 h-11 text-sm font-bold"
               disabled={isSaving}
+              style={{
+                padding: "10px 22px",
+                borderRadius: "10px",
+                fontSize: "13px",
+                fontWeight: 700,
+                cursor: isSaving ? "not-allowed" : "pointer",
+                border: "1.5px solid #f0d5e0",
+                background: "#fff8fb",
+                color: "#c47b96",
+                transition: "all 0.2s",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "#fdf2f6"; e.currentTarget.style.borderColor = "#c47b96"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "#fff8fb"; e.currentTarget.style.borderColor = "#f0d5e0"; }}
             >
               Cancelar
-            </Button>
+            </button>
             <button
               onClick={onSave}
               disabled={isSaving}
-              className={`rounded-lg font-bold px-8 h-11 text-sm border-0 luxury-button-modal flex items-center gap-2 transition-all active:scale-95 ${isSaving ? "opacity-70 cursor-not-allowed" : "cursor-pointer shadow-lg shadow-[#c47b96]/20"}`}
+              style={{
+                padding: "10px 28px",
+                borderRadius: "10px",
+                fontSize: "13px",
+                fontWeight: 700,
+                cursor: isSaving ? "not-allowed" : "pointer",
+                border: "none",
+                background: "linear-gradient(135deg, #c47b96 0%, #a85d77 100%)",
+                color: "#ffffff",
+                boxShadow: "0 4px 12px rgba(196,123,150,0.3)",
+                transition: "all 0.2s",
+                opacity: isSaving ? 0.7 : 1,
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 6px 16px rgba(196,123,150,0.4)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(196,123,150,0.3)"; }}
             >
               {isSaving ? (
                 <>

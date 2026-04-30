@@ -184,45 +184,68 @@ export function GenericCombobox({
             className="bg-white border border-gray-200 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-1 duration-200"
             onMouseDown={(e) => e.stopPropagation()}
           >
-            <div className="max-h-[280px] overflow-y-auto p-1.5 scrollbar-thin">
+            <div className="max-h-[280px] overflow-y-auto p-1 scrollbar-thin">
               {filteredOptions.length === 0 ? (
                 <div
                   role="option"
                   aria-selected={false}
-                  className="p-4 text-sm text-center text-gray-500 italic"
+                  className="p-4 text-sm text-center text-gray-400 italic"
                 >
                   No hay resultados
                 </div>
               ) : (
-                filteredOptions.map((option, index) => (
-                  <div
-                    key={option.value}
-                    id={getOptionId(index)}
-                    role="option"
-                    aria-selected={value === option.value}
-                    // Fix bug 2: cursor explícito en cada opción
-                    style={{ cursor: "pointer" }}
-                    onMouseEnter={() => setSelectedIndex(index)}
-                    onMouseDown={(e) => {
-                      // Prevenir que el input pierda el foco antes del click
-                      e.preventDefault();
-                    }}
-                    onClick={() => selectOption(option)}
-                    className={`flex items-center rounded-lg px-3 py-2.5 text-sm transition-colors mb-0.5
-                      ${
-                        value === option.value
-                          ? "bg-[#c47b96] text-white"
-                          : index === selectedIndex
-                            ? "bg-gray-100 text-gray-900"
-                            : "text-gray-700"
-                      }`}
-                  >
-                    <Check
-                      className={`mr-2 h-4 w-4 flex-shrink-0 ${value === option.value ? "opacity-100" : "opacity-0"}`}
-                    />
-                    <span className="truncate">{option.label}</span>
-                  </div>
-                ))
+                filteredOptions.map((option, index) => {
+                  const isSelected = value === option.value;
+                  const isHovered = index === selectedIndex;
+                  return (
+                    <div
+                      key={option.value}
+                      id={getOptionId(index)}
+                      role="option"
+                      aria-selected={isSelected}
+                      onMouseEnter={() => setSelectedIndex(index)}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                      }}
+                      onClick={() => selectOption(option)}
+                      style={{
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        borderRadius: "8px",
+                        padding: "10px 12px",
+                        fontSize: "13px",
+                        fontWeight: 600,
+                        transition: "all 0.15s ease",
+                        background: isSelected
+                          ? "#c47b96"
+                          : isHovered
+                            ? "#fdf2f6"
+                            : "transparent",
+                        color: isSelected
+                          ? "#ffffff"
+                          : isHovered
+                            ? "#a85d77"
+                            : "#4b5563",
+                        boxShadow: isSelected
+                          ? "0 1px 3px rgba(196,123,150,0.3)"
+                          : "none",
+                      }}
+                    >
+                      <Check
+                        className="flex-shrink-0"
+                        style={{
+                          width: 14,
+                          height: 14,
+                          marginRight: 10,
+                          opacity: isSelected ? 1 : 0,
+                          color: isSelected ? "#ffffff" : "transparent",
+                        }}
+                      />
+                      <span className="truncate">{option.label}</span>
+                    </div>
+                  );
+                })
               )}
             </div>
           </div>,

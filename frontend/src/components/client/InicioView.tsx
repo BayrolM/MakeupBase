@@ -62,7 +62,14 @@ export function InicioView({
   isPublic = false,
   onNavigate,
 }: InicioViewProps = {}) {
-  const { productos, categorias, addToCarrito, setProductos, setCategorias, setMarcas } = useStore();
+  const {
+    productos,
+    categorias,
+    addToCarrito,
+    setProductos,
+    setCategorias,
+    setMarcas,
+  } = useStore();
   const [activeSection, setActiveSection] = useState<Section>("inicio");
   const [api, setApi] = useState<CarouselApi>();
   const [isLoadingData, setIsLoadingData] = useState(false);
@@ -178,13 +185,8 @@ export function InicioView({
   // Get featured categories (first 6)
   const categoriasDestacadas = categorias.slice(0, 6);
 
+  // ALERT PARA AGREGAR AL CARRITO DE COMPRAS
   const handleAddToCart = (productoId: string) => {
-    if (isPublic) {
-      toast.info("Inicia sesión", {
-        description: "Debes iniciar sesión para agregar productos al carrito",
-      });
-      return;
-    }
     addToCarrito(productoId, 1);
     toast.success("Producto agregado", {
       description: "El producto se agregó a tu carrito",
@@ -1093,12 +1095,14 @@ export function InicioView({
   return (
     <div style={{ minHeight: "100vh", background: "white" }}>
       {isLoadingData ? (
-        <div style={{ 
-          minHeight: "100vh", 
-          display: "flex", 
-          alignItems: "center", 
-          justifyContent: "center" 
-        }}>
+        <div
+          style={{
+            minHeight: "100vh",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
           <div style={{ textAlign: "center" }}>
             <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <p style={{ color: C.textMuted }}>Cargando productos...</p>

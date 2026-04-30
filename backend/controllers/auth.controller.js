@@ -12,12 +12,13 @@ export const register = async (req, res) => {
       id_rol,
       tipo_documento,
       documento,
-      nombres, // Viene del frontend
-      apellidos, // Viene del frontend
+      nombres,
+      apellidos,
       email,
       telefono,
       direccion,
       ciudad,
+      departamento,
       password,
     } = req.body;
 
@@ -34,8 +35,16 @@ export const register = async (req, res) => {
       return res.status(400).json({ message: "Faltan campos requeridos" });
     }
 
-    if (password.length < 8 || !/[A-Z]/.test(password) || !/[0-9]/.test(password) || !/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
-      return res.status(400).json({ message: "La contraseña debe tener al menos 8 caracteres, una mayúscula, un número y un carácter especial" });
+    if (
+      password.length < 8 ||
+      !/[A-Z]/.test(password) ||
+      !/[0-9]/.test(password) ||
+      !/[!@#$%^&*(),.?":{}|<>]/.test(password)
+    ) {
+      return res.status(400).json({
+        message:
+          "La contraseña debe tener al menos 8 caracteres, una mayúscula, un número y un carácter especial",
+      });
     }
 
     // Verificar si el correo ya existe
@@ -58,15 +67,15 @@ export const register = async (req, res) => {
     const result = await sql`
       INSERT INTO usuarios (
         id_rol, tipo_documento, documento, nombre, apellido,
-        email, telefono, direccion, ciudad, password_hash, estado
+        email, telefono, direccion, ciudad, departamento, password_hash, estado
       )
       VALUES (
         ${id_rol || 2}, ${tipo_documento || "CC"}, ${
-      documento || ""
-    }, ${nombre}, ${apellido},
+          documento || ""
+        }, ${nombre}, ${apellido},
         ${email}, ${telefono || ""}, ${direccion || ""}, ${
-      ciudad || ""
-    }, ${hashedPassword}, true
+          ciudad || ""
+        }, ${departamento || ""}, ${hashedPassword}, true
       )
       RETURNING id_usuario, email, nombre as nombres, apellido as apellidos
     `;
@@ -107,7 +116,7 @@ export const login = async (req, res) => {
     console.log(
       "📊 Resultado de búsqueda:",
       result.length,
-      "usuario(s) encontrado(s)"
+      "usuario(s) encontrado(s)",
     );
 
     if (result.length === 0) {
@@ -120,7 +129,7 @@ export const login = async (req, res) => {
       "✅ Usuario encontrado:",
       user.email,
       "- id_usuario:",
-      user.id_usuario
+      user.id_usuario,
     );
     console.log("🔐 Campos disponibles:", Object.keys(user));
 
@@ -128,7 +137,7 @@ export const login = async (req, res) => {
     if (!user.password_hash) {
       console.error(
         "❌ ERROR: Campo 'password_hash' no encontrado en usuario. Campos disponibles:",
-        Object.keys(user)
+        Object.keys(user),
       );
       return res
         .status(500)
@@ -147,12 +156,15 @@ export const login = async (req, res) => {
     // Verificar que el usuario esté activo
     if (user.estado === false || user.estado === 0) {
       console.log("❌ Usuario inactivo:", email);
-      return res.status(403).json({ code: "USER_INACTIVE", message: "Tu cuenta está inactiva. Contacta al administrador." });
+      return res.status(403).json({
+        code: "USER_INACTIVE",
+        message: "Tu cuenta está inactiva. Contacta al administrador.",
+      });
     }
 
     console.log("🎟️ Generando JWT...");
     if (!user.id_rol) {
-        console.error("❌ ERROR: El usuario no tiene id_rol:", user);
+      console.error("❌ ERROR: El usuario no tiene id_rol:", user);
     }
     const token = jwt.sign(
       {
@@ -161,7 +173,7 @@ export const login = async (req, res) => {
         rol: user.id_rol,
       },
       process.env.JWT_SECRET,
-      { expiresIn: "7d" }
+      { expiresIn: "7d" },
     );
 
     console.log("✅ Login exitoso para usuario:", email, "Rol:", user.id_rol);
@@ -191,7 +203,7 @@ export const forgotPassword = async (req, res) => {
       return res.status(403).json({ message: "La cuenta está inactiva" });
     }
 
-    const token = crypto.randomBytes(32).toString('hex');
+    const token = crypto.randomBytes(32).toString("hex");
     const expires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
 
     await sql`
@@ -200,13 +212,13 @@ export const forgotPassword = async (req, res) => {
       WHERE id_usuario = ${user.id_usuario}
     `;
 
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
     const resetLink = `${frontendUrl}/?token=${token}`;
 
     await resend.emails.send({
-      from: 'onboarding@resend.dev',
+      from: "onboarding@resend.dev",
       to: email,
-      subject: 'Recuperación de contraseña',
+      subject: "Recuperación de contraseña",
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="text-align: center; margin-bottom: 20px;">
@@ -220,13 +232,15 @@ export const forgotPassword = async (req, res) => {
           </div>
           <p style="color: #666; font-size: 14px;">Si no solicitaste esto, puedes ignorar este correo.</p>
         </div>
-      `
+      `,
     });
 
     return res.status(200).json({ message: "Correo de recuperación enviado" });
   } catch (error) {
     console.error("Error en forgotPassword:", error);
-    return res.status(500).json({ message: "Error enviando correo de recuperación" });
+    return res
+      .status(500)
+      .json({ message: "Error enviando correo de recuperación" });
   }
 };
 
@@ -235,15 +249,26 @@ export const resetPassword = async (req, res) => {
     const { token, new_password } = req.body;
 
     if (!token || !new_password) {
-      return res.status(400).json({ message: "Token y nueva contraseña son requeridos" });
+      return res
+        .status(400)
+        .json({ message: "Token y nueva contraseña son requeridos" });
     }
 
     if (new_password.length < 8) {
-      return res.status(400).json({ message: "La contraseña debe tener al menos 8 caracteres" });
+      return res
+        .status(400)
+        .json({ message: "La contraseña debe tener al menos 8 caracteres" });
     }
 
-    if (!/[A-Z]/.test(new_password) || !/[0-9]/.test(new_password) || !/[!@#$%^&*(),.?":{}|<>]/.test(new_password)) {
-      return res.status(400).json({ message: "La contraseña debe tener al menos una mayúscula, un número y un carácter especial" });
+    if (
+      !/[A-Z]/.test(new_password) ||
+      !/[0-9]/.test(new_password) ||
+      !/[!@#$%^&*(),.?":{}|<>]/.test(new_password)
+    ) {
+      return res.status(400).json({
+        message:
+          "La contraseña debe tener al menos una mayúscula, un número y un carácter especial",
+      });
     }
 
     const result = await sql`
@@ -265,10 +290,13 @@ export const resetPassword = async (req, res) => {
       WHERE id_usuario = ${user.id_usuario}
     `;
 
-    return res.status(200).json({ message: "Contraseña actualizada exitosamente" });
+    return res
+      .status(200)
+      .json({ message: "Contraseña actualizada exitosamente" });
   } catch (error) {
     console.error("Error en resetPassword:", error);
-    return res.status(500).json({ message: "Error al actualizar la contraseña" });
+    return res
+      .status(500)
+      .json({ message: "Error al actualizar la contraseña" });
   }
 };
-

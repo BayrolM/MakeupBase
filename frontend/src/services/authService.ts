@@ -15,6 +15,7 @@ export interface RegisterData {
   documento?: string;
   direccion?: string;
   ciudad?: string;
+  departamento?: string;
   id_rol?: number;
 }
 
@@ -26,6 +27,7 @@ export interface UserProfile {
   telefono: string;
   direccion?: string;
   ciudad?: string;
+  departamento?: string;
   id_rol: number;  
   foto_perfil?: string;
 }

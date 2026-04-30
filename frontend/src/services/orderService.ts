@@ -6,6 +6,7 @@ export interface Order {
   fecha_pedido: string;
   direccion: string;
   ciudad: string;
+  departamento?: string;
   total: number;
   estado: string;
   id_venta?: number;
@@ -19,6 +20,7 @@ export interface Order {
 export interface CreateOrderData {
   direccion: string;
   ciudad: string;
+  departamento?: string;
   metodo_pago: string;
   items: Array<{
     id_producto: number;
@@ -30,6 +32,7 @@ export interface CreateDirectOrderData {
   id_cliente: number;
   direccion: string;
   ciudad: string;
+  departamento?: string;
   metodo_pago: string;
   items: Array<{
     id_producto: number;

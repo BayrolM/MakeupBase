@@ -59,10 +59,23 @@
 
 /* Luxury Classes */
 .bg-luxury-header {
-  background: radial-gradient(ellipse at 80% 8%, rgba(140, 70, 90, 0.6) 0%, transparent 50%),
-              radial-gradient(ellipse at 12% 65%, rgba(80, 25, 40, 0.55) 0%, transparent 50%),
-              radial-gradient(ellipse at 55% 92%, rgba(110, 45, 65, 0.45) 0%, transparent 45%),
-              linear-gradient(158deg, #2e1020 0%, #3d1828 38%, #4a2035 62%, #2e1020 100%) !important;
+  background:
+    radial-gradient(
+      ellipse at 80% 8%,
+      rgba(140, 70, 90, 0.6) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse at 12% 65%,
+      rgba(80, 25, 40, 0.55) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse at 55% 92%,
+      rgba(110, 45, 65, 0.45) 0%,
+      transparent 45%
+    ),
+    linear-gradient(158deg, #2e1020 0%, #3d1828 38%, #4a2035 62%, #2e1020 100%) !important;
 }
 
 .text-luxury-cream {
@@ -117,7 +130,12 @@
   If border-width was lost, we restore a base width for standard border classes,
   but we avoid targeting '*' to prevent mess up.
 */
-.border, [class*="border-"], .border-b, .border-t, .border-l, .border-r {
+.border,
+[class*="border-"],
+.border-b,
+.border-t,
+.border-l,
+.border-r {
   border-color: #fad6e3 !important;
   border-style: solid !important;
 }
@@ -128,7 +146,11 @@
 }
 
 .category-card:hover {
-  background: linear-gradient(135deg, var(--luxury-pink-soft) 0%, var(--luxury-accent-dark) 100%) !important;
+  background: linear-gradient(
+    135deg,
+    var(--luxury-pink-soft) 0%,
+    var(--luxury-accent-dark) 100%
+  ) !important;
   transform: translateY(-6px);
   box-shadow: 0 15px 35px var(--luxury-shadow-sm) !important;
   border-color: transparent !important;
@@ -154,7 +176,11 @@
 }
 
 [data-slot="slider-range"] {
-  background: linear-gradient(90deg, var(--luxury-pink-soft), var(--luxury-pink)) !important;
+  background: linear-gradient(
+    90deg,
+    var(--luxury-pink-soft),
+    var(--luxury-pink)
+  ) !important;
 }
 
 [data-slot="slider-thumb"] {
@@ -168,5 +194,18 @@
 [data-slot="slider-thumb"]:hover,
 [data-slot="slider-thumb"]:focus-visible {
   ring-color: var(--luxury-shadow) !important;
-  box-shadow: 0 0 0 4px var(--luxury-shadow-sm), 0 2px 8px var(--luxury-shadow) !important;
+  box-shadow:
+    0 0 0 4px var(--luxury-shadow-sm),
+    0 2px 8px var(--luxury-shadow) !important;
+}
+
+.quantity-input {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.quantity-input::-webkit-inner-spin-button,
+.quantity-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }

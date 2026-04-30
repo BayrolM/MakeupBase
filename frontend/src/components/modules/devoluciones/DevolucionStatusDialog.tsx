@@ -86,22 +86,53 @@ export function DevolucionStatusDialog({
         </div>
 
         <div className="flex gap-3 px-8 pb-8 pt-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)} className="border-gray-200 text-gray-600 hover:bg-gray-50 rounded-xl h-11 font-bold text-sm flex-1" disabled={isSaving}>
+          <button
+            onClick={() => onOpenChange(false)}
+            disabled={isSaving}
+            style={{
+              padding: "10px 22px",
+              borderRadius: "12px",
+              fontSize: "13px",
+              fontWeight: 700,
+              cursor: isSaving ? "not-allowed" : "pointer",
+              border: "1.5px solid #f0d5e0",
+              background: "#fff8fb",
+              color: "#c47b96",
+              transition: "all 0.2s",
+              flex: 1,
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "#fdf2f6"; e.currentTarget.style.borderColor = "#c47b96"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "#fff8fb"; e.currentTarget.style.borderColor = "#f0d5e0"; }}
+          >
             Cancelar
-          </Button>
-          <Button 
-            onClick={() => onConfirm(nuevoEstado)} 
+          </button>
+          <button
+            onClick={() => onConfirm(nuevoEstado)}
             disabled={isSaving || !motivoDecision.trim() || motivoDecision.trim().length < 3}
-            className="rounded-xl font-bold h-11 text-sm border-0 shadow-lg shadow-[#c47b96]/20 transition-all hover:scale-[1.02] active:scale-95 text-white flex-1" 
-            style={{ backgroundColor: "#c47b96" }}
+            style={{
+              padding: "10px 28px",
+              borderRadius: "12px",
+              fontSize: "13px",
+              fontWeight: 700,
+              cursor: (isSaving || !motivoDecision.trim() || motivoDecision.trim().length < 3) ? "not-allowed" : "pointer",
+              border: "none",
+              background: "linear-gradient(135deg, #c47b96 0%, #a85d77 100%)",
+              color: "#ffffff",
+              boxShadow: "0 4px 12px rgba(196,123,150,0.3)",
+              transition: "all 0.2s",
+              opacity: (isSaving || !motivoDecision.trim() || motivoDecision.trim().length < 3) ? 0.7 : 1,
+              flex: 1,
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 6px 16px rgba(196,123,150,0.4)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(196,123,150,0.3)"; }}
           >
             {isSaving ? (
-              <span className="flex items-center gap-2">
+              <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
                 <Loader2 className="w-4 h-4 animate-spin" />
                 Procesando...
               </span>
             ) : "Confirmar Cambio"}
-          </Button>
+          </button>
         </div>
       </DialogContent>
     </Dialog>

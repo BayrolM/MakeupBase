@@ -46,6 +46,10 @@ export function ClientNavbar({
     updateCarritoQuantity,
   } = useStore();
 
+  const [quantityInputs, setQuantityInputs] = useState<Record<string, string>>(
+    {},
+  );
+
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -60,13 +64,25 @@ export function ClientNavbar({
   const cartItemCount = carrito.reduce((sum, item) => sum + item.cantidad, 0);
 
   // Lógica de Carrito
+  const getLiveQuantity = (item: (typeof carrito)[number]) => {
+    const draft = quantityInputs[item.productoId];
+    if (draft && /^\d+$/.test(draft)) {
+      return Math.min(
+        productos.find((p) => p.id === item.productoId)?.stock ?? item.cantidad,
+        parseInt(draft, 10),
+      );
+    }
+    return item.cantidad;
+  };
+
   const cartTotal = carrito.reduce((sum, item) => {
     const producto = productos.find((p) => p.id === item.productoId);
-    return sum + (producto ? producto.precioVenta * item.cantidad : 0);
+    const cantidad = getLiveQuantity(item);
+    return sum + (producto ? producto.precioVenta * cantidad : 0);
   }, 0);
 
-  const shippingCost = CONFIG.COSTO_ENVIO;
-  const total = cartTotal + shippingCost;
+  const shippingCost = 0;
+  const total = cartTotal;
 
   // Use a ref so validateStock doesn't re-create on every carrito change
   const carritoRef = useRef(carrito);
@@ -230,34 +246,33 @@ export function ClientNavbar({
                 </button>
               )}
               {/* Carrito (Solo Logueado) */}
-              {currentUser && (
-                <button
-                  onClick={() => setIsCartOpen(true)}
-                  title="Carrito"
-                  className={`relative p-2 rounded-lg transition-colors cursor-pointer ${
-                    isCartOpen
-                      ? "bg-primary/10 text-primary"
-                      : "text-foreground-secondary hover:text-primary hover:bg-primary/5"
-                  }`}
-                >
-                  <ShoppingCart className="w-5 h-5" />
-                  {cartItemCount > 0 && (
-                    <span
-                      style={{
-                        position: "absolute",
-                        top: "2px",
-                        right: "2px",
-                        width: "10px",
-                        height: "10px",
-                        borderRadius: "50%",
-                        background: "var(--luxury-pink)",
-                        border: "2px solid white",
-                        boxShadow: "0 0 6px var(--luxury-shadow)",
-                      }}
-                    />
-                  )}
-                </button>
-              )}
+
+              <button
+                onClick={() => setIsCartOpen(true)}
+                title="Carrito"
+                className={`relative p-2 rounded-lg transition-colors cursor-pointer ${
+                  isCartOpen
+                    ? "bg-primary/10 text-primary"
+                    : "text-foreground-secondary hover:text-primary hover:bg-primary/5"
+                }`}
+              >
+                <ShoppingCart className="w-5 h-5" />
+                {cartItemCount > 0 && (
+                  <span
+                    style={{
+                      position: "absolute",
+                      top: "2px",
+                      right: "2px",
+                      width: "10px",
+                      height: "10px",
+                      borderRadius: "50%",
+                      background: "var(--luxury-pink)",
+                      border: "2px solid white",
+                      boxShadow: "0 0 6px var(--luxury-shadow)",
+                    }}
+                  />
+                )}
+              </button>
 
               {/* Mis Pedidos (Solo Logueado) */}
               {currentUser && (
@@ -275,11 +290,7 @@ export function ClientNavbar({
               )}
 
               {/* Tema (Solo Logueado, Inline) */}
-              {currentUser && (
-                <div className="flex items-center px-1">
-
-                </div>
-              )}
+              {currentUser && <div className="flex items-center px-1"></div>}
 
               {/* Acceso / Usuario */}
               {currentUser ? (
@@ -315,50 +326,54 @@ export function ClientNavbar({
                           to { opacity: 1; transform: translateY(0) scale(1); }
                         }
                       `}</style>
-                      <div 
+                      <div
                         className="absolute right-0 top-full mt-2 w-52 rounded-xl shadow-xl overflow-hidden z-50"
-                        style={{ 
-                          backgroundColor: '#ffffff', 
-                          border: '1px solid var(--luxury-pink-soft)',
-                          animation: 'dropdownFade 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-                          transformOrigin: 'top right'
+                        style={{
+                          backgroundColor: "#ffffff",
+                          border: "1px solid var(--luxury-pink-soft)",
+                          animation:
+                            "dropdownFade 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+                          transformOrigin: "top right",
                         }}
                       >
-                        <div className="px-4 py-3 border-b" style={{ borderColor: 'var(--luxury-pink-soft)' }}>
-                        <p className="text-sm font-semibold text-foreground truncate">
-                          {currentUser?.nombres} {currentUser?.apellidos}
-                        </p>
-                        <p className="text-xs text-foreground-secondary truncate">
-                          {currentUser?.email}
-                        </p>
-                      </div>
-
-                      <div className="py-1">
-                        <button
-                          onClick={() => {
-                            onNavigate("perfil");
-                            setDropdownOpen(false);
-                          }}
-                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-surface transition-colors text-left"
+                        <div
+                          className="px-4 py-3 border-b"
+                          style={{ borderColor: "var(--luxury-pink-soft)" }}
                         >
-                          <User className="w-4 h-4 text-foreground-secondary" />
-                          Mi Perfil
-                        </button>
-                      </div>
+                          <p className="text-sm font-semibold text-foreground truncate">
+                            {currentUser?.nombres} {currentUser?.apellidos}
+                          </p>
+                          <p className="text-xs text-foreground-secondary truncate">
+                            {currentUser?.email}
+                          </p>
+                        </div>
 
-                      <div className="border-t border-border py-1">
-                        <button
-                          onClick={() => {
-                            setShowLogoutConfirm(true);
-                            setDropdownOpen(false);
-                          }}
-                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-rose-600 hover:bg-rose-50 transition-colors text-left"
-                        >
-                          <LogOut className="w-4 h-4" />
-                          Cerrar Sesión
-                        </button>
+                        <div className="py-1">
+                          <button
+                            onClick={() => {
+                              onNavigate("perfil");
+                              setDropdownOpen(false);
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-surface transition-colors text-left"
+                          >
+                            <User className="w-4 h-4 text-foreground-secondary" />
+                            Mi Perfil
+                          </button>
+                        </div>
+
+                        <div className="border-t border-border py-1">
+                          <button
+                            onClick={() => {
+                              setShowLogoutConfirm(true);
+                              setDropdownOpen(false);
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-rose-600 hover:bg-rose-50 transition-colors text-left"
+                          >
+                            <LogOut className="w-4 h-4" />
+                            Cerrar Sesión
+                          </button>
+                        </div>
                       </div>
-                    </div>
                     </>
                   )}
                 </div>
@@ -408,7 +423,8 @@ export function ClientNavbar({
               <div
                 style={{
                   height: "3px",
-                  background: "linear-gradient(90deg, var(--luxury-pink-soft), var(--luxury-pink))",
+                  background:
+                    "linear-gradient(90deg, var(--luxury-pink-soft), var(--luxury-pink))",
                   borderRadius: "4px",
                   marginBottom: "16px",
                 }}
@@ -422,7 +438,8 @@ export function ClientNavbar({
                     width: "40px",
                     height: "40px",
                     borderRadius: "14px",
-                    background: "linear-gradient(135deg, var(--luxury-pink-soft), var(--luxury-pink))",
+                    background:
+                      "linear-gradient(135deg, var(--luxury-pink-soft), var(--luxury-pink))",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -503,7 +520,8 @@ export function ClientNavbar({
                       transition: "all 0.2s",
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.background = "var(--luxury-accent-soft)";
+                      e.currentTarget.style.background =
+                        "var(--luxury-accent-soft)";
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.background = "transparent";
@@ -519,6 +537,10 @@ export function ClientNavbar({
                       (p) => p.id === item.productoId,
                     );
                     if (!producto) return null;
+
+                    const inputValue =
+                      quantityInputs[item.productoId] ?? String(item.cantidad);
+
                     const hasStockIssue =
                       stockIssues[item.productoId]?.available === 0;
 
@@ -526,14 +548,16 @@ export function ClientNavbar({
                       <div
                         key={item.productoId}
                         className={`flex gap-4 p-4 rounded-xl transition-all ${
-                          hasStockIssue
-                            ? "bg-red-50/50 border-red-200"
-                            : ""
+                          hasStockIssue ? "bg-red-50/50 border-red-200" : ""
                         }`}
                         style={{
-                          border: hasStockIssue ? undefined : "1.5px solid var(--luxury-accent-soft)",
+                          border: hasStockIssue
+                            ? undefined
+                            : "1.5px solid var(--luxury-accent-soft)",
                           background: hasStockIssue ? undefined : "white",
-                          boxShadow: hasStockIssue ? undefined : "0 2px 12px var(--luxury-shadow-xs)",
+                          boxShadow: hasStockIssue
+                            ? undefined
+                            : "0 2px 12px var(--luxury-shadow-xs)",
                         }}
                       >
                         <div className="w-20 h-20 rounded-lg overflow-hidden border border-border flex-shrink-0 bg-white">
@@ -587,27 +611,94 @@ export function ClientNavbar({
 
                           <div className="flex items-center mt-3">
                             <div className="flex items-center gap-3 bg-background border border-border rounded-lg p-1">
-                              <button
-                                onClick={() =>
-                                  updateCarritoQuantity(
-                                    item.productoId,
-                                    item.cantidad - 1,
-                                  )
-                                }
+                               <button
+                                onClick={() => {
+                                  const next = item.cantidad - 1;
+                                  if (next >= 1) {
+                                    updateCarritoQuantity(
+                                      item.productoId,
+                                      next,
+                                    );
+                                    setQuantityInputs((prev) => ({
+                                      ...prev,
+                                      [item.productoId]: String(next),
+                                    }));
+                                  }
+                                }}
                                 className="w-7 h-7 flex items-center justify-center rounded hover:bg-surface text-foreground transition-colors"
                               >
                                 -
                               </button>
-                              <span className="text-xs font-bold w-4 text-center">
-                                {item.cantidad}
-                              </span>
-                              <button
-                                onClick={() =>
+                              <input
+                                type="number"
+                                min={1}
+                                max={producto.stock}
+                                step={1}
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                                className="quantity-input text-xs font-bold w-20 text-center rounded-lg border border-border bg-white"
+                                value={inputValue}
+                                onChange={(e) => {
+                                  const raw = e.target.value;
+                                  if (/^\d*$/.test(raw)) {
+                                    setQuantityInputs((prev) => ({
+                                      ...prev,
+                                      [item.productoId]: raw,
+                                    }));
+                                  }
+                                }}
+                                onBlur={(e) => {
+                                  const raw = e.target.value;
+                                  const parsed = parseInt(raw, 10);
+
+                                  if (Number.isNaN(parsed) || parsed < 1) {
+                                    updateCarritoQuantity(item.productoId, 1);
+                                    setQuantityInputs((prev) => ({
+                                      ...prev,
+                                      [item.productoId]: "1",
+                                    }));
+                                    return;
+                                  }
+
+                                  if (parsed > producto.stock) {
+                                    toast.error(
+                                      `Sólo hay ${producto.stock} unidades disponibles de ${producto.nombre}`,
+                                    );
+                                    updateCarritoQuantity(
+                                      item.productoId,
+                                      producto.stock,
+                                    );
+                                    setQuantityInputs((prev) => ({
+                                      ...prev,
+                                      [item.productoId]: String(producto.stock),
+                                    }));
+                                    return;
+                                  }
+
                                   updateCarritoQuantity(
                                     item.productoId,
-                                    item.cantidad + 1,
-                                  )
-                                }
+                                    parsed,
+                                  );
+                                  setQuantityInputs((prev) => ({
+                                    ...prev,
+                                    [item.productoId]: String(parsed),
+                                  }));
+                                }}
+                              />
+                               <button
+                                onClick={() => {
+                                  const next = item.cantidad + 1;
+                                  if (next <= producto.stock) {
+                                    updateCarritoQuantity(
+                                      item.productoId,
+                                      next,
+                                    );
+                                    setQuantityInputs((prev) => ({
+                                      ...prev,
+                                      [item.productoId]: String(next),
+                                    }));
+                                  }
+                                }}
                                 disabled={
                                   item.cantidad >= producto.stock ||
                                   hasStockIssue
@@ -635,13 +726,12 @@ export function ClientNavbar({
                 }}
               >
                 <div className="space-y-3 mb-6">
-                  <div className="flex justify-between text-sm" style={{ color: "var(--luxury-text-secondary)" }}>
+                  <div
+                    className="flex justify-between text-sm"
+                    style={{ color: "var(--luxury-text-secondary)" }}
+                  >
                     <span>Subtotal</span>
                     <span>{formatCurrency(cartTotal)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm" style={{ color: "var(--luxury-text-secondary)" }}>
-                    <span>Envío</span>
-                    <span>{formatCurrency(shippingCost)}</span>
                   </div>
                   <div
                     className="flex justify-between text-lg font-bold pt-4"
@@ -649,7 +739,9 @@ export function ClientNavbar({
                       borderTop: "1.5px dashed var(--luxury-accent-soft)",
                     }}
                   >
-                    <span style={{ color: "var(--luxury-text-dark)" }}>Total</span>
+                    <span style={{ color: "var(--luxury-text-dark)" }}>
+                      Total
+                    </span>
                     <span style={{ color: "var(--luxury-pink)" }}>
                       {formatCurrency(total)}
                     </span>
@@ -662,11 +754,15 @@ export function ClientNavbar({
                     Validando stock disponible...
                   </div>
                 )}
-
+                {/* ====MANEJO DE PAGO DE USUARIO NO AUTENTICADO DESDE EL CARRITO==== */}
                 <button
                   onClick={() => {
                     setIsCartOpen(false);
-                    onNavigate("checkout");
+                    if (currentUser) {
+                      onNavigate("checkout");
+                    } else {
+                      onNavigate("login");
+                    }
                   }}
                   disabled={
                     carrito.length === 0 || hasBlockingIssues || isValidating
