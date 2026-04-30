@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import { 
-  useStore, 
-  OrderStatus, 
-  Cliente, 
-  Producto, 
-  Status 
+import {
+  useStore,
+  OrderStatus,
+  Cliente,
+  Producto,
+  Status,
 } from "../../lib/store";
 import { toast } from "sonner";
 import { generateOrderPDF } from "../../lib/pdfGenerator";
@@ -30,8 +30,16 @@ import { PedidoPreviewDialog } from "./pedidos/PedidoPreviewDialog";
 import { getTrackingUrl } from "../../utils/pedidoUtils";
 
 export function PedidosModule() {
-  const { pedidos, clientes, productos, setPedidos, setClientes, setProductos } = useStore();
-  
+  const {
+    currentUser,
+    pedidos,
+    clientes,
+    productos,
+    setPedidos,
+    setClientes,
+    setProductos,
+  } = useStore();
+
   // Dialog States
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
@@ -65,12 +73,19 @@ export function PedidosModule() {
   const [formData, setFormData] = useState({
     clienteId: "",
     direccionEnvio: "",
-    productos: [{ productoId: "", cantidad: 1, precioUnitario: 0, maxStock: 0 }],
+    productos: [
+      { productoId: "", cantidad: 1, precioUnitario: 0, maxStock: 0 },
+    ],
   });
   const [editFormData, setEditFormData] = useState({
     clienteId: "",
     direccionEnvio: "",
-    productos: [] as { productoId: string; cantidad: number; precioUnitario: number; maxStock: number }[],
+    productos: [] as {
+      productoId: string;
+      cantidad: number;
+      precioUnitario: number;
+      maxStock: number;
+    }[],
   });
   const [shippingFormData, setShippingFormData] = useState({
     transportadora: "Servientrega",
@@ -97,12 +112,13 @@ export function PedidosModule() {
     try {
       const [uRes, pRes] = await Promise.all([
         userService.getAll({ id_rol: 2, limit: 100 }),
-        productService.getAll({ limit: 100 })
+        productService.getAll({ limit: 100 }),
       ]);
-      
+
       const mappedClientes: Cliente[] = (uRes.data || []).map((u: any) => ({
         id: u.id_usuario.toString(),
-        nombre: `${u.nombres || ""} ${u.apellidos || ""}`.trim() || "Sin Nombre",
+        nombre:
+          `${u.nombres || ""} ${u.apellidos || ""}`.trim() || "Sin Nombre",
         nombres: u.nombres || "",
         apellidos: u.apellidos || "",
         email: u.email || "",
@@ -138,7 +154,14 @@ export function PedidosModule() {
 
   const refreshPedidos = async () => {
     try {
-      const ESTADOS_VALIDOS = ['pendiente', 'preparado', 'procesando', 'enviado', 'entregado', 'cancelado'];
+      const ESTADOS_VALIDOS = [
+        "pendiente",
+        "preparado",
+        "procesando",
+        "enviado",
+        "entregado",
+        "cancelado",
+      ];
       const qLower = debouncedSearchQuery.toLowerCase().trim();
       const esEstado = ESTADOS_VALIDOS.includes(qLower);
 
@@ -157,7 +180,11 @@ export function PedidosModule() {
         fecha: o.fecha_pedido ? o.fecha_pedido.split("T")[0] : "N/A",
         productos: [],
         subtotal: o.total ? Math.round(Number(o.total) / (1 + CONFIG.IVA)) : 0,
-        iva: o.total ? Math.round(Number(o.total) - Math.round(Number(o.total) / (1 + CONFIG.IVA))) : 0,
+        iva: o.total
+          ? Math.round(
+              Number(o.total) - Math.round(Number(o.total) / (1 + CONFIG.IVA)),
+            )
+          : 0,
         costoEnvio: CONFIG.COSTO_ENVIO,
         total: Number(o.total),
         estado: o.estado as OrderStatus,
@@ -175,17 +202,27 @@ export function PedidosModule() {
     setFormData({
       clienteId: "",
       direccionEnvio: "",
-      productos: [{ productoId: "", cantidad: 1, precioUnitario: 0, maxStock: 0 }],
+      productos: [
+        { productoId: "", cantidad: 1, precioUnitario: 0, maxStock: 0 },
+      ],
     });
     setIsDialogOpen(true);
   };
 
-  const updateProductLine = (isEdit: boolean, index: number, field: string, value: any, prodObj?: any) => {
+  const updateProductLine = (
+    isEdit: boolean,
+    index: number,
+    field: string,
+    value: any,
+    prodObj?: any,
+  ) => {
     const currentData = isEdit ? editFormData : formData;
     const newProductos = [...currentData.productos];
 
     if (field === "productoId") {
-      const existingIdx = newProductos.findIndex((p, i) => i !== index && p.productoId === value);
+      const existingIdx = newProductos.findIndex(
+        (p, i) => i !== index && p.productoId === value,
+      );
       if (existingIdx !== -1 && value) {
         toast.info("Producto ya agregado.");
         return;
@@ -219,7 +256,10 @@ export function PedidosModule() {
         direccion: formData.direccionEnvio,
         ciudad: "Bogotá", // Valor predeterminado
         metodo_pago: "Transferencia", // Valor predeterminado para pedidos directos
-        items: formData.productos.map(p => ({ id_producto: Number(p.productoId), cantidad: p.cantidad })),
+        items: formData.productos.map((p) => ({
+          id_producto: Number(p.productoId),
+          cantidad: p.cantidad,
+        })),
       };
       await orderService.createDirect(payload);
       toast.success("Pedido creado");
@@ -227,7 +267,9 @@ export function PedidosModule() {
       setIsDialogOpen(false);
     } catch (e: any) {
       toast.error(e.message || "Error al crear");
-    } finally { setIsSaving(false); }
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleOpenEdit = async (pedido: any) => {
@@ -241,27 +283,37 @@ export function PedidosModule() {
           productoId: i.id_producto.toString(),
           cantidad: Number(i.cantidad),
           precioUnitario: Number(i.precio_unitario) || 0,
-          maxStock: productos.find(p => p.id === i.id_producto.toString())?.stock || 0,
+          maxStock:
+            productos.find((p) => p.id === i.id_producto.toString())?.stock ||
+            0,
         })),
       });
       setIsEditDialogOpen(true);
-    } catch { toast.error("Error al cargar"); }
+    } catch {
+      toast.error("Error al cargar");
+    }
   };
 
   const handleSaveEdit = async () => {
     setIsSaving(true);
     try {
       const payload: any = { direccion: editFormData.direccionEnvio.trim() };
-      if (editingPedido.estado === 'pendiente') {
+      if (editingPedido.estado === "pendiente") {
         payload.id_cliente = Number(editFormData.clienteId);
-        payload.items = editFormData.productos.map(p => ({ id_producto: Number(p.productoId), cantidad: p.cantidad }));
+        payload.items = editFormData.productos.map((p) => ({
+          id_producto: Number(p.productoId),
+          cantidad: p.cantidad,
+        }));
       }
       await orderService.update(Number(editingPedido.id), payload);
       toast.success("Actualizado");
       refreshPedidos();
       setIsEditDialogOpen(false);
-    } catch (e: any) { toast.error(e.message); }
-    finally { setIsSaving(false); }
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleUpdateStatus = async () => {
@@ -276,90 +328,131 @@ export function PedidosModule() {
     }
     setIsSaving(true);
     try {
-      await orderService.updateStatus(Number(selectedPedido.id), newStatus, motivoAnulacion);
+      await orderService.updateStatus(
+        Number(selectedPedido.id),
+        newStatus,
+        Number(currentUser?.id),
+        motivoAnulacion,
+      );
       toast.success("Estado actualizado");
       refreshPedidos();
       setIsStatusDialogOpen(false);
-    } catch (e: any) { toast.error(e.message); }
-    finally { setIsSaving(false); }
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleConfirmShipping = async () => {
     setIsSaving(true);
     try {
-      const tracking_link = getTrackingUrl(shippingFormData.transportadora, shippingFormData.numero_guia);
-      await orderService.updateStatus(Number(selectedPedido.id), "enviado", "", { ...shippingFormData, tracking_link });
+      const tracking_link = getTrackingUrl(
+        shippingFormData.transportadora,
+        shippingFormData.numero_guia,
+      );
+      await orderService.updateStatus(
+        Number(selectedPedido.id),
+        "enviado",
+        Number(currentUser?.id),
+        "",
+        { ...shippingFormData, tracking_link },
+      );
       toast.success("Enviado");
       refreshPedidos();
       setIsShippingDialogOpen(false);
-    } catch (e: any) { toast.error(e.message); }
-    finally { setIsSaving(false); }
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleConfirmPayment = async () => {
     setIsSaving(true);
     try {
       const nuevoEstado = !pedidoToConfirm.pago_confirmado;
-      await orderService.confirmPayment(Number(pedidoToConfirm.id), nuevoEstado);
+      await orderService.confirmPayment(
+        Number(pedidoToConfirm.id),
+        nuevoEstado,
+        Number(currentUser?.id),
+      );
       toast.success(nuevoEstado ? "Confirmado" : "Removido");
       refreshPedidos();
       setIsPaymentConfirmOpen(false);
-    } catch (e: any) { toast.error(e.message); }
-    finally { setIsSaving(false); }
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleViewPDF = async (pedido: any) => {
     try {
       const fullOrder = await orderService.getById(Number(pedido.id));
-      const orderData = { 
-        ...pedido, 
+      const orderData = {
+        ...pedido,
         productos: (fullOrder?.items || []).map((i: any) => ({
-          productoId: i.id_producto.toString(), 
-          cantidad: i.cantidad, 
-          precio_unitario: i.precio_unitario
-        })) 
+          productoId: i.id_producto.toString(),
+          cantidad: i.cantidad,
+          precio_unitario: i.precio_unitario,
+        })),
       };
-      const cliente = clientes.find(c => c.id === pedido.clienteId);
+      const cliente = clientes.find((c) => c.id === pedido.clienteId);
       await generateOrderPDF(orderData, cliente, productos, CONFIG);
-    } catch { toast.error("Error PDF"); }
+    } catch {
+      toast.error("Error PDF");
+    }
   };
 
   return (
     <div className="min-h-screen bg-[#f6f3f5]">
       <PedidoHeader onOpenDialog={handleOpenDialog} />
-      
+
       <div className="px-8 pb-8">
-        <PedidoTable 
+        <PedidoTable
           pedidos={pedidos}
           searchQuery={searchQuery}
-          onSearchChange={(q) => { setSearchQuery(q); handlePageChange(1); }}
-          onViewDetail={async (p) => { 
-            const f = await orderService.getById(Number(p.id)); 
+          onSearchChange={(q) => {
+            setSearchQuery(q);
+            handlePageChange(1);
+          }}
+          onViewDetail={async (p) => {
+            const f = await orderService.getById(Number(p.id));
             setSelectedPedido({
-              ...p, 
+              ...p,
               productos: (f?.items || []).map((i: any) => ({
-                productoId: i.id_producto.toString(), 
-                cantidad: i.cantidad, 
-                precioUnitario: i.precio_unitario
-              }))
+                productoId: i.id_producto.toString(),
+                cantidad: i.cantidad,
+                precioUnitario: i.precio_unitario,
+              })),
             });
-            setDetailDialogOpen(true); 
+            setDetailDialogOpen(true);
           }}
           onViewPDF={handleViewPDF}
           onEdit={handleOpenEdit}
-          onStatusClick={(p) => { setSelectedPedido(p); setNewStatus(p.estado); setIsStatusDialogOpen(true); }}
-          onConfirmPayment={(p) => { setPedidoToConfirm(p); setIsPaymentConfirmOpen(true); }}
-          onViewComprobante={(url) => { 
-            const baseUrl = (import.meta.env.VITE_API_URL || "http://localhost:3000/api").replace('/api', '');
-            const fullUrl = url.startsWith('http') ? url : `${baseUrl}${url}`;
-            setPreviewImageUrl(fullUrl); 
-            setIsPreviewOpen(true); 
+          onStatusClick={(p) => {
+            setSelectedPedido(p);
+            setNewStatus(p.estado);
+            setIsStatusDialogOpen(true);
+          }}
+          onConfirmPayment={(p) => {
+            setPedidoToConfirm(p);
+            setIsPaymentConfirmOpen(true);
+          }}
+          onViewComprobante={(url) => {
+            const baseUrl = (
+              import.meta.env.VITE_API_URL || "http://localhost:3000/api"
+            ).replace("/api", "");
+            const fullUrl = url.startsWith("http") ? url : `${baseUrl}${url}`;
+            setPreviewImageUrl(fullUrl);
+            setIsPreviewOpen(true);
           }}
         />
 
         {totalPages > 1 && (
           <div className="mt-6">
-            <Pagination 
+            <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
               totalItems={totalItems}
@@ -371,19 +464,34 @@ export function PedidosModule() {
         )}
       </div>
 
-      <PedidoFormDialog 
+      <PedidoFormDialog
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         formData={formData}
         setFormData={setFormData}
         isSaving={isSaving}
         onSave={handleSave}
-        onAddProduct={() => setFormData({...formData, productos: [...formData.productos, {productoId:"", cantidad:1, precioUnitario:0, maxStock:0}]})}
-        onRemoveProduct={(idx) => setFormData({...formData, productos: formData.productos.filter((_,i)=>i!==idx)})}
-        onUpdateProduct={(idx, f, v, o) => updateProductLine(false, idx, f, v, o)}
+        onAddProduct={() =>
+          setFormData({
+            ...formData,
+            productos: [
+              ...formData.productos,
+              { productoId: "", cantidad: 1, precioUnitario: 0, maxStock: 0 },
+            ],
+          })
+        }
+        onRemoveProduct={(idx) =>
+          setFormData({
+            ...formData,
+            productos: formData.productos.filter((_, i) => i !== idx),
+          })
+        }
+        onUpdateProduct={(idx, f, v, o) =>
+          updateProductLine(false, idx, f, v, o)
+        }
       />
 
-      <PedidoEditDialog 
+      <PedidoEditDialog
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
         editingPedido={editingPedido}
@@ -391,12 +499,27 @@ export function PedidosModule() {
         setFormData={setEditFormData}
         isSaving={isSaving}
         onSave={handleSaveEdit}
-        onAddProduct={() => setEditFormData({...editFormData, productos: [...editFormData.productos, {productoId:"", cantidad:1, precioUnitario:0, maxStock:0}]})}
-        onRemoveProduct={(idx) => setEditFormData({...editFormData, productos: editFormData.productos.filter((_,i)=>i!==idx)})}
-        onUpdateProduct={(idx, f, v, o) => updateProductLine(true, idx, f, v, o)}
+        onAddProduct={() =>
+          setEditFormData({
+            ...editFormData,
+            productos: [
+              ...editFormData.productos,
+              { productoId: "", cantidad: 1, precioUnitario: 0, maxStock: 0 },
+            ],
+          })
+        }
+        onRemoveProduct={(idx) =>
+          setEditFormData({
+            ...editFormData,
+            productos: editFormData.productos.filter((_, i) => i !== idx),
+          })
+        }
+        onUpdateProduct={(idx, f, v, o) =>
+          updateProductLine(true, idx, f, v, o)
+        }
       />
 
-      <PedidoStatusDialog 
+      <PedidoStatusDialog
         open={isStatusDialogOpen}
         onOpenChange={setIsStatusDialogOpen}
         selectedPedido={selectedPedido}
@@ -408,14 +531,14 @@ export function PedidosModule() {
         onUpdateStatus={handleUpdateStatus}
       />
 
-      <PedidoDetailDialog 
+      <PedidoDetailDialog
         open={detailDialogOpen}
         onOpenChange={setDetailDialogOpen}
         selectedPedido={selectedPedido}
         productos={productos}
       />
 
-      <PedidoShippingDialog 
+      <PedidoShippingDialog
         open={isShippingDialogOpen}
         onOpenChange={setIsShippingDialogOpen}
         shippingFormData={shippingFormData}
@@ -424,7 +547,7 @@ export function PedidosModule() {
         onConfirm={handleConfirmShipping}
       />
 
-      <PedidoPaymentConfirmDialog 
+      <PedidoPaymentConfirmDialog
         open={isPaymentConfirmOpen}
         onOpenChange={setIsPaymentConfirmOpen}
         pedidoToConfirm={pedidoToConfirm}
@@ -432,7 +555,7 @@ export function PedidosModule() {
         onConfirm={handleConfirmPayment}
       />
 
-      <PedidoPreviewDialog 
+      <PedidoPreviewDialog
         open={isPreviewOpen}
         onOpenChange={setIsPreviewOpen}
         imageUrl={previewImageUrl}

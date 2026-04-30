@@ -154,11 +154,12 @@ export interface Pedido {
   iva: number;
   costoEnvio: number;
   total: number;
-  estado: OrderStatus; // pendiente, preparado, entregado, cancelado
+  estado: OrderStatus;
   direccionEnvio: string;
   pago_confirmado: boolean;
   comprobante_url?: string;
   motivoAnulacion?: string;
+  id_usuario_empleado?: string;
 }
 
 export interface Devolucion {
@@ -476,7 +477,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       },
 
       addPedido: (pedido) => {
-        const newPedido = { ...pedido, id: "id" in pedido ? pedido.id : generateId() };
+        const newPedido = {
+          ...pedido,
+          id: "id" in pedido ? pedido.id : generateId(),
+        };
         setPedidos((prev) => [newPedido, ...prev]);
       },
       updatePedido: (id, pedidoData) => {

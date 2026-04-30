@@ -203,15 +203,17 @@ export const obtenerOrdenes = async (id_usuario, rol = null, options = {}) => {
       p.motivo_anulacion,
       p.pago_confirmado,
       p.comprobante_url,
+      p.id_usuario_empleado,
       v.id_venta,
       v.metodo_pago,
       v.fecha_venta,
       CONCAT(COALESCE(u.nombre, ''), ' ', COALESCE(u.apellido, '')) as nombre_usuario,
-
+      CONCAT(COALESCE(e.nombre, ''), ' ', COALESCE(e.apellido, '')) as nombre_empleado,
       u.email as email_usuario
     FROM pedidos p
     LEFT JOIN ventas v ON p.id_pedido = v.id_pedido
     LEFT JOIN usuarios u ON p.id_usuario_cliente = u.id_usuario
+    LEFT JOIN usuarios e ON p.id_usuario_empleado = e.id_usuario
     ${userFilter}
     ${estadoFilter}
     ${searchFilter}
@@ -253,6 +255,7 @@ export const obtenerDetalleOrden = async (
         p.estado,
         p.motivo_anulacion,
         p.pago_confirmado,
+        p.id_usuario_empleado,
         p.transportadora,
         p.numero_guia,
         p.tracking_link,
@@ -262,11 +265,12 @@ export const obtenerDetalleOrden = async (
         v.metodo_pago,
         v.fecha_venta,
         CONCAT(COALESCE(u.nombre, ''), ' ', COALESCE(u.apellido, '')) as nombre_usuario,
-
+        CONCAT(COALESCE(e.nombre, ''), ' ', COALESCE(e.apellido, '')) as nombre_empleado,
         u.email as email_usuario
       FROM pedidos p
       LEFT JOIN ventas v ON p.id_pedido = v.id_pedido
       LEFT JOIN usuarios u ON p.id_usuario_cliente = u.id_usuario
+      LEFT JOIN usuarios e ON p.id_usuario_empleado = e.id_usuario
       WHERE p.id_pedido = ${id_pedido}
     `;
   } else {
@@ -326,13 +330,14 @@ export const obtenerDetalleOrden = async (
 /**
  * Actualizar el estado de un pedido
  */
-export const actualizarEstadoPedido = async (id_pedido, estado, motivo = null, shippingData = null) => {
+export const actualizarEstadoPedido = async (id_pedido, estado, id_usuario_empleado, motivo = null, shippingData = null) => {
+  const empId = id_usuario_empleado && !isNaN(id_usuario_empleado) ? parseInt(id_usuario_empleado, 10) : null;
+  
   return await sql.begin(async (sql) => {
     // 1. Obtener datos del pedido
     const [pedido] = await sql`SELECT * FROM pedidos WHERE id_pedido = ${id_pedido}`;
     if (!pedido) throw new Error('Pedido no encontrado');
-
-    // 2. Si es cancelación, DEVOLVEMOS el stock reservado
+      // 2. Si es cancelación, DEVOLVEMOS el stock reservado
     if (estado === 'cancelado') {
       const items = await sql`SELECT id_producto, cantidad FROM detalle_pedido WHERE id_pedido = ${id_pedido}`;
       for (const item of items) {
@@ -361,7 +366,7 @@ export const actualizarEstadoPedido = async (id_pedido, estado, motivo = null, s
             id_pedido, id_usuario_cliente, id_usuario_empleado, 
             fecha_venta, subtotal, iva, total, metodo_pago, estado
           ) VALUES (
-            ${id_pedido}, ${pedido.id_usuario_cliente}, ${pedido.id_usuario_empleado || null}, 
+            ${id_pedido}, ${pedido.id_usuario_cliente}, ${empId || pedido.id_usuario_empleado || null}, 
             NOW(), ${pedido.subtotal}, ${pedido.iva}, ${pedido.total}, ${pedido.metodo_pago}, true
           ) RETURNING id_venta
         `;
@@ -378,26 +383,31 @@ export const actualizarEstadoPedido = async (id_pedido, estado, motivo = null, s
       }
     }
 
-    // 4. Actualizar el estado del pedido y shipping info si aplica
-    let setClause = sql`estado = ${estado}, motivo_anulacion = ${motivo}`;
+    // 4. Actualizar el estado del pedido, el empleado que lo procesa y shipping info si aplica
+    const finalEmpId = empId || pedido.id_usuario_empleado || null;
     
+    // Construir el objeto de actualización para evitar errores de fragmentos SQL
+    const updateData = {
+      estado,
+      motivo_anulacion: motivo,
+      id_usuario_empleado: finalEmpId
+    };
+
     if (estado === 'enviado' && shippingData) {
-      setClause = sql`${setClause}, 
-        transportadora = ${shippingData.transportadora},
-        numero_guia = ${shippingData.numero_guia},
-        tracking_link = ${shippingData.tracking_link},
-        fecha_envio = ${shippingData.fecha_envio},
-        fecha_estimada = ${shippingData.fecha_estimada}`;
+      updateData.transportadora = shippingData.transportadora;
+      updateData.numero_guia = shippingData.numero_guia;
+      updateData.tracking_link = shippingData.tracking_link;
+      updateData.fecha_envio = shippingData.fecha_envio;
+      updateData.fecha_estimada = shippingData.fecha_estimada;
     }
 
     const [updatedPedido] = await sql`
       UPDATE pedidos 
-      SET ${setClause}
+      SET ${sql(updateData)}
       WHERE id_pedido = ${id_pedido}
       RETURNING *
     `;
-
-    return updatedPedido;
+      return updatedPedido;
   });
 };
 
@@ -446,10 +456,13 @@ export const cancelarOrden = async (id_pedido, motivo) => {
 /**
  * Confirmar o desconfirmar el pago de un pedido
  */
-export const confirmarPago = async (id_pedido, pago_confirmado) => {
+export const confirmarPago = async (id_pedido, pago_confirmado, id_usuario_empleado) => {
+  const empId = id_usuario_empleado && !isNaN(id_usuario_empleado) ? parseInt(id_usuario_empleado, 10) : null;
+  
   const [updatedPedido] = await sql`
     UPDATE pedidos 
-    SET pago_confirmado = ${pago_confirmado}
+    SET pago_confirmado = ${pago_confirmado},
+        id_usuario_empleado = ${empId || null}
     WHERE id_pedido = ${id_pedido}
     RETURNING *
   `;

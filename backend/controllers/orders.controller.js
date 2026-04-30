@@ -173,13 +173,13 @@ export const actualizarPedido = async (req, res) => {
 export const actualizarEstado = async (req, res) => {
   try {
     const { id } = req.params;
-    const { estado, motivo, shippingData } = req.body;
+    const { estado, motivo, shippingData, id_usuario_empleado } = req.body;
 
     if (!estado) {
       return res.status(400).json({ ok: false, message: "El estado es requerido" });
     }
 
-    const orden = await ordersService.actualizarEstadoPedido(parseInt(id, 10), estado, motivo, shippingData);
+    const orden = await ordersService.actualizarEstadoPedido(parseInt(id, 10), estado, id_usuario_empleado, motivo, shippingData);
 
     return res.json({ ok: true, message: "Estado actualizado exitosamente", data: orden });
   } catch (error) {
@@ -216,9 +216,9 @@ export const cancelarOrden = async (req, res) => {
 export const confirmarPago = async (req, res) => {
   try {
     const { id } = req.params;
-    const { pago_confirmado } = req.body;
+    const { pago_confirmado, id_usuario_empleado } = req.body;
 
-    const orden = await ordersService.confirmarPago(parseInt(id, 10), pago_confirmado);
+    const orden = await ordersService.confirmarPago(parseInt(id, 10), pago_confirmado, id_usuario_empleado);
 
     return res.json({ 
       ok: true, 
