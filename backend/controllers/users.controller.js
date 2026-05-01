@@ -472,6 +472,20 @@ export const eliminarUsuario = async (req, res) => {
         .json({ ok: false, message: "Usuario no encontrado" });
     }
 
+    if (usuarioExiste[0].id_rol === 2 && usuarioExiste[0].estado === false) {
+      return res.status(400).json({
+        ok: false,
+        message: "No se puede eliminar un cliente inactivo",
+      });
+    }
+
+    if (usuarioExiste[0].estado === false) {
+      return res.status(400).json({
+        ok: false,
+        message: "No se puede eliminar un usuario inactivo",
+      });
+    }
+
     // Bloquear si tiene pedidos en estado activo
     const pedidosActivos = await sql`
       SELECT COUNT(*) as total FROM pedidos

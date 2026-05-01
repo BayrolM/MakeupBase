@@ -45,6 +45,7 @@ export function ClientesViewModule() {
     numeroDocumento: "",
     email: "",
     passwordHash: "",
+    confirmPassword: "",
     telefono: "",
     direccion: "",
     ciudad: "",
@@ -111,6 +112,7 @@ export function ClientesViewModule() {
         numeroDocumento: cliente.numeroDocumento,
         email: cliente.email,
         passwordHash: "",
+        confirmPassword: "",
         telefono: cliente.telefono,
         direccion: cliente.direccion || "",
         ciudad: cliente.ciudad || "",
@@ -126,6 +128,7 @@ export function ClientesViewModule() {
         numeroDocumento: "",
         email: "",
         passwordHash: "",
+        confirmPassword: "",
         telefono: "",
         direccion: "",
         ciudad: "",
@@ -139,6 +142,12 @@ export function ClientesViewModule() {
 
   const handleFieldChange = (name: string, value: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
+    
+    // Clear mismatch error if typing in either password field
+    if (name === "passwordHash" || name === "confirmPassword") {
+      setFieldErrors((prev) => ({ ...prev, confirmPassword: "" }));
+    }
+
     const error = validateClientField(name, value, editingCliente);
 
     // Check for uniqueness if basic validation passes
@@ -156,7 +165,7 @@ export function ClientesViewModule() {
           ? `Este ${name === "email" ? "email" : "documento"} ya está registrado`
           : "",
       }));
-    } else {
+    } else if (name !== "confirmPassword") {
       setFieldErrors((prev) => ({ ...prev, [name]: error }));
     }
   };
@@ -177,6 +186,10 @@ export function ClientesViewModule() {
       const err = validateClientField(f, (formData as any)[f], editingCliente);
       if (err) newErrors[f] = err;
     });
+
+    if (!editingCliente && formData.passwordHash !== formData.confirmPassword) {
+      newErrors.confirmPassword = "Las contraseñas no coinciden";
+    }
 
     if (Object.keys(newErrors).length > 0) {
       setFieldErrors(newErrors);
@@ -264,6 +277,12 @@ export function ClientesViewModule() {
           }}
           onEdit={handleOpenDialog}
           onDelete={(c) => {
+            if (c.estado === "inactivo") {
+              toast.error("Cliente inactivo", {
+                description: "No se puede eliminar un cliente inactivo.",
+              });
+              return;
+            }
             setSelectedCliente(c);
             setIsDeleteDialogOpen(true);
           }}

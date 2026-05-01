@@ -1,58 +1,59 @@
-import { useState, useEffect } from 'react';
-import { useStore, TipoDocumento, Status } from '../../lib/store';
-import { Pagination } from '../Pagination';
-import { toast } from 'sonner';
-import { userService } from '../../services/userService';
-import { getRoles } from '../../services/roleService';
-import { validateField } from '../../utils/usuarioUtils';
+import { useState, useEffect } from "react";
+import { useStore, TipoDocumento, Status, UserRole } from "../../lib/store";
+import { Pagination } from "../Pagination";
+import { toast } from "sonner";
+import { userService } from "../../services/userService";
+import { getRoles } from "../../services/roleService";
+import { validateField } from "../../utils/usuarioUtils";
 
 // Sub-componentes
-import { UsuarioHeader } from './usuarios/UsuarioHeader';
-import { UsuarioTable } from './usuarios/UsuarioTable';
-import { UsuarioFormDialog } from './usuarios/UsuarioFormDialog';
-import { UsuarioDetailDialog } from './usuarios/UsuarioDetailDialog';
-import { UsuarioDeleteDialog } from './usuarios/UsuarioDeleteDialog';
+import { UsuarioHeader } from "./usuarios/UsuarioHeader";
+import { UsuarioTable } from "./usuarios/UsuarioTable";
+import { UsuarioFormDialog } from "./usuarios/UsuarioFormDialog";
+import { UsuarioDetailDialog } from "./usuarios/UsuarioDetailDialog";
+import { UsuarioDeleteDialog } from "./usuarios/UsuarioDeleteDialog";
 
 export function UsuariosModule() {
   const { users, setUsers, pedidos, currentUser } = useStore();
-  
+
   // Estados de Diálogos
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  
+
   // Estados de carga y datos
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [editingUser, setEditingUser] = useState<any>(null);
   const [selectedUser, setSelectedUser] = useState<any>(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [roles, setRoles] = useState<any[]>([]);
-  
+
   // Paginación
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  
+
   // Formulario
   const [formData, setFormData] = useState({
-    nombres: '',
-    apellidos: '',
-    tipoDocumento: 'CC' as TipoDocumento,
-    numeroDocumento: '',
-    fechaNacimiento: '',
-    email: '',
-    passwordHash: '',
-    telefono: '',
-    direccion: '',
-    ciudad: '',
-    pais: 'Colombia',
-    rol: '',
-    estado: 'activo' as Status,
+    nombres: "",
+    apellidos: "",
+    tipoDocumento: "CC" as TipoDocumento,
+    numeroDocumento: "",
+    fechaNacimiento: "",
+    email: "",
+    passwordHash: "",
+    confirmPassword: "",
+    telefono: "",
+    direccion: "",
+    ciudad: "",
+    pais: "Colombia",
+    rol: "",
+    estado: "activo" as Status,
   });
 
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  const isAdmin = currentUser?.rol === 'admin';
+  const isAdmin = currentUser?.rol === "admin";
 
   const fetchUsers = async () => {
     try {
@@ -64,20 +65,22 @@ export function UsuariosModule() {
         id: u.id_usuario.toString(),
         nombres: u.nombres || u.nombre,
         apellidos: u.apellidos || u.apellido,
-        tipoDocumento: u.tipo_documento || 'CC',
+        tipoDocumento: u.tipo_documento || "CC",
         numeroDocumento: u.documento || u.numeroDocumento,
         email: u.email,
-        passwordHash: '',
+        passwordHash: "",
         telefono: u.telefono,
         direccion: u.direccion,
         ciudad: u.ciudad,
-        rol: String(u.id_rol),
-        estado: (u.estado ? 'activo' : 'inactivo') as Status,
+        rol: (Number(u.id_rol) === 1 ? "admin" : "cliente") as UserRole,
+        id_rol: Number(u.id_rol),
+        rolAsignadoId: String(u.id_rol),
+        estado: (u.estado ? "activo" : "inactivo") as Status,
         fechaCreacion: u.fecha_registro || new Date().toISOString(),
       }));
       setUsers(mapped);
     } catch (error: any) {
-      toast.error('Error al cargar usuarios', { description: error.message });
+      toast.error("Error al cargar usuarios", { description: error.message });
     }
   };
 
@@ -87,53 +90,91 @@ export function UsuariosModule() {
         const fetchedRoles = await getRoles();
         setRoles(fetchedRoles);
       } catch (err) {
-        console.error('Error fetching roles', err);
+        console.error("Error fetching roles", err);
       }
     };
     fetchInitialData();
   }, []);
 
-  useEffect(() => { fetchUsers(); }, [searchQuery]);
+  useEffect(() => {
+    fetchUsers();
+  }, [searchQuery]);
 
   const handleFieldChange = (name: string, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
-    const error = validateField(name, value, editingUser);
+    setFormData((prev) => ({ ...prev, [name]: value }));
     
-    if (name === 'email' && !error) {
-      const emailExists = users.some(u => u.email.toLowerCase() === value.trim().toLowerCase() && (!editingUser || u.id !== editingUser.id));
-      setFieldErrors(prev => ({ ...prev, [name]: emailExists ? 'Este email ya está registrado' : '' }));
-    } else {
-      setFieldErrors(prev => ({ ...prev, [name]: error }));
+    if (name === "passwordHash" || name === "confirmPassword") {
+      setFieldErrors((prev) => ({ ...prev, confirmPassword: "" }));
+    }
+
+    const error = validateField(name, value, editingUser);
+
+    if (name === "email" && !error) {
+      const emailExists = users.some(
+        (u) =>
+          u.email.toLowerCase() === value.trim().toLowerCase() &&
+          (!editingUser || u.id !== editingUser.id),
+      );
+      setFieldErrors((prev) => ({
+        ...prev,
+        [name]: emailExists ? "Este email ya está registrado" : "",
+      }));
+    } else if (name !== "confirmPassword") {
+      setFieldErrors((prev) => ({ ...prev, [name]: error }));
     }
   };
 
   const handleOpenDialog = (user?: any) => {
-    if (!isAdmin) { toast.error('Solo los administradores pueden gestionar usuarios.'); return; }
-    
+    if (!isAdmin) {
+      toast.error("Solo los administradores pueden gestionar usuarios.");
+      return;
+    }
+
     // Check if user is actually a User object and not a MouseEvent
     const actualUser = user && user.id ? user : null;
 
-    if (actualUser && actualUser.estado === 'inactivo') {
-      toast.error('Usuario inactivo', { description: 'Debes activar el usuario antes de poder editarlo.' });
+    if (actualUser && actualUser.estado === "inactivo") {
+      toast.error("Usuario inactivo", {
+        description: "Debes activar el usuario antes de poder editarlo.",
+      });
       return;
     }
-    
+
     if (actualUser) {
       setEditingUser(actualUser);
       setFormData({
-        nombres: actualUser.nombres, apellidos: actualUser.apellidos,
-        tipoDocumento: actualUser.tipoDocumento, numeroDocumento: actualUser.numeroDocumento,
-        fechaNacimiento: actualUser.fechaNacimiento || '', email: actualUser.email,
-        passwordHash: '', telefono: actualUser.telefono,
-        direccion: actualUser.direccion || '', ciudad: actualUser.ciudad || '',
-        pais: actualUser.pais || 'Colombia', rol: actualUser.rol, estado: actualUser.estado,
+        nombres: actualUser.nombres,
+        apellidos: actualUser.apellidos,
+        tipoDocumento: actualUser.tipoDocumento,
+        numeroDocumento: actualUser.numeroDocumento,
+        fechaNacimiento: actualUser.fechaNacimiento || "",
+        email: actualUser.email,
+        passwordHash: "",
+        confirmPassword: "",
+        telefono: actualUser.telefono,
+        direccion: actualUser.direccion || "",
+        ciudad: actualUser.ciudad || "",
+        pais: actualUser.pais || "Colombia",
+        rol: actualUser.rol,
+        estado: actualUser.estado,
       });
     } else {
       setEditingUser(null);
       setFormData({
-        nombres: '', apellidos: '', tipoDocumento: 'CC', numeroDocumento: '',
-        fechaNacimiento: '', email: '', passwordHash: '', telefono: '',
-        direccion: '', ciudad: '', pais: 'Colombia', rol: roles.length > 0 ? String(roles[0].id) : '', estado: 'activo',
+        nombres: "",
+        apellidos: "",
+        tipoDocumento: "CC",
+        numeroDocumento: "",
+        fechaNacimiento: "",
+        email: "",
+        passwordHash: "",
+        confirmPassword: "",
+        telefono: "",
+        direccion: "",
+        ciudad: "",
+        pais: "Colombia",
+        rol: roles.length > 0 ? String(roles[0].id) : "",
+        estado: "activo",
       });
     }
     setFieldErrors({});
@@ -141,23 +182,44 @@ export function UsuariosModule() {
   };
 
   const validateForm = () => {
-    const fields = ['nombres', 'apellidos', 'numeroDocumento', 'email', 'telefono', 'direccion', 'ciudad'];
-    if (!editingUser) fields.push('passwordHash');
+    const fields = [
+      "nombres",
+      "apellidos",
+      "numeroDocumento",
+      "email",
+      "telefono",
+      "direccion",
+      "ciudad",
+    ];
+    if (!editingUser) fields.push("passwordHash");
     const newErrors: Record<string, string> = {};
-    fields.forEach(f => {
-      const err = validateField(f, (formData as any)[f] || '', editingUser);
+    fields.forEach((f) => {
+      const err = validateField(f, (formData as any)[f] || "", editingUser);
       if (err) newErrors[f] = err;
     });
-    
-    const emailExists = users.some(u => u.email.toLowerCase() === formData.email.trim().toLowerCase() && (!editingUser || u.id !== editingUser.id));
-    if (emailExists) newErrors.email = 'Este email ya está registrado';
-    
-    const docExists = users.some(u => u.numeroDocumento === formData.numeroDocumento.trim() && (!editingUser || u.id !== editingUser.id));
-    if (docExists) newErrors.numeroDocumento = 'Ya existe un usuario con este documento';
+
+    if (!editingUser && formData.passwordHash !== formData.confirmPassword) {
+      newErrors.confirmPassword = "Las contraseñas no coinciden";
+    }
+
+    const emailExists = users.some(
+      (u) =>
+        u.email.toLowerCase() === formData.email.trim().toLowerCase() &&
+        (!editingUser || u.id !== editingUser.id),
+    );
+    if (emailExists) newErrors.email = "Este email ya está registrado";
+
+    const docExists = users.some(
+      (u) =>
+        u.numeroDocumento === formData.numeroDocumento.trim() &&
+        (!editingUser || u.id !== editingUser.id),
+    );
+    if (docExists)
+      newErrors.numeroDocumento = "Ya existe un usuario con este documento";
 
     setFieldErrors(newErrors);
     if (Object.keys(newErrors).length > 0) {
-      toast.error('Corrige los errores antes de continuar');
+      toast.error("Corrige los errores antes de continuar");
       return false;
     }
     return true;
@@ -169,49 +231,68 @@ export function UsuariosModule() {
     try {
       const userData = {
         id_rol: Number(formData.rol),
-        nombres: formData.nombres.trim(), 
+        nombres: formData.nombres.trim(),
         apellidos: formData.apellidos.trim(),
         telefono: formData.telefono.trim(),
         direccion: formData.direccion.trim() || undefined,
         ciudad: formData.ciudad.trim() || undefined,
-        estado: formData.estado === 'activo',
+        estado: formData.estado === "activo",
       };
-      
+
       if (editingUser) {
         await userService.update(editingUser.id, userData);
-        toast.success('Usuario actualizado correctamente');
+        toast.success("Usuario actualizado correctamente");
       } else {
-        await userService.create({ 
-          ...userData, 
-          tipo_documento: formData.tipoDocumento, 
-          documento: formData.numeroDocumento, 
-          email: formData.email, 
-          password_hash: formData.passwordHash 
+        await userService.create({
+          ...userData,
+          tipo_documento: formData.tipoDocumento,
+          documento: formData.numeroDocumento,
+          email: formData.email,
+          password_hash: formData.passwordHash,
         });
-        toast.success('Usuario creado correctamente');
+        toast.success("Usuario creado correctamente");
       }
       await fetchUsers();
       setIsDialogOpen(false);
     } catch (error: any) {
-      toast.error('Error al procesar usuario', { description: error.message });
+      toast.error("Error al procesar usuario", { description: error.message });
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleOpenDeleteDialog = (user: any) => {
-    if (!isAdmin) { toast.error('Solo los administradores pueden eliminar usuarios.'); return; }
-    if (user.rol === 'admin') {
-      toast.error('No permitido', { description: 'No se puede eliminar a un usuario administrador.' });
+    if (!isAdmin) {
+      toast.error("Solo los administradores pueden eliminar usuarios.");
       return;
     }
-    
-    const pedidosActivos = pedidos.filter(p =>
-      p.clienteId === user.id &&
-      !['entregado', 'cancelado'].includes(p.estado)
+    if (user.rol === "admin") {
+      toast.error("No permitido", {
+        description: "No se puede eliminar a un usuario administrador.",
+      });
+      return;
+    }
+    if (user.rol === "cliente" && user.estado === "inactivo") {
+      toast.error("Cliente inactivo", {
+        description: "No se puede eliminar un cliente inactivo.",
+      });
+      return;
+    }
+
+    if (user.estado === "inactivo") {
+      toast.error("Usuario inactivo", {
+        description: "No se puede eliminar un usuario inactivo.",
+      });
+      return;
+    }
+
+    const pedidosActivos = pedidos.filter(
+      (p) =>
+        p.clienteId === user.id &&
+        !["entregado", "cancelado"].includes(p.estado),
     );
     if (pedidosActivos.length > 0) {
-      toast.error('No se puede eliminar este usuario', {
+      toast.error("No se puede eliminar este usuario", {
         description: `Tiene ${pedidosActivos.length} pedido(s) activo(s). Deben estar entregados o cancelados primero.`,
       });
       return;
@@ -226,28 +307,35 @@ export function UsuariosModule() {
     setIsDeleting(true);
     try {
       await userService.deletePermanent(selectedUser.id);
-      toast.success('Usuario eliminado correctamente');
+      toast.success("Usuario eliminado correctamente");
       await fetchUsers();
       setIsDeleteDialogOpen(false);
       setSelectedUser(null);
     } catch (error: any) {
-      toast.error('No se pudo eliminar el usuario', { description: error.message });
+      toast.error("No se pudo eliminar el usuario", {
+        description: error.message,
+      });
     } finally {
       setIsDeleting(false);
     }
   };
 
-  const handleStatusChange = async (user: any, newStatus: 'activo' | 'inactivo') => {
+  const handleStatusChange = async (
+    user: any,
+    newStatus: "activo" | "inactivo",
+  ) => {
     try {
-      await userService.update(user.id, { estado: newStatus === 'activo' });
+      await userService.update(user.id, { estado: newStatus === "activo" });
       await fetchUsers();
-      toast.success(`Usuario ${newStatus === 'activo' ? 'activado' : 'desactivado'}`);
+      toast.success(
+        `Usuario ${newStatus === "activo" ? "activado" : "desactivado"}`,
+      );
     } catch {
-      toast.error('Error al cambiar estado');
+      toast.error("Error al cambiar estado");
     }
   };
 
-  const filteredUsers = users.filter(user => {
+  const filteredUsers = users.filter((user) => {
     if (!searchQuery || searchQuery.length < 2) return true;
     const q = searchQuery.toLowerCase();
     return (
@@ -259,22 +347,28 @@ export function UsuariosModule() {
   });
 
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
-  const paginatedUsers = filteredUsers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const paginatedUsers = filteredUsers.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
+  );
 
   return (
     <div className="min-h-screen bg-[#f6f3f5]">
-      <UsuarioHeader 
-        isAdmin={isAdmin} 
-        onOpenDialog={handleOpenDialog} 
-      />
+      <UsuarioHeader isAdmin={isAdmin} onOpenDialog={handleOpenDialog} />
 
       <div className="px-8 pb-8">
-        <UsuarioTable 
+        <UsuarioTable
           users={paginatedUsers}
           pedidos={pedidos}
           searchQuery={searchQuery}
-          onSearchChange={(q) => { setSearchQuery(q); setCurrentPage(1); }}
-          onViewDetail={(u) => { setSelectedUser(u); setIsDetailDialogOpen(true); }}
+          onSearchChange={(q) => {
+            setSearchQuery(q);
+            setCurrentPage(1);
+          }}
+          onViewDetail={(u) => {
+            setSelectedUser(u);
+            setIsDetailDialogOpen(true);
+          }}
           onEdit={handleOpenDialog}
           onDelete={handleOpenDeleteDialog}
           onStatusChange={handleStatusChange}
@@ -290,13 +384,16 @@ export function UsuariosModule() {
               totalItems={filteredUsers.length}
               itemsPerPage={itemsPerPage}
               onPageChange={setCurrentPage}
-              onItemsPerPageChange={(n) => { setItemsPerPage(n); setCurrentPage(1); }}
+              onItemsPerPageChange={(n) => {
+                setItemsPerPage(n);
+                setCurrentPage(1);
+              }}
             />
           </div>
         )}
       </div>
 
-      <UsuarioFormDialog 
+      <UsuarioFormDialog
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         editingUser={editingUser}
@@ -304,19 +401,21 @@ export function UsuariosModule() {
         fieldErrors={fieldErrors}
         isSaving={isSaving}
         onFieldChange={handleFieldChange}
-        onSelectChange={(name, val) => setFormData(p => ({ ...p, [name]: val }))}
+        onSelectChange={(name, val) =>
+          setFormData((p) => ({ ...p, [name]: val }))
+        }
         onSave={handleSave}
         roles={roles}
       />
 
-      <UsuarioDetailDialog 
+      <UsuarioDetailDialog
         open={isDetailDialogOpen}
         onOpenChange={setIsDetailDialogOpen}
         user={selectedUser}
         roles={roles}
       />
 
-      <UsuarioDeleteDialog 
+      <UsuarioDeleteDialog
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
         user={selectedUser}

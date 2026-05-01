@@ -9,7 +9,7 @@ const api = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 30000, // 30 segundos para APIs serverless
+  timeout: 20000, // 30 segundos para APIs serverless
 });
 
 // Interceptor para agregar token a todas las peticiones
@@ -32,12 +32,13 @@ api.interceptors.response.use(
   (error: AxiosError<any>) => {
     // Ignorar errores 401 en peticiones públicas (GET sin auth)
     // Solo mostrar error si es una petición que requiere auth
-    const isAuthRequired = error.config?.url?.includes('/orders') || 
-                        error.config?.url?.includes('/cart') ||
-                        error.config?.url?.includes('/ventas');
-    
+    const isAuthRequired =
+      error.config?.url?.includes("/orders") ||
+      error.config?.url?.includes("/cart") ||
+      error.config?.url?.includes("/ventas");
+
     if (error.response?.status === 401 && !isAuthRequired) {
-      console.log('ℹ️ Error 401 en ruta pública, ignorando');
+      console.log("ℹ️ Error 401 en ruta pública, ignorando");
       return Promise.reject(error);
     }
 

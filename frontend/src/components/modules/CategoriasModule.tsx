@@ -144,17 +144,6 @@ export function CategoriasModule() {
   const handleConfirmDelete = async () => {
     if (!selectedCategoria) return;
 
-    const productCount = getCategoryProductCount(
-      selectedCategoria.id,
-      productos,
-    );
-    if (productCount > 0) {
-      toast.error("No se puede eliminar esta categoría", {
-        description: `Tiene ${productCount} producto(s) asociado(s). Reasigna o elimina los productos primero.`,
-      });
-      return;
-    }
-
     setIsSaving(true);
     try {
       await categoryService.delete(Number(selectedCategoria.id));
@@ -189,6 +178,22 @@ export function CategoriasModule() {
         }}
         onEdit={handleOpenDialog}
         onDelete={(cat) => {
+          if (cat.estado === "inactivo") {
+            toast.error("Categoría inactiva", {
+              description:
+                "No se puede eliminar una categoría que ya está inactiva.",
+            });
+            return;
+          }
+
+          const productCount = getCategoryProductCount(cat.id, productos);
+          if (productCount > 0) {
+            toast.error("No se puede eliminar esta categoría", {
+              description: `Tiene ${productCount} producto(s) asociado(s). Reasigna o elimina los productos primero.`,
+            });
+            return;
+          }
+
           setSelectedCategoria(cat);
           setIsDeleteDialogOpen(true);
         }}
