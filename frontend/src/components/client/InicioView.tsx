@@ -1,5 +1,10 @@
 import { useState, useEffect } from "react";
-import { useStore } from "../../lib/store";
+import {
+  useStore,
+  type Categoria,
+  type Marca,
+  type Producto,
+} from "../../lib/store";
 import {
   Carousel,
   CarouselContent,
@@ -62,7 +67,14 @@ export function InicioView({
   isPublic = false,
   onNavigate,
 }: InicioViewProps = {}) {
-  const { productos, categorias, addToCarrito, setProductos, setCategorias, setMarcas } = useStore();
+  const {
+    productos,
+    categorias,
+    addToCarrito,
+    setProductos,
+    setCategorias,
+    setMarcas,
+  } = useStore();
   const [activeSection, setActiveSection] = useState<Section>("inicio");
   const [api, setApi] = useState<CarouselApi>();
   const [isLoadingData, setIsLoadingData] = useState(false);
@@ -78,7 +90,7 @@ export function InicioView({
           productService.getAll({ limit: 100 }),
         ]);
 
-        const mappedCats = catsRes.data.map((cat: any) => ({
+        const mappedCats: Categoria[] = catsRes.data.map((cat: any) => ({
           id: cat.id_categoria.toString(),
           nombre: cat.nombre,
           descripcion: cat.descripcion || "",
@@ -86,7 +98,7 @@ export function InicioView({
         }));
         setCategorias(mappedCats);
 
-        const mappedBrands = brandsRes.map((brand: any) => ({
+        const mappedBrands: Marca[] = brandsRes.map((brand: any) => ({
           id: brand.id_marca.toString(),
           nombre: brand.nombre,
           descripcion: brand.descripcion || "",
@@ -94,7 +106,7 @@ export function InicioView({
         }));
         setMarcas(mappedBrands);
 
-        const mappedProds = prodsRes.data.map((prod: any) => ({
+        const mappedProds: Producto[] = prodsRes.data.map((prod: any) => ({
           id: prod.id_producto.toString(),
           nombre: prod.nombre,
           descripcion: prod.descripcion || "",
@@ -106,7 +118,7 @@ export function InicioView({
           stockMinimo: prod.stock_min || 0,
           stockMaximo: prod.stock_max || 100,
           imagenUrl: prod.imagen_url || undefined,
-          estado: prod.estado ? "activo" : "inactivo",
+          estado: prod.estado ? ("activo" as const) : ("inactivo" as const),
           fechaCreacion: new Date().toISOString(),
         }));
         setProductos(mappedProds);
@@ -178,13 +190,8 @@ export function InicioView({
   // Get featured categories (first 6)
   const categoriasDestacadas = categorias.slice(0, 6);
 
+  // ALERT PARA AGREGAR AL CARRITO DE COMPRAS
   const handleAddToCart = (productoId: string) => {
-    if (isPublic) {
-      toast.info("Inicia sesión", {
-        description: "Debes iniciar sesión para agregar productos al carrito",
-      });
-      return;
-    }
     addToCarrito(productoId, 1);
     toast.success("Producto agregado", {
       description: "El producto se agregó a tu carrito",
@@ -246,7 +253,7 @@ export function InicioView({
                   loop: true,
                   align: "center",
                 }}
-                className="w-[100vw] h-full"
+                className="w-screen h-full"
                 style={{ width: "100vw" }}
               >
                 <CarouselContent className="ml-0 h-full">
@@ -947,19 +954,19 @@ export function InicioView({
                     </h4>
                     <ul className="space-y-3">
                       <li className="flex items-center gap-2.5">
-                        <MapPin className="w-4 h-4 text-[#c47b96] flex-shrink-0" />
+                        <MapPin className="w-4 h-4 text-[#c47b96] shrink-0" />
                         <span className="text-white/70 text-[13px]">
                           Medellín, Colombia
                         </span>
                       </li>
                       <li className="flex items-center gap-2.5">
-                        <Phone className="w-4 h-4 text-[#c47b96] flex-shrink-0" />
+                        <Phone className="w-4 h-4 text-[#c47b96] shrink-0" />
                         <span className="text-white/70 text-[13px]">
                           WhatsApp: +57 300 123 4567
                         </span>
                       </li>
                       <li className="flex items-center gap-2.5">
-                        <Mail className="w-4 h-4 text-[#c47b96] flex-shrink-0" />
+                        <Mail className="w-4 h-4 text-[#c47b96] shrink-0" />
                         <span className="text-white/70 text-[13px]">
                           hola@glamourml.com
                         </span>
@@ -1093,12 +1100,14 @@ export function InicioView({
   return (
     <div style={{ minHeight: "100vh", background: "white" }}>
       {isLoadingData ? (
-        <div style={{ 
-          minHeight: "100vh", 
-          display: "flex", 
-          alignItems: "center", 
-          justifyContent: "center" 
-        }}>
+        <div
+          style={{
+            minHeight: "100vh",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
           <div style={{ textAlign: "center" }}>
             <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <p style={{ color: C.textMuted }}>Cargando productos...</p>

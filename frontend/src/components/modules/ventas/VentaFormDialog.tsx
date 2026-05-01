@@ -90,25 +90,23 @@ export function VentaFormDialog({
 
         <div 
           className="no-scrollbar overflow-y-auto"
-          style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: "16px", maxHeight: "70vh" }}
+          style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: "16px", maxHeight: "65vh" }}
         >
-          {/* Fila superior: Cliente + Método de Pago */}
-          <div style={{ display: "grid", gridTemplateColumns: "3fr 2fr", gap: "16px" }}>
+          {/* Cliente y Método de Pago - lado a lado */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
             {/* Cliente */}
-            <div style={{ background: "#f9fafb", borderRadius: "12px", padding: "16px" }}>
+            <div>
               <p style={{ fontSize: "11px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
                 <UserIcon className="w-3.5 h-3.5" /> Cliente <span style={{ color: "#f87171" }}>*</span>
               </p>
-              <div style={{ background: "#ffffff", borderRadius: "8px" }}>
-                <AsyncClientSelect
-                  value={formData.clienteId}
-                  onChange={(val) => setFormData({ ...formData, clienteId: val })}
-                />
-              </div>
+              <AsyncClientSelect
+                value={formData.clienteId}
+                onChange={(val) => setFormData({ ...formData, clienteId: val })}
+              />
             </div>
 
             {/* Método de Pago */}
-            <div style={{ background: "#f9fafb", borderRadius: "12px", padding: "16px" }}>
+            <div>
               <p style={{ fontSize: "11px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
                 <CreditCard className="w-3.5 h-3.5" /> Método de Pago <span style={{ color: "#f87171" }}>*</span>
               </p>
@@ -128,7 +126,7 @@ export function VentaFormDialog({
           {/* Sección de Productos */}
           <div style={{ background: "#ffffff", border: "1px solid #f3f4f6", borderRadius: "12px" }}>
             {/* Header productos */}
-            <div className="flex items-center justify-between" style={{ background: "#f9fafb", padding: "12px 16px", borderBottom: "1px solid #f3f4f6" }}>
+            <div className="flex items-center justify-between" style={{ background: "#f9fafb", padding: "12px 16px", borderBottom: "1px solid #f3f4f6", borderRadius: "12px 12px 0 0" }}>
               <p style={{ fontSize: "11px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", display: "flex", alignItems: "center", gap: "6px", margin: 0 }}>
                 <Package className="w-3.5 h-3.5" /> Productos <span style={{ color: "#f87171" }}>*</span>
               </p>
@@ -225,41 +223,64 @@ export function VentaFormDialog({
         </div>
 
         {/* Footer: Total + Botones */}
-        <div className="flex items-center justify-between px-6 pb-6 pt-4 border-t border-gray-100 bg-white z-10">
+        <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 bg-white z-10">
           {/* Total */}
-          <div className="bg-gradient-to-r from-[#fff0f5] to-[#fce8f0] rounded-xl border border-[#f0d5e0]" style={{ padding: "10px 20px", display: "flex", alignItems: "center", gap: "16px" }}>
-            <p style={{ fontSize: "11px", fontWeight: 700, color: "#c47b96", textTransform: "uppercase", letterSpacing: "0.07em", margin: 0 }}>
-              Total de la Venta
-            </p>
-            <span className="text-[#c47b96] font-black text-2xl">
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <span style={{ fontSize: "13px", fontWeight: 600, color: "#9ca3af" }}>Total:</span>
+            <span style={{ fontSize: "22px", fontWeight: 900, color: "#c47b96", letterSpacing: "-0.5px" }}>
               {formatCurrency(totalVenta)}
             </span>
           </div>
+
           {/* Botones */}
           <div className="flex gap-3">
-            <Button
-              variant="outline"
+            <button
               onClick={() => onOpenChange(false)}
-              className="border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg px-5 h-10 text-sm"
               disabled={isSaving}
+              style={{
+                padding: "10px 22px",
+                borderRadius: "10px",
+                fontSize: "13px",
+                fontWeight: 700,
+                cursor: isSaving ? "not-allowed" : "pointer",
+                border: "1.5px solid #f0d5e0",
+                background: "#fff8fb",
+                color: "#c47b96",
+                transition: "all 0.2s",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "#fdf2f6"; e.currentTarget.style.borderColor = "#c47b96"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "#fff8fb"; e.currentTarget.style.borderColor = "#f0d5e0"; }}
             >
               Cancelar
-            </Button>
-            <Button
+            </button>
+            <button
               onClick={onSave}
               disabled={isSaving}
-              className="rounded-lg font-semibold px-6 h-10 text-sm border-0"
-              style={{ backgroundColor: "#c47b96", color: "#ffffff" }}
+              style={{
+                padding: "10px 28px",
+                borderRadius: "10px",
+                fontSize: "13px",
+                fontWeight: 700,
+                cursor: isSaving ? "not-allowed" : "pointer",
+                border: "none",
+                background: "linear-gradient(135deg, #c47b96 0%, #a85d77 100%)",
+                color: "#ffffff",
+                boxShadow: "0 4px 12px rgba(196,123,150,0.3)",
+                transition: "all 0.2s",
+                opacity: isSaving ? 0.7 : 1,
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 6px 16px rgba(196,123,150,0.4)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(196,123,150,0.3)"; }}
             >
               {isSaving ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <span style={{ width: 16, height: 16, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.6s linear infinite", display: "inline-block" }} />
                   Guardando...
-                </div>
+                </span>
               ) : (
                 "Confirmar Venta"
               )}
-            </Button>
+            </button>
           </div>
         </div>
       </DialogContent>

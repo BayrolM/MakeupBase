@@ -6,6 +6,7 @@ export interface Order {
   fecha_pedido: string;
   direccion: string;
   ciudad: string;
+  departamento?: string;
   total: number;
   estado: string;
   id_venta?: number;
@@ -14,11 +15,13 @@ export interface Order {
   nombre_usuario?: string;
   email_usuario?: string;
   items?: any[];
+  id_usuario_empleado?: number;
 }
 
 export interface CreateOrderData {
   direccion: string;
   ciudad: string;
+  departamento?: string;
   metodo_pago: string;
   items: Array<{
     id_producto: number;
@@ -30,6 +33,7 @@ export interface CreateDirectOrderData {
   id_cliente: number;
   direccion: string;
   ciudad: string;
+  departamento?: string;
   metodo_pago: string;
   items: Array<{
     id_producto: number;
@@ -58,19 +62,21 @@ export const orderService = {
       const response = await api.post("/orders/admin", orderData);
       return response.data.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || "Error al crear orden directa");
+      throw new Error(
+        error.response?.data?.message || "Error al crear orden directa",
+      );
     }
   },
 
   /**
    * Obtener todas las órdenes
    */
-  async getAll(params: any = {}): Promise<{ total: number, data: Order[] }> {
+  async getAll(params: any = {}): Promise<{ total: number; data: Order[] }> {
     try {
       const response = await api.get("/orders", { params });
       return {
         total: response.data.total,
-        data: response.data.data
+        data: response.data.data,
       };
     } catch (error: any) {
       throw new Error(
@@ -92,7 +98,7 @@ export const orderService = {
       );
     }
   },
-  
+
   /**
    * Cancelar pedido por el cliente
    */
@@ -101,7 +107,9 @@ export const orderService = {
       const response = await api.put(`/orders/${id}/cancel-client`);
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || "Error al cancelar el pedido");
+      throw new Error(
+        error.response?.data?.message || "Error al cancelar el pedido",
+      );
     }
   },
 
@@ -113,35 +121,68 @@ export const orderService = {
       const response = await api.put(`/orders/${id}/direccion`, { direccion });
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || "Error al actualizar la dirección");
+      throw new Error(
+        error.response?.data?.message || "Error al actualizar la dirección",
+      );
     }
   },
-  async update(id: number, data: { direccion?: string; id_cliente?: number; items?: Array<{ id_producto: number; cantidad: number }> }): Promise<any> {
+  async update(
+    id: number,
+    data: {
+      direccion?: string;
+      id_cliente?: number;
+      items?: Array<{ id_producto: number; cantidad: number }>;
+    },
+  ): Promise<any> {
     try {
       const response = await api.put(`/orders/${id}`, data);
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || "Error al actualizar el pedido");
+      throw new Error(
+        error.response?.data?.message || "Error al actualizar el pedido",
+      );
     }
   },
-  async updateStatus(id: number, estado: string, motivo?: string, shippingData?: any): Promise<any> {
+  async updateStatus(
+    id: number,
+    estado: string,
+    id_usuario_empleado: number,
+    motivo?: string,
+    shippingData?: any,
+  ): Promise<any> {
     try {
-      const response = await api.put(`/orders/${id}/status`, { estado, motivo, shippingData });
+      const response = await api.put(`/orders/${id}/status`, {
+        estado,
+        motivo,
+        id_usuario_empleado,
+        shippingData,
+      });
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || "Error al actualizar estado");
+      throw new Error(
+        error.response?.data?.message || "Error al actualizar estado",
+      );
     }
   },
 
   /**
    * Confirmar pago de orden
    */
-  async confirmPayment(id: number, pago_confirmado: boolean): Promise<any> {
+  async confirmPayment(
+    id: number,
+    pago_confirmado: boolean,
+    id_usuario_empleado: number,
+  ): Promise<any> {
     try {
-      const response = await api.put(`/orders/${id}/pago`, { pago_confirmado });
+      const response = await api.put(`/orders/${id}/pago`, {
+        pago_confirmado,
+        id_usuario_empleado,
+      });
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || "Error al confirmar pago");
+      throw new Error(
+        error.response?.data?.message || "Error al confirmar pago",
+      );
     }
   },
 
@@ -152,12 +193,14 @@ export const orderService = {
     try {
       const response = await api.put(`/orders/${id}/comprobante`, formData, {
         headers: {
-          'Content-Type': 'multipart/form-data',
+          "Content-Type": "multipart/form-data",
         },
       });
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || "Error al subir el comprobante");
+      throw new Error(
+        error.response?.data?.message || "Error al subir el comprobante",
+      );
     }
   },
 
@@ -169,7 +212,9 @@ export const orderService = {
       const response = await api.put(`/orders/${id}/comprobante_url`, { url });
       return response.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || "Error al actualizar el comprobante");
+      throw new Error(
+        error.response?.data?.message || "Error al actualizar el comprobante",
+      );
     }
-  }
+  },
 };

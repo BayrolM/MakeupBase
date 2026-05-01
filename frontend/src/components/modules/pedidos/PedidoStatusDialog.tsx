@@ -54,7 +54,7 @@ export function PedidoStatusDialog({
             </div>
             <div>
               <DialogTitle className="text-base font-bold text-gray-900 leading-tight">
-                Estado del Pedido #{selectedPedido.id.slice(0, 8)}
+                Estado del Pedido #{selectedPedido.id}
               </DialogTitle>
               <DialogDescription className="text-xs text-gray-400 mt-0.5">
                 Actualiza el progreso del pedido actual
@@ -76,12 +76,12 @@ export function PedidoStatusDialog({
             </label>
             <GenericCombobox
               options={[
-                { value: "pendiente", label: "Pedido Pendiente" },
-                { value: "preparado", label: "Preparado para envío" },
-                { value: "procesando", label: "En Procesamiento" },
-                { value: "enviado", label: "Enviado a destino" },
-                { value: "entregado", label: "Entregado con éxito" },
-                { value: "cancelado", label: "Cancelar Pedido" },
+                { value: "pendiente", label: "Pendiente" },
+                { value: "preparado", label: "Preparado" },
+                { value: "procesando", label: "Procesando" },
+                { value: "enviado", label: "Enviado" },
+                { value: "entregado", label: "Entregado" },
+                { value: "cancelado", label: "Cancelado" },
               ]}
               value={newStatus}
               onChange={(val) => setNewStatus(val as OrderStatus)}

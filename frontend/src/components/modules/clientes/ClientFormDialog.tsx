@@ -1,10 +1,35 @@
-import { Pencil, Users, X, User, Mail, Phone, MapPin, CreditCard, Lock, Building2, Hash as HashIcon } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "../../ui/dialog";
+import { useState } from "react";
+import {
+  Pencil,
+  Users,
+  X,
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  CreditCard,
+  Lock,
+  Building2,
+  Hash as HashIcon,
+  Eye,
+  EyeOff,
+} from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "../../ui/dialog";
 import { Input } from "../../ui/input";
 import { Label } from "../../ui/label";
-import { Button } from "../../ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
-import { TipoDocumento } from "../../../lib/store";
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../ui/select";
 
 interface ClientFormDialogProps {
   open: boolean;
@@ -23,12 +48,14 @@ export function ClientFormDialog({
   onOpenChange,
   editingCliente,
   formData,
-  setFormData,
   fieldErrors,
   isSaving,
   onSave,
   onFieldChange,
 }: ClientFormDialogProps) {
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-white border-0 max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl p-0">
@@ -81,7 +108,9 @@ export function ClientFormDialog({
                 disabled={isSaving}
               />
               {fieldErrors.nombres && (
-                <p className="text-rose-500 text-[10px] mt-1">{fieldErrors.nombres}</p>
+                <p className="text-rose-500 text-[10px] mt-1">
+                  {fieldErrors.nombres}
+                </p>
               )}
             </div>
 
@@ -100,7 +129,9 @@ export function ClientFormDialog({
                 disabled={isSaving}
               />
               {fieldErrors.apellidos && (
-                <p className="text-rose-500 text-[10px] mt-1">{fieldErrors.apellidos}</p>
+                <p className="text-rose-500 text-[10px] mt-1">
+                  {fieldErrors.apellidos}
+                </p>
               )}
             </div>
           </div>
@@ -133,8 +164,14 @@ export function ClientFormDialog({
                 Número de Documento <span className="text-rose-500">*</span>
               </Label>
               <Input
-                value={formData.numeroDocumento}
-                onChange={(e) => onFieldChange("numeroDocumento", e.target.value)}
+                onChange={(e) => {
+                  // Limpia el texto dejando solo letras y números (sin espacios ni símbolos)
+                  const letrasYNumeros = e.target.value.replace(
+                    /[^a-zA-Z0-9]/g,
+                    "",
+                  );
+                  onFieldChange("numeroDocumento", letrasYNumeros);
+                }}
                 className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${
                   fieldErrors.numeroDocumento ? "border-rose-400" : ""
                 }`}
@@ -142,7 +179,9 @@ export function ClientFormDialog({
                 disabled={isSaving}
               />
               {fieldErrors.numeroDocumento && (
-                <p className="text-rose-500 text-[10px] mt-1">{fieldErrors.numeroDocumento}</p>
+                <p className="text-rose-500 text-[10px] mt-1">
+                  {fieldErrors.numeroDocumento}
+                </p>
               )}
             </div>
           </div>
@@ -163,7 +202,9 @@ export function ClientFormDialog({
                 disabled={isSaving}
               />
               {fieldErrors.email && (
-                <p className="text-rose-500 text-[10px] mt-1">{fieldErrors.email}</p>
+                <p className="text-rose-500 text-[10px] mt-1">
+                  {fieldErrors.email}
+                </p>
               )}
             </div>
 
@@ -174,7 +215,11 @@ export function ClientFormDialog({
               </Label>
               <Input
                 value={formData.telefono}
-                onChange={(e) => onFieldChange("telefono", e.target.value)}
+                maxLength={10}
+                onChange={(e) => {
+                  const soloNumeros = e.target.value.replace(/[^0-9]/g, "");
+                  onFieldChange("telefono", soloNumeros);
+                }}
                 className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${
                   fieldErrors.telefono ? "border-rose-400" : ""
                 }`}
@@ -182,30 +227,88 @@ export function ClientFormDialog({
                 disabled={isSaving}
               />
               {fieldErrors.telefono && (
-                <p className="text-rose-500 text-[10px] mt-1">{fieldErrors.telefono}</p>
+                <p className="text-rose-500 text-[10px] mt-1">
+                  {fieldErrors.telefono}
+                </p>
               )}
             </div>
           </div>
 
           {!editingCliente && (
-            <div className="space-y-2">
-              <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">
-                <Lock className="w-3.5 h-3.5 text-[#c47b96]" />
-                Contraseña <span className="text-rose-500">*</span>
-              </Label>
-              <Input
-                type="password"
-                value={formData.passwordHash}
-                onChange={(e) => onFieldChange("passwordHash", e.target.value)}
-                className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${
-                  fieldErrors.passwordHash ? "border-rose-400" : ""
-                }`}
-                placeholder="Mínimo 8 caracteres"
-                disabled={isSaving}
-              />
-              {fieldErrors.passwordHash && (
-                <p className="text-rose-500 text-[10px] mt-1">{fieldErrors.passwordHash}</p>
-              )}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">
+                  <Lock className="w-3.5 h-3.5 text-[#c47b96]" />
+                  Contraseña <span className="text-rose-500">*</span>
+                </Label>
+                <div className="relative">
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    value={formData.passwordHash}
+                    onChange={(e) =>
+                      onFieldChange("passwordHash", e.target.value)
+                    }
+                    className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 pr-10 ${
+                      fieldErrors.passwordHash ? "border-rose-400" : ""
+                    }`}
+                    placeholder="Mínimo 8 caracteres"
+                    disabled={isSaving}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+                {fieldErrors.passwordHash && (
+                  <p className="text-rose-500 text-[10px] mt-1">
+                    {fieldErrors.passwordHash}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">
+                  <Lock className="w-3.5 h-3.5 text-[#c47b96]" />
+                  Confirmar Contraseña <span className="text-rose-500">*</span>
+                </Label>
+                <div className="relative">
+                  <Input
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={formData.confirmPassword || ""}
+                    onChange={(e) =>
+                      onFieldChange("confirmPassword", e.target.value)
+                    }
+                    className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 pr-10 ${
+                      fieldErrors.confirmPassword ? "border-rose-400" : ""
+                    }`}
+                    placeholder="Repite la contraseña"
+                    disabled={isSaving}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+                {fieldErrors.confirmPassword && (
+                  <p className="text-rose-500 text-[10px] mt-1">
+                    {fieldErrors.confirmPassword}
+                  </p>
+                )}
+              </div>
             </div>
           )}
 
@@ -225,7 +328,9 @@ export function ClientFormDialog({
                 disabled={isSaving}
               />
               {fieldErrors.direccion && (
-                <p className="text-rose-500 text-[10px] mt-1">{fieldErrors.direccion}</p>
+                <p className="text-rose-500 text-[10px] mt-1">
+                  {fieldErrors.direccion}
+                </p>
               )}
             </div>
 
@@ -244,27 +349,89 @@ export function ClientFormDialog({
                 disabled={isSaving}
               />
               {fieldErrors.ciudad && (
-                <p className="text-rose-500 text-[10px] mt-1">{fieldErrors.ciudad}</p>
+                <p className="text-rose-500 text-[10px] mt-1">
+                  {fieldErrors.ciudad}
+                </p>
               )}
             </div>
           </div>
         </div>
 
         <div className="flex justify-end gap-3 px-6 pb-6 pt-5 bg-white border-t border-gray-100 sticky bottom-0 z-10 rounded-b-2xl">
-          <Button
-            variant="outline"
+          <button
             onClick={() => onOpenChange(false)}
-            className="bg-white border-gray-200 text-gray-600 hover:bg-gray-50 rounded-xl px-6 h-11 text-sm font-semibold"
             disabled={isSaving}
+            style={{
+              padding: "10px 22px",
+              borderRadius: "10px",
+              fontSize: "13px",
+              fontWeight: 700,
+              cursor: isSaving ? "not-allowed" : "pointer",
+              border: "1.5px solid #f0d5e0",
+              background: "#fff8fb",
+              color: "#c47b96",
+              transition: "all 0.2s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "#fdf2f6";
+              e.currentTarget.style.borderColor = "#c47b96";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "#fff8fb";
+              e.currentTarget.style.borderColor = "#f0d5e0";
+            }}
           >
             Cancelar
-          </Button>
+          </button>
           <button
             onClick={onSave}
             disabled={isSaving}
-            className="rounded-xl font-bold px-8 h-11 text-sm border-0 luxury-button-modal shadow-lg shadow-[#c47b96]/20"
+            style={{
+              padding: "10px 28px",
+              borderRadius: "10px",
+              fontSize: "13px",
+              fontWeight: 700,
+              cursor: isSaving ? "not-allowed" : "pointer",
+              border: "none",
+              background: "linear-gradient(135deg, #c47b96 0%, #a85d77 100%)",
+              color: "#ffffff",
+              boxShadow: "0 4px 12px rgba(196,123,150,0.3)",
+              transition: "all 0.2s",
+              opacity: isSaving ? 0.7 : 1,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "translateY(-1px)";
+              e.currentTarget.style.boxShadow =
+                "0 6px 16px rgba(196,123,150,0.4)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "none";
+              e.currentTarget.style.boxShadow =
+                "0 4px 12px rgba(196,123,150,0.3)";
+            }}
           >
-            {isSaving ? "Guardando..." : editingCliente ? "Actualizar Cliente" : "Registrar Cliente"}
+            {isSaving ? (
+              <span
+                style={{ display: "flex", alignItems: "center", gap: "8px" }}
+              >
+                <span
+                  style={{
+                    width: 16,
+                    height: 16,
+                    border: "2px solid rgba(255,255,255,0.3)",
+                    borderTopColor: "#fff",
+                    borderRadius: "50%",
+                    animation: "spin 0.6s linear infinite",
+                    display: "inline-block",
+                  }}
+                />
+                <span>Guardando...</span>
+              </span>
+            ) : editingCliente ? (
+              "Actualizar Cliente"
+            ) : (
+              "Registrar Cliente"
+            )}
           </button>
         </div>
       </DialogContent>

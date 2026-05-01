@@ -27,8 +27,6 @@ interface ProveedorFormDialogProps {
     estado: "activo" | "inactivo";
   };
   setFormData: (data: any) => void;
-  onChange: (field: string, value: any) => void;
-  fieldErrors: Record<string, string>;
   isSaving: boolean;
   onSave: () => void;
 }
@@ -39,8 +37,6 @@ export function ProveedorFormDialog({
   editingProveedor,
   formData,
   setFormData,
-  onChange,
-  fieldErrors,
   isSaving,
   onSave,
 }: ProveedorFormDialogProps) {
@@ -84,125 +80,95 @@ export function ProveedorFormDialog({
           
           {/* Fila 1 */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
-            <div style={{ background: fieldErrors.tipo_proveedor ? "#fff1f2" : "#f9fafb", borderRadius: "12px", padding: "16px", border: fieldErrors.tipo_proveedor ? "1px solid #f43f5e" : "1px solid transparent", transition: "all 0.2s" }}>
-              <p style={{ fontSize: "11px", fontWeight: 700, color: fieldErrors.tipo_proveedor ? "#e11d48" : "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
+            <div>
+              <p style={{ fontSize: "11px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
                 Tipo Persona <span style={{ color: "#f87171" }}>*</span>
               </p>
               <select
                 value={formData.tipo_proveedor}
-                onChange={(e) => onChange("tipo_proveedor", e.target.value)}
-                className={`w-full h-10 px-3 border rounded-lg text-sm transition-all outline-none ${
-                  fieldErrors.tipo_proveedor 
-                    ? "border-rose-300 bg-white focus:ring-rose-500/10" 
-                    : "border-gray-200 focus:border-[#c47b96] focus:ring-[#c47b96]/10 bg-white"
-                }`}
+                onChange={(e) => setFormData({ ...formData, tipo_proveedor: e.target.value })}
+                className="w-full h-10 px-3 border border-gray-200 focus:border-[#c47b96] focus:ring-[#c47b96]/10 rounded-lg text-sm bg-white"
               >
                 <option value="Persona Natural">Persona Natural</option>
                 <option value="Persona Jurídica">Persona Jurídica</option>
               </select>
-              {fieldErrors.tipo_proveedor && <p className="text-[#e11d48] text-[10px] mt-1.5 font-bold animate-in fade-in slide-in-from-top-1">{fieldErrors.tipo_proveedor}</p>}
             </div>
 
-            <div style={{ background: fieldErrors.nombre ? "#fff1f2" : "#f9fafb", borderRadius: "12px", padding: "16px", border: fieldErrors.nombre ? "1px solid #f43f5e" : "1px solid transparent", transition: "all 0.2s" }}>
-              <p style={{ fontSize: "11px", fontWeight: 700, color: fieldErrors.nombre ? "#e11d48" : "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
-                <Building2 className={`w-3.5 h-3.5 ${fieldErrors.nombre ? "text-[#e11d48]" : "text-gray-400"}`} /> Nombre / Razón Social <span style={{ color: "#f87171" }}>*</span>
+            <div>
+              <p style={{ fontSize: "11px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
+                <Building2 className="w-3.5 h-3.5 text-gray-400" /> Nombre / Razón Social <span style={{ color: "#f87171" }}>*</span>
               </p>
               <Input
                 value={formData.nombre}
-                onChange={(e) => onChange("nombre", e.target.value)}
+                onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
                 maxLength={100}
-                aria-invalid={!!fieldErrors.nombre}
-                className={`h-10 rounded-lg text-sm transition-all ${
-                  fieldErrors.nombre 
-                    ? "border-rose-300 bg-white focus:border-rose-500 focus:ring-rose-500/10" 
-                    : "border-gray-200 focus:border-[#c47b96] focus:ring-[#c47b96]/10 bg-white"
-                }`}
+                required
+                className="h-10 border-gray-200 focus:border-[#c47b96] focus:ring-[#c47b96]/10 rounded-lg text-sm bg-white"
                 placeholder="Ej: Suministros S.A.S"
               />
-              {fieldErrors.nombre && <p className="text-[#e11d48] text-[10px] mt-1.5 font-bold animate-in fade-in slide-in-from-top-1">{fieldErrors.nombre}</p>}
             </div>
           </div>
 
           {/* Fila 2 */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
-            <div style={{ background: fieldErrors.nit ? "#fff1f2" : "#f9fafb", borderRadius: "12px", padding: "16px", border: fieldErrors.nit ? "1px solid #f43f5e" : "1px solid transparent", transition: "all 0.2s" }}>
-              <p style={{ fontSize: "11px", fontWeight: 700, color: fieldErrors.nit ? "#e11d48" : "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
-                <FileText className={`w-3.5 h-3.5 ${fieldErrors.nit ? "text-[#e11d48]" : "text-gray-400"}`} /> NIT / Documento <span style={{ color: "#f87171" }}>*</span>
+            <div>
+              <p style={{ fontSize: "11px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
+                <FileText className="w-3.5 h-3.5 text-gray-400" /> NIT / Documento <span style={{ color: "#f87171" }}>*</span>
               </p>
               <Input
                 value={formData.nit}
-                onChange={(e) => onChange("nit", e.target.value)}
+                onChange={(e) => setFormData({ ...formData, nit: e.target.value })}
                 maxLength={20}
-                aria-invalid={!!fieldErrors.nit}
-                className={`h-10 rounded-lg text-sm font-mono transition-all ${
-                  fieldErrors.nit 
-                    ? "border-rose-300 bg-white focus:border-rose-500 focus:ring-rose-500/10" 
-                    : "border-gray-200 focus:border-[#c47b96] focus:ring-[#c47b96]/10 bg-white"
-                }`}
+                required
+                className="h-10 border-gray-200 focus:border-[#c47b96] focus:ring-[#c47b96]/10 rounded-lg text-sm bg-white font-mono"
                 placeholder="900.123.456-7"
               />
-              {fieldErrors.nit && <p className="text-[#e11d48] text-[10px] mt-1.5 font-bold animate-in fade-in slide-in-from-top-1">{fieldErrors.nit}</p>}
             </div>
 
-            <div style={{ background: fieldErrors.telefono ? "#fff1f2" : "#f9fafb", borderRadius: "12px", padding: "16px", border: fieldErrors.telefono ? "1px solid #f43f5e" : "1px solid transparent", transition: "all 0.2s" }}>
-              <p style={{ fontSize: "11px", fontWeight: 700, color: fieldErrors.telefono ? "#e11d48" : "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
-                <Phone className={`w-3.5 h-3.5 ${fieldErrors.telefono ? "text-[#e11d48]" : "text-gray-400"}`} /> Teléfono <span style={{ color: "#f87171" }}>*</span>
+            <div>
+              <p style={{ fontSize: "11px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
+                <Phone className="w-3.5 h-3.5 text-gray-400" /> Teléfono <span style={{ color: "#f87171" }}>*</span>
               </p>
               <Input
                 value={formData.telefono}
-                onChange={(e) => onChange("telefono", e.target.value)}
+                onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
                 maxLength={20}
-                aria-invalid={!!fieldErrors.telefono}
-                className={`h-10 rounded-lg text-sm transition-all ${
-                  fieldErrors.telefono 
-                    ? "border-rose-300 bg-white focus:border-rose-500 focus:ring-rose-500/10" 
-                    : "border-gray-200 focus:border-[#c47b96] focus:ring-[#c47b96]/10 bg-white"
-                }`}
+                required
+                className="h-10 border-gray-200 focus:border-[#c47b96] focus:ring-[#c47b96]/10 rounded-lg text-sm bg-white"
                 placeholder="+57 321..."
               />
-              {fieldErrors.telefono && <p className="text-[#e11d48] text-[10px] mt-1.5 font-bold animate-in fade-in slide-in-from-top-1">{fieldErrors.telefono}</p>}
             </div>
           </div>
 
           {/* Fila 3 */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
-            <div style={{ background: fieldErrors.email ? "#fff1f2" : "#f9fafb", borderRadius: "12px", padding: "16px", border: fieldErrors.email ? "1px solid #f43f5e" : "1px solid transparent", transition: "all 0.2s" }}>
-              <p style={{ fontSize: "11px", fontWeight: 700, color: fieldErrors.email ? "#e11d48" : "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
-                <Mail className={`w-3.5 h-3.5 ${fieldErrors.email ? "text-[#e11d48]" : "text-gray-400"}`} /> Correo Electrónico <span style={{ color: "#f87171" }}>*</span>
+            <div>
+              <p style={{ fontSize: "11px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
+                <Mail className="w-3.5 h-3.5 text-gray-400" /> Correo Electrónico <span style={{ color: "#f87171" }}>*</span>
               </p>
               <Input
                 type="email"
                 value={formData.email}
-                onChange={(e) => onChange("email", e.target.value)}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 maxLength={100}
-                aria-invalid={!!fieldErrors.email}
-                className={`h-10 rounded-lg text-sm transition-all ${
-                  fieldErrors.email 
-                    ? "border-rose-300 bg-white focus:border-rose-500 focus:ring-rose-500/10" 
-                    : "border-gray-200 focus:border-[#c47b96] focus:ring-[#c47b96]/10 bg-white"
-                }`}
+                required
+                className="h-10 border-gray-200 focus:border-[#c47b96] focus:ring-[#c47b96]/10 rounded-lg text-sm bg-white"
                 placeholder="contacto@proveedor.com"
               />
-              {fieldErrors.email && <p className="text-[#e11d48] text-[10px] mt-1.5 font-bold animate-in fade-in slide-in-from-top-1">{fieldErrors.email}</p>}
             </div>
 
-            <div style={{ background: fieldErrors.direccion ? "#fff1f2" : "#f9fafb", borderRadius: "12px", padding: "16px", border: fieldErrors.direccion ? "1px solid #f43f5e" : "1px solid transparent", transition: "all 0.2s" }}>
-              <p style={{ fontSize: "11px", fontWeight: 700, color: fieldErrors.direccion ? "#e11d48" : "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
-                <MapPin className={`w-3.5 h-3.5 ${fieldErrors.direccion ? "text-[#e11d48]" : "text-gray-400"}`} /> Dirección <span style={{ color: "#f87171" }}>*</span>
+            <div>
+              <p style={{ fontSize: "11px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
+                <MapPin className="w-3.5 h-3.5 text-gray-400" /> Dirección <span style={{ color: "#f87171" }}>*</span>
               </p>
               <Input
                 value={formData.direccion}
-                onChange={(e) => onChange("direccion", e.target.value)}
+                onChange={(e) => setFormData({ ...formData, direccion: e.target.value })}
                 maxLength={150}
-                aria-invalid={!!fieldErrors.direccion}
-                className={`h-10 rounded-lg text-sm transition-all ${
-                  fieldErrors.direccion 
-                    ? "border-rose-300 bg-white focus:border-rose-500 focus:ring-rose-500/10" 
-                    : "border-gray-200 focus:border-[#c47b96] focus:ring-[#c47b96]/10 bg-white"
-                }`}
+                required
+                className="h-10 border-gray-200 focus:border-[#c47b96] focus:ring-[#c47b96]/10 rounded-lg text-sm bg-white"
                 placeholder="Av. Siempre Viva 123"
               />
-              {fieldErrors.direccion && <p className="text-[#e11d48] text-[10px] mt-1.5 font-bold animate-in fade-in slide-in-from-top-1">{fieldErrors.direccion}</p>}
             </div>
           </div>
 
@@ -210,31 +176,55 @@ export function ProveedorFormDialog({
 
         {/* Footer */}
         <div className="flex items-center justify-end px-6 pb-6 pt-4 border-t border-gray-100 bg-white z-10 gap-3">
-          <Button
-            variant="outline"
+          <button
             onClick={() => onOpenChange(false)}
-            className="border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg px-5 h-10 text-sm"
             disabled={isSaving}
+            style={{
+              padding: "10px 22px",
+              borderRadius: "10px",
+              fontSize: "13px",
+              fontWeight: 700,
+              cursor: isSaving ? "not-allowed" : "pointer",
+              border: "1.5px solid #f0d5e0",
+              background: "#fff8fb",
+              color: "#c47b96",
+              transition: "all 0.2s",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "#fdf2f6"; e.currentTarget.style.borderColor = "#c47b96"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "#fff8fb"; e.currentTarget.style.borderColor = "#f0d5e0"; }}
           >
             Cancelar
-          </Button>
-          <Button
+          </button>
+          <button
             onClick={onSave}
             disabled={isSaving}
-            className="rounded-lg font-semibold px-6 h-10 text-sm border-0"
-            style={{ backgroundColor: "#c47b96", color: "#ffffff" }}
+            style={{
+              padding: "10px 28px",
+              borderRadius: "10px",
+              fontSize: "13px",
+              fontWeight: 700,
+              cursor: isSaving ? "not-allowed" : "pointer",
+              border: "none",
+              background: "linear-gradient(135deg, #c47b96 0%, #a85d77 100%)",
+              color: "#ffffff",
+              boxShadow: "0 4px 12px rgba(196,123,150,0.3)",
+              transition: "all 0.2s",
+              opacity: isSaving ? 0.7 : 1,
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 6px 16px rgba(196,123,150,0.4)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(196,123,150,0.3)"; }}
           >
             {isSaving ? (
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span style={{ width: 16, height: 16, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.6s linear infinite", display: "inline-block" }} />
                 Guardando...
-              </div>
+              </span>
             ) : editingProveedor ? (
               "Actualizar Proveedor"
             ) : (
               "Registrar Proveedor"
             )}
-          </Button>
+          </button>
         </div>
       </DialogContent>
     </Dialog>

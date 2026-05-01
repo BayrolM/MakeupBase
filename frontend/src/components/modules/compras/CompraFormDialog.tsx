@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { X, Plus, Trash2, Search, Package } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "../../ui/dialog";
+import { Label } from "../../ui/label";
 import { Input } from "../../ui/input";
-import { Check, ChevronsUpDown } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -10,6 +10,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../../ui/table";
 import { Button } from "../../ui/button";
 import { formatCurrency } from "../../../utils/compraUtils";
 
@@ -30,241 +38,9 @@ interface CompraFormDialogProps {
   productos: any[];
   isSaving: boolean;
   onSave: () => void;
-}
-
-function ProductRow({ d, index, formData, setFormData, productos }: any) {
-  const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState("");
-  const prod = productos.find((x: any) => x.id === d.productoId);
-
-  const filtered = productos.filter((p: any) => 
-    p.nombre.toLowerCase().includes(search.toLowerCase())
-  );
-
-  return (
-    <div
-      style={{
-        padding: "14px 0",
-        borderBottom: index < formData.detalles.length - 1 ? "1px solid #f3f4f6" : "none",
-        position: "relative",
-      }}
-    >
-      {/* Fila de campos en línea */}
-      <div style={{ display: "flex", gap: "10px", alignItems: "flex-end", width: "100%" }}>
-        {/* Producto */}
-        <div style={{ flex: "2", minWidth: 0 }}>
-          <p style={{ fontSize: "10px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", marginBottom: "5px", letterSpacing: "0.05em" }}>
-            Producto
-          </p>
-          <div style={{ position: "relative" }}>
-            <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-              <input
-                type="text"
-                placeholder="Buscar producto..."
-                value={open ? search : (prod ? prod.nombre : "")}
-                onFocus={() => {
-                  setOpen(true);
-                  setSearch("");
-                }}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setOpen(true);
-                  // Opcional: si borra todo, podemos limpiar el producto seleccionado
-                  if (d.productoId && e.target.value === "") {
-                    const nd = [...formData.detalles];
-                    nd[index].productoId = "";
-                    setFormData({ ...formData, detalles: nd });
-                  }
-                }}
-                onBlur={() => {
-                  setTimeout(() => setOpen(false), 200);
-                }}
-                style={{
-                  width: "100%",
-                  height: 36,
-                  borderRadius: 8,
-                  border: "1px solid #e5e7eb",
-                  fontSize: 13,
-                  padding: "0 30px 0 12px",
-                  outline: "none",
-                  background: "white",
-                  color: "#111827",
-                  textOverflow: "ellipsis"
-                }}
-              />
-              <ChevronsUpDown className="h-4 w-4 opacity-50 absolute right-3 pointer-events-none" />
-            </div>
-
-            {open && (
-              <div style={{
-                position: "absolute",
-                top: "100%",
-                left: 0,
-                minWidth: "350px", // Más ancho para que se vea completo por fuera
-                background: "white",
-                border: "1px solid #e5e7eb",
-                borderRadius: 8,
-                marginTop: 4,
-                boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
-                zIndex: 999999,
-                maxHeight: 250,
-                display: "flex",
-                flexDirection: "column"
-              }}>
-                <div style={{ overflowY: "auto", padding: 4 }}>
-                  {filtered.length === 0 ? (
-                    <div style={{ padding: "8px", textAlign: "center", fontSize: 12, color: "#9ca3af" }}>
-                      No encontrado.
-                    </div>
-                  ) : (
-                    filtered.map((p: any) => (
-                      <div
-                        key={p.id}
-                        onMouseDown={(e) => {
-                          e.preventDefault(); // Evita que el input pierda el foco y se cierre antes de tiempo
-                          const nd = [...formData.detalles];
-                          nd[index].productoId = p.id;
-                          nd[index].precioUnitario = p.precioCompra || "";
-                          setFormData({ ...formData, detalles: nd });
-                          setOpen(false);
-                          setSearch(""); // reset search
-                        }}
-                        style={{
-                          padding: "8px 8px",
-                          fontSize: 12,
-                          cursor: "pointer",
-                          borderRadius: 4,
-                          display: "flex",
-                          alignItems: "center",
-                          color: "#374151"
-                        }}
-                        className="hover:bg-gray-100"
-                      >
-                        <Check className={`mr-2 h-4 w-4 ${d.productoId === p.id ? "opacity-100" : "opacity-0"}`} />
-                        {p.nombre}
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Unidad */}
-        <div style={{ flex: "0.8", minWidth: 0 }}>
-          <p style={{ fontSize: "10px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", marginBottom: "5px", letterSpacing: "0.05em" }}>
-            Unidad
-          </p>
-          <input
-            type="number"
-            min="1"
-            value={d.cantidad}
-            onChange={(e) => {
-              const nd = [...formData.detalles];
-              nd[index].cantidad = e.target.value;
-              setFormData({ ...formData, detalles: nd });
-            }}
-            style={{
-              width: "100%",
-              height: 36,
-              borderRadius: 8,
-              border: "1px solid #e5e7eb",
-              textAlign: "center",
-              fontWeight: 700,
-              fontSize: 14,
-              color: "#1f2937",
-              padding: "0 4px",
-              outline: "none",
-              MozAppearance: "textfield",
-            }}
-            className="input-no-spin"
-            placeholder="0"
-          />
-        </div>
-
-        {/* Costo Unitario */}
-        <div style={{ flex: "1.2", minWidth: 0 }}>
-          <p style={{ fontSize: "10px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", marginBottom: "5px", letterSpacing: "0.05em" }}>
-            Costo Unit.
-          </p>
-          <input
-            type="number"
-            value={d.precioUnitario}
-            onChange={(e) => {
-              const nd = [...formData.detalles];
-              nd[index].precioUnitario = e.target.value;
-              setFormData({ ...formData, detalles: nd });
-            }}
-            style={{
-              width: "100%",
-              height: 36,
-              borderRadius: 8,
-              border: "1px solid #e5e7eb",
-              fontWeight: 700,
-              fontSize: 13,
-              color: "#1f2937",
-              padding: "0 8px",
-              outline: "none",
-              MozAppearance: "textfield",
-            }}
-            className="input-no-spin"
-            placeholder="0"
-          />
-        </div>
-
-        {/* Total */}
-        <div style={{ flex: "1.2", minWidth: 0 }}>
-          <p style={{ fontSize: "10px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", marginBottom: "5px", letterSpacing: "0.05em" }}>
-            Total
-          </p>
-          <div style={{
-            height: 36,
-            background: "#f9fafb",
-            border: "1px solid #f3f4f6",
-            borderRadius: 8,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "flex-end",
-            padding: "0 8px",
-          }}>
-            <span style={{ fontSize: 12, fontWeight: 800, color: "#c47b96", whiteSpace: "nowrap" }}>
-              {formatCurrency((Number(d.cantidad) || 0) * (Number(d.precioUnitario) || 0))}
-            </span>
-          </div>
-        </div>
-
-        {/* Botón eliminar */}
-        <div style={{ flex: "0 0 32px", display: "flex", justifyContent: "flex-end", paddingBottom: "6px" }}>
-          <button
-            onClick={() => {
-              const nd = [...formData.detalles];
-              nd.splice(index, 1);
-              setFormData({ ...formData, detalles: nd });
-            }}
-            style={{
-              width: 24,
-              height: 24,
-              borderRadius: "50%",
-              border: "1px solid #ef4444",
-              background: "#fef2f2",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
-              color: "#ef4444",
-              padding: 0,
-              flexShrink: 0,
-            }}
-            title="Eliminar producto"
-            className="hover:bg-red-100 transition-colors"
-          >
-            <Trash2 style={{ width: 12, height: 12 }} />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+  selectedProductId: string;
+  setSelectedProductId: (id: string) => void;
+  removeProductFromDetalles: (index: number) => void;
 }
 
 export function CompraFormDialog({
@@ -276,17 +52,48 @@ export function CompraFormDialog({
   productos,
   isSaving,
   onSave,
+  selectedProductId,
+  setSelectedProductId,
+  removeProductFromDetalles,
 }: CompraFormDialogProps) {
-
+  const [productSearch, setProductSearch] = useState("");
+  const [showDropdown, setShowDropdown] = useState(false);
 
   const totalPurchase = formData.detalles.reduce(
-    (acc: number, curr: any) => acc + (Number(curr.cantidad) || 0) * (Number(curr.precioUnitario) || 0),
+    (acc, curr) => acc + curr.cantidad * curr.precioUnitario,
     0,
   );
 
+  const filteredProducts = productos.filter((p) =>
+    p.nombre.toLowerCase().includes(productSearch.toLowerCase()),
+  );
+
+  const handleAddProduct = () => {
+    if (!selectedProductId) return;
+    const existingIndex = formData.detalles.findIndex(
+      (d: any) => d.productoId === selectedProductId,
+    );
+    if (existingIndex >= 0) {
+      const newDetalles = [...formData.detalles];
+      newDetalles[existingIndex].cantidad += 1;
+      setFormData({ ...formData, detalles: newDetalles });
+    } else {
+      setFormData({
+        ...formData,
+        detalles: [
+          ...formData.detalles,
+          { productoId: selectedProductId, cantidad: 1, precioUnitario: 0 },
+        ],
+      });
+    }
+    setSelectedProductId("");
+    setProductSearch("");
+    setShowDropdown(false);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-white border border-gray-100 !w-[95vw] !max-w-[1400px] rounded-2xl shadow-2xl p-0 overflow-hidden">
+      <DialogContent className="bg-white border border-gray-100 !w-[95vw] !max-w-[95vw] rounded-2xl shadow-2xl p-0 overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100 bg-white z-10">
           <div className="flex items-center gap-4">
@@ -322,46 +129,38 @@ export function CompraFormDialog({
         <style dangerouslySetInnerHTML={{ __html: `
           .no-scrollbar::-webkit-scrollbar { display: none; }
           .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-          .input-no-spin::-webkit-inner-spin-button, 
-          .input-no-spin::-webkit-outer-spin-button { 
-            -webkit-appearance: none; 
-            margin: 0; 
-          }
-          .input-no-spin { -moz-appearance: textfield; }
         `}} />
 
         <div 
           className="no-scrollbar overflow-y-auto"
-          style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: "16px", maxHeight: "65vh" }}
+          style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: "16px", maxHeight: "70vh" }}
         >
           {/* Fila superior: Proveedor + Observaciones */}
-          <div style={{ display: "grid", gridTemplateColumns: "3fr 2fr", gap: "16px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
             {/* Proveedor */}
-            <div style={{ background: "#f9fafb", borderRadius: "12px", padding: "16px" }}>
+            <div>
               <p style={{ fontSize: "11px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
                 <Search className="w-3.5 h-3.5" /> Proveedor <span style={{ color: "#f87171" }}>*</span>
               </p>
-              <div style={{ background: "#ffffff", borderRadius: "8px" }}>
-                <Select
-                  value={formData.proveedorId}
-                  onValueChange={(v) => setFormData({ ...formData, proveedorId: v })}
-                >
-                  <SelectTrigger className="h-10 rounded-lg bg-white border-gray-200">
-                    <SelectValue placeholder="Seleccionar proveedor..." />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border-gray-100">
-                    {proveedores.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.nombre}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <Select
+                value={formData.proveedorId}
+                onValueChange={(v) => setFormData({ ...formData, proveedorId: v })}
+              >
+                <SelectTrigger className="h-10 rounded-lg bg-white border-gray-200">
+                  <SelectValue placeholder="Seleccionar proveedor..." />
+                </SelectTrigger>
+                <SelectContent className="bg-white border-gray-100">
+                  {proveedores.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.nombre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Observaciones */}
-            <div style={{ background: "#f9fafb", borderRadius: "12px", padding: "16px" }}>
+            <div>
               <p style={{ fontSize: "11px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
                 Observaciones
               </p>
@@ -387,8 +186,8 @@ export function CompraFormDialog({
                 onClick={() => {
                   const newDetalle = {
                     productoId: "",
-                    cantidad: "",
-                    precioUnitario: "",
+                    cantidad: 1,
+                    precioUnitario: 0
                   };
                   setFormData({
                     ...formData,
@@ -403,22 +202,115 @@ export function CompraFormDialog({
             </div>
 
             {/* Lista de productos */}
-            <div style={{ padding: "0 16px" }}>
+            <div style={{ padding: "0 16px", maxHeight: "300px", overflowY: "auto" }}>
               {formData.detalles.length === 0 ? (
                 <div className="py-8 text-center text-gray-400 text-sm italic">
                   No hay productos agregados. Haz clic en "Añadir" para comenzar.
                 </div>
               ) : (
-                formData.detalles.map((d: any, index: number) => (
-                  <ProductRow 
-                    key={index} 
-                    d={d} 
-                    index={index} 
-                    formData={formData} 
-                    setFormData={setFormData} 
-                    productos={productos} 
-                  />
-                ))
+                formData.detalles.map((d: any, index: number) => {
+                  const prod = productos.find((p) => p.id === d.productoId);
+                  return (
+                    <div
+                      key={index}
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        padding: "16px 0",
+                        borderBottom: index < formData.detalles.length - 1 ? "1px solid #f3f4f6" : "none",
+                        position: "relative",
+                        zIndex: 100 - index,
+                      }}
+                    >
+                      <div className="grid grid-cols-12 gap-3 items-end">
+                        <div className="col-span-6">
+                          <p style={{ fontSize: "10px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", marginBottom: "6px" }}>
+                            Producto
+                          </p>
+                          <Select
+                            value={d.productoId}
+                            onValueChange={(val) => {
+                              const nd = [...formData.detalles];
+                              nd[index].productoId = val;
+                              const p = productos.find(x => x.id === val);
+                              if (p) nd[index].precioUnitario = p.precioCosto || 0;
+                              setFormData({ ...formData, detalles: nd });
+                            }}
+                          >
+                            <SelectTrigger className="h-9 rounded-lg bg-white border-gray-200">
+                              <SelectValue placeholder="Seleccionar producto..." />
+                            </SelectTrigger>
+                            <SelectContent className="bg-white border-gray-100 max-h-[200px]">
+                              {productos.map((p) => (
+                                <SelectItem key={p.id} value={p.id}>
+                                  {p.nombre}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="col-span-2">
+                          <p style={{ fontSize: "10px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", marginBottom: "6px" }}>
+                            Cant.
+                          </p>
+                          <Input
+                            type="number"
+                            min="1"
+                            value={d.cantidad}
+                            onChange={(e) => {
+                              const nd = [...formData.detalles];
+                              nd[index].cantidad = parseInt(e.target.value) || 0;
+                              setFormData({ ...formData, detalles: nd });
+                            }}
+                            className="border-gray-200 text-gray-800 h-9 rounded-lg"
+                          />
+                        </div>
+                        <div className="col-span-2">
+                          <p style={{ fontSize: "10px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", marginBottom: "6px" }}>
+                            Costo Unit.
+                          </p>
+                          <Input
+                            type="number"
+                            value={d.precioUnitario}
+                            onChange={(e) => {
+                              const nd = [...formData.detalles];
+                              nd[index].precioUnitario = parseFloat(e.target.value) || 0;
+                              setFormData({ ...formData, detalles: nd });
+                            }}
+                            className="border-gray-200 text-gray-800 h-9 rounded-lg"
+                          />
+                        </div>
+                        <div className="col-span-2">
+                          <p style={{ fontSize: "10px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", marginBottom: "6px" }}>
+                            Total
+                          </p>
+                          <div style={{ height: "36px", padding: "0 12px", background: "#f9fafb", border: "1px solid #f3f4f6", borderRadius: "8px", display: "flex", alignItems: "center" }}>
+                            <span style={{ fontSize: "13px", fontWeight: 800, color: "#1f2937" }}>
+                              {formatCurrency(d.cantidad * d.precioUnitario)}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="absolute -top-1 -right-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              const nd = [...formData.detalles];
+                              nd.splice(index, 1);
+                              setFormData({ ...formData, detalles: nd });
+                            }}
+                            style={{ height: "24px", width: "24px", padding: 0 }}
+                            className="bg-white border border-gray-200 rounded-full text-gray-400 hover:text-rose-500 hover:border-rose-200 transition-all shadow-sm"
+                            title="Eliminar producto"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
               )}
             </div>
           </div>
@@ -427,39 +319,62 @@ export function CompraFormDialog({
         {/* Footer: Total + Botones */}
         <div className="flex items-center justify-between px-6 pb-6 pt-4 border-t border-gray-100 bg-white z-10">
           {/* Total */}
-          <div className="bg-gradient-to-r from-[#fff0f5] to-[#fce8f0] rounded-xl border border-[#f0d5e0]" style={{ padding: "10px 20px", display: "flex", alignItems: "center", gap: "16px" }}>
-            <p style={{ fontSize: "11px", fontWeight: 700, color: "#c47b96", textTransform: "uppercase", letterSpacing: "0.07em", margin: 0 }}>
-              Inversión Total
-            </p>
-            <span className="text-[#c47b96] font-black text-2xl">
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <span style={{ fontSize: "13px", fontWeight: 600, color: "#9ca3af" }}>Inversión Total:</span>
+            <span style={{ fontSize: "22px", fontWeight: 900, color: "#c47b96", letterSpacing: "-0.5px" }}>
               {formatCurrency(totalPurchase)}
             </span>
           </div>
+
           {/* Botones */}
-          <div className="flex items-center gap-4 ml-4">
-            <Button
-              variant="outline"
+          <div className="flex gap-3">
+            <button
               onClick={() => onOpenChange(false)}
-              className="border-gray-200 text-gray-600 hover:bg-gray-50 rounded-xl px-6 h-12 text-sm font-bold whitespace-nowrap"
               disabled={isSaving}
+              style={{
+                padding: "10px 22px",
+                borderRadius: "10px",
+                fontSize: "13px",
+                fontWeight: 700,
+                cursor: isSaving ? "not-allowed" : "pointer",
+                border: "1.5px solid #f0d5e0",
+                background: "#fff8fb",
+                color: "#c47b96",
+                transition: "all 0.2s",
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "#fdf2f6"; e.currentTarget.style.borderColor = "#c47b96"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "#fff8fb"; e.currentTarget.style.borderColor = "#f0d5e0"; }}
             >
               Cancelar
-            </Button>
-            <Button
+            </button>
+            <button
               onClick={onSave}
               disabled={isSaving || formData.detalles.length === 0}
-              className="rounded-xl font-bold px-8 h-12 text-sm border-0 whitespace-nowrap transition-all shadow-md hover:opacity-90"
-              style={{ backgroundColor: formData.detalles.length === 0 ? "#d1d5db" : "#c47b96", color: "#ffffff" }}
+              style={{
+                padding: "10px 28px",
+                borderRadius: "10px",
+                fontSize: "13px",
+                fontWeight: 700,
+                cursor: (isSaving || formData.detalles.length === 0) ? "not-allowed" : "pointer",
+                border: "none",
+                background: "linear-gradient(135deg, #c47b96 0%, #a85d77 100%)",
+                color: "#ffffff",
+                boxShadow: "0 4px 12px rgba(196,123,150,0.3)",
+                transition: "all 0.2s",
+                opacity: (isSaving || formData.detalles.length === 0) ? 0.7 : 1,
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 6px 16px rgba(196,123,150,0.4)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(196,123,150,0.3)"; }}
             >
               {isSaving ? (
-                <div className="flex items-center justify-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  <span>Guardando...</span>
-                </div>
+                <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <span style={{ width: 16, height: 16, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.6s linear infinite", display: "inline-block" }} />
+                  Guardando...
+                </span>
               ) : (
                 "Guardar Compra"
               )}
-            </Button>
+            </button>
           </div>
         </div>
       </DialogContent>

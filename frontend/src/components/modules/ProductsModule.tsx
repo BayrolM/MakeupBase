@@ -14,17 +14,18 @@ import { ProductDetailDialog } from "./products/ProductDetailDialog";
 import { ProductDeleteDialog } from "./products/ProductDeleteDialog";
 
 export function ProductsModule() {
-  const { productos, categorias, marcas, setProductos, currentUser } = useStore();
-  
+  const { productos, categorias, marcas, setProductos, currentUser } =
+    useStore();
+
   // Estados de Diálogos
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  
+
   // Estados de Selección
   const [editingProduct, setEditingProduct] = useState<Producto | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Producto | null>(null);
-  
+
   // Estados de Filtro
   const [searchQuery, setSearchQuery] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -106,10 +107,7 @@ export function ProductsModule() {
 
   return (
     <div className="min-h-screen bg-[#f6f3f5]">
-      <ProductHeader 
-        isAdmin={isAdmin} 
-        onOpenDialog={() => handleOpenForm()} 
-      />
+      <ProductHeader isAdmin={isAdmin} onOpenDialog={() => handleOpenForm()} />
 
       <div className="px-8 pb-8">
         <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
@@ -148,6 +146,13 @@ export function ProductsModule() {
             }}
             onEdit={handleOpenForm}
             onDelete={(p) => {
+              if (p.estado === "inactivo") {
+                toast.error("Producto inactivo", {
+                  description: "No se puede eliminar un producto inactivo.",
+                });
+                return;
+              }
+
               setSelectedProduct(p);
               setIsDeleteOpen(true);
             }}

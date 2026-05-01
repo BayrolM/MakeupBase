@@ -1,17 +1,25 @@
 import { Cliente, Venta, Pedido } from "../lib/store";
 
-export const validateClientField = (name: string, value: string, editingCliente?: any) => {
+export const validateClientField = (
+  name: string,
+  value: string,
+  editingCliente?: any,
+) => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   switch (name) {
     case "nombres":
     case "apellidos": {
       const label = name === "nombres" ? "El nombre" : "El apellido";
       if (!value.trim()) return `${label} es obligatorio`;
-      if (value.trim().length > 80) return `${label} no puede superar 80 caracteres`;
+      if (value.trim().length > 80)
+        return `${label} no puede superar 80 caracteres`;
       return "";
     }
     case "numeroDocumento":
       if (!value.trim()) return "El documento es obligatorio";
+      if (!/^[a-zA-Z0-9]+$/.test(value.trim())) {
+        return "No se permiten caracteres especiales o espacios.";
+      }
       if (value.trim().length > 10) return "Máximo 10 caracteres";
       return "";
     case "email":
@@ -27,8 +35,9 @@ export const validateClientField = (name: string, value: string, editingCliente?
       return "";
     case "telefono": {
       if (!value.trim()) return "El teléfono es obligatorio";
-      const soloDigitos = /^\d+$/.test(value.trim());
-      if (!soloDigitos) return "Solo se permiten números";
+      if (!/^\d+$/.test(value)) {
+        return "Solo se permiten números";
+      }
       if (value.trim().length < 7) return "Mínimo 7 dígitos";
       if (value.trim().length > 15) return "Máximo 15 dígitos";
       return "";
@@ -46,23 +55,33 @@ export const validateClientField = (name: string, value: string, editingCliente?
 };
 
 export const getClientStats = (clienteId: string, ventas: Venta[]) => {
-  return ventas.filter((v) => v.clienteId === clienteId && v.estado === "activo").length;
+  return ventas.filter(
+    (v) => v.clienteId === clienteId && v.estado === "activo",
+  ).length;
 };
 
-export const checkClientActiveConstraints = (clienteId: string, pedidos: Pedido[], ventas: Venta[]) => {
+export const checkClientActiveConstraints = (
+  clienteId: string,
+  pedidos: Pedido[],
+  ventas: Venta[],
+) => {
   const pedidosActivos = pedidos.filter(
-    (p) => p.clienteId === clienteId && !["entregado", "cancelado"].includes(p.estado)
+    (p) =>
+      p.clienteId === clienteId &&
+      !["entregado", "cancelado"].includes(p.estado),
   );
   const ventasActivas = ventas.filter(
-    (v) => v.clienteId === clienteId && v.estado === "activo"
+    (v) => v.clienteId === clienteId && v.estado === "activo",
   );
-  
+
   const constraints = [];
-  if (pedidosActivos.length > 0) constraints.push(`${pedidosActivos.length} pedido(s) activo(s)`);
-  if (ventasActivas.length > 0) constraints.push(`${ventasActivas.length} venta(s) activa(s)`);
-  
+  if (pedidosActivos.length > 0)
+    constraints.push(`${pedidosActivos.length} pedido(s) activo(s)`);
+  if (ventasActivas.length > 0)
+    constraints.push(`${ventasActivas.length} venta(s) activa(s)`);
+
   return {
     hasConstraints: constraints.length > 0,
-    description: constraints.join(" y ")
+    description: constraints.join(" y "),
   };
 };

@@ -1,5 +1,5 @@
-import sql from '../config/db.js';
-import bcrypt from 'bcryptjs';
+import sql from "../config/db.js";
+import bcrypt from "bcryptjs";
 
 export const getProfile = async (req, res) => {
   try {
@@ -13,6 +13,7 @@ export const getProfile = async (req, res) => {
         telefono,
         direccion,
         ciudad,
+        departamento,
         id_rol,
         foto_perfil
       FROM usuarios 
@@ -22,7 +23,7 @@ export const getProfile = async (req, res) => {
     if (result.length === 0) {
       return res
         .status(404)
-        .json({ message: 'Perfil de usuario no encontrado' });
+        .json({ message: "Perfil de usuario no encontrado" });
     }
 
     const user = result[0];
@@ -30,13 +31,21 @@ export const getProfile = async (req, res) => {
     return res.json(user);
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: 'Error al obtener el perfil' });
+    return res.status(500).json({ message: "Error al obtener el perfil" });
   }
 };
 
 export const updateProfile = async (req, res) => {
   try {
-    const { nombres, apellidos, telefono, direccion, ciudad, foto_perfil } = req.body;
+    const {
+      nombres,
+      apellidos,
+      telefono,
+      direccion,
+      ciudad,
+      departamento,
+      foto_perfil,
+    } = req.body;
 
     await sql`
       UPDATE usuarios
@@ -45,14 +54,15 @@ export const updateProfile = async (req, res) => {
           telefono = ${telefono !== undefined ? telefono : sql`telefono`},
           direccion = ${direccion !== undefined ? direccion : sql`direccion`},
           ciudad = ${ciudad !== undefined ? ciudad : sql`ciudad`},
+          departamento = ${departamento !== undefined ? departamento : sql`departamento`},
           foto_perfil = ${foto_perfil !== undefined ? foto_perfil : sql`foto_perfil`}
       WHERE id_usuario = ${req.user.id_usuario}
     `;
 
-    return res.json({ message: 'Perfil actualizado correctamente' });
+    return res.json({ message: "Perfil actualizado correctamente" });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: 'Error en el servidor' });
+    return res.status(500).json({ message: "Error en el servidor" });
   }
 };
 
@@ -66,12 +76,17 @@ export const changePassword = async (req, res) => {
     `;
 
     if (result.length === 0) {
-      return res.status(404).json({ message: 'Usuario no encontrado' });
+      return res.status(404).json({ message: "Usuario no encontrado" });
     }
 
-    const isMatch = await bcrypt.compare(currentPassword, result[0].password_hash);
+    const isMatch = await bcrypt.compare(
+      currentPassword,
+      result[0].password_hash,
+    );
     if (!isMatch) {
-      return res.status(400).json({ message: 'La contraseña actual es incorrecta' });
+      return res
+        .status(400)
+        .json({ message: "La contraseña actual es incorrecta" });
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -83,10 +98,10 @@ export const changePassword = async (req, res) => {
       WHERE id_usuario = ${req.user.id_usuario}
     `;
 
-    return res.json({ message: 'Contraseña actualizada correctamente' });
+    return res.json({ message: "Contraseña actualizada correctamente" });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: 'Error al cambiar la contraseña' });
+    return res.status(500).json({ message: "Error al cambiar la contraseña" });
   }
 };
 
@@ -103,28 +118,29 @@ export const listarUsuarios = async (req, res) => {
     // Filtro de búsqueda por nombre, apellido, email o documento
     if (q) {
       whereConditions.push(sql`(
-                u.nombre ILIKE ${'%' + q + '%'} OR 
-                u.apellido ILIKE ${'%' + q + '%'} OR 
-                u.email ILIKE ${'%' + q + '%'} OR 
-                u.documento ILIKE ${'%' + q + '%'}
+                u.nombre ILIKE ${"%" + q + "%"} OR 
+                u.apellido ILIKE ${"%" + q + "%"} OR 
+                u.email ILIKE ${"%" + q + "%"} OR 
+                u.documento ILIKE ${"%" + q + "%"}
             )`);
     }
 
     // Filtro por rol
-    if (id_rol && id_rol !== 'all') {
+    if (id_rol && id_rol !== "all") {
       whereConditions.push(sql`u.id_rol = ${parseInt(id_rol)}`);
     }
 
     // Filtro por estado
-    if (estado !== undefined && estado !== '') {
-      const estadoBool = estado === 'true' || estado === '1' || estado === true;
+    if (estado !== undefined && estado !== "") {
+      const estadoBool = estado === "true" || estado === "1" || estado === true;
       whereConditions.push(sql`u.estado = ${estadoBool}`);
     }
 
     // Construir WHERE
-    const whereClause = whereConditions.length > 0 
-      ? sql`WHERE ${whereConditions.reduce((acc, condition) => sql`${acc} AND ${condition}`)}` 
-      : sql``;
+    const whereClause =
+      whereConditions.length > 0
+        ? sql`WHERE ${whereConditions.reduce((acc, condition) => sql`${acc} AND ${condition}`)}`
+        : sql``;
 
     // Consulta principal
     const usuarios = await sql`
@@ -140,6 +156,7 @@ export const listarUsuarios = async (req, res) => {
         u.telefono,
         u.direccion,
         u.ciudad,
+        u.departamento,
         u.estado,
         u.foto_perfil
       FROM usuarios u
@@ -167,15 +184,13 @@ export const listarUsuarios = async (req, res) => {
       data: usuarios,
     });
   } catch (error) {
-    console.error('Error en listarUsuarios:', error);
+    console.error("Error en listarUsuarios:", error);
     return res.status(500).json({
       ok: false,
-      message: 'Error al obtener usuarios',
+      message: "Error al obtener usuarios",
     });
   }
 };
-
-
 
 /**
  * Crear un nuevo usuario (Admin)
@@ -192,53 +207,56 @@ export const crearUsuario = async (req, res) => {
       telefono,
       direccion,
       ciudad,
+      departamento,
       password_hash,
       foto_perfil,
-      estado = true
+      estado = true,
     } = req.body;
 
     // Validar campos requeridos
     if (!email || !nombres || !apellidos || !id_rol) {
       return res.status(400).json({
         ok: false,
-        message: 'Faltan campos obligatorios (email, nombres, apellidos, rol)'
+        message: "Faltan campos obligatorios (email, nombres, apellidos, rol)",
       });
     }
 
     // Verificar si el email ya existe
-    const emailExiste = await sql`SELECT * FROM usuarios WHERE email = ${email}`;
+    const emailExiste =
+      await sql`SELECT * FROM usuarios WHERE email = ${email}`;
     if (emailExiste.length > 0) {
       return res.status(400).json({
         ok: false,
-        message: 'El email ya está registrado'
+        message: "El email ya está registrado",
       });
     }
 
     // Verificar si el documento ya existe (si se proporciona)
     if (documento) {
-      const docExiste = await sql`SELECT * FROM usuarios WHERE documento = ${documento}`;
+      const docExiste =
+        await sql`SELECT * FROM usuarios WHERE documento = ${documento}`;
       if (docExiste.length > 0) {
         return res.status(400).json({
           ok: false,
-          message: 'El documento ya está registrado'
+          message: "El documento ya está registrado",
         });
       }
     }
 
     // Encriptar contraseña
     const salt = await bcrypt.genSalt(10);
-    const passwordToHash = password_hash || documento || '123456';
+    const passwordToHash = password_hash || documento || "123456";
     const hashedPassword = await bcrypt.hash(passwordToHash, salt);
 
     const nuevoUsuario = await sql`
       INSERT INTO usuarios (
         id_rol, tipo_documento, documento, nombre, apellido,
-        email, telefono, direccion, ciudad, password_hash, estado, foto_perfil
+        email, telefono, direccion, ciudad, departamento, password_hash, estado, foto_perfil
       )
       VALUES (
-        ${id_rol}, ${tipo_documento || 'CC'}, ${documento || ''}, 
-        ${nombres}, ${apellidos}, ${email}, ${telefono || ''}, 
-        ${direccion || ''}, ${ciudad || ''}, ${hashedPassword}, 
+        ${id_rol}, ${tipo_documento || "CC"}, ${documento || ""}, 
+        ${nombres}, ${apellidos}, ${email}, ${telefono || ""}, 
+        ${direccion || ""}, ${ciudad || ""}, ${departamento || ""}, ${hashedPassword}, 
         ${estado}, ${foto_perfil || null}
       )
       RETURNING id_usuario, email, nombre as nombres, apellido as apellidos
@@ -246,14 +264,14 @@ export const crearUsuario = async (req, res) => {
 
     return res.status(201).json({
       ok: true,
-      message: 'Usuario creado exitosamente',
-      data: nuevoUsuario[0]
+      message: "Usuario creado exitosamente",
+      data: nuevoUsuario[0],
     });
   } catch (error) {
-    console.error('Error en crearUsuario:', error);
+    console.error("Error en crearUsuario:", error);
     return res.status(500).json({
       ok: false,
-      message: 'Error al crear el usuario'
+      message: "Error al crear el usuario",
     });
   }
 };
@@ -279,6 +297,7 @@ export const obtenerUsuario = async (req, res) => {
                 u.telefono,
                 u.direccion,
                 u.ciudad,
+                u.departamento,
                 u.estado,
                 u.foto_perfil
             FROM usuarios u
@@ -289,7 +308,7 @@ export const obtenerUsuario = async (req, res) => {
     if (usuario.length === 0) {
       return res.status(404).json({
         ok: false,
-        message: 'Usuario no encontrado',
+        message: "Usuario no encontrado",
       });
     }
 
@@ -301,7 +320,7 @@ export const obtenerUsuario = async (req, res) => {
     console.error(error);
     return res.status(500).json({
       ok: false,
-      message: 'Error al obtener el usuario',
+      message: "Error al obtener el usuario",
     });
   }
 };
@@ -312,7 +331,18 @@ export const obtenerUsuario = async (req, res) => {
 export const actualizarUsuario = async (req, res) => {
   try {
     const { id } = req.params;
-    const { id_rol, nombres, apellidos, telefono, direccion, ciudad, estado, email, documento, tipo_documento } = req.body;
+    const {
+      id_rol,
+      nombres,
+      apellidos,
+      telefono,
+      direccion,
+      ciudad,
+      estado,
+      email,
+      documento,
+      tipo_documento,
+    } = req.body;
 
     // Verificar que el usuario existe
     const usuarioExiste = await sql`
@@ -322,7 +352,7 @@ export const actualizarUsuario = async (req, res) => {
     if (usuarioExiste.length === 0) {
       return res.status(404).json({
         ok: false,
-        message: 'Usuario no encontrado',
+        message: "Usuario no encontrado",
       });
     }
 
@@ -353,7 +383,9 @@ export const actualizarUsuario = async (req, res) => {
                   estado !== undefined ? estado : usuarioExiste[0].estado
                 },
                 foto_perfil = ${
-                  req.body.foto_perfil !== undefined ? req.body.foto_perfil : usuarioExiste[0].foto_perfil
+                  req.body.foto_perfil !== undefined
+                    ? req.body.foto_perfil
+                    : usuarioExiste[0].foto_perfil
                 }
             WHERE id_usuario = ${id}
             RETURNING *
@@ -361,14 +393,14 @@ export const actualizarUsuario = async (req, res) => {
 
     return res.json({
       ok: true,
-      message: 'Usuario actualizado exitosamente',
+      message: "Usuario actualizado exitosamente",
       data: usuarioActualizado[0],
     });
   } catch (error) {
     console.error(error);
     return res.status(500).json({
       ok: false,
-      message: 'Error al actualizar el usuario',
+      message: "Error al actualizar el usuario",
     });
   }
 };
@@ -388,7 +420,7 @@ export const desactivarUsuario = async (req, res) => {
     if (usuarioExiste.length === 0) {
       return res.status(404).json({
         ok: false,
-        message: 'Usuario no encontrado',
+        message: "Usuario no encontrado",
       });
     }
 
@@ -414,13 +446,13 @@ export const desactivarUsuario = async (req, res) => {
 
     return res.json({
       ok: true,
-      message: 'Usuario desactivado exitosamente',
+      message: "Usuario desactivado exitosamente",
     });
   } catch (error) {
     console.error(error);
     return res.status(500).json({
       ok: false,
-      message: 'Error al desactivar el usuario',
+      message: "Error al desactivar el usuario",
     });
   }
 };
@@ -432,9 +464,26 @@ export const eliminarUsuario = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const usuarioExiste = await sql`SELECT * FROM usuarios WHERE id_usuario = ${id}`;
+    const usuarioExiste =
+      await sql`SELECT * FROM usuarios WHERE id_usuario = ${id}`;
     if (usuarioExiste.length === 0) {
-      return res.status(404).json({ ok: false, message: 'Usuario no encontrado' });
+      return res
+        .status(404)
+        .json({ ok: false, message: "Usuario no encontrado" });
+    }
+
+    if (usuarioExiste[0].id_rol === 2 && usuarioExiste[0].estado === false) {
+      return res.status(400).json({
+        ok: false,
+        message: "No se puede eliminar un cliente inactivo",
+      });
+    }
+
+    if (usuarioExiste[0].estado === false) {
+      return res.status(400).json({
+        ok: false,
+        message: "No se puede eliminar un usuario inactivo",
+      });
     }
 
     // Bloquear si tiene pedidos en estado activo
@@ -453,9 +502,11 @@ export const eliminarUsuario = async (req, res) => {
     // Eliminar permanentemente
     await sql`DELETE FROM usuarios WHERE id_usuario = ${id}`;
 
-    return res.json({ ok: true, message: 'Usuario eliminado permanentemente' });
+    return res.json({ ok: true, message: "Usuario eliminado permanentemente" });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ ok: false, message: 'Error al eliminar el usuario' });
+    return res
+      .status(500)
+      .json({ ok: false, message: "Error al eliminar el usuario" });
   }
 };

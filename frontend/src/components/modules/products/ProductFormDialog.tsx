@@ -7,12 +7,11 @@ import {
 } from "../../ui/dialog";
 import { Input } from "../../ui/input";
 import { Label } from "../../ui/label";
-import { Button } from "../../ui/button";
+
 import { Textarea } from "../../ui/textarea";
 import { GenericCombobox } from "../../GenericCombobox";
 import {
   X,
-  Plus,
   Pencil,
   Tag,
   Layers,
@@ -112,8 +111,11 @@ export function ProductFormDialog({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith("image/")) {
-      toast.error("El archivo debe ser una imagen");
+    const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+    if (!validTypes.includes(file.type)) {
+      toast.error("Formato inválido", {
+        description: "Solo se permiten imágenes en formato JPG, PNG o WEBP.",
+      });
       return;
     }
 
@@ -186,9 +188,12 @@ export function ProductFormDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-white border border-gray-100 max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl p-0">
-        <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100 sticky top-0 bg-white z-10">
+        <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100 sticky top-0 bg-white" style={{ zIndex: 60 }}>
           <div className="flex items-center gap-4">
-            <div className="flex items-center justify-center text-white font-bold text-lg flex-shrink-0 luxury-icon-gradient" style={{ width: 44, height: 44, borderRadius: 12 }}>
+            <div
+              className="flex items-center justify-center text-white font-bold text-lg flex-shrink-0 luxury-icon-gradient"
+              style={{ width: 44, height: 44, borderRadius: 12 }}
+            >
               {editingProduct ? (
                 <Pencil className="w-5 h-5" />
               ) : (
@@ -216,7 +221,10 @@ export function ProductFormDialog({
 
         <div className="px-6 py-5">
           <div className="grid grid-cols-2 gap-5 py-6">
-            <div className="space-y-4" style={{ position: "relative", zIndex: 50 }}>
+            <div
+              className="space-y-4"
+              style={{ position: "relative", zIndex: 50 }}
+            >
               <div className="space-y-2">
                 <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">
                   <Tag className="w-3.5 h-3.5 text-[#c47b96]" />
@@ -229,7 +237,11 @@ export function ProductFormDialog({
                   placeholder="Nombre del producto"
                   maxLength={80}
                 />
-                {fieldErrors.nombre && <p className="text-rose-500 text-xs mt-1">{fieldErrors.nombre}</p>}
+                {fieldErrors.nombre && (
+                  <p className="text-rose-500 text-xs mt-1">
+                    {fieldErrors.nombre}
+                  </p>
+                )}
               </div>
 
               <div className="flex flex-col gap-4">
@@ -254,7 +266,9 @@ export function ProductFormDialog({
                     disabled={isSaving}
                   />
                   {fieldErrors.categoriaId && (
-                    <p className="text-rose-500 text-xs mt-1">{fieldErrors.categoriaId}</p>
+                    <p className="text-rose-500 text-xs mt-1">
+                      {fieldErrors.categoriaId}
+                    </p>
                   )}
                 </div>
 
@@ -277,13 +291,18 @@ export function ProductFormDialog({
                     disabled={isSaving}
                   />
                   {fieldErrors.marcaId && (
-                    <p className="text-rose-500 text-xs mt-1">{fieldErrors.marcaId}</p>
+                    <p className="text-rose-500 text-xs mt-1">
+                      {fieldErrors.marcaId}
+                    </p>
                   )}
                 </div>
               </div>
             </div>
 
-            <div className="space-y-4" style={{ position: "relative", zIndex: 40 }}>
+            <div
+              className="space-y-4"
+              style={{ position: "relative", zIndex: 40 }}
+            >
               <div className="space-y-2">
                 <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">
                   <DollarSign className="w-3.5 h-3.5 text-[#c47b96]" />
@@ -384,8 +403,8 @@ export function ProductFormDialog({
                 </div>
                 <div className="flex-1 space-y-3">
                   <p className="text-xs text-gray-500">
-                    Sube una imagen clara del producto. Formatos aceptados:
-                    JPG, PNG. Máximo 5MB.
+                    Sube una imagen clara del producto. Formatos aceptados: JPG,
+                    PNG. Máximo 5MB.
                   </p>
                   <div className="flex flex-wrap gap-2">
                     <div className="relative">
@@ -429,27 +448,66 @@ export function ProductFormDialog({
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 px-6 pb-6 pt-4 border-t border-gray-100 sticky bottom-0 bg-white z-10">
-          <Button
-            variant="outline"
+        <div className="flex justify-end gap-3 px-6 pb-6 pt-4 border-t border-gray-100 sticky bottom-0 bg-white" style={{ zIndex: 60 }}>
+          <button
             onClick={() => onOpenChange(false)}
-            className="border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg px-5 h-10 text-sm"
             disabled={isSaving}
+            style={{
+              padding: "10px 22px",
+              borderRadius: "10px",
+              fontSize: "13px",
+              fontWeight: 700,
+              cursor: isSaving ? "not-allowed" : "pointer",
+              border: "1.5px solid #f0d5e0",
+              background: "#fff8fb",
+              color: "#c47b96",
+              transition: "all 0.2s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "#fdf2f6";
+              e.currentTarget.style.borderColor = "#c47b96";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "#fff8fb";
+              e.currentTarget.style.borderColor = "#f0d5e0";
+            }}
           >
             Cancelar
-          </Button>
+          </button>
           <button
             onClick={handleSave}
             disabled={isSaving || isUploading}
-            className={`rounded-lg font-semibold px-6 h-10 text-sm border-0 luxury-button-modal ${
-              (isSaving || isUploading) ? "opacity-70 cursor-not-allowed" : "cursor-pointer"
-            }`}
+            style={{
+              padding: "10px 28px",
+              borderRadius: "10px",
+              fontSize: "13px",
+              fontWeight: 700,
+              cursor: isSaving || isUploading ? "not-allowed" : "pointer",
+              border: "none",
+              background: "linear-gradient(135deg, #c47b96 0%, #a85d77 100%)",
+              color: "#ffffff",
+              boxShadow: "0 4px 12px rgba(196,123,150,0.3)",
+              transition: "all 0.2s",
+              opacity: isSaving || isUploading ? 0.7 : 1,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "translateY(-1px)";
+              e.currentTarget.style.boxShadow =
+                "0 6px 16px rgba(196,123,150,0.4)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "none";
+              e.currentTarget.style.boxShadow =
+                "0 4px 12px rgba(196,123,150,0.3)";
+            }}
           >
             {isSaving ? (
-              <div className="flex items-center gap-2">
+              <span
+                style={{ display: "flex", alignItems: "center", gap: "8px" }}
+              >
                 <Loader2 className="w-4 h-4 animate-spin" />
                 <span>{editingProduct ? "Actualizando..." : "Creando..."}</span>
-              </div>
+              </span>
             ) : editingProduct ? (
               "Actualizar Producto"
             ) : (

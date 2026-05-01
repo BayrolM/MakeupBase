@@ -153,7 +153,7 @@ export function AsyncProductSelect({
           className="bg-white border border-gray-200 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in duration-200"
           onMouseDown={(e) => e.stopPropagation()}
         >
-          <div className="max-h-[250px] overflow-y-auto py-2 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+          <div className="max-h-[250px] overflow-y-auto p-1 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
             {loading && (
               <div className="px-4 py-3 text-sm text-gray-500 flex items-center gap-2">
                 <div className="w-3 h-3 border-2 border-[#c47b96]/30 border-t-[#c47b96] rounded-full animate-spin" />
@@ -161,28 +161,56 @@ export function AsyncProductSelect({
               </div>
             )}
             {!loading && options.length === 0 && (
-              <div className="px-4 py-3 text-sm text-center text-gray-500 italic">No se encontraron productos.</div>
+              <div className="px-4 py-3 text-sm text-center text-gray-400 italic">No se encontraron productos.</div>
             )}
-            {!loading && options.map((prod, index) => (
-              <div
-                key={prod.id}
-                data-option
-                style={{ cursor: "pointer" }}
-                onMouseEnter={() => setSelectedIndex(index)}
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => selectProduct(prod)}
-                className={`relative flex items-center rounded-lg px-3 py-2.5 text-sm transition-all mx-1 mb-0.5 ${
-                  value === prod.id
-                    ? "bg-[#c47b96] text-white font-semibold shadow-sm"
-                    : index === selectedIndex
-                      ? "bg-gray-100 text-gray-900 font-medium"
-                      : "text-gray-700 font-medium"
-                }`}
-              >
-                <Check className={`mr-3 h-4 w-4 shrink-0 ${value === prod.id ? "opacity-100" : "opacity-0"}`} />
-                <span className="truncate">{prod.nombre}</span>
-              </div>
-            ))}
+            {!loading && options.map((prod, index) => {
+              const isSelected = value === prod.id;
+              const isHovered = index === selectedIndex;
+              return (
+                <div
+                  key={prod.id}
+                  data-option
+                  onMouseEnter={() => setSelectedIndex(index)}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => selectProduct(prod)}
+                  style={{
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    borderRadius: "8px",
+                    padding: "10px 12px",
+                    fontSize: "13px",
+                    fontWeight: 600,
+                    transition: "all 0.15s ease",
+                    background: isSelected
+                      ? "#c47b96"
+                      : isHovered
+                        ? "#fdf2f6"
+                        : "transparent",
+                    color: isSelected
+                      ? "#ffffff"
+                      : isHovered
+                        ? "#a85d77"
+                        : "#4b5563",
+                    boxShadow: isSelected
+                      ? "0 1px 3px rgba(196,123,150,0.3)"
+                      : "none",
+                  }}
+                >
+                  <Check
+                    className="flex-shrink-0"
+                    style={{
+                      width: 14,
+                      height: 14,
+                      marginRight: 10,
+                      opacity: isSelected ? 1 : 0,
+                      color: isSelected ? "#ffffff" : "transparent",
+                    }}
+                  />
+                  <span className="truncate">{prod.nombre}</span>
+                </div>
+              );
+            })}
           </div>
         </div>,
         document.body

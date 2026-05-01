@@ -1,5 +1,5 @@
-import { Pencil, Shield, X, CheckCircle2 } from 'lucide-react';
-import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogFooter } from '../../ui/dialog';
+import { Pencil, Shield, X, CheckCircle2, Loader2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '../../ui/dialog';
 import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
 import { Label } from '../../ui/label';
@@ -14,6 +14,7 @@ interface RolFormDialogProps {
   onOpenChange: (open: boolean) => void;
   editingRol: any;
   formData: any;
+  isSaving?: boolean;
   onFieldChange: (name: string, value: any) => void;
   onPermisoChange: (modulo: string, tipo: 'ver' | 'crear' | 'editar' | 'eliminar', value: boolean) => void;
   onSave: () => void;
@@ -24,6 +25,7 @@ export function RolFormDialog({
   onOpenChange,
   editingRol,
   formData,
+  isSaving = false,
   onFieldChange,
   onPermisoChange,
   onSave
@@ -33,7 +35,7 @@ export function RolFormDialog({
       <DialogContent className="bg-white border-0 max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl p-0">
         <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100 sticky top-0 bg-white z-20">
           <div className="flex items-center gap-4">
-            <div className="flex items-center justify-center text-white font-bold text-lg flex-shrink-0 luxury-icon-gradient" 
+            <div className="flex items-center justify-center text-white font-bold text-lg flex-shrink-0 luxury-icon-gradient"
               style={{ width: 44, height: 44, borderRadius: 12 }}>
               {editingRol ? <Pencil className="w-5 h-5" /> : <Shield className="w-5 h-5" />}
             </div>
@@ -46,7 +48,11 @@ export function RolFormDialog({
               </DialogDescription>
             </div>
           </div>
-          <button onClick={() => onOpenChange(false)} className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
+          <button
+            onClick={() => !isSaving && onOpenChange(false)}
+            disabled={isSaving}
+            className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -65,14 +71,24 @@ export function RolFormDialog({
                   id="nombre"
                   value={formData.nombre}
                   onChange={(e) => onFieldChange('nombre', e.target.value)}
-                  className="bg-gray-50 border-gray-200 text-gray-800 rounded-xl h-11 focus:ring-[#c47b96]/20 focus:border-[#c47b96]"
+                  className="bg-gray-50 border-gray-200 text-gray-800 rounded-xl h-11 focus:ring-[#c47b96]/20 focus:border-[#c47b96] disabled:opacity-60"
                   placeholder="Ej: Gerente, Supervisor..."
+                  maxLength={30}
+                  disabled={isSaving || (editingRol && (editingRol.id === '1' || editingRol.id === '2'))}
                 />
+                <div className="flex justify-between items-center mt-1">
+                  {(editingRol && (editingRol.id === '1' || editingRol.id === '2')) ? (
+                    <p className="text-xs text-amber-600 font-medium italic">No se puede renombrar un rol interno.</p>
+                  ) : (
+                    <span />
+                  )}
+                  <p className="text-xs text-gray-400">{formData.nombre.length}/30</p>
+                </div>
               </div>
               <div className="space-y-2">
                 <Label className="text-gray-700 font-bold text-sm">Estado del Rol</Label>
                 <div className="h-11 flex items-center bg-gray-50 rounded-xl border border-gray-200 px-4">
-                   <StatusSwitch
+                  <StatusSwitch
                     status={formData.estado}
                     onChange={(newStatus) => onFieldChange('estado', newStatus)}
                   />
@@ -88,7 +104,8 @@ export function RolFormDialog({
                   value={formData.descripcion}
                   onChange={(e) => onFieldChange('descripcion', e.target.value)}
                   className="bg-gray-50 border-gray-200 text-gray-800 rounded-xl min-h-[80px] focus:ring-[#c47b96]/20 focus:border-[#c47b96]"
-                  placeholder="Explica brevemente para qué sirve este rol..."
+                  placeholder="Explica brevemente para qué sirve este rol... (opcional)"
+                  disabled={isSaving}
                 />
               </div>
             </div>
@@ -152,19 +169,55 @@ export function RolFormDialog({
         </div>
 
         <div className="flex justify-end gap-3 px-6 pb-6 pt-5 bg-white border-t border-gray-100 sticky bottom-0 z-10 rounded-b-2xl">
-          <Button
-            variant="outline"
+          <button
             onClick={() => onOpenChange(false)}
-            className="bg-white border-gray-200 text-gray-600 hover:bg-gray-50 rounded-xl px-6 h-11 text-sm font-semibold"
+            disabled={isSaving}
+            style={{
+              padding: "10px 22px",
+              borderRadius: "10px",
+              fontSize: "13px",
+              fontWeight: 700,
+              cursor: isSaving ? "not-allowed" : "pointer",
+              border: "1.5px solid #f0d5e0",
+              background: "#fff8fb",
+              color: "#c47b96",
+              transition: "all 0.2s",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "#fdf2f6"; e.currentTarget.style.borderColor = "#c47b96"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "#fff8fb"; e.currentTarget.style.borderColor = "#f0d5e0"; }}
           >
             Cancelar
-          </Button>
+          </button>
           <button
             onClick={onSave}
-            className="rounded-xl font-bold px-8 h-11 text-sm border-0 luxury-button-modal shadow-lg shadow-[#c47b96]/20 flex items-center justify-center text-white"
+            disabled={isSaving}
+            style={{
+              padding: "10px 28px",
+              borderRadius: "10px",
+              fontSize: "13px",
+              fontWeight: 700,
+              cursor: isSaving ? "not-allowed" : "pointer",
+              border: "none",
+              background: "linear-gradient(135deg, #c47b96 0%, #a85d77 100%)",
+              color: "#ffffff",
+              boxShadow: "0 4px 12px rgba(196,123,150,0.3)",
+              transition: "all 0.2s",
+              opacity: isSaving ? 0.7 : 1,
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 6px 16px rgba(196,123,150,0.4)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(196,123,150,0.3)"; }}
           >
-            <CheckCircle2 className="w-4 h-4 mr-2" />
-            {editingRol ? 'Guardar Cambios' : 'Registrar Nuevo Rol'}
+            {isSaving ? (
+              <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span style={{ width: 16, height: 16, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.6s linear infinite", display: "inline-block" }} />
+                <span>Guardando...</span>
+              </span>
+            ) : (
+              <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <CheckCircle2 className="w-4 h-4" />
+                <span>{editingRol ? 'Guardar Cambios' : 'Registrar Nuevo Rol'}</span>
+              </span>
+            )}
           </button>
         </div>
       </DialogContent>

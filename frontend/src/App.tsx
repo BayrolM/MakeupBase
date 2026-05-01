@@ -89,6 +89,9 @@ function AppContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [showAuthPage, setShowAuthPage] = useState(false);
   const [authPage, setAuthPage] = useState<AuthPage>("login");
+  const [recoverToken, setRecoverToken] = useState<string | undefined>(
+    undefined,
+  );
   const [currentRoute, setCurrentRoute] = useState<Route>(
     userType === "admin" ? "dashboard" : "inicio",
   );
@@ -226,7 +229,6 @@ function AppContent() {
         comprobante_url: o.comprobante_url || "",
         fechaVenta: o.fecha_venta || null,
         productos: (o.items || []).map((i: any) => ({
-
           productoId: (i.id_producto || i.id_detalle_pedido)?.toString() || "0",
           cantidad: i.cantidad || 0,
           precioUnitario: Number(i.precio_unitario) || 0,
@@ -251,6 +253,7 @@ function AppContent() {
           telefono: profile.telefono,
           direccion: profile.direccion || "",
           ciudad: profile.ciudad || "",
+          departamento: profile.departamento || "",
           id_rol: Number(profile.id_rol),
           foto_perfil: profile.foto_perfil,
           rol:
@@ -281,6 +284,17 @@ function AppContent() {
 
   useEffect(() => {
     checkAuth();
+
+    // Verificar si hay un token de recuperación en la URL
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+    if (token) {
+      setRecoverToken(token);
+      setAuthPage("recover");
+      setShowAuthPage(true);
+      // Limpiar la URL sin recargar la página
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run once on mount
 
@@ -308,6 +322,7 @@ function AppContent() {
         telefono: profile.telefono,
         direccion: profile.direccion || "",
         ciudad: profile.ciudad || "",
+        departamento: profile.departamento || "",
         id_rol: Number(profile.id_rol),
         foto_perfil: profile.foto_perfil,
         rol:
@@ -438,9 +453,16 @@ function AppContent() {
       case "recover":
         authContent = (
           <RecoverPage
+            initialToken={recoverToken}
             onRecover={handleRecover}
-            onNavigateToLogin={() => setAuthPage("login")}
-            onBack={() => setShowAuthPage(false)}
+            onNavigateToLogin={() => {
+              setAuthPage("login");
+              setRecoverToken(undefined);
+            }}
+            onBack={() => {
+              setShowAuthPage(false);
+              setRecoverToken(undefined);
+            }}
           />
         );
         break;
@@ -705,7 +727,9 @@ function AppContent() {
           }}
           onLogout={handleLogout}
         />
-        <main ref={scrollContainerRef} className="flex-1">{renderContent()}</main>
+        <main ref={scrollContainerRef} className="flex-1">
+          {renderContent()}
+        </main>
       </div>
     );
   }
@@ -722,7 +746,9 @@ function AppContent() {
           currentRoute={currentRoute}
           onLogout={handleLogout}
         />
-        <main ref={scrollContainerRef} className="flex-1 overflow-auto">{renderContent()}</main>
+        <main ref={scrollContainerRef} className="flex-1 overflow-auto">
+          {renderContent()}
+        </main>
       </div>
     </SidebarProvider>
   );
