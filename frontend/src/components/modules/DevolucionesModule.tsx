@@ -179,6 +179,7 @@ export function DevolucionesModule() {
       newProductos[index].cantidadADevolver = 0;
     }
     setProductosDevolver(newProductos);
+    setErrorMessage("");
   };
 
   const handleCantidadChange = (index: number, cantidad: number) => {
@@ -186,6 +187,7 @@ export function DevolucionesModule() {
     if (cantidad >= 0 && cantidad <= newProductos[index].cantidadComprada) {
       newProductos[index].cantidadADevolver = cantidad;
       setProductosDevolver(newProductos);
+      setErrorMessage("");
     }
   };
 
@@ -196,13 +198,42 @@ export function DevolucionesModule() {
   }, [productosDevolver]);
 
   const handleSaveDevolucion = async () => {
-    if (!formData.ventaId.trim()) return setErrorMessage("Debe ingresar el ID de la venta");
-    if (!ventaData) return setErrorMessage("La venta no existe");
+    // Validaciones de campos obligatorios
+    if (!formData.ventaId.trim()) {
+      setErrorMessage("El ID de la venta es obligatorio");
+      return;
+    }
+    
+    if (!ventaData) {
+      setErrorMessage("Debes cargar una venta válida antes de continuar");
+      return;
+    }
 
     const productosSeleccionados = productosDevolver.filter(p => p.selected && p.cantidadADevolver > 0);
-    if (productosSeleccionados.length === 0) return setErrorMessage("Seleccione al menos un producto y cantidad");
-    if (formData.motivo.trim().length < 5) return setErrorMessage("Ingrese un motivo válido (mínimo 5 caracteres)");
-    if (formData.motivo.trim().length > 100) return setErrorMessage("El motivo no puede exceder 100 caracteres");
+    if (productosSeleccionados.length === 0) {
+      setErrorMessage("Debes seleccionar al menos un producto e ingresar una cantidad válida a devolver");
+      return;
+    }
+
+    if (!formData.motivo.trim()) {
+      setErrorMessage("El motivo de la devolución es obligatorio");
+      return;
+    }
+
+    if (formData.motivo.trim().length < 5) {
+      setErrorMessage("El motivo debe tener al menos 5 caracteres");
+      return;
+    }
+
+    if (formData.motivo.trim().length > 100) {
+      setErrorMessage("El motivo no puede exceder los 100 caracteres");
+      return;
+    }
+
+    if (!formData.fechaDevolucion) {
+      setErrorMessage("La fecha de devolución es obligatoria");
+      return;
+    }
 
     setIsSaving(true);
     setErrorMessage("");
@@ -346,13 +377,15 @@ export function DevolucionesModule() {
         formData={formData}
         ventaData={ventaData}
         productosDevolver={productosDevolver}
-        clientes={clientes}
         productos={productos}
         successMessage={successMessage}
         errorMessage={errorMessage}
         isSaving={isSaving}
         onVentaIdChange={handleVentaIdChange}
-        onFieldChange={(name, val) => setFormData(p => ({ ...p, [name]: val }))}
+        onFieldChange={(name, val) => {
+          setFormData(p => ({ ...p, [name]: val }));
+          setErrorMessage("");
+        }}
         onToggleProducto={handleToggleProducto}
         onCantidadChange={handleCantidadChange}
         onSave={handleSaveDevolucion}

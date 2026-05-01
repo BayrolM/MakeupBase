@@ -50,25 +50,25 @@ export function DevolucionTable({
       <Table>
         <TableHeader>
           <TableRow className="bg-[#fff0f5] border-b-2 border-[#fce8f0]">
-            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-3 pl-6">
+            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-4 pl-6">
               <div className="flex items-center gap-1.5"><Hash className="w-3.5 h-3.5" /> ID</div>
             </TableHead>
-            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-3">
+            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-4">
               <div className="flex items-center gap-1.5"><User className="w-3.5 h-3.5" /> Cliente</div>
             </TableHead>
-            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-3">
+            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-4">
               <div className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" /> Fecha</div>
             </TableHead>
-            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-3">
+            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-4">
               Motivo
             </TableHead>
-            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-3">
+            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-4">
               Total
             </TableHead>
-            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-3">
+            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-4">
               Estado
             </TableHead>
-            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider text-right py-3 pr-6">Acciones</TableHead>
+            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider text-right py-4 pr-6">Acciones</TableHead>
           </TableRow>
         </TableHeader>
 
@@ -98,64 +98,56 @@ export function DevolucionTable({
               
               return (
                 <TableRow key={dev.id} className="border-b border-gray-100 transition-all duration-200 hover:bg-gradient-to-r hover:from-[#fff0f5]/40 hover:to-transparent group bg-white">
-                  <TableCell className="py-3 pl-6">
+                  <TableCell className="py-4">
                     <div className="flex flex-col">
-                      <span className="font-mono text-[12px] font-bold text-gray-700 group-hover:text-[#c47b96]">DEV-{dev.id}</span>
+                      <span className="font-mono text-[12px] font-semibold text-gray-700 group-hover:text-[#c47b96]">DEV-{dev.id}</span>
                       {dev.ventaId && (
                         <span className="font-mono text-[10px] text-gray-400">Venta #{dev.ventaId}</span>
                       )}
                     </div>
                   </TableCell>
-                  <TableCell className="py-3">
-                    <span className="text-gray-800 font-semibold text-sm">{(dev as any).clienteNombre || cliente?.nombre || "N/A"}</span>
+                  <TableCell className="py-4">
+                    <span className="text-gray-800 font-medium text-sm">{(dev as any).clienteNombre || cliente?.nombre || "N/A"}</span>
                   </TableCell>
-                  <TableCell className="py-3">
-                    <span className="text-gray-500 text-xs">{dev.fecha}</span>
+                  <TableCell className="py-4">
+                    <span className="text-gray-500 text-sm">{dev.fecha}</span>
                   </TableCell>
-                  <TableCell className="py-3">
-                    <span className="text-gray-500 text-sm truncate max-w-[150px] block" title={dev.motivo}>{dev.motivo}</span>
+                  <TableCell className="py-4">
+                    <div className="max-w-[180px]">
+                      <span className="text-gray-600 text-sm font-medium block truncate" title={dev.motivo}>
+                        {dev.motivo || "—"}
+                      </span>
+                    </div>
                   </TableCell>
-                  <TableCell className="py-3 font-mono text-sm font-bold text-gray-800">
+                  <TableCell className="py-4 font-mono text-sm font-semibold text-gray-800">
                     {formatCurrency(dev.totalDevuelto)}
                   </TableCell>
-                  <TableCell className="py-3">
-                    <div className="flex flex-col gap-1.5">
+                  <TableCell className="py-4">
                       <div className="flex items-center gap-2">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${statusInfo.bg} ${statusInfo.text}`}>
+                        <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider ${statusInfo.bg} ${statusInfo.text}`}>
                           {statusInfo.label}
                         </span>
                         {canChangeEstado(dev.estado) && (
                           <button
                             onClick={() => onChangeEstado(dev)}
-                            className="h-6 w-6 flex items-center justify-center rounded-md text-gray-400 hover:bg-[#fff0f5] hover:text-[#c47b96] transition-colors"
+                            className="h-7 w-7 flex items-center justify-center rounded-lg text-gray-400 hover:bg-[#fff0f5] hover:text-[#c47b96] transition-all border border-transparent hover:border-[#c47b96]/30"
                             title="Cambiar estado"
                           >
-                            <Edit className="w-3 h-3" />
+                            <Edit className="w-3.5 h-3.5" />
                           </button>
                         )}
                       </div>
-                      {dev.motivoDecision && (
-                        <span className="text-[10px] text-gray-400 italic max-w-[150px] truncate" title={dev.motivoDecision}>
-                          Motivo: {dev.motivoDecision}
-                        </span>
-                      )}
-                      {dev.motivoAnulacion && (
-                        <span className="text-[10px] text-rose-400 italic max-w-[150px] truncate" title={dev.motivoAnulacion}>
-                          Anulación: {dev.motivoAnulacion}
-                        </span>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell className="py-3 pr-6">
-                    <div className="flex items-center justify-end gap-1">
-                      <button onClick={() => onViewPdf(dev)} title="Descargar Comprobante" className="h-8 w-8 flex items-center justify-center rounded-lg transition-all duration-150 cursor-pointer text-gray-400 hover:bg-blue-50 hover:text-blue-600">
+                    </TableCell>
+                  <TableCell className="py-4 pr-6">
+                    <div className="flex items-center justify-end gap-1.5">
+                      <button onClick={() => onViewPdf(dev)} title="Descargar Comprobante" className="h-8 w-8 flex items-center justify-center rounded-lg transition-all duration-150 text-gray-400 hover:bg-blue-50 hover:text-blue-600">
                         <FileText className="w-4 h-4" />
                       </button>
-                      <button onClick={() => onViewDetail(dev)} title="Ver Detalles" className="h-8 w-8 flex items-center justify-center rounded-lg transition-all duration-150 cursor-pointer text-gray-400 hover:bg-indigo-50 hover:text-indigo-600">
+                      <button onClick={() => onViewDetail(dev)} title="Ver Detalles" className="h-8 w-8 flex items-center justify-center rounded-lg transition-all duration-150 text-gray-400 hover:bg-indigo-50 hover:text-indigo-600">
                         <Eye className="w-4 h-4" />
                       </button>
                       {canAnularDevolucion(dev.estado) && (
-                        <button onClick={() => onAnular(dev)} title="Anular Devolución" className="h-8 w-8 flex items-center justify-center rounded-lg transition-all duration-150 cursor-pointer text-gray-400 hover:bg-rose-50 hover:text-rose-600">
+                        <button onClick={() => onAnular(dev)} title="Anular Devolución" className="h-8 w-8 flex items-center justify-center rounded-lg transition-all duration-150 text-gray-400 hover:bg-rose-50 hover:text-rose-600">
                           <X className="w-4 h-4" />
                         </button>
                       )}

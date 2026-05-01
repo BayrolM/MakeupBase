@@ -1,5 +1,7 @@
-import { AlertTriangle } from "lucide-react";
-import { Dialog, DialogContent, DialogTitle } from "../../ui/dialog";
+import { AlertTriangle, X, Loader2 } from "lucide-react";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "../../ui/dialog";
+import { Button } from "../../ui/button";
+import { Textarea } from "../../ui/textarea";
 
 interface DevolucionAnularDialogProps {
   open: boolean;
@@ -26,77 +28,47 @@ export function DevolucionAnularDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        className="border-0 rounded-2xl shadow-2xl p-0"
-        style={{
-          backgroundColor: "#fff",
-          maxWidth: 420,
-          overflow: "hidden",
-        }}
-      >
-        {/* Icon + Content */}
-        <div style={{ padding: "32px 28px 20px 28px", textAlign: "center" }}>
-          {/* Warning icon */}
-          <div
-            style={{
-              width: 56,
-              height: 56,
-              borderRadius: "50%",
-              backgroundColor: "#fef2f2",
-              border: "2px solid #fecaca",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              margin: "0 auto 20px auto",
-            }}
+      <DialogContent className="bg-white border-0 max-w-md rounded-2xl shadow-2xl p-0 overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100 bg-white">
+          <div className="flex items-center gap-4">
+            <div 
+              className="flex items-center justify-center text-white font-bold text-lg flex-shrink-0"
+              style={{ width: 44, height: 44, borderRadius: 12, background: "linear-gradient(135deg,#c47b96,#e092b2)", boxShadow: "0 2px 8px rgba(196,123,150,0.3)" }}
+            >
+              <AlertTriangle className="w-5 h-5" />
+            </div>
+            <div>
+              <DialogTitle className="text-base font-bold text-gray-900 leading-tight">
+                Anular Devolución
+              </DialogTitle>
+              <DialogDescription className="text-xs text-gray-400 mt-0.5">
+                DEV-{devolucion.id}
+              </DialogDescription>
+            </div>
+          </div>
+          <button
+            onClick={() => onOpenChange(false)}
+            className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
           >
-            <AlertTriangle style={{ width: 26, height: 26, color: "#ef4444" }} />
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="px-6 py-5 space-y-5">
+          <div className="text-center">
+            <p className="text-sm text-gray-600 leading-relaxed">
+              ¿Estás seguro de que deseas anular esta devolución? Esta acción es{" "}
+              <strong className="text-red-500">irreversible</strong> y la devolución quedará registrada en el historial con estado{" "}
+              <strong>ANULADA</strong>.
+            </p>
           </div>
 
-          <DialogTitle
-            style={{
-              fontSize: 18,
-              fontWeight: 800,
-              color: "#1a1a2e",
-              marginBottom: 8,
-            }}
-          >
-            Anular Devolución DEV-{devolucion.id}
-          </DialogTitle>
-
-          <p
-            style={{
-              fontSize: 14,
-              color: "#6b7280",
-              lineHeight: 1.6,
-              margin: "0 auto",
-              maxWidth: 320,
-            }}
-          >
-            ¿Estás seguro de que deseas anular esta devolución? Esta acción es{" "}
-            <strong style={{ color: "#ef4444" }}>irreversible</strong> y la
-            devolución quedará registrada en el historial con sello de{" "}
-            <strong>ANULADA</strong>.
-          </p>
-
           {/* Info box */}
-          <div
-            style={{
-              marginTop: 20,
-              backgroundColor: "#fef2f2",
-              border: "1px solid #fecaca",
-              borderRadius: 12,
-              padding: "12px 16px",
-              display: "flex",
-              alignItems: "flex-start",
-              gap: 10,
-              textAlign: "left",
-            }}
-          >
-            <AlertTriangle
-              style={{ width: 16, height: 16, color: "#ef4444", flexShrink: 0, marginTop: 2 }}
-            />
-            <span style={{ fontSize: 12, color: "#991b1b", lineHeight: 1.5 }}>
+          <div className="p-4 rounded-xl bg-red-50 border border-red-100 flex gap-3">
+            <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0" />
+            <span className="text-xs text-red-700 leading-relaxed">
               {esAprobada
                 ? "Esta devolución fue aprobada. Al anularla, el stock será revertido (los productos se descontarán del inventario)."
                 : "El registro se conservará en el historial con estado ANULADA."}
@@ -104,125 +76,44 @@ export function DevolucionAnularDialog({
           </div>
 
           {/* Motivo */}
-          <div style={{ marginTop: 20, textAlign: "left" }}>
-            <div className="flex items-center justify-between" style={{ marginBottom: 6 }}>
-              <label
-                style={{
-                  fontSize: 11,
-                  fontWeight: 700,
-                  color: "#888",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.05em",
-                }}
-              >
-                Motivo de Anulación <span style={{ color: "#ef4444" }}>*</span>
-              </label>
-              <span style={{ fontSize: 10, fontWeight: 700, color: "#aaa" }}>
-                Mín: 5 caracteres
-              </span>
-            </div>
-            <textarea
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-gray-600 uppercase tracking-wider">
+              Motivo de Anulación <span className="text-red-500">*</span>
+            </label>
+            <Textarea
               value={motivoAnulacion}
               onChange={(e) => onMotivoChange(e.target.value)}
               disabled={isSaving}
               placeholder="Ingresa los motivos técnicos o legales de la anulación..."
-              style={{
-                width: "100%",
-                minHeight: 80,
-                backgroundColor: "#f9fafb",
-                border: "1px solid #e5e7eb",
-                borderRadius: 12,
-                padding: "10px 14px",
-                fontSize: 13,
-                color: "#1a1a2e",
-                fontWeight: 600,
-                resize: "vertical",
-                outline: "none",
-                fontFamily: "inherit",
-              }}
+              className="min-h-[80px] bg-gray-50 border-gray-200 rounded-xl p-3 text-sm font-medium resize-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500"
             />
+            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest text-right">Mínimo: 5 caracteres</p>
           </div>
         </div>
 
-        {/* Footer buttons */}
-        <div
-          style={{
-            padding: "16px 28px",
-            borderTop: "1px solid #f3f4f6",
-            backgroundColor: "#fafafa",
-            display: "flex",
-            gap: 12,
-            justifyContent: "flex-end",
-          }}
-        >
-          <button
-            onClick={() => onOpenChange(false)}
+        {/* Footer */}
+        <div className="flex gap-3 px-6 pb-6 pt-2 border-t border-gray-100">
+          <Button 
+            variant="outline" 
+            onClick={() => onOpenChange(false)} 
+            className="flex-1 border-gray-200 text-gray-600 hover:bg-gray-50 rounded-xl h-11 font-bold text-sm"
             disabled={isSaving}
-            style={{
-              height: 42,
-              padding: "0 20px",
-              borderRadius: 10,
-              fontWeight: 700,
-              fontSize: 14,
-              border: "1px solid #e5e7eb",
-              backgroundColor: "white",
-              color: "#374151",
-              cursor: isSaving ? "not-allowed" : "pointer",
-              opacity: isSaving ? 0.5 : 1,
-              transition: "background 0.15s",
-            }}
-            onMouseOver={(e) => {
-              if (!isSaving) (e.currentTarget as HTMLElement).style.backgroundColor = "#f3f4f6";
-            }}
-            onMouseOut={(e) => {
-              (e.currentTarget as HTMLElement).style.backgroundColor = "white";
-            }}
           >
             No, Mantener
-          </button>
-          <button
+          </Button>
+          <Button 
             onClick={onConfirm}
             disabled={isSaving || motivoAnulacion.trim().length < 5}
-            style={{
-              height: 42,
-              padding: "0 22px",
-              borderRadius: 10,
-              fontWeight: 700,
-              fontSize: 14,
-              border: "none",
-              backgroundColor: isSaving || motivoAnulacion.trim().length < 5 ? "#fca5a5" : "#ef4444",
-              color: "white",
-              cursor: isSaving || motivoAnulacion.trim().length < 5 ? "not-allowed" : "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 8,
-              minWidth: 160,
-              transition: "background 0.2s",
-            }}
-            onMouseOver={(e) => {
-              if (!isSaving && motivoAnulacion.trim().length >= 5)
-                (e.currentTarget as HTMLElement).style.backgroundColor = "#dc2626";
-            }}
-            onMouseOut={(e) => {
-              if (!isSaving && motivoAnulacion.trim().length >= 5)
-                (e.currentTarget as HTMLElement).style.backgroundColor = "#ef4444";
-            }}
+            className="flex-1 rounded-xl font-bold h-11 text-sm border-0 shadow-lg text-white transition-all hover:opacity-90"
+            style={{ backgroundColor: "#c47b96", boxShadow: "0 4px 12px rgba(196,123,150,0.3)" }}
           >
             {isSaving ? (
-              <>
-                <svg style={{ width: 16, height: 16 }} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" opacity="0.3" />
-                  <path d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" fill="currentColor" opacity="0.8">
-                    <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="1s" repeatCount="indefinite" />
-                  </path>
-                </svg>
+              <span className="flex items-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
                 Procesando...
-              </>
-            ) : (
-              "Sí, Anular Devolución"
-            )}
-          </button>
+              </span>
+            ) : "Sí, Anular"}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

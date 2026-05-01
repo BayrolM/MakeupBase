@@ -5,7 +5,8 @@ import {
   Calendar, 
   DollarSign, 
   Eye, 
-  ShoppingBag 
+  ShoppingBag,
+  FileText
 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../ui/table";
 import { formatCurrency } from "../../../utils/compraUtils";
@@ -16,6 +17,7 @@ interface CompraTableProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   onViewDetail: (compra: any) => void;
+  onViewPdf: (compra: any) => void;
   onAnular?: (compra: any) => void;
   isAdmin?: boolean;
 }
@@ -26,6 +28,7 @@ export function CompraTable({
   searchQuery,
   onSearchChange,
   onViewDetail,
+  onViewPdf,
   onAnular,
   isAdmin = false,
 }: CompraTableProps) {
@@ -48,30 +51,30 @@ export function CompraTable({
       <Table>
         <TableHeader>
           <TableRow className="bg-[#fff0f5] border-b-2 border-[#fce8f0]">
-            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-3 pl-6">
+            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-4 pl-6">
               <div className="flex items-center gap-1.5">
                 <HashIcon className="w-3.5 h-3.5" /> ID
               </div>
             </TableHead>
-            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-3">
+            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-4">
               <div className="flex items-center gap-1.5">
                 <Building2 className="w-3.5 h-3.5" /> Proveedor
               </div>
             </TableHead>
-            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-3 text-center">
+            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-4 text-center">
               <div className="flex items-center justify-center gap-1.5">
                 <Calendar className="w-3.5 h-3.5" /> Fecha
               </div>
             </TableHead>
-            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-3 text-center">
+            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-4 text-center">
               Estado
             </TableHead>
-            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-3 text-right">
+            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-4 text-right">
               <div className="flex items-center justify-end gap-1.5">
                 <DollarSign className="w-3.5 h-3.5" /> Total
               </div>
             </TableHead>
-            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-3 pr-6 text-right">
+            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-4 pr-6 text-right">
               Acciones
             </TableHead>
           </TableRow>
@@ -107,45 +110,49 @@ export function CompraTable({
                   key={compra.id} 
                   className="border-b border-gray-100 transition-all duration-200 hover:bg-gradient-to-r hover:from-[#fff0f5]/40 hover:to-transparent bg-white group"
                 >
-                  <TableCell className="py-2.5 pl-6">
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-gray-300 group-hover:bg-[#c47b96] transition-colors"></div>
-                      <span className="font-mono text-[11px] font-semibold text-gray-500">
-                        #{compra.id}
-                      </span>
-                    </div>
+                  <TableCell className="py-4 pl-6">
+                    <span className="font-mono text-[12px] font-semibold text-gray-700 group-hover:text-[#c47b96]">
+                      #{compra.id}
+                    </span>
                   </TableCell>
-                  <TableCell className="py-2.5">
-                    <span className="text-gray-800 font-semibold text-sm">
+                  <TableCell className="py-4">
+                    <span className="text-gray-800 font-medium text-sm">
                       {proveedor?.nombre || "N/A"}
                     </span>
                   </TableCell>
-                  <TableCell className="py-2.5 text-center">
-                    <span className="text-gray-500 font-mono text-xs">
+                  <TableCell className="py-4 text-center">
+                    <span className="text-gray-500 text-sm">
                       {new Date(compra.fecha).toLocaleDateString()}
                     </span>
                   </TableCell>
-                  <TableCell className="py-2.5 text-center">
+                  <TableCell className="py-4 text-center">
                     {compra.confirmada ? (
-                      <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg text-[10px] font-bold uppercase tracking-wider">
+                      <span className="inline-flex items-center px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
                         Confirmada
                       </span>
                     ) : (
-                      <span className="px-2.5 py-1 bg-red-50 text-red-700 border border-red-200 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1 w-max mx-auto">
+                      <span className="inline-flex items-center px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-red-50 text-red-700 border border-red-200">
                         Anulada
                       </span>
                     )}
                   </TableCell>
-                  <TableCell className="py-2.5 text-right">
-                    <span className="text-gray-900 font-bold text-base bg-gradient-to-r from-[#2e1020] to-[#4a2035] bg-clip-text text-transparent">
+                  <TableCell className="py-4 text-right">
+                    <span className="text-gray-800 font-semibold text-sm">
                       {formatCurrency(compra.total)}
                     </span>
                   </TableCell>
-                  <TableCell className="py-2.5 text-right pr-6">
-                    <div className="flex items-center justify-end gap-1.5 opacity-90 transition-opacity">
+                  <TableCell className="py-4 text-right pr-6">
+                    <div className="flex items-center justify-end gap-1.5">
+                      <button
+                        onClick={() => onViewPdf(compra)}
+                        className="h-8 w-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-all duration-150"
+                        title="Descargar PDF"
+                      >
+                        <FileText className="w-4 h-4" />
+                      </button>
                       <button
                         onClick={() => onViewDetail(compra)}
-                        className="h-8 w-8 flex items-center justify-center rounded-lg cursor-pointer text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-150"
+                        className="h-8 w-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-150"
                         title="Ver detalles"
                       >
                         <Eye className="w-4 h-4" />
@@ -153,7 +160,7 @@ export function CompraTable({
                       {isAdmin && compra.confirmada && onAnular && (
                         <button
                           onClick={() => onAnular(compra)}
-                          className="h-8 w-8 flex items-center justify-center rounded-lg cursor-pointer text-rose-400 hover:bg-rose-50 hover:text-rose-600 transition-all duration-150"
+                          className="h-8 w-8 flex items-center justify-center rounded-lg text-rose-400 hover:bg-rose-50 hover:text-rose-600 transition-all duration-150"
                           title="Anular compra"
                         >
                           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

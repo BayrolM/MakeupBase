@@ -1,7 +1,5 @@
-import { useState } from "react";
-import { X, Plus, Search, Calendar, Package, Check, Loader2, Info } from "lucide-react";
+import { X, Search, Calendar, Package, Check, Info } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "../../ui/dialog";
-import { Label } from "../../ui/label";
 import { Input } from "../../ui/input";
 import { Button } from "../../ui/button";
 import {
@@ -11,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../ui/select";
+import { Textarea } from "../../ui/textarea";
 import { formatCurrency } from "../../../utils/devolucionUtils";
 
 interface DevolucionFormDialogProps {
@@ -19,7 +18,6 @@ interface DevolucionFormDialogProps {
   formData: any;
   ventaData: any;
   productosDevolver: any[];
-  clientes: any[];
   productos: any[];
   successMessage: string;
   errorMessage: string;
@@ -38,7 +36,6 @@ export function DevolucionFormDialog({
   formData,
   ventaData,
   productosDevolver,
-  clientes,
   productos,
   successMessage,
   errorMessage,
@@ -52,7 +49,7 @@ export function DevolucionFormDialog({
 }: DevolucionFormDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-white border border-gray-100 !w-[95vw] !max-w-[900px] rounded-2xl shadow-2xl p-0 overflow-hidden">
+      <DialogContent className="bg-white border border-gray-100 !w-[95vw] !max-w-[800px] rounded-2xl shadow-2xl p-0 overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100 bg-white z-10">
           <div className="flex items-center gap-4">
@@ -88,12 +85,19 @@ export function DevolucionFormDialog({
         <style dangerouslySetInnerHTML={{ __html: `
           .no-scrollbar::-webkit-scrollbar { display: none; }
           .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+          .input-no-spin::-webkit-inner-spin-button, 
+          .input-no-spin::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+          }
+          .input-no-spin { -moz-appearance: textfield; }
+          .stable-gutter { scrollbar-gutter: stable; }
         `}} />
 
         {/* Body */}
         <div 
-          className="no-scrollbar overflow-y-auto"
-          style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: "16px", maxHeight: "70vh" }}
+          className="no-scrollbar overflow-y-auto stable-gutter"
+          style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: "16px", maxHeight: "65vh" }}
         >
           
           {/* Mensajes */}
@@ -136,27 +140,28 @@ export function DevolucionFormDialog({
                 type="date"
                 value={formData.fechaDevolucion}
                 onChange={(e) => onFieldChange("fechaDevolucion", e.target.value)}
-                className="h-10 rounded-lg border-gray-200 bg-white"
-                disabled={isSaving}
+                className="h-10 rounded-lg border-gray-200 bg-gray-50 cursor-not-allowed"
+                disabled={true}
+                readOnly={true}
               />
             </div>
           </div>
 
           {/* Motivo y Estado */}
-          <div style={{ display: "grid", gridTemplateColumns: "3fr 2fr", gap: "16px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "3fr 1.5fr", gap: "16px" }}>
             <div style={{ background: "#f9fafb", borderRadius: "12px", padding: "16px" }}>
-              <p style={{ fontSize: "11px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
+              <p style={{ fontSize: "11px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "8px" }}>
                 Motivo de Devolución <span style={{ color: "#f87171" }}>*</span>
               </p>
-              <textarea
+              <Textarea
                 value={formData.motivo}
                 onChange={(e) => {
                   if (e.target.value.length <= 100) onFieldChange("motivo", e.target.value);
                 }}
                 disabled={isSaving}
-                placeholder="Describa el motivo..."
-                className="w-100 min-h-[40px] bg-white border border-gray-200 rounded-lg p-3 text-sm focus:outline-none transition-all"
-                style={{ width: "100%", resize: "none" }}
+                placeholder="Describa el motivo de la devolución..."
+                className="min-h-[80px] bg-white border border-gray-200 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#c47b96]/20 focus:border-[#c47b96] resize-none"
+                style={{ width: "100%" }}
               />
               <div className="flex justify-end mt-1">
                 <span style={{ fontSize: "10px", fontWeight: 700, color: formData.motivo.length > 90 ? "#ef4444" : "#aaa" }}>
@@ -174,11 +179,14 @@ export function DevolucionFormDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-white border-gray-100">
-                  <SelectItem value="aprobada">Aprobada (Suma Stock)</SelectItem>
-                  <SelectItem value="pendiente">Pendiente de Revisión</SelectItem>
+                  <SelectItem value="aprobada">Aprobada</SelectItem>
+                  <SelectItem value="pendiente">Pendiente</SelectItem>
                   <SelectItem value="rechazada">Rechazada</SelectItem>
                 </SelectContent>
               </Select>
+              <p style={{ fontSize: "10px", color: "#9ca3af", marginTop: "8px" }}>
+                * "Aprobada" suma stock automáticamente
+              </p>
             </div>
           </div>
 
@@ -211,12 +219,12 @@ export function DevolucionFormDialog({
                   <p style={{ fontSize: "11px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", display: "flex", alignItems: "center", gap: "6px", margin: 0 }}>
                     <Package className="w-3.5 h-3.5" /> Productos de la Venta
                   </p>
-                  <span className="text-[10px] font-black text-[#c47b96] bg-[#fff0f5] px-2 py-0.5 rounded-full">
+                  <span className="text-[10px] font-bold text-[#c47b96] bg-[#fff0f5] px-2 py-0.5 rounded-full">
                     {productosDevolver.filter(p => p.selected).length} SELECCIONADOS
                   </span>
                 </div>
                 
-                <div style={{ padding: "0 16px", maxHeight: "250px", overflowY: "auto" }}>
+                <div style={{ padding: "0 16px", maxHeight: "200px", overflowY: "auto" }}>
                   {(ventaData.productos || []).map((item: any, index: number) => {
                     const producto = productos.find((p) => p.id === item.productoId);
                     const isSelected = productosDevolver[index]?.selected || false;
@@ -233,26 +241,26 @@ export function DevolucionFormDialog({
                           disabled={isSaving}
                           className="w-5 h-5 rounded border-gray-300 text-[#c47b96] focus:ring-[#c47b96] cursor-pointer"
                         />
-                        <div className="flex-1">
-                          <p className="font-bold text-sm text-gray-800">{producto?.nombre || "N/A"}</p>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-sm text-gray-800 truncate">{producto?.nombre || "N/A"}</p>
                           <p className="text-[10px] text-gray-400 font-medium">Precio Unit: {formatCurrency(item.precioUnitario)}</p>
                         </div>
-                        <div className="text-center w-20">
+                        <div className="text-center w-20 flex-shrink-0">
                           <p className="text-[9px] font-bold text-gray-400 uppercase mb-1">Original</p>
                           <span className="text-sm font-black text-gray-600 bg-gray-100 px-2 py-0.5 rounded-md border border-gray-200">
                             {item.cantidad}
                           </span>
                         </div>
-                        <div className="text-center w-24">
+                        <div className="text-center w-24 flex-shrink-0">
                           <p className="text-[9px] font-bold text-gray-400 uppercase mb-1">A Devolver</p>
                           <Input
                             type="number"
-                            value={productosDevolver[index]?.cantidadADevolver || 0}
+                            value={productosDevolver[index]?.cantidadADevolver || ""}
                             onChange={(e) => onCantidadChange(index, parseInt(e.target.value) || 0)}
                             disabled={!isSelected || isSaving}
                             min={0}
                             max={item.cantidad}
-                            className="h-8 text-center font-black border-gray-200 rounded-lg text-sm bg-white"
+                            className="h-8 text-center font-black border-gray-200 rounded-lg text-sm bg-white input-no-spin w-full"
                           />
                         </div>
                       </div>
@@ -272,21 +280,21 @@ export function DevolucionFormDialog({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-6 pb-6 pt-4 border-t border-gray-100 bg-white z-10">
-          <div className="bg-gradient-to-r from-[#fff0f5] to-[#fce8f0] rounded-xl border border-[#f0d5e0]" style={{ padding: "10px 20px", display: "flex", alignItems: "center", gap: "16px" }}>
-            <p style={{ fontSize: "11px", fontWeight: 700, color: "#c47b96", textTransform: "uppercase", letterSpacing: "0.07em", margin: 0 }}>
-              Monto a Reembolsar
+        <div className="flex items-center justify-end px-6 pb-6 pt-4 border-t border-gray-100 bg-white z-10 gap-4">
+          <div className="bg-gradient-to-r from-[#fff0f5] to-[#fce8f0] rounded-xl border border-[#f0d5e0] flex items-center gap-4 px-4 py-2">
+            <p style={{ fontSize: "10px", fontWeight: 700, color: "#c47b96", textTransform: "uppercase", letterSpacing: "0.07em", margin: 0 }}>
+              Total Reembolso
             </p>
-            <span className="text-[#c47b96] font-black text-2xl">
+            <span className="text-[#c47b96] font-black text-xl min-w-[100px] text-right">
               {formatCurrency(totalDevolucion)}
             </span>
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex gap-2">
             <Button
               variant="outline"
               onClick={() => onOpenChange(false)}
-              className="border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg px-5 h-10 text-sm"
+              className="border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg px-4 h-10 text-sm"
               disabled={isSaving}
             >
               Cancelar
@@ -294,7 +302,7 @@ export function DevolucionFormDialog({
             <Button
               onClick={onSave}
               disabled={isSaving || !ventaData || totalDevolucion === 0}
-              className="rounded-lg font-semibold px-6 h-10 text-sm border-0"
+              className="rounded-lg font-semibold px-6 h-10 text-sm border-0 shadow-md transition-all active:scale-95"
               style={{ backgroundColor: (isSaving || !ventaData || totalDevolucion === 0) ? "#d1d5db" : "#c47b96", color: "white" }}
             >
               {isSaving ? (

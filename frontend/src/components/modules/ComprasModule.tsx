@@ -12,6 +12,7 @@ import { CompraTable } from "./compras/CompraTable";
 import { CompraFormDialog } from "./compras/CompraFormDialog";
 import { CompraDetailDialog } from "./compras/CompraDetailDialog";
 import { CompraAnularDialog } from "./compras/CompraAnularDialog";
+import { generateCompraPDF } from "../../lib/pdfGenerator";
 
 export function ComprasModule() {
   const { compras, proveedores, productos, setCompras, setProductos, currentUser, userType } = useStore();
@@ -59,7 +60,7 @@ export function ComprasModule() {
     }[],
   });
 
-  const [selectedProductId, setSelectedProductId] = useState("");
+
 
   const refreshData = async () => {
     try {
@@ -116,12 +117,7 @@ export function ComprasModule() {
   };
 
 
-  const removeProductFromDetalles = (index: number) => {
-    setFormData({
-      ...formData,
-      detalles: formData.detalles.filter((_, i) => i !== index),
-    });
-  };
+
 
   const handleSave = async () => {
     if (!formData.proveedorId || formData.detalles.length === 0) {
@@ -168,6 +164,16 @@ export function ComprasModule() {
     }
   };
 
+  const handleViewPdf = async (c: Compra) => {
+    try {
+      const fullPurchase = await purchaseService.getById(Number(c.id));
+      const proveedor = proveedores.find(p => p.id === c.proveedorId);
+      generateCompraPDF({ ...c, detalles: fullPurchase.detalles || [] }, proveedor, productos);
+    } catch (error) {
+      toast.error("Error al generar PDF de la compra");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#f6f3f5]">
       <CompraHeader onOpenDialog={handleOpenDialog} />
@@ -179,6 +185,7 @@ export function ComprasModule() {
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           isAdmin={isAdmin}
+          onViewPdf={handleViewPdf}
           onViewDetail={async (c) => {
             try {
               const fullPurchase = await purchaseService.getById(Number(c.id));
@@ -217,9 +224,6 @@ export function ComprasModule() {
         productos={productos}
         isSaving={isSaving}
         onSave={handleSave}
-        selectedProductId={selectedProductId}
-        setSelectedProductId={setSelectedProductId}
-        removeProductFromDetalles={removeProductFromDetalles}
       />
 
       <CompraDetailDialog

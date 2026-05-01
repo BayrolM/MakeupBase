@@ -8,10 +8,13 @@ import {
   User as UserIcon,
   Briefcase,
   MessageSquare,
-  AlertCircle
+  AlertCircle,
+  Download
 } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "../../ui/dialog";
 import { formatCurrency, getEstadoColor } from "../../../utils/devolucionUtils";
+import { generateDevolucionPDF } from "../../../lib/pdfGenerator";
+import { Button } from "../../ui/button";
 
 interface DevolucionDetailDialogProps {
   open: boolean;
@@ -45,8 +48,8 @@ export function DevolucionDetailDialog({
         <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100 bg-white">
           <div className="flex items-center gap-4">
             <div
-              className="flex items-center justify-center text-white font-bold text-xl flex-shrink-0 luxury-icon-gradient"
-              style={{ width: 44, height: 44, borderRadius: 12 }}
+              className="flex items-center justify-center text-white font-bold text-xl flex-shrink-0"
+              style={{ width: 44, height: 44, borderRadius: 12, background: "linear-gradient(135deg,#c47b96,#e092b2)", boxShadow: "0 2px 8px rgba(196,123,150,0.3)" }}
             >
               <FileText className="w-5 h-5" />
             </div>
@@ -79,7 +82,7 @@ export function DevolucionDetailDialog({
           </div>
         </div>
 
-        <div className="px-6 py-6 overflow-y-auto max-h-[70vh]">
+        <div className="px-6 py-6 overflow-y-auto max-h-[65vh]">
           {/* Seguimiento Auditoría */}
           {(devolucion.motivoDecision || devolucion.motivoAnulacion) && (
             <div className="mb-6 bg-red-50 rounded-xl px-4 py-3 border border-red-200">
@@ -221,10 +224,18 @@ export function DevolucionDetailDialog({
           </div>
         </div>
 
-        <div className="px-6 pb-6 pt-4 border-t border-gray-100">
+        <div className="px-6 pb-6 pt-4 border-t border-gray-100 flex items-center gap-3 bg-white">
+          <Button
+            variant="outline"
+            onClick={() => generateDevolucionPDF(devolucion, cliente, productos)}
+            className="flex items-center gap-2 bg-white border-gray-200 text-gray-600 hover:bg-gray-50 rounded-xl px-6 h-11 text-sm font-semibold"
+          >
+            <Download className="w-4 h-4" /> Exportar PDF
+          </Button>
           <button
             onClick={() => onOpenChange(false)}
-            className="w-full h-11 rounded-xl text-white font-bold text-sm luxury-button-modal shadow-lg shadow-[#c47b96]/20"
+            className="flex-1 h-11 rounded-xl text-white font-bold text-sm transition-all hover:opacity-90"
+            style={{ backgroundColor: "#c47b96", boxShadow: "0 4px 12px rgba(196,123,150,0.3)" }}
           >
             Cerrar Detalle
           </button>

@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "../../ui/dialog";
 import { formatCurrency } from "../../../utils/compraUtils";
-import { jsPDF } from "jspdf";
+import { generateCompraPDF } from "../../../lib/pdfGenerator";
 import { toast } from "sonner";
 import { Button } from "../../ui/button";
 
@@ -40,73 +40,7 @@ export function CompraDetailDialog({
   const itemCount = detalles.length;
 
   const handlePrint = () => {
-    try {
-      const doc = new jsPDF();
-
-      doc.setFontSize(22);
-      doc.setTextColor(196, 123, 150);
-      doc.text("MAKEUPBASE CORP", 14, 22);
-
-      doc.setFontSize(14);
-      doc.setTextColor(40, 40, 40);
-      doc.text(`Comprobante de Compra #${selectedCompra.id}`, 14, 32);
-
-      doc.setFontSize(11);
-      doc.setTextColor(80, 80, 80);
-      doc.text(`Proveedor: ${proveedor?.nombre || "N/A"}`, 14, 45);
-      doc.text(`Fecha: ${new Date(selectedCompra.fecha).toLocaleDateString()}`, 14, 52);
-      doc.text(
-        `Estado: ${isConfirmada ? "Confirmada" : "Anulada"}`,
-        14,
-        59,
-      );
-
-      doc.setDrawColor(200, 200, 200);
-      doc.line(14, 66, 196, 66);
-
-      doc.setFontSize(12);
-      doc.setTextColor(40, 40, 40);
-      doc.text("Detalle de Productos", 14, 76);
-
-      let y = 86;
-      doc.setFontSize(10);
-      doc.setTextColor(80, 80, 80);
-      doc.text("Cant", 14, y);
-      doc.text("Producto", 30, y);
-      doc.text("P. Unit", 140, y);
-      doc.text("Subtotal", 170, y);
-
-      y += 6;
-      doc.line(14, y, 196, y);
-      y += 6;
-
-      detalles.forEach((d: any) => {
-        const pName =
-          d.nombre_producto ||
-          productos.find((p) => p.id === d.id_producto?.toString())?.nombre ||
-          `Item #${d.id_producto}`;
-        doc.text(`${d.cantidad}`, 14, y);
-        doc.text(`${pName}`.substring(0, 40), 30, y);
-        doc.text(`${formatCurrency(Number(d.precio_unitario))}`, 140, y);
-        doc.text(
-          `${formatCurrency(Number(d.cantidad) * Number(d.precio_unitario))}`,
-          170,
-          y,
-        );
-        y += 8;
-      });
-
-      doc.line(14, y + 2, 196, y + 2);
-      doc.setFontSize(14);
-      doc.setTextColor(196, 123, 150);
-      doc.text(`Total: ${formatCurrency(selectedCompra.total)}`, 130, y + 15);
-
-      doc.save(`compra_${selectedCompra.id}.pdf`);
-      toast.success("PDF generado correctamente");
-    } catch (e) {
-      console.error(e);
-      toast.error("Error al generar PDF");
-    }
+    generateCompraPDF(selectedCompra, proveedor, productos);
   };
 
   return (
@@ -116,8 +50,8 @@ export function CompraDetailDialog({
         <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100 bg-white">
           <div className="flex items-center gap-4">
             <div
-              className="flex items-center justify-center text-white font-bold text-xl flex-shrink-0 luxury-icon-gradient"
-              style={{ width: 44, height: 44, borderRadius: 12 }}
+              className="flex items-center justify-center text-white font-bold text-xl flex-shrink-0"
+              style={{ width: 44, height: 44, borderRadius: 12, background: "linear-gradient(135deg,#c47b96,#e092b2)", boxShadow: "0 2px 8px rgba(196,123,150,0.3)" }}
             >
               <FileText className="w-5 h-5" />
             </div>
@@ -150,7 +84,7 @@ export function CompraDetailDialog({
           </div>
         </div>
 
-        <div className="px-6 py-6 overflow-y-auto max-h-[70vh]">
+        <div className="px-6 py-6 overflow-y-auto max-h-[65vh]">
           <div className="grid grid-cols-2 gap-6 mb-6">
             <div className="space-y-4">
               <h3 className="text-[11px] font-bold text-[#c47b96] uppercase tracking-wider">
@@ -260,7 +194,8 @@ export function CompraDetailDialog({
           </Button>
           <button
             onClick={() => onOpenChange(false)}
-            className="flex-1 h-11 rounded-xl text-white font-bold text-sm luxury-button-modal shadow-lg shadow-[#c47b96]/20"
+            className="flex-1 h-11 rounded-xl text-white font-bold text-sm transition-all hover:opacity-90"
+            style={{ backgroundColor: "#c47b96", boxShadow: "0 4px 12px rgba(196,123,150,0.3)" }}
           >
             Cerrar Detalle
           </button>

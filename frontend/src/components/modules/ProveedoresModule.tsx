@@ -63,6 +63,20 @@ export function ProveedoresModule() {
     estado: "activo" as "activo" | "inactivo",
   });
 
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  // Helper to update specific field and clear its error
+  const handleFieldChange = (field: string, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    if (fieldErrors[field]) {
+      setFieldErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
+  };
+
   const refreshProveedores = async () => {
     try {
       const data = await providerService.getAll();
@@ -114,20 +128,41 @@ export function ProveedoresModule() {
         estado: "activo",
       });
     }
+    setFieldErrors({});
     setIsDialogOpen(true);
   };
 
   const handleSave = async () => {
-    if (!formData.tipo_proveedor || !formData.nombre.trim() || !formData.nit.trim() || !formData.telefono.trim() || !formData.email.trim() || !formData.direccion.trim()) {
-      toast.error("Todos los campos son obligatorios.");
+    const errors: Record<string, string> = {};
+
+    if (!formData.nombre.trim()) {
+      errors.nombre = "El nombre es requerido";
+    }
+    if (!formData.nit.trim()) {
+      errors.nit = "El NIT/Documento es requerido";
+    }
+    if (!formData.telefono.trim()) {
+      errors.telefono = "El teléfono es requerido";
+    }
+    if (!formData.email.trim()) {
+      errors.email = "El correo electrónico es requerido";
+    } else {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email.trim())) {
+        errors.email = "Formato de correo electrónico inválido";
+      }
+    }
+    if (!formData.direccion.trim()) {
+      errors.direccion = "La dirección es requerida";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      toast.error("Por favor completa los campos obligatorios");
       return;
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email.trim())) {
-      toast.error("Formato de correo electrónico inválido.");
-      return;
-    }
+    setFieldErrors({});
 
     setIsSaving(true);
     try {
@@ -260,6 +295,8 @@ export function ProveedoresModule() {
         editingProveedor={editingProveedor}
         formData={formData}
         setFormData={setFormData}
+        onChange={handleFieldChange}
+        fieldErrors={fieldErrors}
         isSaving={isSaving}
         onSave={handleSave}
       />

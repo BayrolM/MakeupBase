@@ -629,3 +629,157 @@ export const generateDevolucionPDF = async (
     toast.error("Ocurrió un error al intentar generar el PDF");
   }
 };
+
+export const generateCompraPDF = async (
+  compra: any,
+  proveedor: any,
+  productosDestino: Producto[],
+) => {
+  try {
+    const doc = new jsPDF() as any;
+
+    // COLORES
+    const cPrimary = [46, 16, 32];      // #2e1020
+    const cSecondary = [224, 146, 178]; // #e092b2
+    const cBorder = [220, 220, 220];
+    const cText = [40, 40, 40];
+    const cLightGray = [248, 248, 248];
+
+    const formatP = (v: number) =>
+      new Intl.NumberFormat("es-CO", {
+        style: "currency",
+        currency: "COP",
+        minimumFractionDigits: 0,
+      }).format(isNaN(v) ? 0 : v);
+
+    // 1. BARRA SUPERIOR
+    doc.setFillColor(cPrimary[0], cPrimary[1], cPrimary[2]);
+    doc.rect(0, 0, 210, 4, "F");
+
+    // Logo
+    try {
+      const img = new Image();
+      img.src = "/logo.png";
+      await new Promise((resolve) => {
+        img.onload = () => { doc.addImage(img, "PNG", 20, 12, 18, 18); resolve(true); };
+        img.onerror = () => resolve(false);
+      });
+    } catch (e) {}
+
+    // Nombre empresa
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(20);
+    doc.setTextColor(cPrimary[0], cPrimary[1], cPrimary[2]);
+    doc.text("GLAMOUR ML", 45, 20);
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(120);
+    doc.text("TIENDA DE BELLEZA & CUIDADO PERSONAL", 45, 25);
+
+    // Número de comprobante (derecha)
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(cPrimary[0], cPrimary[1], cPrimary[2]);
+    doc.text("COMPROBANTE DE COMPRA", 190, 20, { align: "right" });
+    doc.setFontSize(10);
+    doc.setTextColor(cSecondary[0], cSecondary[1], cSecondary[2]);
+    doc.text(`#${compra.id.slice(0, 8).toUpperCase()}`, 190, 26, { align: "right" });
+
+    // 2. LÍNEA DIVISORA + INFO PROVEEDOR
+    doc.setDrawColor(cBorder[0], cBorder[1], cBorder[2]);
+    doc.line(20, 40, 190, 40);
+
+    doc.setFontSize(9);
+    doc.setTextColor(150);
+    doc.text("PROVEEDOR:", 20, 50);
+    doc.text("DETALLES DE LA ORDEN:", 110, 50);
+
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(cText[0], cText[1], cText[2]);
+    doc.text(proveedor?.nombre || "Proveedor Desconocido", 20, 56);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.text(`NIT: ${proveedor?.documento || proveedor?.numeroDocumento || "N/A"}`, 20, 62);
+    doc.text(`Tel: ${proveedor?.telefono || "N/A"}`, 20, 68);
+
+    doc.setFont("helvetica", "bold");
+    doc.text(`Fecha: ${new Date(compra.fecha).toLocaleDateString()}`, 110, 56);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Estado: ${compra.confirmada || compra.estado ? "Confirmada" : "Anulada"}`, 110, 62);
+
+    // 3. TABLA DE PRODUCTOS
+    let tableY = 80;
+
+    // Header tabla
+    doc.setFillColor(cPrimary[0], cPrimary[1], cPrimary[2]);
+    doc.rect(20, tableY, 170, 10, "F");
+    doc.setTextColor(255);
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.text("PRODUCTO / DESCRIPCIÓN", 25, tableY + 6.5);
+    doc.text("CANT", 115, tableY + 6.5, { align: "center" });
+    doc.text("PRECIO UNIT.", 148, tableY + 6.5, { align: "center" });
+    doc.text("TOTAL", 185, tableY + 6.5, { align: "right" });
+
+    tableY += 10;
+    doc.setTextColor(cText[0], cText[1], cText[2]);
+    doc.setFont("helvetica", "normal");
+
+    (compra.detalles || []).forEach((d: any, i: number) => {
+      const pName = d.nombre_producto || productosDestino.find(p => p.id === d.id_producto?.toString())?.nombre || `Item #${d.id_producto}`;
+      const nameLines = doc.splitTextToSize(pName, 80);
+      const rowHeight = nameLines.length * 5 + 6;
+
+      // Fondo alternado
+      if (i % 2 !== 0) {
+        doc.setFillColor(cLightGray[0], cLightGray[1], cLightGray[2]);
+        doc.rect(20, tableY, 170, rowHeight, "F");
+      }
+
+      // Bordes
+      doc.setDrawColor(cBorder[0], cBorder[1], cBorder[2]);
+      doc.setLineWidth(0.1);
+      doc.line(20, tableY + rowHeight, 190, tableY + rowHeight);
+      doc.line(20, tableY, 20, tableY + rowHeight);
+      doc.line(190, tableY, 190, tableY + rowHeight);
+
+      doc.text(nameLines, 25, tableY + 6);
+      doc.text(String(d.cantidad || 0), 115, tableY + 6, { align: "center" });
+      doc.text(formatP(d.precio_unitario || 0), 148, tableY + 6, { align: "center" });
+      doc.setFont("helvetica", "bold");
+      doc.text(formatP((d.cantidad || 0) * (d.precio_unitario || 0)), 185, tableY + 6, { align: "right" });
+      doc.setFont("helvetica", "normal");
+
+      tableY += rowHeight;
+    });
+
+    // 4. TOTALES
+    const footerY = Math.max(tableY + 15, 185);
+
+    doc.setDrawColor(cPrimary[0], cPrimary[1], cPrimary[2]);
+    doc.setLineWidth(0.5);
+    doc.line(120, footerY, 190, footerY);
+
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(cPrimary[0], cPrimary[1], cPrimary[2]);
+    doc.text("TOTAL COMPRA:", 125, footerY + 10);
+
+    doc.setFontSize(16);
+    doc.text(formatP(compra.total), 185, footerY + 10, { align: "right" });
+
+    // 5. FOOTER
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "italic");
+    doc.setTextColor(150);
+    doc.text("Este documento es un comprobante interno de recibo de mercancía.", 20, 275);
+    doc.text("GLAMOUR ML - Medellín, Colombia", 20, 280);
+
+    doc.save(`GlamourML_Compra_${compra.id.slice(0, 8)}.pdf`);
+    toast.success("Comprobante de compra generado");
+  } catch (error) {
+    console.error("Error generando PDF:", error);
+    toast.error("Ocurrió un error al intentar generar el PDF");
+  }
+};
