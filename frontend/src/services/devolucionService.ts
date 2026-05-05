@@ -14,6 +14,7 @@ export interface CreateDevolucionPayload {
   fecha_devolucion: string;
   productos: DevolucionProducto[];
   evidencia_url?: string;
+  es_defectuoso?: boolean;
 }
 
 
@@ -33,10 +34,11 @@ export const devolucionService = {
     return response.data;
   },
 
-  async cambiarEstado(id: number, estado: string, motivo_decision: string) {
+  async cambiarEstado(id: number, estado: string, motivo_decision: string, es_defectuoso: boolean = false) {
     const response = await api.put(`/devoluciones/${id}/estado`, {
       estado,
       motivo_decision,
+      es_defectuoso,
     });
     return response.data;
   },

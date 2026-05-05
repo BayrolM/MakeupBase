@@ -20,8 +20,10 @@ interface DevolucionFormDialogProps {
   successMessage: string;
   errorMessage: string;
   isSaving: boolean;
+  esDefectuoso: boolean;
   onVentaIdChange: (id: string) => void;
   onFieldChange: (name: string, value: any) => void;
+  onEsDefectuosoChange: (val: boolean) => void;
   onToggleProducto: (index: number) => void;
   onCantidadChange: (index: number, cantidad: number) => void;
   onSave: () => void;
@@ -40,8 +42,10 @@ export function DevolucionFormDialog({
   successMessage,
   errorMessage,
   isSaving,
+  esDefectuoso,
   onVentaIdChange,
   onFieldChange,
+  onEsDefectuosoChange,
   onToggleProducto,
   onCantidadChange,
   onSave,
@@ -205,13 +209,33 @@ export function DevolucionFormDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent position="popper" sideOffset={4} className="bg-white border-gray-100 shadow-xl rounded-xl" style={{ zIndex: 99999 }}>
-                  <SelectItem value="aprobada" className="text-sm" style={{ fontSize: 13 }}>Aprobada (Suma Stock)</SelectItem>
+                  <SelectItem value="aprobada" className="text-sm" style={{ fontSize: 13 }}>Aprobada (buen estado o dañado)</SelectItem>
                   <SelectItem value="pendiente" className="text-sm" style={{ fontSize: 13 }}>Pendiente de Revisión</SelectItem>
                   <SelectItem value="rechazada" className="text-sm" style={{ fontSize: 13 }}>Rechazada</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
+
+          {formData.estado === "aprobada" && (
+            <div className="flex flex-col items-center justify-center text-center p-5 rounded-2xl bg-rose-50 border border-rose-100 transition-all animate-in fade-in slide-in-from-top-1 my-5 space-y-2">
+              <div className="flex items-center gap-2.5">
+                <input
+                  id="es_defectuoso_form"
+                  type="checkbox"
+                  checked={esDefectuoso}
+                  onChange={(e) => onEsDefectuosoChange(e.target.checked)}
+                  className="w-5 h-5 text-[#c47b96] border-gray-300 rounded-lg focus:ring-[#c47b96] cursor-pointer"
+                />
+                <label htmlFor="es_defectuoso_form" className="text-sm font-bold text-rose-700 cursor-pointer select-none">
+                  ¿Producto Defectuoso?
+                </label>
+              </div>
+              <p className="text-[11px] text-rose-500 font-semibold max-w-xs leading-relaxed">
+                Se registrará como pérdida y <strong>NO</strong> volverá al stock.
+              </p>
+            </div>
+          )}
 
           {/* Resumen de Venta */}
           {ventaData ? (
