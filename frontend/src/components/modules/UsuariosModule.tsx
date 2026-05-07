@@ -46,6 +46,7 @@ export function UsuariosModule() {
     telefono: "",
     direccion: "",
     ciudad: "",
+    departamento: "",
     pais: "Colombia",
     rol: "",
     estado: "activo" as Status,
@@ -72,6 +73,7 @@ export function UsuariosModule() {
         telefono: u.telefono,
         direccion: u.direccion,
         ciudad: u.ciudad,
+        departamento: u.departamento || "",
         rol: (Number(u.id_rol) === 1 ? "admin" : "cliente") as UserRole,
         id_rol: Number(u.id_rol),
         rolAsignadoId: String(u.id_rol),
@@ -154,8 +156,9 @@ export function UsuariosModule() {
         telefono: actualUser.telefono,
         direccion: actualUser.direccion || "",
         ciudad: actualUser.ciudad || "",
+        departamento: actualUser.departamento || "",
         pais: actualUser.pais || "Colombia",
-        rol: actualUser.rol,
+        rol: actualUser.rolAsignadoId || String(actualUser.id_rol),
         estado: actualUser.estado,
       });
     } else {
@@ -172,6 +175,7 @@ export function UsuariosModule() {
         telefono: "",
         direccion: "",
         ciudad: "",
+        departamento: "",
         pais: "Colombia",
         rol: roles.length > 0 ? String(roles[0].id) : "",
         estado: "activo",
@@ -190,6 +194,7 @@ export function UsuariosModule() {
       "telefono",
       "direccion",
       "ciudad",
+      "departamento",
     ];
     if (!editingUser) fields.push("passwordHash");
     const newErrors: Record<string, string> = {};
@@ -234,8 +239,9 @@ export function UsuariosModule() {
         nombres: formData.nombres.trim(),
         apellidos: formData.apellidos.trim(),
         telefono: formData.telefono.trim(),
-        direccion: formData.direccion.trim() || undefined,
-        ciudad: formData.ciudad.trim() || undefined,
+        direccion: formData.direccion.trim(),
+        ciudad: formData.ciudad.trim(),
+        departamento: formData.departamento.trim(),
         estado: formData.estado === "activo",
       };
 

@@ -340,6 +340,27 @@ export function UsuarioFormDialog({
             <div className="space-y-2">
               <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">
                 <Building2 className="w-3.5 h-3.5 text-[#c47b96]" />
+                Departamento
+              </Label>
+              <Input
+                value={formData.departamento}
+                onChange={(e) => onFieldChange("departamento", e.target.value)}
+                className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${fieldErrors.departamento ? "border-rose-400" : ""}`}
+                placeholder="Ej: Antioquia"
+                disabled={isSaving}
+              />
+              {fieldErrors.departamento && (
+                <p className="text-rose-500 text-[10px] mt-1">
+                  {fieldErrors.departamento}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">
+                <Building2 className="w-3.5 h-3.5 text-[#c47b96]" />
                 Ciudad
               </Label>
               <Input

@@ -331,6 +331,7 @@ export const obtenerUsuario = async (req, res) => {
 export const actualizarUsuario = async (req, res) => {
   try {
     const { id } = req.params;
+
     const {
       id_rol,
       nombres,
@@ -338,6 +339,7 @@ export const actualizarUsuario = async (req, res) => {
       telefono,
       direccion,
       ciudad,
+      departamento,
       estado,
       email,
       documento,
@@ -378,6 +380,9 @@ export const actualizarUsuario = async (req, res) => {
                 },
                 ciudad = ${
                   ciudad !== undefined ? ciudad : usuarioExiste[0].ciudad
+                },
+                departamento = ${
+                  departamento !== undefined ? departamento : usuarioExiste[0].departamento
                 },
                 estado = ${
                   estado !== undefined ? estado : usuarioExiste[0].estado

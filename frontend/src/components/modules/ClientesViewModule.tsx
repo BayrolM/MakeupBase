@@ -49,6 +49,7 @@ export function ClientesViewModule() {
     telefono: "",
     direccion: "",
     ciudad: "",
+    departamento: "",
     pais: "Colombia",
     estado: "activo" as "activo" | "inactivo",
   });
@@ -81,6 +82,7 @@ export function ClientesViewModule() {
         tipoDocumento: u.tipo_documento || "CC",
         direccion: u.direccion || "",
         ciudad: u.ciudad || "",
+        departamento: u.departamento || "",
         pais: u.pais || "Colombia",
         estado: u.estado ? "activo" : "inactivo",
         totalCompras: Number(u.total_ventas) || 0,
@@ -116,6 +118,7 @@ export function ClientesViewModule() {
         telefono: cliente.telefono,
         direccion: cliente.direccion || "",
         ciudad: cliente.ciudad || "",
+        departamento: cliente.departamento || "",
         pais: cliente.pais || "Colombia",
         estado: cliente.estado,
       });
@@ -132,6 +135,7 @@ export function ClientesViewModule() {
         telefono: "",
         direccion: "",
         ciudad: "",
+        departamento: "",
         pais: "Colombia",
         estado: "activo",
       });
@@ -142,7 +146,7 @@ export function ClientesViewModule() {
 
   const handleFieldChange = (name: string, value: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
-    
+
     // Clear mismatch error if typing in either password field
     if (name === "passwordHash" || name === "confirmPassword") {
       setFieldErrors((prev) => ({ ...prev, confirmPassword: "" }));
@@ -207,8 +211,9 @@ export function ClientesViewModule() {
         email: formData.email.trim(),
         password_hash: formData.passwordHash || undefined,
         telefono: formData.telefono.trim(),
-        direccion: formData.direccion.trim() || undefined,
-        ciudad: formData.ciudad.trim() || undefined,
+        direccion: formData.direccion.trim(),
+        ciudad: formData.ciudad.trim(),
+        departamento: formData.departamento.trim(),
         id_rol: 2,
         estado: formData.estado === "activo",
       };
@@ -248,7 +253,7 @@ export function ClientesViewModule() {
     setIsDeleting(true);
     try {
       await userService.deletePermanent(selectedCliente.id);
-      toast.success("Cliente eliminado permanentemente");
+      toast.success("Cliente eliminado");
       await fetchClientes();
       setIsDeleteDialogOpen(false);
     } catch (error: any) {
