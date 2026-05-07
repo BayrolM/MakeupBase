@@ -39,8 +39,10 @@ export function DevolucionesModule() {
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [esDefectuoso, setEsDefectuoso] = useState(false);
   const [ventaData, setVentaData] = useState<any>(null);
   const [productosDevolver, setProductosDevolver] = useState<any[]>([]);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const [formData, setFormData] = useState({
     ventaId: "",
@@ -103,6 +105,7 @@ export function DevolucionesModule() {
         motivoDecision: dev.motivo_decision || "",
         motivoAnulacion: dev.motivo_anulacion || "",
         fechaAnulacion: dev.fecha_anulacion ? new Date(dev.fecha_anulacion).toLocaleDateString() : "",
+        esDefectuoso: dev.es_defectuoso || false,
         evidencias: [],
         productos: (dev.detalles || []).map((det: any) => ({
           productoId: det.id_producto?.toString() || "",
@@ -136,6 +139,8 @@ export function DevolucionesModule() {
     setErrorMessage("");
     setVentaData(null);
     setProductosDevolver([]);
+    setFieldErrors({});
+    setEsDefectuoso(false);
     setIsDialogOpen(true);
   };
 
@@ -180,6 +185,7 @@ export function DevolucionesModule() {
     }
     setProductosDevolver(newProductos);
     setErrorMessage("");
+    setFieldErrors(prev => ({ ...prev, productos: "" }));
   };
 
   const handleCantidadChange = (index: number, cantidad: number) => {
@@ -188,6 +194,11 @@ export function DevolucionesModule() {
       newProductos[index].cantidadADevolver = cantidad;
       setProductosDevolver(newProductos);
       setErrorMessage("");
+      setFieldErrors(prev => {
+        const nf: Record<string, string> = { ...prev, productos: "" };
+        delete nf[`cantidad_${index}`];
+        return nf;
+      });
     }
   };
 
@@ -198,43 +209,41 @@ export function DevolucionesModule() {
   }, [productosDevolver]);
 
   const handleSaveDevolucion = async () => {
-    // Validaciones de campos obligatorios
-    if (!formData.ventaId.trim()) {
-      setErrorMessage("El ID de la venta es obligatorio");
-      return;
-    }
-    
-    if (!ventaData) {
-      setErrorMessage("Debes cargar una venta válida antes de continuar");
-      return;
-    }
+    const errors: Record<string, string> = {};
 
-    const productosSeleccionados = productosDevolver.filter(p => p.selected && p.cantidadADevolver > 0);
+    if (!formData.ventaId.trim()) errors.ventaId = "El ID de la venta es obligatorio.";
+    else if (!ventaData) errors.ventaId = "Debes cargar una venta válida.";
+
+    if (!formData.motivo.trim()) errors.motivo = "El motivo de la devolución es obligatorio.";
+    else if (formData.motivo.trim().length < 5) errors.motivo = "Mínimo 5 caracteres.";
+    else if (formData.motivo.trim().length > 100) errors.motivo = "Máximo 100 caracteres.";
+
+    const productosSeleccionados = productosDevolver.filter(p => p.selected);
     if (productosSeleccionados.length === 0) {
-      setErrorMessage("Debes seleccionar al menos un producto e ingresar una cantidad válida a devolver");
+      errors.productos = "Selecciona al menos un producto.";
+    } else {
+      let tieneCantidadValida = false;
+      productosDevolver.forEach((p, index) => {
+        if (p.selected) {
+          if (!p.cantidadADevolver || p.cantidadADevolver <= 0) {
+            errors[`cantidad_${index}`] = "Cantidad inválida.";
+          } else {
+            tieneCantidadValida = true;
+          }
+        }
+      });
+      if (!tieneCantidadValida && !Object.keys(errors).some(k => k.startsWith('cantidad_'))) {
+        errors.productos = "Ingresa una cantidad válida.";
+      }
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      setErrorMessage("Hay campos incompletos o inválidos marcados en rojo.");
       return;
     }
 
-    if (!formData.motivo.trim()) {
-      setErrorMessage("El motivo de la devolución es obligatorio");
-      return;
-    }
-
-    if (formData.motivo.trim().length < 5) {
-      setErrorMessage("El motivo debe tener al menos 5 caracteres");
-      return;
-    }
-
-    if (formData.motivo.trim().length > 100) {
-      setErrorMessage("El motivo no puede exceder los 100 caracteres");
-      return;
-    }
-
-    if (!formData.fechaDevolucion) {
-      setErrorMessage("La fecha de devolución es obligatoria");
-      return;
-    }
-
+    setFieldErrors({});
     setIsSaving(true);
     setErrorMessage("");
     try {
@@ -249,6 +258,7 @@ export function DevolucionesModule() {
           cantidad: p.cantidadADevolver,
           precio_unitario: p.precioUnitario,
         })),
+        es_defectuoso: esDefectuoso,
       });
 
       setSuccessMessage("Devolución registrada correctamente");
@@ -280,11 +290,13 @@ export function DevolucionesModule() {
         Number(selectedDevolucion.id),
         newEstado,
         motivoDecision.trim(),
+        esDefectuoso
       );
       toast.success("Estado actualizado correctamente");
       await refreshData();
       setStatusDialogOpen(false);
       setMotivoDecision("");
+      setEsDefectuoso(false);
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Error al cambiar estado");
     } finally {
@@ -335,6 +347,7 @@ export function DevolucionesModule() {
               const fullData = await devolucionService.getById(Number(dev.id));
               setSelectedDevolucion({
                 ...dev,
+                esDefectuoso: fullData.es_defectuoso || false,
                 productos: (fullData.detalles || []).map((det: any) => ({
                   productoId: det.id_producto?.toString() || "",
                   productoNombre: det.nombre_producto || "",
@@ -353,7 +366,7 @@ export function DevolucionesModule() {
           }}
           onViewPdf={handleViewPdf}
           onAnular={(dev) => { setSelectedDevolucion(dev); setMotivoAnulacion(""); setAnularDialogOpen(true); }}
-          onChangeEstado={(dev) => { setSelectedDevolucion(dev); setMotivoDecision(""); setNuevoEstado("en_revision"); setStatusDialogOpen(true); }}
+          onChangeEstado={(dev) => { setSelectedDevolucion(dev); setMotivoDecision(""); setNuevoEstado("en_revision"); setEsDefectuoso(false); setStatusDialogOpen(true); }}
           filteredCount={filteredDevoluciones.length}
         />
 
@@ -385,11 +398,19 @@ export function DevolucionesModule() {
         onFieldChange={(name, val) => {
           setFormData(p => ({ ...p, [name]: val }));
           setErrorMessage("");
+          // Si cambia el estado a algo distinto de "aprobada", resetear defectuoso
+          if (name === "estado" && val !== "aprobada") {
+            setEsDefectuoso(false);
+          }
         }}
+        onEsDefectuosoChange={setEsDefectuoso}
         onToggleProducto={handleToggleProducto}
         onCantidadChange={handleCantidadChange}
         onSave={handleSaveDevolucion}
         totalDevolucion={totalDevolucionEstimado}
+        fieldErrors={fieldErrors}
+        setFieldErrors={setFieldErrors}
+        esDefectuoso={esDefectuoso}
       />
 
       <DevolucionDetailDialog
@@ -407,8 +428,13 @@ export function DevolucionesModule() {
         motivoDecision={motivoDecision}
         nuevoEstado={nuevoEstado}
         isSaving={isSaving}
+        esDefectuoso={esDefectuoso}
         onMotivoChange={setMotivoDecision}
-        onEstadoChange={setNuevoEstado}
+        onEstadoChange={(val) => {
+          setNuevoEstado(val);
+          if (val !== "aprobada") setEsDefectuoso(false);
+        }}
+        onEsDefectuosoChange={setEsDefectuoso}
         onConfirm={handleChangeStatus}
       />
 

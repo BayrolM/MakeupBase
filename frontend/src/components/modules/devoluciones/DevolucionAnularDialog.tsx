@@ -70,7 +70,9 @@ export function DevolucionAnularDialog({
             <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0" />
             <span className="text-xs text-red-700 leading-relaxed">
               {esAprobada
-                ? "Esta devolución fue aprobada. Al anularla, el stock será revertido (los productos se descontarán del inventario)."
+                ? devolucion.esDefectuoso
+                  ? "Esta devolución fue aprobada como defectuosa. Al anularla, no se descontará stock y se eliminará el registro de pérdida correspondiente."
+                  : "Esta devolución fue aprobada. Al anularla, el stock será revertido (los productos se descontarán del inventario)."
                 : "El registro se conservará en el historial con estado ANULADA."}
             </span>
           </div>

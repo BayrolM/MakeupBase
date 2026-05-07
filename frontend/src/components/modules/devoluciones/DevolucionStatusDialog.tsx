@@ -1,6 +1,5 @@
 import { Edit, CheckCircle2, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../../ui/dialog';
-import { Button } from '../../ui/button';
 import { Label } from '../../ui/label';
 import { Textarea } from '../../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
@@ -12,8 +11,10 @@ interface DevolucionStatusDialogProps {
   motivoDecision: string;
   nuevoEstado: string;
   isSaving: boolean;
+  esDefectuoso: boolean;
   onMotivoChange: (val: string) => void;
   onEstadoChange: (val: string) => void;
+  onEsDefectuosoChange: (val: boolean) => void;
   onConfirm: (status: string) => void;
 }
 
@@ -24,8 +25,10 @@ export function DevolucionStatusDialog({
   motivoDecision,
   nuevoEstado,
   isSaving,
+  esDefectuoso,
   onMotivoChange,
   onEstadoChange,
+  onEsDefectuosoChange,
   onConfirm
 }: DevolucionStatusDialogProps) {
   if (!devolucion) return null;
@@ -61,6 +64,26 @@ export function DevolucionStatusDialog({
                 </SelectContent>
               </Select>
             </div>
+            
+            {nuevoEstado === "aprobada" && (
+              <div className="flex flex-col items-center justify-center text-center p-5 rounded-2xl bg-rose-50 border border-rose-100 transition-all animate-in fade-in slide-in-from-top-2 space-y-2">
+                <div className="flex items-center gap-2.5">
+                  <input
+                    id="es_defectuoso"
+                    type="checkbox"
+                    checked={esDefectuoso}
+                    onChange={(e) => onEsDefectuosoChange(e.target.checked)}
+                    className="w-5 h-5 text-[#c47b96] border-gray-300 rounded-lg focus:ring-[#c47b96] cursor-pointer"
+                  />
+                  <label htmlFor="es_defectuoso" className="text-sm font-bold text-rose-700 cursor-pointer select-none">
+                    ¿Producto Defectuoso?
+                  </label>
+                </div>
+                <p className="text-[11px] text-rose-500 font-semibold max-w-xs leading-relaxed">
+                  Si se marca, el producto se registrará como pérdida y <strong>NO</strong> volverá al stock.
+                </p>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label className="text-gray-700 font-bold text-sm">Motivo de la Decisión <span className="text-rose-500">*</span></Label>
@@ -80,7 +103,11 @@ export function DevolucionStatusDialog({
                 <CheckCircle2 className="w-4 h-4 text-indigo-500" />
              </div>
              <p className="text-[11px] text-indigo-600 font-medium leading-relaxed">
-                Al marcar como <strong>"Aprobada"</strong>, las cantidades seleccionadas volverán automáticamente al inventario disponible para la venta.
+                {esDefectuoso && nuevoEstado === 'aprobada' ? (
+                  <>Al marcar como <strong>"Aprobada"</strong> con defecto, las cantidades se registrarán en el módulo de <strong>pérdidas</strong>.</>
+                ) : (
+                  <>Al marcar como <strong>"Aprobada"</strong>, las cantidades seleccionadas volverán automáticamente al inventario disponible para la venta.</>
+                )}
              </p>
           </div>
         </div>
