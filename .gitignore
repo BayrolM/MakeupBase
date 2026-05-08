@@ -50,3 +50,8 @@ coverage/
 .tmp/
 .temp/
 .cache/
+
+# Agent instruction files
+AGENTS.md
+CLAUDE.md
+.opencode/
