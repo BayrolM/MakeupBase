@@ -3,7 +3,6 @@ import { useStore } from "../../lib/store";
 import { toast } from "sonner";
 import { generateSalePDF } from "../../lib/pdfGenerator";
 import { saleService } from "../../services/saleService";
-import { CONFIG } from "../../lib/constants";
 import { usePagination } from "../../hooks/usePagination";
 import { Pagination } from "../Pagination";
 
@@ -163,7 +162,7 @@ export function VentasModule() {
 
     setIsSaving(true);
     try {
-      const { subtotal, iva, total } = calculateSaleTotals(formData.productos, CONFIG.IVA);
+      const { subtotal, iva, total } = calculateSaleTotals(formData.productos);
       const payload = {
         id_usuario_cliente: Number(formData.clienteId),
         id_pedido: formData.pedidoId ? Number(formData.pedidoId) : null,

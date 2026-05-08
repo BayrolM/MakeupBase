@@ -112,10 +112,7 @@ export function PedidoDetailDialog({
                   <span className="text-gray-500 font-medium">Subtotal</span>
                   <span className="font-bold text-gray-800">{formatCurrency(selectedPedido.subtotal)}</span>
                 </div>
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-gray-500 font-medium">IVA 19%</span>
-                  <span className="font-bold text-gray-800">{formatCurrency(selectedPedido.iva)}</span>
-                </div>
+
                 <div className="flex justify-between items-center text-sm pb-3 border-b border-pink-100">
                   <span className="text-gray-500 font-medium">Envío</span>
                   <span className="font-bold text-gray-800">{formatCurrency(selectedPedido.costoEnvio)}</span>

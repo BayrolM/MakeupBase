@@ -52,7 +52,7 @@ export function UsuarioDetailDialog({
           <div className="grid grid-cols-2 gap-6">
             {/* Información Personal */}
             <div className="space-y-4">
-              <h3 className="text-[11px] font-bold text-[#c47b96] uppercase tracking-wider">
+               <h3 className="text-[11px] font-bold text-[#c47b96] tracking-wider">
                 Información Personal
               </h3>
               
@@ -60,7 +60,7 @@ export function UsuarioDetailDialog({
                 <div className="flex items-center gap-3">
                   <User className="w-4 h-4 text-gray-400" />
                   <div>
-                    <p className="text-[10px] text-gray-400 font-semibold uppercase">Nombre Completo</p>
+                     <p className="text-[10px] text-gray-400 font-semibold">Nombre Completo</p>
                     <p className="text-sm font-bold text-gray-800">{user.nombres} {user.apellidos}</p>
                   </div>
                 </div>
@@ -68,7 +68,7 @@ export function UsuarioDetailDialog({
                 <div className="flex items-center gap-3">
                   <CreditCard className="w-4 h-4 text-gray-400" />
                   <div>
-                    <p className="text-[10px] text-gray-400 font-semibold uppercase">{getTipoDocumentoLabel(user.tipoDocumento)}</p>
+                     <p className="text-[10px] text-gray-400 font-semibold">{getTipoDocumentoLabel(user.tipoDocumento)}</p>
                     <p className="text-sm font-bold text-gray-800">{user.numeroDocumento}</p>
                   </div>
                 </div>
@@ -76,7 +76,7 @@ export function UsuarioDetailDialog({
                 <div className="flex items-center gap-3">
                   <Calendar className="w-4 h-4 text-gray-400" />
                   <div>
-                    <p className="text-[10px] text-gray-400 font-semibold uppercase">Fecha Registro</p>
+                     <p className="text-[10px] text-gray-400 font-semibold">Fecha Registro</p>
                     <p className="text-sm font-bold text-gray-800">
                       {new Date(user.fechaCreacion).toLocaleDateString()}
                     </p>
@@ -87,7 +87,7 @@ export function UsuarioDetailDialog({
 
             {/* Contacto y Ubicación */}
             <div className="space-y-4">
-              <h3 className="text-[11px] font-bold text-[#c47b96] uppercase tracking-wider">
+               <h3 className="text-[11px] font-bold text-[#c47b96] tracking-wider">
                 Contacto y Ubicación
               </h3>
               
@@ -95,7 +95,7 @@ export function UsuarioDetailDialog({
                 <div className="flex items-center gap-3">
                   <Mail className="w-4 h-4 text-gray-400" />
                   <div>
-                    <p className="text-[10px] text-gray-400 font-semibold uppercase">Email</p>
+                     <p className="text-[10px] text-gray-400 font-semibold">Email</p>
                     <p className="text-sm font-bold text-gray-800 truncate max-w-[180px]">{user.email}</p>
                   </div>
                 </div>
@@ -103,7 +103,7 @@ export function UsuarioDetailDialog({
                 <div className="flex items-center gap-3">
                   <Phone className="w-4 h-4 text-gray-400" />
                   <div>
-                    <p className="text-[10px] text-gray-400 font-semibold uppercase">Teléfono</p>
+                     <p className="text-[10px] text-gray-400 font-semibold">Teléfono</p>
                     <p className="text-sm font-bold text-gray-800">{user.telefono}</p>
                   </div>
                 </div>
@@ -111,7 +111,7 @@ export function UsuarioDetailDialog({
                 <div className="flex items-center gap-3">
                   <MapPin className="w-4 h-4 text-gray-400" />
                   <div>
-                    <p className="text-[10px] text-gray-400 font-semibold uppercase">Ubicación</p>
+                     <p className="text-[10px] text-gray-400 font-semibold">Ubicación</p>
                     <p className="text-sm font-bold text-gray-800">
                       {user.direccion ? `${user.direccion}, ` : ""}{user.ciudad || "N/A"}{user.pais ? ` - ${user.pais}` : ""}
                     </p>
@@ -123,22 +123,22 @@ export function UsuarioDetailDialog({
 
           {/* Estadísticas Rápidas / Estado */}
           <div className="mt-6">
-            <h3 className="text-[11px] font-bold text-[#c47b96] uppercase tracking-wider mb-4">
+             <h3 className="text-[11px] font-bold text-[#c47b96] tracking-wider mb-4">
               Estado y Permisos
             </h3>
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-[#fff0f5] border border-pink-100 rounded-xl p-4 text-center">
                 <Shield className="w-5 h-5 text-[#c47b96] mx-auto mb-2" />
                 <p className="text-xl font-bold text-gray-800">{rolNombre}</p>
-                <p className="text-[10px] text-gray-500 uppercase font-semibold">Nivel de Acceso</p>
+                 <p className="text-[10px] text-gray-500 font-semibold">Nivel de Acceso</p>
               </div>
               
               <div className="bg-gray-50 border border-gray-100 rounded-xl p-4 text-center">
                 <Activity className={`w-5 h-5 mx-auto mb-2 ${user.estado === 'activo' ? 'text-emerald-500' : 'text-gray-400'}`} />
-                <p className={`text-sm font-bold uppercase ${user.estado === 'activo' ? 'text-emerald-600' : 'text-gray-500'}`}>
+                 <p className={`text-sm font-bold ${user.estado === 'activo' ? 'text-emerald-600' : 'text-gray-500'}`}>
                   {user.estado === 'activo' ? 'Activo' : 'Inactivo'}
                 </p>
-                <p className="text-[10px] text-gray-500 uppercase font-semibold">Estado de Cuenta</p>
+                 <p className="text-[10px] text-gray-500 font-semibold">Estado de Cuenta</p>
               </div>
             </div>
           </div>

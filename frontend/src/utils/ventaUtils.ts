@@ -26,12 +26,14 @@ export const getStatusColor = (estado: string) => {
   };
 };
 
-export const calculateSaleTotals = (productos: any[], ivaRate: number) => {
-  const subtotal = productos.reduce(
-    (sum, p) => sum + (Number(p.cantidad) || 0) * (Number(p.precioUnitario) || 0),
-    0
-  );
-  const iva = Math.round(subtotal * ivaRate);
-  const total = subtotal + iva;
-  return { subtotal, iva, total };
+export const calculateSaleTotals = (productos: any[]) => {
+  if (!productos || productos.length === 0) return { subtotal: 0, iva: 0, total: 0 };
+
+  const subtotal = productos.reduce((sum, item) => {
+    return sum + (item.precioUnitario * item.cantidad);
+  }, 0);
+
+  const total = subtotal;
+
+  return { subtotal, iva: 0, total };
 };

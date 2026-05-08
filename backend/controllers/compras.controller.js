@@ -13,7 +13,9 @@ export const listar = async (req, res) => {
     return res.json(result);
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ ok: false, message: "Error al obtener compras." });
+    return res
+      .status(500)
+      .json({ ok: false, message: "Error al obtener compras." });
   }
 };
 
@@ -27,25 +29,29 @@ export const obtener = async (req, res) => {
       LEFT JOIN usuarios u ON c.id_usuario_empleado = u.id_usuario
       WHERE c.id_compra = ${id}
     `;
-    
+
     if (compra.length === 0) {
-      return res.status(404).json({ ok: false, message: "Compra no encontrada." });
+      return res
+        .status(404)
+        .json({ ok: false, message: "Compra no encontrada." });
     }
-    
+
     const detalles = await sql`
       SELECT dc.*, pr.nombre as nombre_producto
       FROM detalle_compra dc
       LEFT JOIN productos pr ON dc.id_producto = pr.id_producto
       WHERE dc.id_compra = ${id}
     `;
-    
+
     return res.json({
       ...compra[0],
-      detalles
+      detalles,
     });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ ok: false, message: "Error al obtener la compra." });
+    return res
+      .status(500)
+      .json({ ok: false, message: "Error al obtener la compra." });
   }
 };
 
@@ -54,16 +60,26 @@ export const crear = async (req, res) => {
     const { id_proveedor, items } = req.body;
     const id_usuario = req.user.id_usuario;
 
-    if (!id_proveedor || !items || !Array.isArray(items) || items.length === 0) {
-      return res.status(400).json({ ok: false, message: "Faltan datos requeridos (proveedor e ítems)." });
+    if (
+      !id_proveedor ||
+      !items ||
+      !Array.isArray(items) ||
+      items.length === 0
+    ) {
+      return res
+        .status(400)
+        .json({
+          ok: false,
+          message: "Faltan datos requeridos (proveedor e ítems).",
+        });
     }
 
     // Calcular totales
     let subtotalTotal = 0;
-    items.forEach(item => {
+    items.forEach((item) => {
       subtotalTotal += item.cantidad * item.precio_unitario;
     });
-    const iva = subtotalTotal * CONFIG.IVA; 
+    const iva = subtotalTotal * CONFIG.IVA;
     const total = subtotalTotal + iva;
 
     // Ejecutar transacción
@@ -95,9 +111,14 @@ export const crear = async (req, res) => {
 
     return res.status(201).json(resultado);
   } catch (error) {
-    console.error('❌ ERROR en crear compra:', error);
-    console.error('📋 Stack:', error.stack);
-    return res.status(500).json({ ok: false, message: error.message || "Error al registrar la compra." });
+    console.error("❌ ERROR en crear compra:", error);
+    console.error("📋 Stack:", error.stack);
+    return res
+      .status(500)
+      .json({
+        ok: false,
+        message: error.message || "Error al registrar la compra.",
+      });
   }
 };
 
@@ -142,9 +163,13 @@ export const anular = async (req, res) => {
     return res.json({ ok: true, message: "Compra anulada correctamente." });
   } catch (error) {
     console.error(error);
-    const msg = error.message === "Compra no encontrada." || error.message === "La compra ya se encuentra anulada."
-      ? error.message 
-      : "Error al anular la compra.";
-    return res.status(msg === "Error al anular la compra." ? 500 : 400).json({ ok: false, message: msg });
+    const msg =
+      error.message === "Compra no encontrada." ||
+      error.message === "La compra ya se encuentra anulada."
+        ? error.message
+        : "Error al anular la compra.";
+    return res
+      .status(msg === "Error al anular la compra." ? 500 : 400)
+      .json({ ok: false, message: msg });
   }
 };

@@ -94,7 +94,6 @@ export function CheckoutView({ onBack, onComplete }: CheckoutViewProps) {
     return sum + (producto ? producto.precioVenta * item.cantidad : 0);
   }, 0);
 
-  const iva = 0;
   const costoEnvio = 0;
   const total = subtotal;
 
@@ -216,7 +215,6 @@ export function CheckoutView({ onBack, onComplete }: CheckoutViewProps) {
         fecha: new Date().toISOString().split("T")[0],
         productos: productosConPrecios,
         subtotal,
-        iva,
         costoEnvio,
         total,
         estado: "pendiente",

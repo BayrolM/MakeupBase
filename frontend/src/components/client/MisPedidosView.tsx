@@ -96,7 +96,6 @@ export function MisPedidosView({
                 fecha: serverOrder.fecha_pedido?.split("T")[0] || "",
                 productos: [],
                 subtotal: 0,
-                iva: 0,
                 costoEnvio: 0,
                 direccionEnvio: serverOrder.direccion || "",
                 estado: serverOrder.estado,
@@ -248,7 +247,6 @@ export function MisPedidosView({
           fecha: o.fecha_pedido?.split("T")[0] || "",
           productos: [],
           subtotal: 0,
-          iva: 0,
           costoEnvio: 0,
           total: Number(o.total),
           estado: o.estado,
@@ -819,6 +817,10 @@ export function MisPedidosView({
             boxShadow: "0 8px 40px rgba(46,16,32,0.12)",
           }}
         >
+          <DialogTitle className="sr-only">Detalle del Pedido</DialogTitle>
+          <DialogDescription className="sr-only">
+            Información detallada sobre el pedido, productos y estado de envío.
+          </DialogDescription>
           {selectedPedido && (
             <div style={{ display: "flex", height: "100%", width: "100%" }}>
               {/* ── LEFT PANEL ── */}
@@ -851,8 +853,8 @@ export function MisPedidosView({
                       style={{
                         fontSize: "9px",
                         fontWeight: 900,
-                        letterSpacing: "4px",
-                        textTransform: "uppercase",
+                        letterSpacing: "2px",
+                        textTransform: "none",
                         color: "#c47b96",
                         opacity: 0.8,
                         marginBottom: "4px",
@@ -900,11 +902,11 @@ export function MisPedidosView({
                         />
                         <span
                           style={{
-                            fontSize: "9px",
-                            fontWeight: 900,
+                            fontSize: "10px",
+                            fontWeight: 700,
                             color: "#16a34a",
-                            letterSpacing: "2px",
-                            textTransform: "uppercase",
+                            letterSpacing: "0.5px",
+                            textTransform: "none",
                           }}
                         >
                           Pago OK
@@ -948,11 +950,11 @@ export function MisPedidosView({
                             />
                             <span
                               style={{
-                                fontSize: "9px",
-                                fontWeight: 900,
-                                letterSpacing: "3px",
-                                textTransform: "uppercase",
-                                color: "#c47b96",
+                              fontSize: "10px",
+                              fontWeight: 700,
+                              letterSpacing: "1px",
+                              textTransform: "none",
+                              color: "#c47b96",
                               }}
                             >
                               Datos de Envío
@@ -1027,10 +1029,10 @@ export function MisPedidosView({
                                 borderRadius: "8px",
                                 background: "#c47b96",
                                 color: "#fff",
-                                fontSize: "9px",
-                                fontWeight: 900,
-                                letterSpacing: "3px",
-                                textTransform: "uppercase",
+                                fontSize: "12px",
+                                fontWeight: 700,
+                                letterSpacing: "0.5px",
+                                textTransform: "none",
                                 textDecoration: "none",
                               }}
                             >
@@ -1117,18 +1119,18 @@ export function MisPedidosView({
                       }}
                     />
                     <div style={{ flex: 1 }}>
-                      <p
-                        style={{
-                          fontSize: "9px",
-                          fontWeight: 900,
-                          color: "#9ca3af",
-                          textTransform: "uppercase",
-                          letterSpacing: "2px",
-                          marginBottom: "4px",
-                        }}
-                      >
-                        Entrega en
-                      </p>
+                        <p
+                          style={{
+                            fontSize: "10px",
+                            fontWeight: 700,
+                            color: "#9ca3af",
+                            textTransform: "none",
+                            letterSpacing: "0.5px",
+                            marginBottom: "4px",
+                          }}
+                        >
+                          Entrega en
+                        </p>
                       <p
                         style={{
                           fontSize: "12px",
@@ -1145,7 +1147,7 @@ export function MisPedidosView({
                             fontSize: "10px",
                             fontWeight: 700,
                             color: "#9ca3af",
-                            textTransform: "uppercase",
+                            textTransform: "none",
                           }}
                         >
                           {selectedPedido.ciudad || "Colombia"}
@@ -1202,18 +1204,18 @@ export function MisPedidosView({
                       }}
                     />
                     <div>
-                      <p
-                        style={{
-                          fontSize: "9px",
-                          fontWeight: 900,
-                          color: "#9ca3af",
-                          textTransform: "uppercase",
-                          letterSpacing: "2px",
-                          marginBottom: "4px",
-                        }}
-                      >
-                        Fecha
-                      </p>
+                        <p
+                          style={{
+                            fontSize: "10px",
+                            fontWeight: 700,
+                            color: "#9ca3af",
+                            textTransform: "none",
+                            letterSpacing: "0.5px",
+                            marginBottom: "4px",
+                          }}
+                        >
+                          Fecha
+                        </p>
                       <p
                         style={{
                           fontSize: "12px",
@@ -1237,11 +1239,11 @@ export function MisPedidosView({
                 >
                   <p
                     style={{
-                      fontSize: "9px",
-                      fontWeight: 900,
+                      fontSize: "10px",
+                      fontWeight: 700,
                       color: "#c47b96",
-                      textTransform: "uppercase",
-                      letterSpacing: "4px",
+                      textTransform: "none",
+                      letterSpacing: "1px",
                       marginBottom: "4px",
                     }}
                   >
@@ -1293,11 +1295,11 @@ export function MisPedidosView({
                     />
                     <span
                       style={{
-                        fontSize: "10px",
-                        fontWeight: 900,
+                        fontSize: "11px",
+                        fontWeight: 700,
                         color: "#9ca3af",
-                        textTransform: "uppercase",
-                        letterSpacing: "4px",
+                        textTransform: "none",
+                        letterSpacing: "1px",
                       }}
                     >
                       Artículos ({selectedPedido.productos.length})
@@ -1443,10 +1445,10 @@ export function MisPedidosView({
                       background: "#c47b96",
                       border: "none",
                       color: "#ffffff",
-                      fontSize: "10px",
-                      fontWeight: 900,
-                      letterSpacing: "3px",
-                      textTransform: "uppercase",
+                      fontSize: "13px",
+                      fontWeight: 700,
+                      letterSpacing: "0.5px",
+                      textTransform: "none",
                       cursor: "pointer",
                       transition: "all 0.2s",
                     }}
@@ -1604,7 +1606,7 @@ export function MisPedidosView({
           </div>
           <div style={{ padding: "20px 24px" }} className="space-y-4">
             <div>
-              <label className="text-[10px] font-bold text-gray-400 uppercase mb-1.5 block tracking-widest">
+              <label className="text-[11px] font-bold text-gray-400 mb-1.5 block tracking-wide">
                 Nueva dirección de envío
               </label>
               <input
@@ -1617,7 +1619,7 @@ export function MisPedidosView({
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-[10px] font-bold text-gray-400 uppercase mb-1.5 block tracking-widest">
+                <label className="text-[11px] font-bold text-gray-400 mb-1.5 block tracking-wide">
                   Ciudad
                 </label>
                 <input
@@ -1628,7 +1630,7 @@ export function MisPedidosView({
                 />
               </div>
               <div>
-                <label className="text-[10px] font-bold text-gray-400 uppercase mb-1.5 block tracking-widest">
+                <label className="text-[11px] font-bold text-gray-400 mb-1.5 block tracking-wide">
                   Departamento
                 </label>
                 <input
@@ -1726,10 +1728,10 @@ export function MisPedidosView({
                 style={{ border: "2px solid #c47b96" }}
               >
                 <p
-                  className="font-bold text-sm uppercase tracking-widest mb-1 text-center"
+                  className="font-bold text-sm tracking-wide mb-1 text-center"
                   style={{ color: "#c47b96" }}
                 >
-                  COMPROBANTE DE PEDIDO
+                  Comprobante de Pedido
                 </p>
                 <p
                   className="font-bold text-2xl text-center"
@@ -1749,8 +1751,8 @@ export function MisPedidosView({
 
           <div className="grid grid-cols-2 gap-12 mb-12 py-8 border-t border-b border-gray-100">
             <div>
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">
-                DATOS DEL CLIENTE
+              <p className="text-xs font-bold text-gray-400 tracking-wide mb-3">
+                Datos del Cliente
               </p>
               <p className="font-bold text-lg" style={{ color: "#2e1020" }}>
                 {currentUser?.nombres || "Cliente"}{" "}
@@ -1760,8 +1762,8 @@ export function MisPedidosView({
               <p className="text-gray-600">{currentUser?.telefono || "N/A"}</p>
             </div>
             <div>
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">
-                DIRECCIÓN DE ENVÍO
+              <p className="text-xs font-bold text-gray-400 tracking-wide mb-3">
+                Dirección de Envío
               </p>
               <p className="font-medium" style={{ color: "#2e1020" }}>
                 {selectedPedido.direccionEnvio}
@@ -1770,7 +1772,7 @@ export function MisPedidosView({
               <p className="text-gray-600 mt-1">
                 Estado:{" "}
                 <span
-                  className="font-bold uppercase"
+                  className="font-bold capitalize"
                   style={{ color: "#c47b96" }}
                 >
                   {selectedPedido.estado}
@@ -1782,7 +1784,7 @@ export function MisPedidosView({
           <table className="w-full mb-12">
             <thead>
               <tr
-                className="text-xs font-bold uppercase tracking-widest"
+                className="text-xs font-bold tracking-wide"
                 style={{ borderBottom: "2px solid #2e1020", color: "#2e1020" }}
               >
                 <th className="py-4 text-left">Descripción del Artículo</th>

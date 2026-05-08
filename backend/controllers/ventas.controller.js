@@ -23,7 +23,8 @@ export const listar = async (req, res) => {
 
 export const crear = async (req, res) => {
   try {
-    const { id_usuario_cliente, id_pedido, metodo_pago, productos, subtotal, iva, total } = req.body;
+    const { id_usuario_cliente, id_pedido, metodo_pago, productos, subtotal, total } = req.body;
+    const iva = 0;
     const id_usuario_empleado = req.user?.id_usuario;
 
     console.log("📥 Nueva Venta - Body clienteID:", id_usuario_cliente);

@@ -232,7 +232,7 @@ export function PedidoReturnDialog({
             <>
               {/* Productos */}
               <div className="bg-gray-50 rounded-xl p-4">
-                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-3">
+                <p className="text-[11px] font-bold text-gray-400 tracking-wider mb-3">
                   Productos a devolver <span className="text-rose-500">*</span>
                 </p>
                 <div className="space-y-2">
@@ -290,7 +290,7 @@ export function PedidoReturnDialog({
                             className="flex flex-col items-end gap-1"
                             onClick={(e) => e.stopPropagation()}
                           >
-                            <span className="text-[9px] font-bold text-[#c47b96] uppercase tracking-tighter">
+                            <span className="text-[9px] font-bold text-[#c47b96] tracking-tighter">
                               Cantidad
                             </span>
                             <input
@@ -316,7 +316,7 @@ export function PedidoReturnDialog({
 
               {/* Motivo */}
               <div className="bg-gray-50 rounded-xl p-4">
-                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">
+                <p className="text-[11px] font-bold text-gray-400 tracking-wider mb-2">
                   Motivo de la devolución{" "}
                   <span className="text-rose-500">*</span>
                 </p>
@@ -331,7 +331,7 @@ export function PedidoReturnDialog({
 
               {/* Imagen / Evidencia */}
               <div className="bg-gray-50 rounded-xl p-4">
-                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">
+                <p className="text-[11px] font-bold text-gray-400 tracking-wider mb-2">
                   Evidencia fotográfica (Opcional)
                 </p>
 
@@ -349,7 +349,7 @@ export function PedidoReturnDialog({
                     className="w-full h-24 border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center gap-2 hover:border-[#c47b96] hover:bg-[#c47b96]/5 transition-all group"
                   >
                     <Upload className="w-6 h-6 text-gray-300 group-hover:text-[#c47b96]" />
-                    <span className="text-[10px] font-bold text-gray-400 group-hover:text-[#c47b96] uppercase tracking-wider">
+                    <span className="text-[10px] font-bold text-gray-400 group-hover:text-[#c47b96] tracking-wider">
                       Subir desde dispositivo
                     </span>
                   </button>

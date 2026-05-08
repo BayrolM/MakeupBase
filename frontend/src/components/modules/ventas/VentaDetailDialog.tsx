@@ -15,7 +15,7 @@ import {
 } from "../../ui/dialog";
 import { Button } from "../../ui/button";
 import { formatCurrency, getStatusColor } from "../../../utils/ventaUtils";
-import { CONFIG } from "../../../lib/constants";
+
 
 interface VentaDetailDialogProps {
   open: boolean;
@@ -51,13 +51,13 @@ export function VentaDetailDialog({
                 Detalle de Venta
               </DialogTitle>
               <DialogDescription className="text-xs text-gray-400 mt-0.5">
-                DETALLE #{selectedVenta.id.slice(0, 8).toUpperCase()}
+                Detalle #{selectedVenta.id.slice(0, 8).toUpperCase()}
               </DialogDescription>
             </div>
           </div>
           <div className="flex items-center gap-3">
               <span
-                className="px-3 py-1 rounded-full text-xs font-bold uppercase"
+                className="px-3 py-1 rounded-full text-xs font-bold"
                 style={{
                   background: selectedVenta.estado === "activo" ? "rgba(209,250,229,0.9)" : "rgba(254,226,226,0.9)",
                   color: selectedVenta.estado === "activo" ? "#065f46" : "#991b1b",
@@ -84,28 +84,28 @@ export function VentaDetailDialog({
 
           <div className="grid grid-cols-2 gap-6 mb-6">
             <div className="space-y-4">
-              <h3 className="text-[11px] font-bold text-[#c47b96] uppercase tracking-wider">
+              <h3 className="text-[11px] font-bold text-[#c47b96] tracking-wider">
                 Información de Venta
               </h3>
               <div className="bg-gray-50 rounded-xl p-4 space-y-3">
                 <div className="flex items-center gap-3">
                   <UserIcon className="w-4 h-4 text-gray-400" />
                   <div>
-                    <p className="text-[10px] text-gray-400 font-semibold uppercase">Cliente</p>
+                    <p className="text-[10px] text-gray-400 font-semibold">Cliente</p>
                     <p className="text-sm font-bold text-gray-800">{clientes.find((c) => c.id === selectedVenta.clienteId)?.nombre || "Consumidor Final"}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <Calendar className="w-4 h-4 text-gray-400" />
                   <div>
-                    <p className="text-[10px] text-gray-400 font-semibold uppercase">Fecha</p>
+                    <p className="text-[10px] text-gray-400 font-semibold">Fecha</p>
                     <p className="text-sm font-bold text-gray-800">{selectedVenta.fecha}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <CreditCard className="w-4 h-4 text-gray-400" />
                   <div>
-                    <p className="text-[10px] text-gray-400 font-semibold uppercase">Método de Pago</p>
+                    <p className="text-[10px] text-gray-400 font-semibold">Método de Pago</p>
                     <p className="text-sm font-bold text-gray-800">{selectedVenta.metodoPago}</p>
                   </div>
                 </div>
@@ -113,7 +113,7 @@ export function VentaDetailDialog({
             </div>
             
             <div className="space-y-4">
-              <h3 className="text-[11px] font-bold text-[#c47b96] uppercase tracking-wider">
+              <h3 className="text-[11px] font-bold text-[#c47b96] tracking-wider">
                 Resumen de Totales
               </h3>
               <div className="bg-[#fff0f5] border border-pink-100 rounded-xl p-4 space-y-3">
@@ -121,12 +121,9 @@ export function VentaDetailDialog({
                   <span className="text-gray-500 font-medium">Subtotal</span>
                   <span className="font-bold text-gray-800">{formatCurrency(selectedVenta.subtotal)}</span>
                 </div>
-                <div className="flex justify-between items-center text-sm pb-3 border-b border-pink-100">
-                  <span className="text-gray-500 font-medium">IVA ({CONFIG.IVA * 100}%)</span>
-                  <span className="font-bold text-gray-800">{formatCurrency(selectedVenta.iva)}</span>
-                </div>
+
                 <div className="flex justify-between items-center pt-1">
-                  <span className="text-sm font-bold text-gray-800 uppercase tracking-wide">Total</span>
+                   <span className="text-sm font-bold text-gray-800 tracking-wide">Total</span>
                   <span className="text-2xl font-black text-[#c47b96]">{formatCurrency(selectedVenta.total)}</span>
                 </div>
               </div>
@@ -135,20 +132,20 @@ export function VentaDetailDialog({
 
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-[11px] font-bold text-[#c47b96] uppercase tracking-wider">
+              <h3 className="text-[11px] font-bold text-[#c47b96] tracking-wider">
                 Artículos
               </h3>
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold text-gray-500 bg-gray-100 uppercase tracking-widest">
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold text-gray-500 bg-gray-100 tracking-widest">
                 {selectedVenta.productos.length} {selectedVenta.productos.length === 1 ? "ítem" : "ítems"}
               </span>
             </div>
             
             <div className="rounded-xl border border-gray-100 overflow-hidden">
               <div className="grid grid-cols-12 gap-4 px-4 py-2.5 bg-gray-50 border-b border-gray-100">
-                <div className="col-span-6 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Producto</div>
-                <div className="col-span-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-center">Cant.</div>
-                <div className="col-span-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-right">Precio</div>
-                <div className="col-span-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-right">Total</div>
+                <div className="col-span-6 text-[10px] font-bold text-gray-400 tracking-wider">Producto</div>
+                <div className="col-span-2 text-[10px] font-bold text-gray-400 tracking-wider text-center">Cant.</div>
+                <div className="col-span-2 text-[10px] font-bold text-gray-400 tracking-wider text-right">Precio</div>
+                <div className="col-span-2 text-[10px] font-bold text-gray-400 tracking-wider text-right">Total</div>
               </div>
               <div className="divide-y divide-gray-50">
                 {selectedVenta.productos.map((p: any, i: number) => {

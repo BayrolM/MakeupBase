@@ -137,7 +137,6 @@ export interface Venta {
   fecha: string;
   productos: { productoId: string; cantidad: number; precioUnitario: number }[];
   subtotal: number;
-  iva: number;
   costoEnvio: number;
   total: number;
   estado: "activo" | "anulada";
@@ -151,7 +150,6 @@ export interface Pedido {
   fecha: string;
   productos: { productoId: string; cantidad: number; precioUnitario: number }[];
   subtotal: number;
-  iva: number;
   costoEnvio: number;
   total: number;
   estado: OrderStatus;

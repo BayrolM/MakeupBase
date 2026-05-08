@@ -8,7 +8,6 @@ interface VentaData {
   metodoPago: string;
   clienteId: string;
   subtotal: number;
-  iva: number;
   total: number;
   productos: {
     productoId: string;
@@ -149,27 +148,15 @@ export const generateSalePDF = async (
     doc.setLineWidth(0.5);
     doc.line(120, footerY, 190, footerY);
 
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(120);
-    doc.text("Subtotal:", 125, footerY + 10);
-    doc.text(`IVA (${Math.round((venta.iva / (venta.subtotal || 1)) * 100)}%):`, 125, footerY + 16);
-
     doc.setFontSize(12);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(cPrimary[0], cPrimary[1], cPrimary[2]);
-    doc.text("TOTAL:", 125, footerY + 26);
-
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(cText[0], cText[1], cText[2]);
-    doc.text(formatP(venta.subtotal), 185, footerY + 10, { align: "right" });
-    doc.text(formatP(venta.iva), 185, footerY + 16, { align: "right" });
+    doc.text("TOTAL:", 125, footerY + 10);
 
     doc.setFontSize(16);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(cPrimary[0], cPrimary[1], cPrimary[2]);
-    doc.text(formatP(venta.total), 185, footerY + 26, { align: "right" });
+    doc.text(formatP(venta.total), 185, footerY + 10, { align: "right" });
 
     // 5. FOOTER
     doc.setFontSize(8);

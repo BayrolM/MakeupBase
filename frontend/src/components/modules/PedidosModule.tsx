@@ -183,12 +183,8 @@ export function PedidosModule() {
         clienteNombre: o.nombre_usuario || "Sin Nombre",
         fecha: o.fecha_pedido ? o.fecha_pedido.split("T")[0] : "N/A",
         productos: [],
-        subtotal: o.total ? Math.round(Number(o.total) / (1 + CONFIG.IVA)) : 0,
-        iva: o.total
-          ? Math.round(
-              Number(o.total) - Math.round(Number(o.total) / (1 + CONFIG.IVA)),
-            )
-          : 0,
+        subtotal: Number(o.total) || 0,
+        iva: 0,
         costoEnvio: CONFIG.COSTO_ENVIO,
         total: Number(o.total),
         estado: o.estado as OrderStatus,
