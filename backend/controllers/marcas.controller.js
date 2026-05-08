@@ -2,7 +2,7 @@ import sql from "../config/db.js";
 
 export const listar = async (req, res) => {
   try {
-    const result = await sql`SELECT * FROM marcas ORDER BY id_marca ASC`;
+    const result = await sql`SELECT * FROM marcas ORDER BY id_marca DESC`;
     return res.json(result);
   } catch (error) {
     console.error(error);

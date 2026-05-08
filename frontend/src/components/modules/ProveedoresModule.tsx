@@ -33,8 +33,9 @@ export function ProveedoresModule() {
       (p) =>
         p.nombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.nit.includes(searchQuery) ||
-        (p.email && p.email.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (p.telefono && p.telefono.includes(searchQuery))
+        (p.email &&
+          p.email.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (p.telefono && p.telefono.includes(searchQuery)),
     );
   }, [proveedores, searchQuery]);
 
@@ -67,9 +68,9 @@ export function ProveedoresModule() {
 
   // Helper to update specific field and clear its error
   const handleFieldChange = (field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
     if (fieldErrors[field]) {
-      setFieldErrors(prev => {
+      setFieldErrors((prev) => {
         const newErrors = { ...prev };
         delete newErrors[field];
         return newErrors;
@@ -141,7 +142,9 @@ export function ProveedoresModule() {
     if (!formData.nit.trim()) {
       errors.nit = "El NIT/Documento es requerido";
     } else {
-      const duplicateNit = proveedores.find(p => p.nit === formData.nit.trim() && p.id !== editingProveedor?.id);
+      const duplicateNit = proveedores.find(
+        (p) => p.nit === formData.nit.trim() && p.id !== editingProveedor?.id,
+      );
       if (duplicateNit) {
         errors.nit = "Ya existe un proveedor registrado con este NIT";
       }
@@ -156,7 +159,11 @@ export function ProveedoresModule() {
       if (!emailRegex.test(formData.email.trim())) {
         errors.email = "Formato de correo electrónico inválido";
       } else {
-        const duplicateEmail = proveedores.find(p => p.email.toLowerCase() === formData.email.trim().toLowerCase() && p.id !== editingProveedor?.id);
+        const duplicateEmail = proveedores.find(
+          (p) =>
+            p.email.toLowerCase() === formData.email.trim().toLowerCase() &&
+            p.id !== editingProveedor?.id,
+        );
         if (duplicateEmail) {
           errors.email = "Este correo electrónico ya está en uso";
         }
@@ -246,14 +253,14 @@ export function ProveedoresModule() {
 
   return (
     <div className="min-h-screen bg-[#f6f3f5]">
-      <ProveedorHeader 
+      <ProveedorHeader
         onOpenDialog={() => {
           if (!isAdmin) {
             toast.error("Solo un administrador puede realizar esta acción");
             return;
           }
           handleOpenDialog();
-        }} 
+        }}
         isAdmin={isAdmin}
       />
 

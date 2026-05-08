@@ -15,7 +15,7 @@ export const listar = async (req, res) => {
     const categorias = await sql`
       SELECT * FROM categorias 
       ${whereClause}
-      ORDER BY id_categoria ASC
+      ORDER BY id_categoria DESC
       LIMIT ${limit} OFFSET ${offset}
     `;
 

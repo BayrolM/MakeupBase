@@ -337,7 +337,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           id: generateId(),
           fechaCreacion: getCurrentDate(),
         };
-        setUsers((prev) => [...prev, newUser]);
+        setUsers((prev) => [newUser, ...prev]);
       },
       updateUser: (id, userData) => {
         setUsers((prev) =>
@@ -355,7 +355,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           fechaRegistro: getCurrentDate(),
           totalCompras: 0,
         };
-        setClientes((prev) => [...prev, newCliente]);
+        setClientes((prev) => [newCliente, ...prev]);
       },
       updateCliente: (id, clienteData) => {
         setClientes((prev) =>
@@ -372,7 +372,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           id: generateId(),
           fechaRegistro: getCurrentDate(),
         };
-        setProveedores((prev) => [...prev, newProveedor]);
+        setProveedores((prev) => [newProveedor, ...prev]);
       },
       updateProveedor: (id, proveedorData) => {
         setProveedores((prev) =>
@@ -385,7 +385,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
       addCategoria: (categoria) => {
         const newCategoria = { ...categoria, id: generateId() };
-        setCategorias((prev) => [...prev, newCategoria]);
+        setCategorias((prev) => [newCategoria, ...prev]);
       },
       updateCategoria: (id, categoriaData) => {
         setCategorias((prev) =>
@@ -402,7 +402,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           id: generateId(),
           fechaCreacion: getCurrentDate(),
         };
-        setProductos((prev) => [...prev, newProducto]);
+        setProductos((prev) => [newProducto, ...prev]);
       },
       updateProducto: (id, productoData) => {
         setProductos((prev) =>
@@ -422,7 +422,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
       addCompra: (compra) => {
         const newCompra = { ...compra, id: generateId() };
-        setCompras((prev) => [...prev, newCompra]);
+        setCompras((prev) => [newCompra, ...prev]);
       },
       updateCompra: (id, compraData) => {
         setCompras((prev) =>
@@ -446,7 +446,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
       addVenta: (venta) => {
         const newVenta = { ...venta, id: generateId() };
-        setVentas((prev) => [...prev, newVenta]);
+        setVentas((prev) => [newVenta, ...prev]);
         setClientes((prev) =>
           prev.map((c) =>
             c.id === venta.clienteId
@@ -496,7 +496,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
       addDevolucion: (devolucion) => {
         const newDevolucion = { ...devolucion, id: generateId() };
-        setDevoluciones((prev) => [...prev, newDevolucion]);
+        setDevoluciones((prev) => [newDevolucion, ...prev]);
       },
       updateDevolucion: (id, devolucionData) => {
         setDevoluciones((prev) =>
@@ -507,7 +507,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setRoles: (newRoles) => setRoles(newRoles),
       addRol: (rol) => {
         const newRol = { ...rol, id: generateId() };
-        setRoles((prev) => [...prev, newRol]);
+        setRoles((prev) => [newRol, ...prev]);
       },
       updateRol: (id, rolData) => {
         setRoles((prev) =>

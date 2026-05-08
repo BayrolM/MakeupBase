@@ -15,7 +15,15 @@ import { CompraAnularDialog } from "./compras/CompraAnularDialog";
 import { generateCompraPDF } from "../../lib/pdfGenerator";
 
 export function ComprasModule() {
-  const { compras, proveedores, productos, setCompras, setProductos, currentUser, userType } = useStore();
+  const {
+    compras,
+    proveedores,
+    productos,
+    setCompras,
+    setProductos,
+    currentUser,
+    userType,
+  } = useStore();
   const isAdmin = currentUser?.rol === "admin" || userType === "admin";
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
@@ -62,12 +70,12 @@ export function ComprasModule() {
 
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-
-
   const refreshData = async () => {
     try {
       const purchasesResp = await purchaseService.getAll();
-      const purchasesArray = Array.isArray(purchasesResp) ? purchasesResp : purchasesResp.data || [];
+      const purchasesArray = Array.isArray(purchasesResp)
+        ? purchasesResp
+        : purchasesResp.data || [];
       const mappedPurchases = purchasesArray.map((purch: any) => ({
         id: purch.id_compra.toString(),
         proveedorId: purch.id_proveedor.toString(),
@@ -119,19 +127,20 @@ export function ComprasModule() {
     setIsDialogOpen(true);
   };
 
-
-
-
   const handleSave = async () => {
     const errors: Record<string, string> = {};
 
-    if (!formData.proveedorId) errors.proveedorId = "Debe seleccionar un proveedor.";
-    if (formData.detalles.length === 0) errors.detalles = "Debe agregar al menos un producto.";
+    if (!formData.proveedorId)
+      errors.proveedorId = "Debe seleccionar un proveedor.";
+    if (formData.detalles.length === 0)
+      errors.detalles = "Debe agregar al menos un producto.";
 
     formData.detalles.forEach((d, i) => {
       if (!d.productoId) errors[`producto_${i}`] = "Seleccione un producto.";
-      if (!d.cantidad || Number(d.cantidad) <= 0) errors[`cantidad_${i}`] = "Dato inválido.";
-      if (d.precioUnitario === "" || Number(d.precioUnitario) < 0) errors[`precio_${i}`] = "Precio inválido.";
+      if (!d.cantidad || Number(d.cantidad) <= 0)
+        errors[`cantidad_${i}`] = "Dato inválido.";
+      if (d.precioUnitario === "" || Number(d.precioUnitario) < 0)
+        errors[`precio_${i}`] = "Precio inválido.";
     });
 
     if (Object.keys(errors).length > 0) {
@@ -157,7 +166,10 @@ export function ComprasModule() {
       await refreshData();
       setIsDialogOpen(false);
     } catch (error: any) {
-      const msg = error.response?.data?.message || error.message || "Error al registrar la compra";
+      const msg =
+        error.response?.data?.message ||
+        error.message ||
+        "Error al registrar la compra";
       console.error("Error guardando compra:", error.response?.data || error);
       toast.error(msg);
     } finally {
@@ -175,7 +187,9 @@ export function ComprasModule() {
       setIsAnularDialogOpen(false);
       setCompraToAnular(null);
     } catch (e: any) {
-      toast.error(e.response?.data?.message || e.message || "Error al anular compra");
+      toast.error(
+        e.response?.data?.message || e.message || "Error al anular compra",
+      );
     } finally {
       setIsSaving(false);
     }
@@ -184,8 +198,12 @@ export function ComprasModule() {
   const handleViewPdf = async (c: Compra) => {
     try {
       const fullPurchase = await purchaseService.getById(Number(c.id));
-      const proveedor = proveedores.find(p => p.id === c.proveedorId);
-      generateCompraPDF({ ...c, detalles: fullPurchase.detalles || [] }, proveedor, productos);
+      const proveedor = proveedores.find((p) => p.id === c.proveedorId);
+      generateCompraPDF(
+        { ...c, detalles: fullPurchase.detalles || [] },
+        proveedor,
+        productos,
+      );
     } catch (error) {
       toast.error("Error al generar PDF de la compra");
     }
@@ -206,7 +224,10 @@ export function ComprasModule() {
           onViewDetail={async (c) => {
             try {
               const fullPurchase = await purchaseService.getById(Number(c.id));
-              setSelectedCompra({ ...c, detalles: fullPurchase.detalles || [] });
+              setSelectedCompra({
+                ...c,
+                detalles: fullPurchase.detalles || [],
+              });
               setIsDetailDialogOpen(true);
             } catch (error) {
               toast.error("Error al cargar detalles de la compra");

@@ -60,7 +60,7 @@ export const listarProductos = async (filters = {}) => {
     LEFT JOIN marcas m ON p.id_marca = m.id_marca
     LEFT JOIN categorias c ON p.id_categoria = c.id_categoria
     ${whereFragment}
-    ORDER BY p.nombre
+    ORDER BY p.id_producto DESC
     LIMIT ${limit} OFFSET ${offset}
   `;
 

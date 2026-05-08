@@ -180,7 +180,10 @@ export function ProductsModule() {
         editingProduct={editingProduct}
         categorias={categorias}
         marcas={marcas}
-        refreshProducts={refreshProductsLocal}
+        refreshProducts={async () => {
+          if (!editingProduct) setCurrentPage(1);
+          await refreshProductsLocal();
+        }}
       />
 
       <ProductDetailDialog

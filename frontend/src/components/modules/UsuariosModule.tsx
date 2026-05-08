@@ -257,6 +257,7 @@ export function UsuariosModule() {
           password_hash: formData.passwordHash,
         });
         toast.success("Usuario creado correctamente");
+        setCurrentPage(1);
       }
       await fetchUsers();
       setIsDialogOpen(false);

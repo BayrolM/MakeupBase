@@ -130,6 +130,7 @@ export function CategoriasModule() {
       } else {
         await categoryService.create(payload);
         toast.success("Categoría creada");
+        setCurrentPage(1);
       }
 
       await refreshCategorias();

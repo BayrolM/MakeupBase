@@ -266,6 +266,7 @@ export function PedidosModule() {
       };
       await orderService.createDirect(payload);
       toast.success("Pedido creado");
+      handlePageChange(1);
       refreshPedidos();
       setIsDialogOpen(false);
     } catch (e: any) {

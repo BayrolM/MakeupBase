@@ -224,6 +224,7 @@ export function ClientesViewModule() {
       } else {
         await userService.create(payload as any);
         toast.success("Cliente registrado");
+        handlePageChange(1);
       }
 
       await fetchClientes();

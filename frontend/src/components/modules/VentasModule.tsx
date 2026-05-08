@@ -173,6 +173,7 @@ export function VentasModule() {
 
       await saleService.create(payload);
       toast.success("Venta registrada con éxito");
+      handlePageChange(1);
       await refreshVentas();
       setIsDialogOpen(false);
     } catch (error: any) {

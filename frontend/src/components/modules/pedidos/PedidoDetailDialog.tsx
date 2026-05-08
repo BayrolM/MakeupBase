@@ -1,19 +1,17 @@
-import { 
-  X, 
-  ShoppingBag, 
-  User as UserIcon, 
-  Calendar, 
-  MapPin, 
-  Package, 
-  ClipboardList 
+import {
+  X,
+  User as UserIcon,
+  Calendar,
+  MapPin,
+  Package,
+  ClipboardList,
 } from "lucide-react";
-import { 
-  Dialog, 
-  DialogContent, 
+import {
+  Dialog,
+  DialogContent,
   DialogTitle,
-  DialogDescription
+  DialogDescription,
 } from "../../ui/dialog";
-import { Button } from "../../ui/button";
 import { formatCurrency, getStatusColor } from "../../../utils/pedidoUtils";
 
 interface PedidoDetailDialogProps {
@@ -53,21 +51,33 @@ export function PedidoDetailDialog({
             </div>
           </div>
           <div className="flex items-center gap-3">
-              <span
-                className="px-3 py-1 rounded-full text-xs font-bold uppercase"
-                style={{
-                  background: selectedPedido.estado === "entregado" || selectedPedido.estado === "preparado" ? "rgba(209,250,229,0.9)" : selectedPedido.estado === "cancelado" ? "rgba(254,226,226,0.9)" : "rgba(254,243,199,0.9)",
-                  color: selectedPedido.estado === "entregado" || selectedPedido.estado === "preparado" ? "#065f46" : selectedPedido.estado === "cancelado" ? "#991b1b" : "#92400e",
-                }}
-              >
-                {getStatusColor(selectedPedido.estado).label}
-              </span>
-              <button
-                onClick={() => onOpenChange(false)}
-                className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
+            <span
+              className="px-3 py-1 rounded-full text-xs font-bold uppercase"
+              style={{
+                background:
+                  selectedPedido.estado === "entregado" ||
+                  selectedPedido.estado === "preparado"
+                    ? "rgba(209,250,229,0.9)"
+                    : selectedPedido.estado === "cancelado"
+                      ? "rgba(254,226,226,0.9)"
+                      : "rgba(254,243,199,0.9)",
+                color:
+                  selectedPedido.estado === "entregado" ||
+                  selectedPedido.estado === "preparado"
+                    ? "#065f46"
+                    : selectedPedido.estado === "cancelado"
+                      ? "#991b1b"
+                      : "#92400e",
+              }}
+            >
+              {getStatusColor(selectedPedido.estado).label}
+            </span>
+            <button
+              onClick={() => onOpenChange(false)}
+              className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
         </div>
 
@@ -81,28 +91,43 @@ export function PedidoDetailDialog({
                 <div className="flex items-center gap-3">
                   <UserIcon className="w-4 h-4 text-gray-400" />
                   <div>
-                    <p className="text-[10px] text-gray-400 font-semibold uppercase">Cliente</p>
-                    <p className="text-sm font-bold text-gray-800">{selectedPedido.clienteNombre}</p>
+                    <p className="text-[10px] text-gray-400 font-semibold uppercase">
+                      Cliente
+                    </p>
+                    <p className="text-sm font-bold text-gray-800">
+                      {selectedPedido.clienteNombre}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <Calendar className="w-4 h-4 text-gray-400" />
                   <div>
-                    <p className="text-[10px] text-gray-400 font-semibold uppercase">Fecha</p>
-                    <p className="text-sm font-bold text-gray-800">{selectedPedido.fecha}</p>
+                    <p className="text-[10px] text-gray-400 font-semibold uppercase">
+                      Fecha
+                    </p>
+                    <p className="text-sm font-bold text-gray-800">
+                      {selectedPedido.fecha}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <MapPin className="w-4 h-4 text-gray-400" />
                   <div>
-                    <p className="text-[10px] text-gray-400 font-semibold uppercase">Dirección de Envío</p>
-                    <p className="text-sm font-bold text-gray-800 max-w-[180px]">{selectedPedido.direccionEnvio || selectedPedido.direccion}</p>
-                    <p className="text-[11px] text-gray-500">{selectedPedido.ciudad} - {selectedPedido.departamento}</p>
+                    <p className="text-[10px] text-gray-400 font-semibold uppercase">
+                      Dirección de Envío
+                    </p>
+                    <p className="text-sm font-bold text-gray-800 max-w-[180px]">
+                      {selectedPedido.direccionEnvio ||
+                        selectedPedido.direccion}
+                    </p>
+                    <p className="text-[11px] text-gray-500">
+                      {selectedPedido.ciudad} - {selectedPedido.departamento}
+                    </p>
                   </div>
                 </div>
               </div>
             </div>
-            
+
             <div className="space-y-4">
               <h3 className="text-[11px] font-bold text-[#c47b96] uppercase tracking-wider">
                 Resumen de Totales
@@ -110,16 +135,24 @@ export function PedidoDetailDialog({
               <div className="bg-[#fff0f5] border border-pink-100 rounded-xl p-4 space-y-3">
                 <div className="flex justify-between items-center text-sm">
                   <span className="text-gray-500 font-medium">Subtotal</span>
-                  <span className="font-bold text-gray-800">{formatCurrency(selectedPedido.subtotal)}</span>
+                  <span className="font-bold text-gray-800">
+                    {formatCurrency(selectedPedido.subtotal)}
+                  </span>
                 </div>
 
                 <div className="flex justify-between items-center text-sm pb-3 border-b border-pink-100">
                   <span className="text-gray-500 font-medium">Envío</span>
-                  <span className="font-bold text-gray-800">{formatCurrency(selectedPedido.costoEnvio)}</span>
+                  <span className="font-bold text-gray-800">
+                    {formatCurrency(selectedPedido.costoEnvio)}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center pt-1">
-                  <span className="text-sm font-bold text-gray-800 uppercase tracking-wide">Total</span>
-                  <span className="text-2xl font-black text-[#c47b96]">{formatCurrency(selectedPedido.total)}</span>
+                  <span className="text-sm font-bold text-gray-800 uppercase tracking-wide">
+                    Total
+                  </span>
+                  <span className="text-2xl font-black text-[#c47b96]">
+                    {formatCurrency(selectedPedido.total)}
+                  </span>
                 </div>
               </div>
             </div>
@@ -131,39 +164,68 @@ export function PedidoDetailDialog({
                 Artículos
               </h3>
               <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold text-gray-500 bg-gray-100 uppercase tracking-widest">
-                {(selectedPedido.productos || []).length} {(selectedPedido.productos || []).length === 1 ? "ítem" : "ítems"}
+                {(selectedPedido.productos || []).length}{" "}
+                {(selectedPedido.productos || []).length === 1
+                  ? "ítem"
+                  : "ítems"}
               </span>
             </div>
-            
+
             <div className="rounded-xl border border-gray-100 overflow-hidden">
               <div className="grid grid-cols-12 gap-4 px-4 py-2.5 bg-gray-50 border-b border-gray-100">
-                <div className="col-span-6 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Producto</div>
-                <div className="col-span-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-center">Cant.</div>
-                <div className="col-span-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-right">Precio</div>
-                <div className="col-span-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-right">Total</div>
+                <div className="col-span-6 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                  Producto
+                </div>
+                <div className="col-span-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-center">
+                  Cant.
+                </div>
+                <div className="col-span-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-right">
+                  Precio
+                </div>
+                <div className="col-span-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider text-right">
+                  Total
+                </div>
               </div>
               <div className="divide-y divide-gray-50">
                 {(selectedPedido.productos || []).map((p: any, i: number) => {
-                  const producto = productos.find((prod) => prod.id === p.productoId);
+                  const producto = productos.find(
+                    (prod) => prod.id === p.productoId,
+                  );
                   return (
-                    <div key={i} className="grid grid-cols-12 gap-4 px-4 py-3.5 items-center hover:bg-gray-50/60 transition-colors">
+                    <div
+                      key={i}
+                      className="grid grid-cols-12 gap-4 px-4 py-3.5 items-center hover:bg-gray-50/60 transition-colors"
+                    >
                       <div className="col-span-6 flex items-center gap-3">
                         <div className="w-9 h-9 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                          {producto?.imagenUrl
-                            ? <img src={producto.imagenUrl} alt={producto.nombre} className="w-full h-full object-contain" />
-                            : <Package className="w-4 h-4 text-gray-300" />
-                          }
+                          {producto?.imagenUrl ? (
+                            <img
+                              src={producto.imagenUrl}
+                              alt={producto.nombre}
+                              className="w-full h-full object-contain"
+                            />
+                          ) : (
+                            <Package className="w-4 h-4 text-gray-300" />
+                          )}
                         </div>
-                        <span className="text-sm font-semibold text-gray-800 truncate">{producto?.nombre || "Producto"}</span>
+                        <span className="text-sm font-semibold text-gray-800 truncate">
+                          {producto?.nombre || "Producto"}
+                        </span>
                       </div>
                       <div className="col-span-2 text-center">
-                        <span className="text-sm text-gray-600 font-medium">{p.cantidad}</span>
+                        <span className="text-sm text-gray-600 font-medium">
+                          {p.cantidad}
+                        </span>
                       </div>
                       <div className="col-span-2 text-right">
-                        <span className="text-sm text-gray-600">{formatCurrency(p.precioUnitario)}</span>
+                        <span className="text-sm text-gray-600">
+                          {formatCurrency(p.precioUnitario)}
+                        </span>
                       </div>
                       <div className="col-span-2 text-right">
-                        <span className="text-sm font-bold text-gray-800">{formatCurrency(p.cantidad * p.precioUnitario)}</span>
+                        <span className="text-sm font-bold text-gray-800">
+                          {formatCurrency(p.cantidad * p.precioUnitario)}
+                        </span>
                       </div>
                     </div>
                   );
