@@ -76,6 +76,9 @@ export const crear = async (req, res) => {
         .status(400)
         .json({ ok: false, message: "Error de restricción única en la base de datos" });
     }
+    if (err?.code === "PRODUCT_DUPLICATE") {
+      return res.status(400).json({ ok: false, message: err.message });
+    }
     return res.status(500).json({ ok: false, message: "Error interno" });
   }
 };
@@ -96,7 +99,7 @@ export const actualizar = async (req, res) => {
     return res.json({ ok: true, message: "Producto actualizado" });
   } catch (err) {
     console.error(err);
-    if (err.code === 'PRODUCT_HAS_ACTIVE_ASSOCIATIONS') {
+    if (err.code === 'PRODUCT_HAS_ACTIVE_ASSOCIATIONS' || err.code === 'PRODUCT_DUPLICATE') {
       return res.status(400).json({ ok: false, message: err.message });
     }
     return res.status(500).json({ ok: false, message: "Error interno" });

@@ -94,6 +94,21 @@ export const crearProducto = async (data) => {
     estado = 1,
   } = data;
 
+  // Verificar duplicado
+  const [duplicate] = await sql`
+    SELECT id_producto FROM productos 
+    WHERE LOWER(TRIM(nombre)) = LOWER(TRIM(${nombre})) 
+      AND id_marca = ${id_marca} 
+      AND id_categoria = ${id_categoria}
+  `;
+
+  if (duplicate) {
+    throw Object.assign(
+      new Error('Ya existe un producto con este nombre en la misma marca y categoría.'),
+      { code: 'PRODUCT_DUPLICATE', status: 400 }
+    );
+  }
+
   const result = await sql`
       INSERT INTO productos
         (nombre, id_marca, id_categoria, descripcion, costo_promedio, precio_venta, stock_actual, stock_max, stock_min, imagen_url, estado)
@@ -145,6 +160,31 @@ export const actualizarProducto = async (id, data) => {
         new Error(`No se puede desactivar: el producto tiene ${detalle.join(' y ')}.`),
         { code: 'PRODUCT_HAS_ACTIVE_ASSOCIATIONS', status: 400 }
       );
+    }
+  }
+
+  // Verificar duplicados si se actualiza nombre, marca o categoría
+  if (nombre !== undefined || id_marca !== undefined || id_categoria !== undefined) {
+    const current = await obtenerProductoPorId(id);
+    if (current) {
+      const checkNombre = nombre !== undefined ? nombre : current.nombre;
+      const checkMarca = id_marca !== undefined ? id_marca : current.id_marca;
+      const checkCategoria = id_categoria !== undefined ? id_categoria : current.id_categoria;
+
+      const [duplicate] = await sql`
+        SELECT id_producto FROM productos 
+        WHERE LOWER(TRIM(nombre)) = LOWER(TRIM(${checkNombre})) 
+          AND id_marca = ${checkMarca} 
+          AND id_categoria = ${checkCategoria}
+          AND id_producto != ${id}
+      `;
+
+      if (duplicate) {
+        throw Object.assign(
+          new Error('Ya existe otro producto con este nombre en la misma marca y categoría.'),
+          { code: 'PRODUCT_DUPLICATE', status: 400 }
+        );
+      }
     }
   }
 
@@ -207,9 +247,20 @@ export const eliminarProducto = async (id) => {
     );
   }
 
-  // Sin asociaciones activas → eliminar definitivamente
-  await sql`DELETE FROM productos WHERE id_producto = ${id}`;
-  return { hardDeleted: true, message: "Producto eliminado definitivamente" };
+  // Sin asociaciones activas → intentar eliminar definitivamente
+  try {
+    await sql`DELETE FROM productos WHERE id_producto = ${id}`;
+    return { hardDeleted: true, message: "Producto eliminado definitivamente" };
+  } catch (err) {
+    // Error de llave foránea (23503) en PostgreSQL
+    if (err.code === '23503') {
+      throw Object.assign(
+        new Error("No se puede eliminar físicamente porque tiene historial de ventas o pedidos (inactivos). Te recomendamos desactivarlo en su lugar."),
+        { code: 'PRODUCT_HAS_ACTIVE_ASSOCIATIONS', status: 400 }
+      );
+    }
+    throw err;
+  }
 };
 
 export const productosDestacados = async (limit = 10) => {

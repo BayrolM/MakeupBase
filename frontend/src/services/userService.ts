@@ -100,4 +100,17 @@ export const userService = {
       );
     }
   },
+  /**
+   * Actualizar perfil del usuario autenticado (Cliente/Vendedor)
+   */
+  async updateProfile(userData: any): Promise<any> {
+    try {
+      const response = await api.put("/users/profile", userData);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(
+        error.response?.data?.message || "Error al actualizar el perfil",
+      );
+    }
+  },
 };

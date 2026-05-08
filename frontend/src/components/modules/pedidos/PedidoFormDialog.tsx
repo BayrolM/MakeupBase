@@ -93,18 +93,44 @@ export function PedidoFormDialog({
               />
             </div>
 
-            {/* Dirección de Envío */}
+          {/* Dirección de Envío */}
+          <div>
+            <p style={{ fontSize: "11px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
+              <MapPin className="w-3.5 h-3.5" /> Dirección de Envío <span style={{ color: "#f87171" }}>*</span>
+            </p>
+            <Input
+              value={formData.direccionEnvio}
+              onChange={(e) => setFormData({ ...formData, direccionEnvio: e.target.value })}
+              placeholder="Ej: Carrera 50 # 10-20"
+              className="rounded-xl h-11 border-gray-200 bg-white text-sm focus:ring-2 focus:ring-[#c47b96]/20 focus:border-[#c47b96]"
+            />
+          </div>
+
+          {/* Ciudad y Departamento */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
             <div>
-              <p style={{ fontSize: "11px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
-                <MapPin className="w-3.5 h-3.5" /> Dirección de Envío <span style={{ color: "#f87171" }}>*</span>
+              <p style={{ fontSize: "11px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "8px" }}>
+                Ciudad <span style={{ color: "#f87171" }}>*</span>
               </p>
               <Input
-                value={formData.direccionEnvio}
-                onChange={(e) => setFormData({ ...formData, direccionEnvio: e.target.value })}
-                placeholder="Ej: Carrera 50 # 10-20, Medellín"
-                className="rounded-xl h-11 border-gray-200 bg-white text-sm focus:ring-2 focus:ring-[#c47b96]/20 focus:border-[#c47b96]"
+                value={formData.ciudad}
+                onChange={(e) => setFormData({ ...formData, ciudad: e.target.value })}
+                placeholder="Medellín"
+                className="rounded-xl h-11 border-gray-200 bg-white text-sm"
               />
             </div>
+            <div>
+              <p style={{ fontSize: "11px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "8px" }}>
+                Departamento <span style={{ color: "#f87171" }}>*</span>
+              </p>
+              <Input
+                value={formData.departamento}
+                onChange={(e) => setFormData({ ...formData, departamento: e.target.value })}
+                placeholder="Antioquia"
+                className="rounded-xl h-11 border-gray-200 bg-white text-sm"
+              />
+            </div>
+          </div>
           </div>
 
           {/* Sección de Productos */}

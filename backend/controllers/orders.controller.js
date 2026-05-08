@@ -17,10 +17,14 @@ export const cancelarOrdenPorCliente = async (req, res) => {
 export const actualizarDireccionPorCliente = async (req, res) => {
   try {
     const { id } = req.params;
-    const { direccion } = req.body;
+    const { direccion, ciudad, departamento } = req.body;
     const id_usuario = req.user.id_usuario;
     if (!direccion?.trim()) return res.status(400).json({ ok: false, message: "La dirección es obligatoria" });
-    const orden = await ordersService.actualizarDireccionCliente(parseInt(id, 10), id_usuario, direccion.trim());
+    const orden = await ordersService.actualizarDireccionCliente(parseInt(id, 10), id_usuario, {
+      direccion: direccion.trim(),
+      ciudad: ciudad?.trim(),
+      departamento: departamento?.trim()
+    });
     return res.json({ ok: true, message: "Dirección actualizada correctamente", data: orden });
   } catch (error) {
     console.error(error);
@@ -31,7 +35,7 @@ export const actualizarDireccionPorCliente = async (req, res) => {
 // Controlador para crear una nueva orden
 export const crearOrden = async (req, res) => {
   try {
-    const { direccion, ciudad, metodo_pago, items } = req.body;
+    const { direccion, ciudad, departamento, metodo_pago, items } = req.body;
     if (
       !direccion ||
       !ciudad ||
@@ -49,6 +53,7 @@ export const crearOrden = async (req, res) => {
     const orden = await ordersService.crearOrden(req.user.id_usuario, {
       direccion,
       ciudad,
+      departamento,
       metodo_pago,
       items, 
     });
@@ -75,7 +80,7 @@ export const crearOrdenDirecta = async (req, res) => {
       return res.status(403).json({ ok: false, message: "No autorizado para crear órdenes directas" });
     }
 
-    const { id_cliente, direccion, ciudad, metodo_pago, items } = req.body;
+    const { id_cliente, direccion, ciudad, departamento, metodo_pago, items } = req.body;
     
     if (!id_cliente || !items || items.length === 0) {
       return res.status(400).json({
@@ -87,6 +92,7 @@ export const crearOrdenDirecta = async (req, res) => {
     const orden = await ordersService.crearOrdenDirecta(id_cliente, req.user.id_usuario, {
       direccion: direccion || 'N/A',
       ciudad: ciudad || 'N/A',
+      departamento: departamento || 'N/A',
       metodo_pago: metodo_pago || 'efectivo',
       items,
     });
@@ -155,9 +161,9 @@ export const obtenerDetalleOrden = async (req, res) => {
 export const actualizarPedido = async (req, res) => {
   try {
     const { id } = req.params;
-    const { direccion, id_cliente, items } = req.body;
+    const { direccion, ciudad, departamento, id_cliente, items } = req.body;
 
-    const orden = await ordersService.actualizarPedido(parseInt(id, 10), { direccion, id_cliente, items });
+    const orden = await ordersService.actualizarPedido(parseInt(id, 10), { direccion, ciudad, departamento, id_cliente, items });
 
     return res.json({ ok: true, message: "Pedido actualizado exitosamente", data: orden });
   } catch (error) {

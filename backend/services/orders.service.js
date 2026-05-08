@@ -15,6 +15,7 @@ export const crearOrden = async (id_usuario, datosEnvio) => {
     return await crearOrdenDirecta(id_usuario, null, { 
       direccion, 
       ciudad, 
+      departamento: datosEnvio.departamento,
       metodo_pago, 
       items: providedItems 
     });
@@ -66,6 +67,7 @@ export const crearOrden = async (id_usuario, datosEnvio) => {
       SET estado = 'pendiente',
           direccion = ${direccion},
           ciudad = ${ciudad},
+          departamento = ${datosEnvio.departamento || null},
           total = ${total},
           fecha_pedido = NOW()
       WHERE id_pedido = ${id_pedido}
@@ -93,7 +95,7 @@ export const crearOrden = async (id_usuario, datosEnvio) => {
  * Crear una nueva orden directamente desde el panel (sin pasar por carrito)
  */
 export const crearOrdenDirecta = async (id_cliente, id_empleado, datosEnvio) => {
-  const { direccion, ciudad, metodo_pago, items } = datosEnvio;
+  const { direccion, ciudad, departamento, metodo_pago, items } = datosEnvio;
 
   if (!items || items.length === 0) {
     throw new Error('El pedido debe contener al menos un producto');
@@ -125,8 +127,8 @@ export const crearOrdenDirecta = async (id_cliente, id_empleado, datosEnvio) => 
   return await sql.begin(async (sql) => {
     // 1. Crear el Pedido directamente en estado 'pendiente'
     const [pedido] = await sql`
-      INSERT INTO pedidos (id_usuario_cliente, id_usuario_empleado, fecha_pedido, direccion, ciudad, subtotal, iva, total, metodo_pago, estado)
-      VALUES (${id_cliente}, ${id_empleado}, NOW(), ${direccion}, ${ciudad}, ${total}, 0, ${total}, ${metodo_pago}, 'pendiente')
+      INSERT INTO pedidos (id_usuario_cliente, id_usuario_empleado, fecha_pedido, direccion, ciudad, departamento, subtotal, iva, total, metodo_pago, estado)
+      VALUES (${id_cliente}, ${id_empleado}, NOW(), ${direccion}, ${ciudad}, ${departamento || null}, ${total}, 0, ${total}, ${metodo_pago}, 'pendiente')
       RETURNING id_pedido
     `;
     const id_pedido = pedido.id_pedido;
@@ -198,6 +200,7 @@ export const obtenerOrdenes = async (id_usuario, rol = null, options = {}) => {
       p.fecha_pedido,
       p.direccion,
       p.ciudad,
+      p.departamento,
       p.total,
       p.estado,
       p.motivo_anulacion,
@@ -251,6 +254,7 @@ export const obtenerDetalleOrden = async (
         p.fecha_pedido,
         p.direccion,
         p.ciudad,
+        p.departamento,
         p.total,
         p.estado,
         p.motivo_anulacion,
@@ -283,6 +287,7 @@ export const obtenerDetalleOrden = async (
         p.fecha_pedido,
         p.direccion,
         p.ciudad,
+        p.departamento,
         p.total,
         p.estado,
         p.transportadora,
@@ -485,7 +490,8 @@ export const actualizarComprobante = async (id_pedido, url) => {
  * - pendiente: permite cambiar dirección, cliente y productos
  * - preparado/procesando: solo dirección
  */
-export const actualizarPedido = async (id_pedido, { direccion, id_cliente, items }) => {
+export const actualizarPedido = async (id_pedido, datos) => {
+  const { direccion, ciudad, id_cliente, items } = datos;
   const [pedido] = await sql`SELECT * FROM pedidos WHERE id_pedido = ${id_pedido}`;
   if (!pedido) throw new Error('Pedido no encontrado');
 
@@ -496,8 +502,13 @@ export const actualizarPedido = async (id_pedido, { direccion, id_cliente, items
 
   return await sql.begin(async (sql) => {
     // Actualizar dirección siempre que se envíe
-    if (direccion !== undefined) {
-      await sql`UPDATE pedidos SET direccion = ${direccion} WHERE id_pedido = ${id_pedido}`;
+    if (direccion !== undefined || ciudad !== undefined || datos.departamento !== undefined) {
+      const updateObj = {};
+      if (direccion !== undefined) updateObj.direccion = direccion;
+      if (ciudad !== undefined) updateObj.ciudad = ciudad;
+      if (datos.departamento !== undefined) updateObj.departamento = datos.departamento;
+      
+      await sql`UPDATE pedidos SET ${sql(updateObj)} WHERE id_pedido = ${id_pedido}`;
     }
 
     // Cambiar cliente (solo pendiente)
@@ -564,12 +575,17 @@ export const cancelarOrdenCliente = async (id_pedido, id_usuario) => {
 /**
  * Actualizar dirección de un pedido por el cliente — solo si le pertenece y está en 'pendiente'
  */
-export const actualizarDireccionCliente = async (id_pedido, id_usuario, direccion) => {
+export const actualizarDireccionCliente = async (id_pedido, id_usuario, { direccion, ciudad, departamento }) => {
   const [pedido] = await sql`SELECT * FROM pedidos WHERE id_pedido = ${id_pedido}`;
   if (!pedido) throw new Error('Pedido no encontrado');
   if (pedido.id_usuario_cliente !== id_usuario) throw new Error('No tienes permiso para editar este pedido');
   if (!['pendiente', 'preparado'].includes(pedido.estado)) throw new Error('Solo puedes cambiar la dirección si el pedido está en pendiente o preparado');
 
-  const [updated] = await sql`UPDATE pedidos SET direccion = ${direccion} WHERE id_pedido = ${id_pedido} RETURNING *`;
+  const updateObj = {};
+  if (direccion) updateObj.direccion = direccion;
+  if (ciudad) updateObj.ciudad = ciudad;
+  if (departamento) updateObj.departamento = departamento;
+
+  const [updated] = await sql`UPDATE pedidos SET ${sql(updateObj)} WHERE id_pedido = ${id_pedido} RETURNING *`;
   return updated;
 };

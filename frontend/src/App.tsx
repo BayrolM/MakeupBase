@@ -67,7 +67,9 @@ type Route =
   | "mis-pedidos"
   | "historial"
   | "perfil"
-  | "checkout";
+  | "checkout"
+  | "nosotros"
+  | "contacto";
 
 type AuthPage = "login" | "register" | "recover";
 
@@ -158,13 +160,14 @@ function AppContent() {
         const providersData = await providerService.getAll();
         const mappedProviders = providersData.map((prov) => ({
           id: prov.id_proveedor.toString(),
+          tipo_proveedor: prov.tipo_proveedor || "Persona Natural",
           nombre: prov.nombre,
           email: prov.email || "",
           telefono: prov.telefono || "",
           nit: prov.documento_nit || "",
-          direccion: "",
+          direccion: prov.direccion || "",
           estado: prov.estado ? ("activo" as const) : ("inactivo" as const),
-          fechaRegistro: new Date().toISOString(),
+          fechaRegistro: prov.fecha_registro || new Date().toISOString(),
         }));
         setProveedores(mappedProviders);
 
@@ -382,6 +385,7 @@ function AppContent() {
     documento: string;
     direccion: string;
     ciudad: string;
+    departamento: string;
   }) => {
     try {
       await authService.register({
@@ -395,6 +399,7 @@ function AppContent() {
         documento: data.documento,
         direccion: data.direccion,
         ciudad: data.ciudad,
+        departamento: data.departamento,
       });
 
       toast.success("¡Registro exitoso!", {

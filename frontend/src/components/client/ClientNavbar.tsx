@@ -12,8 +12,8 @@ import {
   AlertTriangle,
   Loader2,
 } from "lucide-react";
-import { Dialog, DialogContent, DialogTitle } from "../ui/dialog";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "../ui/sheet";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "../ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "../ui/sheet";
 import { productService } from "../../services/productService";
 import { toast } from "sonner";
 import { Button } from "../ui/button";
@@ -410,6 +410,9 @@ export function ClientNavbar({
             borderLeft: "1px solid var(--luxury-accent-soft)",
           }}
         >
+          <SheetDescription className="sr-only">
+            Resumen de productos agregados a tu carrito de compras
+          </SheetDescription>
           <div className="flex flex-col h-full">
             <SheetHeader
               className="p-6"
@@ -793,6 +796,9 @@ export function ClientNavbar({
       {/* Logout Confirmation Modal */}
       <Dialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>
         <DialogContent className="bg-white border border-gray-100 max-w-md rounded-2xl shadow-2xl p-0 overflow-hidden">
+          <DialogDescription className="sr-only">
+            ¿Estás seguro que deseas cerrar tu sesión actual?
+          </DialogDescription>
           {/* Header */}
           <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100">
             <div className="flex items-center gap-4">

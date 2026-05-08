@@ -73,6 +73,8 @@ export function PedidosModule() {
   const [formData, setFormData] = useState({
     clienteId: "",
     direccionEnvio: "",
+    ciudad: "",
+    departamento: "",
     productos: [
       { productoId: "", cantidad: 1, precioUnitario: 0, maxStock: 0 },
     ],
@@ -80,6 +82,8 @@ export function PedidosModule() {
   const [editFormData, setEditFormData] = useState({
     clienteId: "",
     direccionEnvio: "",
+    ciudad: "",
+    departamento: "",
     productos: [] as {
       productoId: string;
       cantidad: number;
@@ -202,6 +206,8 @@ export function PedidosModule() {
     setFormData({
       clienteId: "",
       direccionEnvio: "",
+      ciudad: "",
+      departamento: "",
       productos: [
         { productoId: "", cantidad: 1, precioUnitario: 0, maxStock: 0 },
       ],
@@ -254,7 +260,8 @@ export function PedidosModule() {
       const payload = {
         id_cliente: Number(formData.clienteId),
         direccion: formData.direccionEnvio,
-        ciudad: "Bogotá", // Valor predeterminado
+        ciudad: formData.ciudad || "Bogotá",
+        departamento: formData.departamento,
         metodo_pago: "Transferencia", // Valor predeterminado para pedidos directos
         items: formData.productos.map((p) => ({
           id_producto: Number(p.productoId),
@@ -278,7 +285,9 @@ export function PedidosModule() {
       setEditingPedido(pedido);
       setEditFormData({
         clienteId: pedido.clienteId,
-        direccionEnvio: pedido.direccionEnvio,
+        direccionEnvio: pedido.direccionEnvio || pedido.direccion,
+        ciudad: pedido.ciudad || "",
+        departamento: pedido.departamento || "",
         productos: (fullOrder.items || []).map((i: any) => ({
           productoId: i.id_producto.toString(),
           cantidad: Number(i.cantidad),
@@ -297,7 +306,11 @@ export function PedidosModule() {
   const handleSaveEdit = async () => {
     setIsSaving(true);
     try {
-      const payload: any = { direccion: editFormData.direccionEnvio.trim() };
+      const payload: any = { 
+        direccion: editFormData.direccionEnvio.trim(),
+        ciudad: editFormData.ciudad.trim(),
+        departamento: editFormData.departamento.trim()
+      };
       if (editingPedido.estado === "pendiente") {
         payload.id_cliente = Number(editFormData.clienteId);
         payload.items = editFormData.productos.map((p) => ({

@@ -96,7 +96,8 @@ export function PedidoDetailDialog({
                   <MapPin className="w-4 h-4 text-gray-400" />
                   <div>
                     <p className="text-[10px] text-gray-400 font-semibold uppercase">Dirección de Envío</p>
-                    <p className="text-sm font-bold text-gray-800 max-w-[180px]">{selectedPedido.direccionEnvio}</p>
+                    <p className="text-sm font-bold text-gray-800 max-w-[180px]">{selectedPedido.direccionEnvio || selectedPedido.direccion}</p>
+                    <p className="text-[11px] text-gray-500">{selectedPedido.ciudad} - {selectedPedido.departamento}</p>
                   </div>
                 </div>
               </div>

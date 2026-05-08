@@ -116,9 +116,9 @@ export const orderService = {
   /**
    * Actualizar dirección por el cliente
    */
-  async updateDireccion(id: number, direccion: string): Promise<any> {
+  async updateDireccion(id: number, data: { direccion: string; ciudad: string; departamento: string }): Promise<any> {
     try {
-      const response = await api.put(`/orders/${id}/direccion`, { direccion });
+      const response = await api.put(`/orders/${id}/direccion`, data);
       return response.data;
     } catch (error: any) {
       throw new Error(
@@ -130,6 +130,8 @@ export const orderService = {
     id: number,
     data: {
       direccion?: string;
+      ciudad?: string;
+      departamento?: string;
       id_cliente?: number;
       items?: Array<{ id_producto: number; cantidad: number }>;
     },

@@ -18,15 +18,16 @@ import {
   Building2,
   DollarSign,
   Boxes,
-  AlertCircle,
   Archive,
   Upload,
   Loader2,
   Package,
 } from "lucide-react";
+import { UploadCloud, Image as ImageIcon, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
-import { Producto, Categoria, Marca } from "../../../lib/store";
 import { uploadToSupabase } from "../../supabaseUpload";
+import { Categoria, Marca, Producto, useStore } from "../../../lib/store";
+
 import { validateProductField } from "../../../utils/productUtils";
 import { productService } from "../../../services/productService";
 
@@ -47,6 +48,7 @@ export function ProductFormDialog({
   marcas,
   refreshProducts,
 }: ProductFormDialogProps) {
+  const { productos } = useStore();
   const [formData, setFormData] = useState({
     nombre: "",
     descripcion: "",
@@ -152,6 +154,27 @@ export function ProductFormDialog({
       return;
     }
 
+    // Validación de duplicidad en el frontend
+    const isDuplicate = productos.some((p) => {
+      if (editingProduct && String(p.id) === String(editingProduct.id))
+        return false;
+      const sameName =
+        p.nombre.trim().toLowerCase() === formData.nombre.trim().toLowerCase();
+      const sameMarca = String(p.marcaId) === String(formData.marcaId);
+      const sameCategoria =
+        String(p.categoriaId) === String(formData.categoriaId);
+
+      return sameName && sameMarca && sameCategoria;
+    });
+
+    if (isDuplicate) {
+      setFieldErrors({
+        nombre: "Este producto (nombre, marca y categoría) ya existe.",
+      });
+      toast.error("Producto duplicado");
+      return;
+    }
+
     setIsSaving(true);
     try {
       const payload = {
@@ -188,7 +211,10 @@ export function ProductFormDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-white border border-gray-100 max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl p-0">
-        <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100 sticky top-0 bg-white" style={{ zIndex: 60 }}>
+        <div
+          className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100 sticky top-0 bg-white"
+          style={{ zIndex: 60 }}
+        >
           <div className="flex items-center gap-4">
             <div
               className="flex items-center justify-center text-white font-bold text-lg flex-shrink-0 luxury-icon-gradient"
@@ -448,7 +474,10 @@ export function ProductFormDialog({
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 px-6 pb-6 pt-4 border-t border-gray-100 sticky bottom-0 bg-white" style={{ zIndex: 60 }}>
+        <div
+          className="flex justify-end gap-3 px-6 pb-6 pt-4 border-t border-gray-100 sticky bottom-0 bg-white"
+          style={{ zIndex: 60 }}
+        >
           <button
             onClick={() => onOpenChange(false)}
             disabled={isSaving}

@@ -46,6 +46,8 @@ export function MisPedidosView({
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
   const [showEditDir, setShowEditDir] = useState(false);
   const [editDireccion, setEditDireccion] = useState("");
+  const [editCiudad, setEditCiudad] = useState("");
+  const [editDepartamento, setEditDepartamento] = useState("");
   const [isSavingDir, setIsSavingDir] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [pedidoToCancel, setPedidoToCancel] = useState<any>(null);
@@ -275,7 +277,11 @@ export function MisPedidosView({
     try {
       await orderService.updateDireccion(
         Number(selectedPedido.id),
-        editDireccion.trim(),
+        {
+          direccion: editDireccion.trim(),
+          ciudad: editCiudad.trim(),
+          departamento: editDepartamento.trim()
+        }
       );
       toast.success("Dirección actualizada correctamente");
       setShowEditDir(false);
@@ -284,6 +290,8 @@ export function MisPedidosView({
         ...selectedPedido,
         direccionEnvio: editDireccion.trim(),
         direccion: editDireccion.trim(),
+        ciudad: editCiudad.trim(),
+        departamento: editDepartamento.trim()
       });
     } catch (error: any) {
       toast.error(error.message || "Error al actualizar la dirección");
@@ -1154,6 +1162,8 @@ export function MisPedidosView({
                                 selectedPedido.direccionEnvio ||
                                 "",
                             );
+                            setEditCiudad(selectedPedido.ciudad || "");
+                            setEditDepartamento(selectedPedido.departamento || "");
                             setShowEditDir(true);
                           }}
                           style={{
@@ -1592,17 +1602,43 @@ export function MisPedidosView({
               <X className="w-4 h-4" />
             </button>
           </div>
-          <div style={{ padding: "20px 24px" }}>
-            <label className="text-sm font-semibold text-gray-700 block mb-2">
-              Nueva dirección de envío
-            </label>
-            <input
-              value={editDireccion}
-              onChange={(e) => setEditDireccion(e.target.value)}
-              placeholder="Ej: Calle 50 #30-20, Medellín"
-              className="w-full h-11 px-4 rounded-xl border border-gray-200 bg-gray-50 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:border-[#c47b96] focus:ring-2 focus:ring-[#c47b96]/20 text-sm"
-              maxLength={100}
-            />
+          <div style={{ padding: "20px 24px" }} className="space-y-4">
+            <div>
+              <label className="text-[10px] font-bold text-gray-400 uppercase mb-1.5 block tracking-widest">
+                Nueva dirección de envío
+              </label>
+              <input
+                value={editDireccion}
+                onChange={(e) => setEditDireccion(e.target.value)}
+                placeholder="Ej: Calle 50 #30-20"
+                className="w-full h-11 px-4 rounded-xl border border-gray-200 bg-gray-50 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:border-[#c47b96] focus:ring-2 focus:ring-[#c47b96]/20 text-sm transition-all"
+                maxLength={100}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-[10px] font-bold text-gray-400 uppercase mb-1.5 block tracking-widest">
+                  Ciudad
+                </label>
+                <input
+                  value={editCiudad}
+                  onChange={(e) => setEditCiudad(e.target.value)}
+                  placeholder="Medellín"
+                  className="w-full h-11 px-4 rounded-xl border border-gray-200 bg-gray-50 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:border-[#c47b96] focus:ring-2 focus:ring-[#c47b96]/20 text-sm transition-all"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-gray-400 uppercase mb-1.5 block tracking-widest">
+                  Departamento
+                </label>
+                <input
+                  value={editDepartamento}
+                  onChange={(e) => setEditDepartamento(e.target.value)}
+                  placeholder="Antioquia"
+                  className="w-full h-11 px-4 rounded-xl border border-gray-200 bg-gray-50 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:border-[#c47b96] focus:ring-2 focus:ring-[#c47b96]/20 text-sm transition-all"
+                />
+              </div>
+            </div>
           </div>
           <div className="flex justify-end gap-3 px-6 pb-6 pt-2">
             <Button

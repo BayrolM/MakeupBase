@@ -32,6 +32,7 @@ interface RegisterPageProps {
     documento: string;
     direccion: string;
     ciudad: string;
+    departamento: string;
   }) => void;
   onNavigateToLogin: () => void;
   onBack?: () => void;
@@ -46,6 +47,7 @@ export function RegisterPageColombia({ onRegister, onNavigateToLogin, onBack }: 
     email: '',
     telefono: '',
     ciudad: '',
+    departamento: '',
     direccion: '',
     password: '',
     confirmPassword: '',
@@ -113,7 +115,7 @@ export function RegisterPageColombia({ onRegister, onNavigateToLogin, onBack }: 
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const fields = ['nombres', 'apellidos', 'numeroDocumento', 'email', 'telefono', 'password', 'confirmPassword', 'direccion', 'ciudad'];
+    const fields = ['nombres', 'apellidos', 'numeroDocumento', 'email', 'telefono', 'password', 'confirmPassword', 'direccion', 'ciudad', 'departamento'];
     const newErrors: Record<string, string> = {};
     fields.forEach(f => {
       const err = validateField(f, (formData as any)[f] || '');
@@ -133,6 +135,7 @@ export function RegisterPageColombia({ onRegister, onNavigateToLogin, onBack }: 
       documento: formData.numeroDocumento.trim(),
       direccion: formData.direccion.trim(),
       ciudad: formData.ciudad.trim(),
+      departamento: formData.departamento.trim(),
     });
     setIsLoading(false);
   };
@@ -326,7 +329,7 @@ export function RegisterPageColombia({ onRegister, onNavigateToLogin, onBack }: 
               {/* Residencia */}
               <div>
                 <p style={{ fontSize: '11px', fontWeight: 700, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '12px' }}>Residencia</p>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <label style={{ fontSize: '13px', fontWeight: 600, color: C.textDark, display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <Building2 style={{ width: 14, height: 14, color: C.accentDeep }} /> Ciudad
@@ -339,6 +342,19 @@ export function RegisterPageColombia({ onRegister, onNavigateToLogin, onBack }: 
                       onBlur={e => e.currentTarget.style.borderColor = errors.ciudad ? C.danger : C.accent}
                     />
                     {errors.ciudad && <p style={{ color: C.danger, fontSize: '11px', margin: 0 }}>{errors.ciudad}</p>}
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <label style={{ fontSize: '13px', fontWeight: 600, color: C.textDark, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <MapPin style={{ width: 14, height: 14, color: C.accentDeep }} /> Dpto
+                    </label>
+                    <input
+                      {...fieldProps('departamento')}
+                      placeholder="Antioquia" maxLength={50}
+                      style={{ width: '100%', height: '44px', borderRadius: '8px', border: `1px solid ${errors.departamento ? C.danger : C.accent}`, padding: '0 16px', fontSize: '14px', color: C.textDark, outline: 'none', transition: 'border-color 0.2s', background: C.white }}
+                      onFocus={e => e.currentTarget.style.borderColor = C.accentDeep}
+                      onBlur={e => e.currentTarget.style.borderColor = errors.departamento ? C.danger : C.accent}
+                    />
+                    {errors.departamento && <p style={{ color: C.danger, fontSize: '11px', margin: 0 }}>{errors.departamento}</p>}
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <label style={{ fontSize: '13px', fontWeight: 600, color: C.textDark, display: 'flex', alignItems: 'center', gap: '6px' }}>

@@ -21,6 +21,7 @@ import { orderService } from "../../services/orderService";
 import { productService } from "../../services/productService";
 import { toast } from "sonner";
 import { uploadToSupabase } from "../supabaseUpload";
+import { userService } from "../../services/userService";
 
 /* ── Luxury CSS variable helpers ── */
 const V = (name: string) => `var(--luxury-${name})`;
@@ -46,6 +47,7 @@ export function CheckoutView({ onBack, onComplete }: CheckoutViewProps) {
     carrito,
     productos,
     currentUser,
+    setCurrentUser,
     addPedido,
     updateStock,
     clearCarrito,
@@ -162,6 +164,21 @@ export function CheckoutView({ onBack, onComplete }: CheckoutViewProps) {
 
       const response = await orderService.create(orderData);
       const idPedido = response.id_pedido;
+
+      // Actualizar departamento por defecto si el cliente no lo tiene
+      if (currentUser && !currentUser.departamento && departamentoEnvio) {
+        try {
+          await userService.updateProfile({
+            departamento: departamentoEnvio,
+          });
+          setCurrentUser({
+            ...currentUser,
+            departamento: departamentoEnvio,
+          });
+        } catch (updateError) {
+          console.error("Error al actualizar departamento por defecto:", updateError);
+        }
+      }
 
       let comprobanteUrl = "";
       if (comprobanteFile && idPedido) {

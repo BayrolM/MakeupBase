@@ -103,18 +103,40 @@ export function PedidoEditDialog({
             </div>
 
             {/* Dirección */}
-            <div className="space-y-2">
-              <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">
-                <MapPin className="w-3.5 h-3.5 text-[#c47b96]" />
-                Dirección de Envío <span className="text-rose-500">*</span>
-              </Label>
-              <Input
-                value={formData.direccionEnvio}
-                onChange={(e) => setFormData({ ...formData, direccionEnvio: e.target.value })}
-                placeholder="Ej: Carrera 50 # 10-20"
-                className="bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11"
-                disabled={isSaving}
-              />
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">
+                  <MapPin className="w-3.5 h-3.5 text-[#c47b96]" />
+                  Dirección de Envío <span className="text-rose-500">*</span>
+                </Label>
+                <Input
+                  value={formData.direccionEnvio || formData.direccion}
+                  onChange={(e) => setFormData({ ...formData, direccionEnvio: e.target.value })}
+                  placeholder="Ej: Carrera 50 # 10-20"
+                  className="bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11"
+                  disabled={isSaving}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-gray-700 font-semibold text-sm">Ciudad *</Label>
+                  <Input
+                    value={formData.ciudad}
+                    onChange={(e) => setFormData({ ...formData, ciudad: e.target.value })}
+                    className="bg-gray-50 border-gray-200 rounded-xl h-11"
+                    disabled={isSaving}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-gray-700 font-semibold text-sm">Departamento *</Label>
+                  <Input
+                    value={formData.departamento}
+                    onChange={(e) => setFormData({ ...formData, departamento: e.target.value })}
+                    className="bg-gray-50 border-gray-200 rounded-xl h-11"
+                    disabled={isSaving}
+                  />
+                </div>
+              </div>
             </div>
           </div>
 

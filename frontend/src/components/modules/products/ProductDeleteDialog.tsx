@@ -1,5 +1,5 @@
 import { AlertCircle, X } from "lucide-react";
-import { Dialog, DialogContent, DialogTitle } from "../../ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "../../ui/dialog";
 import { Button } from "../../ui/button";
 import { Producto } from "../../../lib/store";
 
@@ -42,9 +42,9 @@ export function ProductDeleteDialog({
               <DialogTitle className="text-base font-bold text-gray-900 leading-tight">
                 Eliminar Producto
               </DialogTitle>
-              <p className="text-xs text-gray-400 mt-0.5">
+              <DialogDescription className="text-xs text-gray-400 mt-0.5">
                 Esta acción no se puede deshacer
-              </p>
+              </DialogDescription>
             </div>
           </div>
           <button

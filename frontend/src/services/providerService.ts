@@ -9,6 +9,7 @@ export interface Proveedor {
   tipo_proveedor: string;
   direccion: string;
   estado: boolean;
+  fecha_registro?: string;
 }
 
 export const providerService = {
