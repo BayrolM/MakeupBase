@@ -1,6 +1,6 @@
 import { Search, Hash, User, Calendar, FileText, Eye, X, Edit, Package } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../ui/table';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
+
 import { getEstadoColor, formatCurrency, canChangeEstado, canAnularDevolucion } from '../../../utils/devolucionUtils';
 
 interface DevolucionTableProps {

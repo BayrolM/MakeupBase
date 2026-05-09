@@ -1,6 +1,6 @@
 import { X, Trash2, AlertCircle } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "../../ui/dialog";
-import { Button } from "../../ui/button";
+
 
 interface ProveedorDeleteDialogProps {
   open: boolean;
