@@ -11,7 +11,10 @@ import {
   Trash2,
   AlertTriangle,
   Loader2,
+  AlertCircle,
+  X,
 } from "lucide-react";
+import { LogoutConfirmDialog } from "../LogoutConfirmDialog";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "../ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "../ui/sheet";
 import { productService } from "../../services/productService";
@@ -794,69 +797,11 @@ export function ClientNavbar({
       </Sheet>
 
       {/* Logout Confirmation Modal */}
-      <Dialog open={showLogoutConfirm} onOpenChange={setShowLogoutConfirm}>
-        <DialogContent className="bg-white border border-gray-100 max-w-md rounded-2xl shadow-2xl p-0 overflow-hidden">
-          <DialogDescription className="sr-only">
-            ¿Estás seguro que deseas cerrar tu sesión actual?
-          </DialogDescription>
-          {/* Header */}
-          <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100">
-            <div className="flex items-center gap-4">
-              <div
-                className="flex items-center justify-center shrink-0"
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 12,
-                  background: "linear-gradient(135deg,#c47b96,#e092b2)",
-                  boxShadow: "0 2px 8px rgba(196,123,150,0.3)",
-                }}
-              >
-                <LogoutIcon className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <DialogTitle className="text-base font-bold text-gray-900 leading-tight">
-                  Cerrar Sesión
-                </DialogTitle>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  ¿Estás segura de que deseas salir?
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Body */}
-          <div className="px-6 py-5">
-            <div className="bg-[#fff0f5] rounded-xl p-4 border border-[#f0d5e0]">
-              <p className="text-sm text-gray-600 leading-relaxed">
-                Tu sesión se cerrará y tendrás que volver a iniciar sesión para
-                acceder a tu cuenta.
-              </p>
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div className="flex justify-end gap-3 px-6 pb-6 pt-2">
-            <Button
-              variant="outline"
-              onClick={() => setShowLogoutConfirm(false)}
-              className="border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg px-5 h-10 text-sm"
-            >
-              Cancelar
-            </Button>
-            <Button
-              onClick={() => {
-                setShowLogoutConfirm(false);
-                onLogout();
-              }}
-              className="rounded-lg font-semibold px-6 h-10 text-sm border-0"
-              style={{ backgroundColor: "#c47b96", color: "#ffffff" }}
-            >
-              Cerrar Sesión
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <LogoutConfirmDialog
+        open={showLogoutConfirm}
+        onOpenChange={setShowLogoutConfirm}
+        onConfirm={onLogout}
+      />
     </>
   );
 }

@@ -1,16 +1,20 @@
-import { 
-  X, 
-  Building2, 
-  Mail, 
-  Phone, 
-  FileText, 
-  MapPin, 
+import {
+  X,
+  Building2,
+  Mail,
+  Phone,
+  FileText,
+  MapPin,
   Calendar,
-  User as UserIcon,
   Activity,
-  Shield
+  Shield,
 } from "lucide-react";
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from "../../ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from "../../ui/dialog";
 import { formatNIT } from "../../../utils/proveedorUtils";
 
 interface ProveedorDetailDialogProps {
@@ -64,28 +68,38 @@ export function ProveedorDetailDialog({
               <h3 className="text-[11px] font-bold text-[#c47b96] tracking-wider uppercase">
                 Información Corporativa
               </h3>
-              
+
               <div className="bg-gray-50 rounded-xl p-4 space-y-3">
                 <div className="flex items-center gap-3">
                   <Building2 className="w-4 h-4 text-gray-400" />
                   <div>
-                    <p className="text-[10px] text-gray-400 font-semibold uppercase">Nombre / Razón Social</p>
-                    <p className="text-sm font-bold text-gray-800">{proveedor.nombre}</p>
+                    <p className="text-[10px] text-gray-400 font-semibold uppercase">
+                      Nombre / Razón Social
+                    </p>
+                    <p className="text-sm font-bold text-gray-800">
+                      {proveedor.nombre}
+                    </p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
                   <FileText className="w-4 h-4 text-gray-400" />
                   <div>
-                    <p className="text-[10px] text-gray-400 font-semibold uppercase">NIT / Documento</p>
-                    <p className="text-sm font-bold text-gray-800 font-mono">{formatNIT(proveedor.nit)}</p>
+                    <p className="text-[10px] text-gray-400 font-semibold uppercase">
+                      NIT / Documento
+                    </p>
+                    <p className="text-sm font-bold text-gray-800 font-mono">
+                      {formatNIT(proveedor.nit)}
+                    </p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
                   <Calendar className="w-4 h-4 text-gray-400" />
                   <div>
-                    <p className="text-[10px] text-gray-400 font-semibold uppercase">Fecha Registro</p>
+                    <p className="text-[10px] text-gray-400 font-semibold uppercase">
+                      Fecha Registro
+                    </p>
                     <p className="text-sm font-bold text-gray-800">
                       {new Date(proveedor.fechaRegistro).toLocaleDateString()}
                     </p>
@@ -99,29 +113,42 @@ export function ProveedorDetailDialog({
               <h3 className="text-[11px] font-bold text-[#c47b96] tracking-wider uppercase">
                 Contacto y Ubicación
               </h3>
-              
+
               <div className="bg-gray-50 rounded-xl p-4 space-y-3">
                 <div className="flex items-center gap-3">
                   <Mail className="w-4 h-4 text-gray-400" />
                   <div>
-                    <p className="text-[10px] text-gray-400 font-semibold uppercase">Email Corporativo</p>
-                    <p className="text-sm font-bold text-gray-800 truncate max-w-[180px]">{proveedor.email || "N/A"}</p>
+                    <p className="text-[10px] text-gray-400 font-semibold uppercase">
+                      Email Corporativo
+                    </p>
+                    <p className="text-sm font-bold text-gray-800 truncate max-w-[180px]">
+                      {proveedor.email || "N/A"}
+                    </p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
                   <Phone className="w-4 h-4 text-gray-400" />
                   <div>
-                    <p className="text-[10px] text-gray-400 font-semibold uppercase">Teléfono</p>
-                    <p className="text-sm font-bold text-gray-800">{proveedor.telefono || "N/A"}</p>
+                    <p className="text-[10px] text-gray-400 font-semibold uppercase">
+                      Teléfono
+                    </p>
+                    <p className="text-sm font-bold text-gray-800">
+                      {proveedor.telefono || "N/A"}
+                    </p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
                   <MapPin className="w-4 h-4 text-gray-400" />
                   <div>
-                    <p className="text-[10px] text-gray-400 font-semibold uppercase">Ubicación</p>
-                    <p className="text-sm font-bold text-gray-800 truncate max-w-[180px]" title={proveedor.direccion}>
+                    <p className="text-[10px] text-gray-400 font-semibold uppercase">
+                      Ubicación
+                    </p>
+                    <p
+                      className="text-sm font-bold text-gray-800 truncate max-w-[180px]"
+                      title={proveedor.direccion}
+                    >
                       {proveedor.direccion || "No especificada"}
                     </p>
                   </div>

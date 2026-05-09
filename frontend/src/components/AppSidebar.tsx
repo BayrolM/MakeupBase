@@ -28,7 +28,9 @@ import {
   X,
   ChevronRight,
   User,
+  AlertCircle,
 } from "lucide-react";
+import { LogoutConfirmDialog } from "./LogoutConfirmDialog";
 
 interface AppSidebarProps {
   onNavigate: (route: string) => void;
@@ -308,115 +310,11 @@ export function AppSidebar({
         </SidebarFooter>
       </div>
 
-      <Dialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
-        <DialogContent
-          className="border-0 max-w-sm rounded-2xl shadow-2xl p-0 overflow-hidden"
-          style={{
-            background: "linear-gradient(180deg, #fff 0%, #fff5f8 100%)",
-          }}
-        >
-          <div className="flex flex-col items-center text-center px-6 pt-8 pb-4">
-            <div
-              className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
-              style={{
-                background:
-                  "linear-gradient(135deg, rgba(196,123,150,0.15) 0%, rgba(224,160,190,0.1) 100%)",
-                border: "1px solid rgba(196, 123, 150, 0.25)",
-              }}
-            >
-              <LogOut
-                className="w-7 h-7"
-                style={{ color: "var(--luxury-pink)" }}
-              />
-            </div>
-
-            <DialogTitle
-              style={{
-                fontFamily: "'Cormorant Garamond', serif",
-                fontSize: "1.25rem",
-                fontWeight: 600,
-                color: "var(--luxury-deep)",
-                letterSpacing: "0.5px",
-              }}
-            >
-              ¿Cerrar sesión?
-            </DialogTitle>
-
-            <p
-              className="mt-2 text-sm leading-relaxed"
-              style={{ color: "var(--luxury-text-secondary)" }}
-            >
-              Tu sesión se cerrará y tendrás que volver a iniciar sesión para
-              acceder a tu cuenta.
-            </p>
-          </div>
-
-          <div className="flex gap-3 px-6 pb-6 pt-2">
-            <button
-              onClick={() => setShowLogoutDialog(false)}
-              className="flex-1 py-2.5 rounded-xl text-sm font-medium transition-all"
-              style={{
-                background: "transparent",
-                border: "1px solid rgba(196, 123, 150, 0.3)",
-                color: "var(--luxury-text-secondary)",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(196, 123, 150, 0.08)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "transparent";
-              }}
-            >
-              Cancelar
-            </button>
-
-            <button
-              onClick={() => {
-                setShowLogoutDialog(false);
-                onLogout?.();
-              }}
-              className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-all"
-              style={{
-                background: "var(--luxury-pink)",
-                border: "none",
-                boxShadow: "0 4px 12px rgba(123, 19, 71, 0.3)",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.opacity = "0.9";
-                e.currentTarget.style.transform = "translateY(-1px)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.opacity = "1";
-                e.currentTarget.style.transform = "translateY(0)";
-              }}
-              onMouseDown={(e) => {
-                e.currentTarget.style.transform = "translateY(0) scale(0.98)";
-              }}
-              onMouseUp={(e) => {
-                e.currentTarget.style.transform = "translateY(-1px) scale(1)";
-              }}
-            >
-              Cerrar Sesión
-            </button>
-          </div>
-
-          <button
-            onClick={() => setShowLogoutDialog(false)}
-            className="absolute top-4 right-4 p-1.5 rounded-full transition-colors"
-            style={{ color: "rgba(75, 85, 99, 0.5)" }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = "rgba(75, 85, 99, 0.8)";
-              e.currentTarget.style.background = "rgba(0, 0, 0, 0.05)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = "rgba(75, 85, 99, 0.5)";
-              e.currentTarget.style.background = "transparent";
-            }}
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </DialogContent>
-      </Dialog>
+      <LogoutConfirmDialog
+        open={showLogoutDialog}
+        onOpenChange={setShowLogoutDialog}
+        onConfirm={() => onLogout?.()}
+      />
     </Sidebar>
   );
 }

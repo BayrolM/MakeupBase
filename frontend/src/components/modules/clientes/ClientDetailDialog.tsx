@@ -6,8 +6,6 @@ import {
   CreditCard,
   Calendar,
   User,
-  Building2,
-  ShoppingBag,
   Activity,
 } from "lucide-react";
 import {
