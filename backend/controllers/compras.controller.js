@@ -4,7 +4,15 @@ import { CONFIG } from "../config/constants.js";
 export const listar = async (req, res) => {
   try {
     const result = await sql`
-      SELECT c.*, p.nombre as nombre_proveedor, u.nombre as nombre_usuario
+      SELECT c.*, p.nombre as nombre_proveedor, u.nombre as nombre_usuario,
+      (
+        SELECT json_agg(dc)
+        FROM (
+          SELECT id_producto, cantidad, precio_unitario 
+          FROM detalle_compra 
+          WHERE id_compra = c.id_compra
+        ) dc
+      ) as productos
       FROM compras c
       LEFT JOIN proveedores p ON c.id_proveedor = p.id_proveedor
       LEFT JOIN usuarios u ON c.id_usuario_empleado = u.id_usuario
@@ -101,7 +109,8 @@ export const crear = async (req, res) => {
         // 3. Actualizar el stock del producto
         await sql`
           UPDATE productos 
-          SET stock_actual = stock_actual + ${item.cantidad} 
+          SET stock_actual = stock_actual + ${item.cantidad},
+              costo_promedio = ${item.precio_unitario}
           WHERE id_producto = ${item.id_producto}
         `;
       }
