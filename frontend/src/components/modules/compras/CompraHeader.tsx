@@ -16,15 +16,16 @@ export function CompraHeader({ onOpenDialog }: CompraHeaderProps) {
                   <ShoppingBag className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-3xl font-bold tracking-tight luxury-text-cream">Adquisiciones</h1>
-                  <p className="text-sm mt-0.5 luxury-text-cream">Gestión de inventario y entradas de mercancía</p>
+                  <h1 className="text-3xl font-bold tracking-tight luxury-text-cream">
+                    Compras
+                  </h1>
+                  <p className="text-sm mt-0.5 luxury-text-cream">
+                    Gestión de las compras de productos
+                  </p>
                 </div>
               </div>
             </div>
-            <button
-              onClick={onOpenDialog}
-              className="luxury-button-premium"
-            >
+            <button onClick={onOpenDialog} className="luxury-button-premium">
               <Plus className="w-5 h-5" />
               Registrar Compra
             </button>

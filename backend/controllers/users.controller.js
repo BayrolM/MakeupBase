@@ -9,6 +9,8 @@ export const getProfile = async (req, res) => {
         id_usuario,
         nombre as nombres,
         apellido as apellidos,
+        documento,
+        tipo_documento,
         email,
         telefono,
         direccion,
@@ -44,6 +46,8 @@ export const updateProfile = async (req, res) => {
       direccion,
       ciudad,
       departamento,
+      documento,
+      tipo_documento,
       foto_perfil,
     } = req.body;
 
@@ -55,6 +59,8 @@ export const updateProfile = async (req, res) => {
           direccion = ${direccion !== undefined ? direccion : sql`direccion`},
           ciudad = ${ciudad !== undefined ? ciudad : sql`ciudad`},
           departamento = ${departamento !== undefined ? departamento : sql`departamento`},
+          documento = ${documento !== undefined ? documento : sql`documento`},
+          tipo_documento = ${tipo_documento !== undefined ? tipo_documento : sql`tipo_documento`},
           foto_perfil = ${foto_perfil !== undefined ? foto_perfil : sql`foto_perfil`}
       WHERE id_usuario = ${req.user.id_usuario}
     `;

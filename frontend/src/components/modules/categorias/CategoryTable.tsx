@@ -1,5 +1,22 @@
-import { Search, X, Hash, FolderTree, Archive, Layers, Eye, Pencil, Trash2 } from "lucide-react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../ui/table";
+import {
+  Search,
+  X,
+  Hash,
+  FolderTree,
+  Archive,
+  Layers,
+  Eye,
+  Pencil,
+  Trash2,
+} from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../../ui/table";
 import { StatusSwitch } from "../../StatusSwitch";
 import { Categoria, Producto } from "../../../lib/store";
 import { getCategoryProductCount } from "../../../utils/categoryUtils";
@@ -115,7 +132,10 @@ export function CategoryTable({
               </TableRow>
             ) : (
               categorias.map((categoria) => {
-                const productCount = getCategoryProductCount(categoria.id, productos);
+                const productCount = getCategoryProductCount(
+                  categoria.id,
+                  productos,
+                );
                 const hasProducts = productCount > 0;
                 return (
                   <TableRow
@@ -138,14 +158,18 @@ export function CategoryTable({
                     <TableCell className="py-2.5">
                       <span className="text-gray-500 text-sm line-clamp-1 max-w-xs">
                         {categoria.descripcion || (
-                          <span className="text-gray-400 italic">Sin descripción</span>
+                          <span className="text-gray-400 italic">
+                            Sin descripción
+                          </span>
                         )}
                       </span>
                     </TableCell>
                     <TableCell className="py-2.5">
                       <StatusSwitch
                         status={categoria.estado}
-                        onChange={(newStatus) => onStatusChange(categoria.id, newStatus)}
+                        onChange={(newStatus) =>
+                          onStatusChange(categoria.id, newStatus)
+                        }
                         disabled={!isAdmin}
                       />
                     </TableCell>
@@ -176,8 +200,8 @@ export function CategoryTable({
                             !isAdmin
                               ? "Acceso denegado"
                               : hasProducts
-                              ? `Tiene ${productCount} producto(s) asociado(s)`
-                              : "Eliminar categoría"
+                                ? `Tiene ${productCount} producto(s) asociado(s)`
+                                : "Eliminar categoría"
                           }
                           className={`h-8 w-8 flex items-center justify-center rounded-lg transition-all duration-150 ${
                             isAdmin

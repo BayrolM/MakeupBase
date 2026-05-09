@@ -1,13 +1,14 @@
 import { 
   Search, 
-  X, 
   Eye, 
   Pencil, 
   Trash2, 
   Building2, 
   Mail, 
   Phone, 
-  FileText 
+  FileText,
+  Hash,
+  Activity
 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../ui/table";
 import { StatusSwitch } from "../../StatusSwitch";
@@ -42,21 +43,10 @@ export function ProveedorTable({
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               value={searchQuery}
-              onChange={(e) => {
-                const cleanValue = e.target.value.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]/g, "");
-                onSearchChange(cleanValue);
-              }}
+              onChange={(e) => onSearchChange(e.target.value)}
               className="w-full h-10 pl-10 pr-10 bg-white border border-gray-200 rounded-lg text-gray-800 placeholder:text-gray-400 focus:outline-none focus:border-[#c47b96] focus:ring-2 focus:ring-[#c47b96]/20 transition-all duration-150"
               placeholder="Buscar por nombre o NIT..."
             />
-            {searchQuery && (
-              <button 
-                onClick={() => onSearchChange("")} 
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
           </div>
         </div>
       </div>
@@ -64,30 +54,37 @@ export function ProveedorTable({
       <Table>
         <TableHeader>
           <TableRow className="bg-[#fff0f5] border-b-2 border-[#fce8f0]">
-            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-3 pl-6 whitespace-nowrap">
+            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-3 pl-6">
+              <div className="flex items-center gap-1.5">
+                <Hash className="w-3.5 h-3.5" /> ID
+              </div>
+            </TableHead>
+            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-3">
               <div className="flex items-center gap-1.5">
                 <Building2 className="w-3.5 h-3.5" /> Proveedor
               </div>
             </TableHead>
-            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-3 whitespace-nowrap">
+            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-3">
               <div className="flex items-center gap-1.5">
                 <FileText className="w-3.5 h-3.5" /> NIT
               </div>
             </TableHead>
-            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-3 whitespace-nowrap">
+            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-3">
               <div className="flex items-center gap-1.5">
                 <Mail className="w-3.5 h-3.5" /> Email
               </div>
             </TableHead>
-            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-3 whitespace-nowrap">
+            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-3">
               <div className="flex items-center gap-1.5">
                 <Phone className="w-3.5 h-3.5" /> Teléfono
               </div>
             </TableHead>
-            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-3 whitespace-nowrap text-center">
-              Estado
+            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-3">
+              <div className="flex items-center gap-1.5">
+                <Activity className="w-3.5 h-3.5" /> Estado
+              </div>
             </TableHead>
-            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-3 pr-6 text-right whitespace-nowrap">
+            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider text-right py-3 pr-6">
               Acciones
             </TableHead>
           </TableRow>
@@ -95,7 +92,7 @@ export function ProveedorTable({
         <TableBody>
           {proveedores.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} className="text-center py-20 bg-white">
+              <TableCell colSpan={7} className="text-center py-20 bg-white">
                 <div className="flex flex-col items-center gap-4">
                   <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#fff0f5] to-[#fce8f0] flex items-center justify-center">
                     <Building2 className="w-10 h-10 text-[#c47b96]" />
@@ -121,33 +118,42 @@ export function ProveedorTable({
                 key={proveedor.id} 
                 className="border-b border-gray-100 transition-all duration-200 hover:bg-gradient-to-r hover:from-[#fff0f5]/40 hover:to-transparent group bg-white"
               >
-                <TableCell className="py-4 pl-6">
-                  <span className="text-gray-800 font-bold text-sm block group-hover:text-[#c47b96] transition-colors">
+                <TableCell className="py-2.5 pl-6">
+                  <span className="font-mono text-[11px] font-semibold text-gray-400 group-hover:text-[#c47b96]">
+                    #{proveedor.id}
+                  </span>
+                </TableCell>
+                <TableCell className="py-2.5">
+                  <span className="text-gray-800 font-semibold text-sm">
                     {proveedor.nombre}
                   </span>
                 </TableCell>
-                <TableCell className="py-4">
-                  <span className="text-gray-600 font-mono text-xs">{formatNIT(proveedor.nit)}</span>
+                <TableCell className="py-2.5">
+                  <span className="text-gray-500 text-xs font-mono">
+                    {formatNIT(proveedor.nit)}
+                  </span>
                 </TableCell>
-                <TableCell className="py-4">
-                  <span className="text-gray-500 text-xs">{proveedor.email || "N/A"}</span>
+                <TableCell className="py-2.5">
+                  <span className="text-gray-600 text-sm">
+                    {proveedor.email || "N/A"}
+                  </span>
                 </TableCell>
-                <TableCell className="py-4">
-                  <span className="text-gray-500 text-xs">{proveedor.telefono || "N/A"}</span>
+                <TableCell className="py-2.5">
+                  <span className="text-gray-500 text-xs">
+                    {proveedor.telefono || "N/A"}
+                  </span>
                 </TableCell>
-                <TableCell className="py-4 text-center">
-                  <div className="flex justify-center">
-                    <StatusSwitch 
-                      status={proveedor.estado} 
-                      onChange={(newStatus) => onStatusChange(proveedor, newStatus)} 
-                    />
-                  </div>
+                <TableCell className="py-2.5">
+                  <StatusSwitch 
+                    status={proveedor.estado} 
+                    onChange={(newStatus) => onStatusChange(proveedor, newStatus)} 
+                  />
                 </TableCell>
-                <TableCell className="py-4 text-right pr-6">
-                  <div className="flex items-center justify-end gap-1.5 opacity-100 transition-opacity">
+                <TableCell className="py-2.5 pr-6">
+                  <div className="flex items-center justify-end gap-1">
                     <button
                       onClick={() => onViewDetail(proveedor)}
-                      className="h-8 w-8 flex items-center justify-center rounded-lg cursor-pointer text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-150"
+                      className="h-8 w-8 flex items-center justify-center rounded-lg transition-all duration-150 cursor-pointer text-gray-400 hover:bg-indigo-50 hover:text-indigo-600"
                       title="Ver detalles"
                     >
                       <Eye className="w-4 h-4" />
@@ -156,15 +162,15 @@ export function ProveedorTable({
                       <>
                         <button
                           onClick={() => onEdit(proveedor)}
-                          className="h-8 w-8 flex items-center justify-center rounded-lg cursor-pointer text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-all duration-150"
-                          title="Editar proveedor"
+                          className="h-8 w-8 flex items-center justify-center rounded-lg transition-all duration-150 cursor-pointer text-gray-400 hover:bg-blue-50 hover:text-blue-600"
+                          title="Editar"
                         >
                           <Pencil className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => onDelete(proveedor)}
-                          className="h-8 w-8 flex items-center justify-center rounded-lg cursor-pointer text-gray-400 hover:bg-rose-50 hover:text-rose-600 transition-all duration-150"
-                          title="Eliminar proveedor"
+                          className="h-8 w-8 flex items-center justify-center rounded-lg transition-all duration-150 cursor-pointer text-gray-400 hover:bg-rose-50 hover:text-rose-600"
+                          title="Eliminar"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>

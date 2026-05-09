@@ -1,14 +1,24 @@
-import { 
-  Search, 
-  Hash as HashIcon, 
-  Building2, 
-  Calendar, 
-  DollarSign, 
-  Eye, 
+import {
+  Search,
+  Hash,
+  Building2,
+  Calendar,
+  DollarSign,
+  Eye,
   ShoppingBag,
-  FileText
+  FileText,
+  Package,
+  CheckCircle2,
+  X,
 } from "lucide-react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../../ui/table";
 import { formatCurrency } from "../../../utils/compraUtils";
 
 interface CompraTableProps {
@@ -40,10 +50,7 @@ export function CompraTable({
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               value={searchQuery}
-              onChange={(e) => {
-                const cleanValue = e.target.value.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]/g, "");
-                onSearchChange(cleanValue);
-              }}
+              onChange={(e) => onSearchChange(e.target.value)}
               className="w-full h-10 pl-10 pr-10 bg-white border border-gray-200 rounded-lg text-gray-800 placeholder:text-gray-400 focus:outline-none focus:border-[#c47b96] focus:ring-2 focus:ring-[#c47b96]/20 transition-all duration-150"
               placeholder="Buscar por ID o proveedor..."
             />
@@ -54,30 +61,32 @@ export function CompraTable({
       <Table>
         <TableHeader>
           <TableRow className="bg-[#fff0f5] border-b-2 border-[#fce8f0]">
-            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-4 pl-6">
+            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-3 pl-6">
               <div className="flex items-center gap-1.5">
-                <HashIcon className="w-3.5 h-3.5" /> ID
+                <Hash className="w-3.5 h-3.5" /> ID
               </div>
             </TableHead>
-            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-4">
+            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-3">
               <div className="flex items-center gap-1.5">
                 <Building2 className="w-3.5 h-3.5" /> Proveedor
               </div>
             </TableHead>
-            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-4 text-center">
+            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-3 text-center">
               <div className="flex items-center justify-center gap-1.5">
                 <Calendar className="w-3.5 h-3.5" /> Fecha
               </div>
             </TableHead>
-            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-4 text-center">
-              Estado
+            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-3">
+              <div className="flex items-center gap-1.5">
+                <Package className="w-3.5 h-3.5" /> Estado
+              </div>
             </TableHead>
-            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-4 text-right">
-              <div className="flex items-center justify-end gap-1.5">
+            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-3">
+              <div className="flex items-center gap-1.5">
                 <DollarSign className="w-3.5 h-3.5" /> Total
               </div>
             </TableHead>
-            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-4 pr-6 text-right">
+            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-3 pr-6 text-right">
               Acciones
             </TableHead>
           </TableRow>
@@ -107,45 +116,52 @@ export function CompraTable({
             </TableRow>
           ) : (
             compras.map((compra) => {
-              const proveedor = proveedores.find(p => p.id === compra.proveedorId);
+              const proveedor = proveedores.find(
+                (p) => p.id === compra.proveedorId,
+              );
               return (
-                <TableRow 
-                  key={compra.id} 
+                <TableRow
+                  key={compra.id}
                   className="border-b border-gray-100 transition-all duration-200 hover:bg-gradient-to-r hover:from-[#fff0f5]/40 hover:to-transparent bg-white group"
                 >
-                  <TableCell className="py-4 pl-6">
-                    <span className="font-mono text-[12px] font-semibold text-gray-700 group-hover:text-[#c47b96]">
-                      #{compra.id}
-                    </span>
+                  <TableCell className="py-2.5 pl-6">
+                    <div className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-gray-300 group-hover:bg-[#c47b96] transition-colors"></div>
+                      <span className="font-mono text-[11px] font-semibold text-gray-500">
+                        #{compra.id}
+                      </span>
+                    </div>
                   </TableCell>
-                  <TableCell className="py-4">
-                    <span className="text-gray-800 font-medium text-sm">
+                  <TableCell className="py-2.5">
+                    <span className="text-gray-800 font-semibold text-sm">
                       {proveedor?.nombre || "N/A"}
                     </span>
                   </TableCell>
-                  <TableCell className="py-4 text-center">
-                    <span className="text-gray-500 text-sm">
+                  <TableCell className="py-2.5 text-center">
+                    <span className="text-gray-500 text-sm font-mono">
                       {new Date(compra.fecha).toLocaleDateString()}
                     </span>
                   </TableCell>
-                  <TableCell className="py-4 text-center">
+                  <TableCell className="py-2.5">
                     {compra.confirmada ? (
-                      <span className="inline-flex items-center px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
                         Confirmada
                       </span>
                     ) : (
-                      <span className="inline-flex items-center px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-red-50 text-red-700 border border-red-200">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium bg-rose-50 text-rose-700 border border-rose-100">
+                        <X className="w-3.5 h-3.5" />
                         Anulada
                       </span>
                     )}
                   </TableCell>
-                  <TableCell className="py-4 text-right">
-                    <span className="text-gray-800 font-semibold text-sm">
+                  <TableCell className="py-2.5">
+                    <span className="text-gray-900 font-bold text-base bg-gradient-to-r from-[#2e1020] to-[#4a2035] bg-clip-text text-transparent">
                       {formatCurrency(compra.total)}
                     </span>
                   </TableCell>
-                  <TableCell className="py-4 text-right pr-6">
-                    <div className="flex items-center justify-end gap-1.5">
+                  <TableCell className="py-2.5 text-right pr-6">
+                    <div className="flex items-center justify-end gap-2">
                       <button
                         onClick={() => onViewPdf(compra)}
                         className="h-8 w-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-all duration-150"
@@ -166,9 +182,7 @@ export function CompraTable({
                           className="h-8 w-8 flex items-center justify-center rounded-lg text-rose-400 hover:bg-rose-50 hover:text-rose-600 transition-all duration-150"
                           title="Anular compra"
                         >
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                          </svg>
+                          <X className="w-4 h-4" />
                         </button>
                       )}
                     </div>

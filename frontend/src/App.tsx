@@ -179,7 +179,7 @@ function AppContent() {
           id: purch.id_compra.toString(),
           proveedorId: purch.id_proveedor.toString(),
           fecha: purch.fecha_compra,
-          total: Number(purch.total),
+          total: Number(purch.total) || 0,
           estado:
             purch.estado === true || purch.estado === 1
               ? ("confirmada" as const)

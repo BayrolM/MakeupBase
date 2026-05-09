@@ -82,20 +82,18 @@ export const crear = async (req, res) => {
         });
     }
 
-    // Calcular totales
-    let subtotalTotal = 0;
+    // Calcular totales (Sin IVA)
+    let total = 0;
     items.forEach((item) => {
-      subtotalTotal += item.cantidad * item.precio_unitario;
+      total += item.cantidad * item.precio_unitario;
     });
-    const iva = subtotalTotal * CONFIG.IVA;
-    const total = subtotalTotal + iva;
 
     // Ejecutar transacción
     const resultado = await sql.begin(async (sql) => {
-      // 1. Insertar la compra
+      // 1. Insertar la compra (IVA siempre 0)
       const [compra] = await sql`
         INSERT INTO compras (id_proveedor, id_usuario_empleado, fecha_compra, subtotal, iva, total, estado)
-        VALUES (${id_proveedor}, ${id_usuario}, NOW(), ${subtotalTotal}, ${iva}, ${total}, true)
+        VALUES (${id_proveedor}, ${id_usuario}, NOW(), ${total}, 0, ${total}, true)
         RETURNING *
       `;
 
@@ -106,7 +104,7 @@ export const crear = async (req, res) => {
           VALUES (${compra.id_compra}, ${item.id_producto}, ${item.cantidad}, ${item.precio_unitario})
         `;
 
-        // 3. Actualizar el stock del producto
+        // 3. Actualizar el stock del producto y el costo promedio
         await sql`
           UPDATE productos 
           SET stock_actual = stock_actual + ${item.cantidad},
