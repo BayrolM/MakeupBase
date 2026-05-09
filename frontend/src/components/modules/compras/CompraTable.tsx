@@ -128,7 +128,7 @@ export function CompraTable({
                     <div className="flex items-center gap-2">
                       <div className="w-1.5 h-1.5 rounded-full bg-gray-300 group-hover:bg-[#c47b96] transition-colors"></div>
                       <span className="font-mono text-[11px] font-semibold text-gray-500">
-                        #{compra.id}
+                        {compra.id}
                       </span>
                     </div>
                   </TableCell>

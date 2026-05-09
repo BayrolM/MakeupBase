@@ -1,24 +1,24 @@
-import { 
-  Search, 
-  Hash, 
-  ClipboardList, 
-  User, 
-  Calendar, 
-  DollarSign, 
-  CreditCard, 
-  Package, 
-  ShoppingBag, 
-  FileText, 
-  Eye, 
-  X 
+import {
+  Search,
+  Hash,
+  ClipboardList,
+  User,
+  Calendar,
+  DollarSign,
+  CreditCard,
+  Package,
+  ShoppingBag,
+  FileText,
+  Eye,
+  X,
 } from "lucide-react";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "../../ui/table";
 import { formatCurrency, getStatusColor } from "../../../utils/ventaUtils";
 
@@ -151,7 +151,7 @@ export function VentaTable({
                   <TableCell className="py-2.5">
                     <span className="text-gray-500 text-sm font-mono">
                       {venta.pedidoId ? (
-                        `#${venta.pedidoId}`
+                        `${venta.pedidoId}`
                       ) : (
                         <span className="text-gray-400 italic">
                           Venta Directa

@@ -1,16 +1,23 @@
-import { 
-  Search, 
-  Eye, 
-  Pencil, 
-  Trash2, 
-  Building2, 
-  Mail, 
-  Phone, 
+import {
+  Search,
+  Eye,
+  Pencil,
+  Trash2,
+  Building2,
+  Mail,
+  Phone,
   FileText,
   Hash,
-  Activity
+  Activity,
 } from "lucide-react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../../ui/table";
 import { StatusSwitch } from "../../StatusSwitch";
 import { formatNIT } from "../../../utils/proveedorUtils";
 
@@ -114,13 +121,13 @@ export function ProveedorTable({
             </TableRow>
           ) : (
             proveedores.map((proveedor) => (
-              <TableRow 
-                key={proveedor.id} 
+              <TableRow
+                key={proveedor.id}
                 className="border-b border-gray-100 transition-all duration-200 hover:bg-gradient-to-r hover:from-[#fff0f5]/40 hover:to-transparent group bg-white"
               >
                 <TableCell className="py-2.5 pl-6">
-                  <span className="font-mono text-[11px] font-semibold text-gray-400 group-hover:text-[#c47b96]">
-                    #{proveedor.id}
+                  <span className="font-mono text-[11px] font-semibold text-gray-500 group-hover:text-[#c47b96]">
+                    {proveedor.id}
                   </span>
                 </TableCell>
                 <TableCell className="py-2.5">
@@ -144,9 +151,11 @@ export function ProveedorTable({
                   </span>
                 </TableCell>
                 <TableCell className="py-2.5">
-                  <StatusSwitch 
-                    status={proveedor.estado} 
-                    onChange={(newStatus) => onStatusChange(proveedor, newStatus)} 
+                  <StatusSwitch
+                    status={proveedor.estado}
+                    onChange={(newStatus) =>
+                      onStatusChange(proveedor, newStatus)
+                    }
                   />
                 </TableCell>
                 <TableCell className="py-2.5 pr-6">

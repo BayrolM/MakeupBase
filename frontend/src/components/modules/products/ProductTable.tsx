@@ -123,7 +123,9 @@ export function ProductTable({
                   className="border-b border-gray-100 transition-all duration-200 hover:bg-gradient-to-r hover:from-[#fff0f5]/40 hover:to-transparent group bg-white"
                 >
                   <TableCell className="py-2.5 pl-6">
-                    <span className="font-mono text-[11px] font-semibold text-gray-400 group-hover:text-[#c47b96]">#{product.id}</span>
+                    <span className="font-mono text-[11px] font-semibold text-gray-500 group-hover:text-[#c47b96]">
+                      {product.id}
+                    </span>
                   </TableCell>
                   <TableCell className="py-2.5">
                     <span className="text-gray-800 font-semibold text-sm">
@@ -137,7 +139,9 @@ export function ProductTable({
                     </span>
                   </TableCell>
                   <TableCell className="py-2.5">
-                    <span className="text-gray-600 text-sm">{product.marca}</span>
+                    <span className="text-gray-600 text-sm">
+                      {product.marca}
+                    </span>
                   </TableCell>
                   <TableCell className="py-2.5">
                     <span className="text-gray-900 font-bold text-sm">
@@ -171,7 +175,9 @@ export function ProductTable({
                           });
                           await refreshProducts();
                         } catch (error: any) {
-                          toast.error(error.message || "Error al cambiar estado");
+                          toast.error(
+                            error.message || "Error al cambiar estado",
+                          );
                         }
                       }}
                       disabled={!isAdmin}

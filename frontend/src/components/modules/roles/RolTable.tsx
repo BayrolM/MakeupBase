@@ -126,7 +126,7 @@ export function RolTable({
               >
                 <TableCell className="py-2.5 pl-6">
                   <span className="font-mono text-[11px] font-semibold text-gray-400 group-hover:text-[#c47b96]">
-                    #{rol.id}
+                    {rol.id}
                   </span>
                 </TableCell>
                 <TableCell className="py-2.5">

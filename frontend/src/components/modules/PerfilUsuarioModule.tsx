@@ -13,10 +13,6 @@ import {
 import { User, Lock, Camera, ShieldCheck, Save } from "lucide-react";
 import { toast } from "sonner";
 
-/* ─────────────────────────────────────────
-   Paleta navy / naranja – solo variables
-   del diseño aprobado
-───────────────────────────────────────── */
 const D = {
   navy: "var(--luxury-pink)",
   navyMid: "#66103b",
@@ -375,25 +371,28 @@ export function PerfilUsuarioModule() {
 
     setIsSavingInfo(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/users/profile`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem("gml_token")}`,
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/users/profile`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("gml_token")}`,
+          },
+          body: JSON.stringify({
+            nombres: infoFormData.nombre.trim(),
+            apellidos: infoFormData.apellido.trim(),
+            tipo_documento: infoFormData.tipoDocumento,
+            documento: infoFormData.numeroDocumento.trim(),
+            telefono: infoFormData.telefono.trim(),
+            direccion: infoFormData.direccion.trim(),
+            ciudad: infoFormData.ciudad.trim(),
+            departamento: infoFormData.departamento.trim(),
+            pais: infoFormData.pais.trim(),
+            email: infoFormData.email.trim(),
+          }),
         },
-        body: JSON.stringify({
-          nombres: infoFormData.nombre.trim(),
-          apellidos: infoFormData.apellido.trim(),
-          tipo_documento: infoFormData.tipoDocumento,
-          documento: infoFormData.numeroDocumento.trim(),
-          telefono: infoFormData.telefono.trim(),
-          direccion: infoFormData.direccion.trim(),
-          ciudad: infoFormData.ciudad.trim(),
-          departamento: infoFormData.departamento.trim(),
-          pais: infoFormData.pais.trim(),
-          email: infoFormData.email.trim(),
-        }),
-      });
+      );
 
       if (!response.ok) throw new Error("Error al actualizar");
 

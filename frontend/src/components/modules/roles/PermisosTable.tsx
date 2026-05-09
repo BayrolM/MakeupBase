@@ -1,8 +1,23 @@
-import { Search, Loader2, ShieldCheck, Hash, FileText, LayoutGrid, X } from "lucide-react";
+import {
+  Search,
+  Loader2,
+  ShieldCheck,
+  Hash,
+  FileText,
+  LayoutGrid,
+  X,
+} from "lucide-react";
 import { Pagination } from "../../Pagination";
 import { useState, useEffect } from "react";
 import { getPermisosPaginatedAPI } from "../../../services/roleService";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../../ui/table";
 
 interface Permiso {
   id_permiso: number;
@@ -83,16 +98,24 @@ export function PermisosTable() {
         <TableHeader>
           <TableRow className="bg-[#fff0f5] border-b-2 border-[#fce8f0]">
             <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-3 pl-6">
-              <div className="flex items-center gap-1.5"><Hash className="w-3.5 h-3.5" /> ID</div>
+              <div className="flex items-center gap-1.5">
+                <Hash className="w-3.5 h-3.5" /> ID
+              </div>
             </TableHead>
             <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-3">
-              <div className="flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5" /> Nombre</div>
+              <div className="flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5" /> Nombre
+              </div>
             </TableHead>
             <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-3">
-              <div className="flex items-center gap-1.5"><FileText className="w-3.5 h-3.5" /> Descripción</div>
+              <div className="flex items-center gap-1.5">
+                <FileText className="w-3.5 h-3.5" /> Descripción
+              </div>
             </TableHead>
             <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-3 pr-6">
-              <div className="flex items-center gap-1.5"><LayoutGrid className="w-3.5 h-3.5" /> Módulo</div>
+              <div className="flex items-center gap-1.5">
+                <LayoutGrid className="w-3.5 h-3.5" /> Módulo
+              </div>
             </TableHead>
           </TableRow>
         </TableHeader>
@@ -103,7 +126,9 @@ export function PermisosTable() {
               <TableCell colSpan={4} className="py-20 text-center bg-white">
                 <div className="flex flex-col items-center gap-3">
                   <Loader2 className="w-8 h-8 animate-spin text-[#c47b96]" />
-                  <p className="text-sm text-gray-400 font-medium tracking-wide">Consultando catálogo...</p>
+                  <p className="text-sm text-gray-400 font-medium tracking-wide">
+                    Consultando catálogo...
+                  </p>
                 </div>
               </TableCell>
             </TableRow>
@@ -116,7 +141,9 @@ export function PermisosTable() {
                   </div>
                   <div>
                     <p className="text-gray-700 font-semibold text-lg">
-                      {searchQuery ? `No se encontraron resultados para "${searchQuery}"` : 'No hay permisos registrados'}
+                      {searchQuery
+                        ? `No se encontraron resultados para "${searchQuery}"`
+                        : "No hay permisos registrados"}
                     </p>
                     <p className="text-gray-400 text-sm mt-1 italic">
                       Intenta ajustar tus criterios de búsqueda.
@@ -127,13 +154,13 @@ export function PermisosTable() {
             </TableRow>
           ) : (
             permisos.map((p) => (
-              <TableRow 
-                key={p.id_permiso} 
+              <TableRow
+                key={p.id_permiso}
                 className="border-b border-gray-100 transition-all duration-200 hover:bg-gradient-to-r hover:from-[#fff0f5]/40 hover:to-transparent group bg-white"
               >
                 <TableCell className="py-3 pl-6">
-                  <span className="font-mono text-[11px] font-semibold text-gray-400 group-hover:text-[#c47b96]">
-                    #{p.id_permiso}
+                  <span className="font-mono text-[11px] font-semibold text-gray-500 group-hover:text-[#c47b96]">
+                    {p.id_permiso}
                   </span>
                 </TableCell>
                 <TableCell className="py-3">
