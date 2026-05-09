@@ -534,13 +534,16 @@ export function Dashboard() {
                         dataKey="mes"
                         axisLine={false}
                         tickLine={false}
-                        interval={1}
+                        interval={0}
                         tick={{
-                          fontSize: 10,
+                          fontSize: 8,
                           fill: V("text-muted"),
                           fontWeight: 500,
                         }}
                         dy={10}
+                        angle={-45}
+                        textAnchor="end"
+                        height={70}
                       />
                       <YAxis
                         axisLine={false}
@@ -554,7 +557,7 @@ export function Dashboard() {
                             return `$${(value / 1000).toFixed(0)}K`;
                           return `$${value}`;
                         }}
-                        width={40}
+                        width={50}
                       />
                       <Tooltip
                         contentStyle={{
@@ -582,6 +585,8 @@ export function Dashboard() {
                         fillOpacity={1}
                         fill="url(#gradientTrend)"
                         connectNulls
+                        dot={{ r: 4, fill: C.accentDeep, strokeWidth: 2, stroke: C.white }}
+                        activeDot={{ r: 6, fill: C.accentDeep }}
                       />
                     </AreaChart>
                   </ResponsiveContainer>
