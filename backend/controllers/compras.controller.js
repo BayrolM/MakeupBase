@@ -94,8 +94,8 @@ export const crear = async (req, res) => {
     const resultado = await sql.begin(async (sql) => {
       // 1. Insertar la compra
       const [compra] = await sql`
-        INSERT INTO compras (id_proveedor, id_usuario_empleado, fecha_compra, subtotal, iva, total)
-        VALUES (${id_proveedor}, ${id_usuario}, NOW(), ${subtotalTotal}, ${iva}, ${total})
+        INSERT INTO compras (id_proveedor, id_usuario_empleado, fecha_compra, subtotal, iva, total, estado)
+        VALUES (${id_proveedor}, ${id_usuario}, NOW(), ${subtotalTotal}, ${iva}, ${total}, true)
         RETURNING *
       `;
 

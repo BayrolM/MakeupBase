@@ -51,10 +51,17 @@ export function ProductFormDialog({
   const { productos, compras } = useStore();
   const hasBeenPurchased = useMemo(() => {
     if (!editingProduct) return false;
-    return compras.some(c => 
+    
+    // Check if it exists in any confirmed purchase in the store
+    const inPurchases = compras.some(c => 
       c.estado === "confirmada" && 
       c.productos.some(p => p.productoId === editingProduct.id)
     );
+
+    // Fallback: if it already has stock or price, it's considered "activated"
+    const hasData = Number(editingProduct.stock) > 0 || Number(editingProduct.precioCompra) > 0;
+
+    return inPurchases || hasData;
   }, [editingProduct, compras]);
 
   const [formData, setFormData] = useState({
