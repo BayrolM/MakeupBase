@@ -8,10 +8,11 @@ export interface DashboardData {
     total_usuarios: number;
     productos_bajo_stock: number;
   };
-  ventas_por_mes: Array<{
-    mes: string;
-    cantidad: string;
+  ventas_tendencia: Array<{
+    mes_id: string;
+    mes_nombre: string;
     total: string;
+    cantidad: string;
   }>;
   productos_mas_vendidos: Array<{
     id_producto: number;

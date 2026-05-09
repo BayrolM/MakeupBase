@@ -75,7 +75,26 @@ export const obtenerDashboard = async () => {
       total_usuarios: parseInt(totalUsuarios[0].total),
       productos_bajo_stock: parseInt(productosBajoStock[0].total),
     },
-    ventas_por_mes: ventasPorMes,
+    // Tendencia de ventas (últimos 24 meses para ver histórico completo)
+    ventas_tendencia: await sql`
+      WITH meses AS (
+        SELECT generate_series(
+          DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '23 months', 
+          DATE_TRUNC('month', CURRENT_DATE), 
+          '1 month'::interval
+        )::date as mes_fecha
+      )
+      SELECT 
+        TO_CHAR(m.mes_fecha, 'YYYY-MM') as mes_id,
+        TO_CHAR(m.mes_fecha, 'Mon YY') as mes_nombre,
+        COALESCE(SUM(v.total), 0) as total,
+        COUNT(v.id_venta) as cantidad
+      FROM meses m
+      LEFT JOIN ventas v ON DATE_TRUNC('month', v.fecha_venta) = DATE_TRUNC('month', m.mes_fecha) 
+        AND v.estado = true
+      GROUP BY m.mes_fecha
+      ORDER BY m.mes_fecha ASC
+    `,
     productos_mas_vendidos: productosMasVendidos,
   };
 };

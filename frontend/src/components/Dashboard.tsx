@@ -19,25 +19,35 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+  AreaChart,
+  Area,
 } from "recharts";
-import { reportService, DashboardData, SalesComparisonData } from "../services/reportService";
+import {
+  reportService,
+  DashboardData,
+  SalesComparisonData,
+} from "../services/reportService";
 import { toast } from "sonner";
 
 /* ── Luxury CSS variable helpers ── */
 const V = (name: string) => `var(--luxury-${name})`;
 const C = {
-  bgSoft: V('bg-soft'),
-  accent: V('pink-soft'),
-  accentDark: V('accent-dark'),
-  accentDeep: V('pink'),
-  textDark: V('text-dark'),
-  textMuted: V('text-muted'),
-  shadowSm: V('shadow-sm'),
-  shadow: V('shadow'),
-  white: '#ffffff',
-  danger: '#ef4444',
-  success: '#10b981',
-  blue: '#3b82f6',
+  bgSoft: V("bg-soft"),
+  accent: V("pink-soft"),
+  accentDark: V("accent-dark"),
+  accentDeep: V("pink"),
+  textDark: V("text-dark"),
+  textMuted: V("text-muted"),
+  shadowSm: V("shadow-sm"),
+  shadow: V("shadow"),
+  white: "#ffffff",
+  danger: "#ef4444",
+  success: "#10b981",
+  blue: "#3b82f6",
 };
 
 export function Dashboard() {
@@ -51,9 +61,10 @@ export function Dashboard() {
       productos_bajo_stock: 0,
     },
     productos_mas_vendidos: [],
-    ventas_por_mes: [],
+    ventas_tendencia: [],
   });
-  const [salesComparison, setSalesComparison] = useState<SalesComparisonData | null>(null);
+  const [salesComparison, setSalesComparison] =
+    useState<SalesComparisonData | null>(null);
 
   useEffect(() => {
     fetchDashboardData();
@@ -120,221 +131,481 @@ export function Dashboard() {
     },
   ];
 
+  const statusColors = ["#7b1347", "#a85d77", "#c47b96", "#10b981", "#ef4444"];
+
   const productosStockCriticoList = productos.filter(
     (p) => p.stock <= p.stockMinimo,
   );
 
-  const comparisonChartData = useMemo(() => {
-    if (!salesComparison) return [];
+  const trendChartData = useMemo(() => {
+    if (!data?.ventas_tendencia) return [];
 
-    const mesesOrden = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'];
-    const nombresMeses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-
-    const actualMap = new Map(
-      salesComparison.ventas_por_mes.actual.map(v => [v.mes_num, parseFloat(v.total) || 0])
-    );
-    const pasadoMap = new Map(
-      salesComparison.ventas_por_mes.pasado.map(v => [v.mes_num, parseFloat(v.total) || 0])
-    );
-
-    return mesesOrden.map((num, idx) => ({
-      mes: nombresMeses[idx],
-      anioActual: actualMap.get(num) || 0,
-      anioPasado: pasadoMap.get(num) || 0,
+    return data.ventas_tendencia.map((v) => ({
+      mes: v.mes_nombre,
+      total: parseFloat(v.total) || 0,
+      cantidad: parseInt(v.cantidad) || 0,
     }));
-  }, [salesComparison]);
+  }, [data?.ventas_tendencia]);
 
   return (
-    <div className="min-h-screen relative" style={{ background: C.bgSoft, fontFamily: "'DM Sans', sans-serif" }}>
+    <div
+      className="min-h-screen relative"
+      style={{ background: C.bgSoft, fontFamily: "'DM Sans', sans-serif" }}
+    >
       <PageHeader
         title="Panel de Control"
         subtitle="Métricas estratégicas y estado del negocio"
         icon={LayoutDashboard}
       />
 
-
-
-      <div className="p-8 space-y-8">
+      <div className="p-6 space-y-6">
         {/* KPI Grid - Modern & Clean */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          
           {/* Sales KPI */}
-          <div style={{ background: C.white, borderRadius: '24px', padding: '24px', boxShadow: C.shadowSm, border: `1px solid ${C.accent}`, position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', top: 0, right: 0, width: '80px', height: '80px', background: `linear-gradient(135deg, transparent 50%, ${C.accent} 100%)`, opacity: 0.3 }} />
+          <div
+            style={{
+              background: C.white,
+              borderRadius: "20px",
+              padding: "16px",
+              boxShadow: C.shadowSm,
+              border: `1px solid ${C.accent}`,
+              position: "relative",
+              overflow: "hidden",
+            }}
+          >
+            <div
+              style={{
+                position: "absolute",
+                top: 0,
+                right: 0,
+                width: "80px",
+                height: "80px",
+                background: `linear-gradient(135deg, transparent 50%, ${C.accent} 100%)`,
+                opacity: 0.3,
+              }}
+            />
             <div className="flex justify-between items-start mb-4">
-              <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: C.bgSoft, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <TrendingUp style={{ width: 20, height: 20, color: C.accentDeep }} />
+              <div
+                style={{
+                  width: "40px",
+                  height: "40px",
+                  borderRadius: "12px",
+                  background: C.bgSoft,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <TrendingUp
+                  style={{ width: 20, height: 20, color: C.accentDeep }}
+                />
               </div>
-              <span style={{ fontSize: '12px', color: '#10b981', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span
+                style={{
+                  fontSize: "12px",
+                  color: "#10b981",
+                  fontWeight: 600,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
+                }}
+              >
                 +12% <ArrowUpRight style={{ width: 12, height: 12 }} />
               </span>
             </div>
-            <p style={{ fontSize: '13px', fontWeight: 600, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>Ventas Totales</p>
-            <h3 style={{ fontSize: '24px', fontWeight: 800, color: C.textDark, margin: 0, letterSpacing: '-0.5px' }}>
+            <p
+              style={{
+                fontSize: "13px",
+                fontWeight: 600,
+                color: C.textMuted,
+                textTransform: "uppercase",
+                letterSpacing: "1px",
+                marginBottom: "8px",
+              }}
+            >
+              Ventas Totales
+            </p>
+            <h3
+              style={{
+                fontSize: "24px",
+                fontWeight: 800,
+                color: C.textDark,
+                margin: 0,
+                letterSpacing: "-0.5px",
+              }}
+            >
               {formatCurrency(safeData.resumen.total_ventas)}
             </h3>
           </div>
 
           {/* Orders KPI */}
-          <div style={{ background: C.white, borderRadius: '24px', padding: '24px', boxShadow: C.shadowSm, border: `1px solid ${C.accent}`, position: 'relative', overflow: 'hidden' }}>
+          <div
+            style={{
+              background: C.white,
+              borderRadius: "20px",
+              padding: "16px",
+              boxShadow: C.shadowSm,
+              border: `1px solid ${C.accent}`,
+              position: "relative",
+              overflow: "hidden",
+            }}
+          >
             <div className="flex justify-between items-start mb-4">
-              <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: C.bgSoft, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <ShoppingCart style={{ width: 20, height: 20, color: C.accentDeep }} />
+              <div
+                style={{
+                  width: "40px",
+                  height: "40px",
+                  borderRadius: "12px",
+                  background: C.bgSoft,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <ShoppingCart
+                  style={{ width: 20, height: 20, color: C.accentDeep }}
+                />
               </div>
-              <span style={{ fontSize: '11px', color: C.textMuted, fontWeight: 500, background: C.bgSoft, padding: '2px 8px', borderRadius: '20px' }}>
+              <span
+                style={{
+                  fontSize: "11px",
+                  color: C.textMuted,
+                  fontWeight: 500,
+                  background: C.bgSoft,
+                  padding: "2px 8px",
+                  borderRadius: "20px",
+                }}
+              >
                 Hoy
               </span>
             </div>
-            <p style={{ fontSize: '13px', fontWeight: 600, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>Pedidos</p>
-            <h3 style={{ fontSize: '24px', fontWeight: 800, color: C.textDark, margin: 0, letterSpacing: '-0.5px' }}>
+            <p
+              style={{
+                fontSize: "13px",
+                fontWeight: 600,
+                color: C.textMuted,
+                textTransform: "uppercase",
+                letterSpacing: "1px",
+                marginBottom: "8px",
+              }}
+            >
+              Pedidos
+            </p>
+            <h3
+              style={{
+                fontSize: "24px",
+                fontWeight: 800,
+                color: C.textDark,
+                margin: 0,
+                letterSpacing: "-0.5px",
+              }}
+            >
               {safeData.resumen.total_ordenes}
             </h3>
           </div>
 
           {/* Users KPI */}
-          <div style={{ background: C.white, borderRadius: '24px', padding: '24px', boxShadow: C.shadowSm, border: `1px solid ${C.accent}`, position: 'relative', overflow: 'hidden' }}>
+          <div
+            style={{
+              background: C.white,
+              borderRadius: "20px",
+              padding: "16px",
+              boxShadow: C.shadowSm,
+              border: `1px solid ${C.accent}`,
+              position: "relative",
+              overflow: "hidden",
+            }}
+          >
             <div className="flex justify-between items-start mb-4">
-              <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: C.bgSoft, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div
+                style={{
+                  width: "40px",
+                  height: "40px",
+                  borderRadius: "12px",
+                  background: C.bgSoft,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
                 <Users style={{ width: 20, height: 20, color: C.accentDeep }} />
               </div>
             </div>
-            <p style={{ fontSize: '13px', fontWeight: 600, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>Usuarios</p>
-            <h3 style={{ fontSize: '24px', fontWeight: 800, color: C.textDark, margin: 0, letterSpacing: '-0.5px' }}>
+            <p
+              style={{
+                fontSize: "13px",
+                fontWeight: 600,
+                color: C.textMuted,
+                textTransform: "uppercase",
+                letterSpacing: "1px",
+                marginBottom: "8px",
+              }}
+            >
+              Usuarios
+            </p>
+            <h3
+              style={{
+                fontSize: "24px",
+                fontWeight: 800,
+                color: C.textDark,
+                margin: 0,
+                letterSpacing: "-0.5px",
+              }}
+            >
               {safeData.resumen.total_usuarios}
             </h3>
           </div>
 
           {/* Stock KPI - Warning style */}
-          <div style={{ background: `linear-gradient(135deg, ${C.white} 0%, #fffafa 100%)`, borderRadius: '24px', padding: '24px', boxShadow: C.shadowSm, border: `1px solid ${C.danger}33`, position: 'relative', overflow: 'hidden' }}>
+          <div
+            style={{
+              background: `linear-gradient(135deg, ${C.white} 0%, #fffafa 100%)`,
+              borderRadius: "20px",
+              padding: "20px",
+              boxShadow: C.shadowSm,
+              border: `1px solid ${C.danger}33`,
+              position: "relative",
+              overflow: "hidden",
+            }}
+          >
             <div className="flex justify-between items-start mb-4">
-              <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: `${C.danger}11`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <AlertTriangle style={{ width: 20, height: 20, color: C.danger }} />
+              <div
+                style={{
+                  width: "40px",
+                  height: "40px",
+                  borderRadius: "12px",
+                  background: `${C.danger}11`,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <AlertTriangle
+                  style={{ width: 20, height: 20, color: C.danger }}
+                />
               </div>
               {safeData.resumen.productos_bajo_stock > 0 && (
-                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: C.danger, animation: 'pulse 2s infinite' }} />
+                <div
+                  style={{
+                    width: "8px",
+                    height: "8px",
+                    borderRadius: "50%",
+                    background: C.danger,
+                    animation: "pulse 2s infinite",
+                  }}
+                />
               )}
             </div>
-            <p style={{ fontSize: '13px', fontWeight: 600, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>Stock Crítico</p>
-            <h3 style={{ fontSize: '24px', fontWeight: 800, color: C.danger, margin: 0, letterSpacing: '-0.5px' }}>
+            <p
+              style={{
+                fontSize: "13px",
+                fontWeight: 600,
+                color: C.textMuted,
+                textTransform: "uppercase",
+                letterSpacing: "1px",
+                marginBottom: "8px",
+              }}
+            >
+              Stock Crítico
+            </p>
+            <h3
+              style={{
+                fontSize: "24px",
+                fontWeight: 800,
+                color: C.danger,
+                margin: 0,
+                letterSpacing: "-0.5px",
+              }}
+            >
               {safeData.resumen.productos_bajo_stock}
             </h3>
           </div>
         </div>
 
         {/* Main Analytics Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Sales Comparison Chart */}
-          <div style={{ background: C.white, borderRadius: '24px', padding: '32px', boxShadow: C.shadow, border: `1px solid ${C.accent}` }}>
+          <div
+            style={{
+              background: C.white,
+              borderRadius: "20px",
+              padding: "24px",
+              boxShadow: C.shadow,
+              border: `1px solid ${C.accent}`,
+            }}
+          >
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h3 style={{ fontSize: '18px', fontWeight: 700, color: C.textDark, margin: 0 }}>Comparación de Ventas</h3>
-                <p style={{ fontSize: '13px', color: C.textMuted, margin: 0 }}>
-                  {salesComparison ? `${salesComparison.anio_pasado} vs ${salesComparison.anio_actual}` : 'Cargando...'}
+                <h3
+                  style={{
+                    fontSize: "18px",
+                    fontWeight: 800,
+                    color: C.textDark,
+                    margin: 0,
+                  }}
+                >
+                  Tendencia de Ingresos
+                </h3>
+                <p style={{ fontSize: "13px", color: C.textMuted, margin: 0 }}>
+                  Evolución de ventas - Últimos 24 meses
                 </p>
               </div>
               {salesComparison ? (
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-2">
-                    <div style={{ width: '12px', height: '12px', borderRadius: '3px', background: C.accentDeep }} />
-                    <span style={{ fontSize: '12px', color: C.textMuted }}>{salesComparison.anio_actual}</span>
+                    <div
+                      style={{
+                        width: "12px",
+                        height: "12px",
+                        borderRadius: "3px",
+                        background: C.accentDeep,
+                      }}
+                    />
+                    <span style={{ fontSize: "12px", color: C.textMuted }}>
+                      {salesComparison.anio_actual}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div style={{ width: '12px', height: '12px', borderRadius: '3px', background: C.blue }} />
-                    <span style={{ fontSize: '12px', color: C.textMuted }}>{salesComparison.anio_pasado}</span>
+                    <div
+                      style={{
+                        width: "12px",
+                        height: "12px",
+                        borderRadius: "3px",
+                        background: C.blue,
+                      }}
+                    />
+                    <span style={{ fontSize: "12px", color: C.textMuted }}>
+                      {salesComparison.anio_pasado}
+                    </span>
                   </div>
                 </div>
               ) : (
                 <div className="flex items-center gap-3">
-                  <div className="w-3 h-3 rounded animate-pulse" style={{ background: V('accent-soft') }} />
-                  <div className="w-3 h-3 rounded animate-pulse" style={{ background: V('accent-soft') }} />
+                  <div
+                    className="w-3 h-3 rounded animate-pulse"
+                    style={{ background: V("accent-soft") }}
+                  />
+                  <div
+                    className="w-3 h-3 rounded animate-pulse"
+                    style={{ background: V("accent-soft") }}
+                  />
                 </div>
               )}
             </div>
 
-            {!salesComparison ? (
-              <div className="w-full flex flex-col gap-3" style={{ height: '320px', justifyContent: 'center' }}>
-                {[60, 80, 45, 90, 70, 55, 85, 65, 75, 50, 95, 40].map((h, i) => (
-                  <div key={i} className="flex gap-2 items-end" style={{ height: `${h}%` }}>
-                    <div className="w-8 rounded-t animate-pulse" style={{ height: '100%', background: V('accent-soft') }} />
-                    <div className="w-8 rounded-t animate-pulse" style={{ height: `${h * 0.7}%`, background: V('accent-soft') }} />
-                  </div>
-                ))}
+            {!data?.ventas_tendencia ? (
+              <div className="flex flex-col gap-4 animate-pulse">
+                <div className="h-48 bg-gray-100 rounded-2xl" />
               </div>
             ) : (
               <>
-                <div style={{ width: '100%', height: '320px' }}>
+                <div style={{ width: "100%", height: "220px" }}>
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={comparisonChartData} barGap={8}>
+                    <AreaChart
+                      data={trendChartData}
+                      margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                    >
                       <defs>
-                        <linearGradient id="gradientThisYear" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor={C.accentDeep} stopOpacity={1}/>
-                          <stop offset="100%" stopColor={C.accent} stopOpacity={0.8}/>
-                        </linearGradient>
-                        <linearGradient id="gradientLastYear" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor={C.blue} stopOpacity={1}/>
-                          <stop offset="100%" stopColor="#60a5fa" stopOpacity={0.8}/>
+                        <linearGradient
+                          id="gradientTrend"
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop
+                            offset="5%"
+                            stopColor={C.accentDeep}
+                            stopOpacity={0.3}
+                          />
+                          <stop
+                            offset="95%"
+                            stopColor={C.accentDeep}
+                            stopOpacity={0}
+                          />
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
-                      <XAxis 
-                        dataKey="mes" 
-                        axisLine={false} 
-                        tickLine={false} 
-                        tick={{ fontSize: 12, fill: V('text-muted'), fontWeight: 500 }}
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        vertical={false}
+                        stroke="rgba(0,0,0,0.05)"
+                      />
+                      <XAxis
+                        dataKey="mes"
+                        axisLine={false}
+                        tickLine={false}
+                        interval={1}
+                        tick={{
+                          fontSize: 10,
+                          fill: V("text-muted"),
+                          fontWeight: 500,
+                        }}
                         dy={10}
                       />
-                      <YAxis 
-                        axisLine={false} 
-                        tickLine={false} 
-                        tick={{ fontSize: 11, fill: V('text-muted') }}
-                        tickFormatter={(value) => `$${(value / 1000000).toFixed(1)}M`}
-                        width={55}
+                      <YAxis
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 10, fill: V("text-muted") }}
+                        tickFormatter={(value) => {
+                          if (value === 0) return "$0";
+                          if (value >= 1000000)
+                            return `$${(value / 1000000).toFixed(1)}M`;
+                          if (value >= 1000)
+                            return `$${(value / 1000).toFixed(0)}K`;
+                          return `$${value}`;
+                        }}
+                        width={40}
                       />
-                      <Tooltip 
-                        cursor={{ fill: 'rgba(0,0,0,0.02)' }}
-                        contentStyle={{ 
-                          borderRadius: '16px', 
-                          border: 'none', 
-                          boxShadow: '0 10px 40px rgba(0,0,0,0.1)', 
-                          padding: '16px',
+                      <Tooltip
+                        contentStyle={{
+                          borderRadius: "12px",
+                          border: "none",
+                          boxShadow: "0 10px 40px rgba(0,0,0,0.1)",
+                          padding: "12px",
                           background: C.white,
                         }}
-                        formatter={(value: any, name: string) => [
+                        formatter={(value: any) => [
                           formatCurrency(value),
-                          name === 'anioActual' ? `${salesComparison.anio_actual}` : `${salesComparison.anio_pasado}`
+                          "Ingresos",
                         ]}
-                        labelStyle={{ fontWeight: 600, color: C.textDark, marginBottom: '8px' }}
+                        labelStyle={{
+                          fontWeight: 600,
+                          color: C.textDark,
+                          marginBottom: "4px",
+                        }}
                       />
-                      <Bar dataKey="anioActual" fill="url(#gradientThisYear)" radius={[8, 8, 0, 0]} maxBarSize={40} />
-                      <Bar dataKey="anioPasado" fill="url(#gradientLastYear)" radius={[8, 8, 0, 0]} maxBarSize={40} opacity={0.7} />
-                    </BarChart>
+                      <Area
+                        type="monotone"
+                        dataKey="total"
+                        stroke={C.accentDeep}
+                        strokeWidth={3.5}
+                        fillOpacity={1}
+                        fill="url(#gradientTrend)"
+                        connectNulls
+                      />
+                    </AreaChart>
                   </ResponsiveContainer>
                 </div>
 
-                <div className="mt-6 pt-6" style={{ borderTop: `1px solid ${V('accent-soft')}` }}>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p style={{ fontSize: '12px', color: C.textMuted, margin: 0 }}>Crecimiento</p>
-                      <p style={{ 
-                        fontSize: '28px', 
-                        fontWeight: 800, 
-                        margin: 0, 
-                        color: salesComparison.resumen.crecimiento >= 0 ? C.success : C.danger 
-                      }}>
-                        {salesComparison.resumen.crecimiento >= 0 ? '+' : ''}{salesComparison.resumen.crecimiento.toFixed(1)}%
-                      </p>
-                    </div>
-                    <div className="flex gap-6">
-                      <div style={{ textAlign: 'right' }}>
-                        <p style={{ fontSize: '11px', color: C.textMuted, margin: 0 }}>Año Anterior</p>
-                        <p style={{ fontSize: '16px', fontWeight: 700, color: C.blue, margin: 0 }}>{formatCurrency(salesComparison.resumen.anio_pasado)}</p>
-                      </div>
-                      <div style={{ textAlign: 'right' }}>
-                        <p style={{ fontSize: '11px', color: C.textMuted, margin: 0 }}>Año Actual</p>
-                        <p style={{ fontSize: '16px', fontWeight: 700, color: C.accentDeep, margin: 0 }}>{formatCurrency(salesComparison.resumen.anio_actual)}</p>
-                      </div>
-                    </div>
+                <div className="flex justify-center items-center gap-6 mt-2">
+                  <div className="flex items-center gap-2">
+                    <div
+                      style={{
+                        width: "10px",
+                        height: "10px",
+                        borderRadius: "50%",
+                        background: C.accentDeep,
+                      }}
+                    />
+                    <span
+                      style={{
+                        fontSize: "11px",
+                        fontWeight: 600,
+                        color: C.textMuted,
+                      }}
+                    >
+                      Ingresos Mensuales
+                    </span>
                   </div>
                 </div>
               </>
@@ -342,79 +613,302 @@ export function Dashboard() {
           </div>
 
           {/* Orders Distribution */}
-          <div style={{ background: C.white, borderRadius: '24px', padding: '32px', boxShadow: C.shadow, border: `1px solid ${C.accent}` }}>
-            <div className="mb-8">
-              <h3 style={{ fontSize: '18px', fontWeight: 700, color: C.textDark, margin: 0 }}>Distribución de Pedidos</h3>
-              <p style={{ fontSize: '13px', color: C.textMuted, margin: 0 }}>Estado actual de la logística</p>
+          <div
+            style={{
+              background: C.white,
+              borderRadius: "20px",
+              padding: "20px",
+              boxShadow: C.shadow,
+              border: `1px solid ${C.accent}`,
+            }}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3
+                  style={{
+                    fontSize: "16px",
+                    fontWeight: 700,
+                    color: C.textDark,
+                    margin: 0,
+                  }}
+                >
+                  Estado de Pedidos
+                </h3>
+                <p style={{ fontSize: "12px", color: C.textMuted, margin: 0 }}>
+                  Seguimiento logístico
+                </p>
+              </div>
+              <div
+                style={{
+                  padding: "2px 8px",
+                  borderRadius: "20px",
+                  background: V("accent-soft"),
+                  fontSize: "10px",
+                  fontWeight: 600,
+                  color: C.accentDeep,
+                }}
+              >
+                {pedidos.length} total
+              </div>
             </div>
 
-            <div style={{ width: '100%', height: '300px' }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={ordersByStatus}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
-                  <XAxis 
-                    dataKey="estado" 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{ fontSize: 11, fill: V('text-muted') }}
-                    dy={10}
-                  />
-                  <YAxis 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{ fontSize: 12, fill: V('text-muted') }}
-                  />
-                  <Tooltip 
-                    cursor={{ fill: 'rgba(0,0,0,0.02)' }}
-                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: C.shadow, padding: '12px' }}
-                  />
-                  <Bar 
-                    dataKey="cantidad" 
-                    fill={V('pink-soft')} 
-                    radius={[8, 8, 0, 0]}
-                    activeBar={{ fill: V('pink') }}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
+            <div className="flex items-center gap-6">
+              <div
+                style={{
+                  width: "180px",
+                  height: "180px",
+                  position: "relative",
+                  flexShrink: 0,
+                }}
+              >
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={ordersByStatus}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={55}
+                      outerRadius={75}
+                      paddingAngle={5}
+                      dataKey="cantidad"
+                      stroke="none"
+                    >
+                      {ordersByStatus.map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={statusColors[index % statusColors.length]}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{
+                        borderRadius: "12px",
+                        border: "none",
+                        boxShadow: "0 8px 30px rgba(0,0,0,0.12)",
+                        padding: "10px",
+                        background: C.white,
+                      }}
+                      formatter={(value: any, name: string, props: any) => [
+                        `${value} pedidos`,
+                        props.payload.estado,
+                      ]}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "50%",
+                    left: "50%",
+                    transform: "translate(-50%, -50%)",
+                    textAlign: "center",
+                  }}
+                >
+                  <p
+                    style={{
+                      fontSize: "10px",
+                      fontWeight: 600,
+                      color: C.textMuted,
+                      textTransform: "uppercase",
+                      letterSpacing: "1px",
+                      margin: 0,
+                    }}
+                  >
+                    Total
+                  </p>
+                  <p
+                    style={{
+                      fontSize: "20px",
+                      fontWeight: 800,
+                      color: C.textDark,
+                      margin: 0,
+                      lineHeight: 1,
+                    }}
+                  >
+                    {pedidos.length}
+                  </p>
+                </div>
+              </div>
+
+              {/* Status Cards Legend - Right side */}
+              <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2 overflow-y-auto max-h-[220px] pr-2 no-scrollbar">
+                {ordersByStatus.map((status, index) => (
+                  <div
+                    key={status.estado}
+                    style={{
+                      background: C.bgSoft,
+                      padding: "8px 12px",
+                      borderRadius: "12px",
+                      border: `1px solid ${V("accent-soft")}`,
+                      display: "flex",
+                      justifyContent: "between",
+                      alignItems: "center",
+                      gap: "8px",
+                    }}
+                  >
+                    <div className="flex items-center gap-2 flex-1">
+                      <div
+                        style={{
+                          width: "8px",
+                          height: "8px",
+                          borderRadius: "50%",
+                          background: statusColors[index % statusColors.length],
+                        }}
+                      />
+                      <span
+                        style={{
+                          fontSize: "11px",
+                          fontWeight: 700,
+                          color: C.textMuted,
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        {status.estado}
+                      </span>
+                    </div>
+                    <span
+                      style={{
+                        fontSize: "14px",
+                        fontWeight: 800,
+                        color: C.textDark,
+                      }}
+                    >
+                      {status.cantidad}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
 
         {/* Detailed Insights Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Best Sellers */}
-          <div style={{ background: C.white, borderRadius: '24px', padding: '32px', boxShadow: C.shadow, border: `1px solid ${C.accent}` }}>
-            <div className="flex items-center justify-between mb-8">
-              <h3 style={{ fontSize: '18px', fontWeight: 700, color: C.textDark, margin: 0 }}>Productos Estrella</h3>
-              <button style={{ fontSize: '12px', fontWeight: 700, color: C.accentDeep, background: 'none', border: 'none', cursor: 'pointer' }}>VER TODOS</button>
+          <div
+            style={{
+              background: C.white,
+              borderRadius: "20px",
+              padding: "20px",
+              boxShadow: C.shadow,
+              border: `1px solid ${C.accent}`,
+            }}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3
+                style={{
+                  fontSize: "16px",
+                  fontWeight: 700,
+                  color: C.textDark,
+                  margin: 0,
+                }}
+              >
+                Productos Estrella
+              </h3>
+              <button
+                style={{
+                  fontSize: "12px",
+                  fontWeight: 700,
+                  color: C.accentDeep,
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                }}
+              >
+                VER TODOS
+              </button>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3">
               {safeData.productos_mas_vendidos.map((producto, index) => {
-                const prodInfo = productos.find(p => p.id === producto.id_producto.toString());
+                const prodInfo = productos.find(
+                  (p) => p.id === producto.id_producto.toString(),
+                );
                 return (
-                  <div 
+                  <div
                     key={producto.id_producto}
-                    className="flex items-center justify-between p-4 rounded-2xl transition-all hover:bg-gray-50"
-                    style={{ background: C.bgSoft, border: '1px solid transparent' }}
+                    className="flex items-center justify-between p-3 rounded-xl transition-all hover:bg-gray-50"
+                    style={{
+                      background: C.bgSoft,
+                      border: "1px solid transparent",
+                    }}
                   >
-                    <div className="flex items-center gap-4">
-                      <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: C.white, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: `1px solid ${C.accent}` }}>
+                    <div className="flex items-center gap-3">
+                      <div
+                        style={{
+                          width: "40px",
+                          height: "40px",
+                          borderRadius: "10px",
+                          background: C.white,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          overflow: "hidden",
+                          border: `1px solid ${C.accent}`,
+                        }}
+                      >
                         {prodInfo?.imagenUrl ? (
-                          <img src={prodInfo.imagenUrl} alt={producto.nombre} className="w-full h-full object-cover" />
+                          <img
+                            src={prodInfo.imagenUrl}
+                            alt={producto.nombre}
+                            className="w-full h-full object-cover"
+                          />
                         ) : (
-                          <span style={{ fontSize: '14px', fontWeight: 800, color: C.accentDeep }}>#{index + 1}</span>
+                          <span
+                            style={{
+                              fontSize: "12px",
+                              fontWeight: 800,
+                              color: C.accentDeep,
+                            }}
+                          >
+                            #{index + 1}
+                          </span>
                         )}
                       </div>
                       <div>
-                        <p style={{ fontSize: '14px', fontWeight: 700, color: C.textDark, margin: 0 }}>{producto.nombre}</p>
-                        <p style={{ fontSize: '11px', color: C.textMuted, margin: 0 }}>Cod: {producto.id_producto}</p>
+                        <p
+                          style={{
+                            fontSize: "13px",
+                            fontWeight: 700,
+                            color: C.textDark,
+                            margin: 0,
+                          }}
+                        >
+                          {producto.nombre}
+                        </p>
+                        <p
+                          style={{
+                            fontSize: "10px",
+                            color: C.textMuted,
+                            margin: 0,
+                          }}
+                        >
+                          Cod: {producto.id_producto}
+                        </p>
                       </div>
                     </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <p style={{ fontSize: '15px', fontWeight: 800, color: C.accentDeep, margin: 0 }}>{producto.total_vendido}</p>
-                      <p style={{ fontSize: '10px', color: C.textMuted, margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Unidades</p>
+                    <div style={{ textAlign: "right" }}>
+                      <p
+                        style={{
+                          fontSize: "14px",
+                          fontWeight: 800,
+                          color: C.accentDeep,
+                          margin: 0,
+                        }}
+                      >
+                        {producto.total_vendido}
+                      </p>
+                      <p
+                        style={{
+                          fontSize: "9px",
+                          color: C.textMuted,
+                          margin: 0,
+                          textTransform: "uppercase",
+                          letterSpacing: "0.5px",
+                        }}
+                      >
+                        Unidades
+                      </p>
                     </div>
                   </div>
                 );
@@ -423,54 +917,153 @@ export function Dashboard() {
           </div>
 
           {/* Critical Inventory */}
-          <div style={{ background: C.white, borderRadius: '24px', padding: '32px', boxShadow: C.shadow, border: `1px solid ${C.danger}22` }}>
-            <div className="flex items-center justify-between mb-8">
-              <h3 style={{ fontSize: '18px', fontWeight: 700, color: C.textDark, margin: 0 }}>Inventario Crítico</h3>
-              <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: C.danger }}></div>
+          <div
+            style={{
+              background: C.white,
+              borderRadius: "20px",
+              padding: "20px",
+              boxShadow: C.shadow,
+              border: `1px solid ${C.danger}22`,
+            }}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3
+                style={{
+                  fontSize: "16px",
+                  fontWeight: 700,
+                  color: C.textDark,
+                  margin: 0,
+                }}
+              >
+                Inventario Crítico
+              </h3>
+              <div
+                style={{
+                  width: "10px",
+                  height: "10px",
+                  borderRadius: "50%",
+                  background: C.danger,
+                }}
+              ></div>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3">
               {productosStockCriticoList.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12">
-                  <Package style={{ width: 48, height: 48, color: C.accent, opacity: 0.5, marginBottom: '16px' }} />
-                  <p style={{ fontSize: '14px', color: C.textMuted, fontWeight: 500 }}>Inventario saludable</p>
+                <div className="flex flex-col items-center justify-center py-8">
+                  <Package
+                    style={{
+                      width: 40,
+                      height: 40,
+                      color: C.accent,
+                      opacity: 0.5,
+                      marginBottom: "12px",
+                    }}
+                  />
+                  <p
+                    style={{
+                      fontSize: "13px",
+                      color: C.textMuted,
+                      fontWeight: 500,
+                    }}
+                  >
+                    Inventario saludable
+                  </p>
                 </div>
               ) : (
                 productosStockCriticoList.slice(0, 5).map((producto) => (
-                  <div 
+                  <div
                     key={producto.id}
-                    className="flex items-center justify-between p-4 rounded-2xl"
-                    style={{ background: `${C.danger}05`, border: `1px solid ${C.danger}11` }}
+                    className="flex items-center justify-between p-3 rounded-xl"
+                    style={{
+                      background: `${C.danger}05`,
+                      border: `1px solid ${C.danger}11`,
+                    }}
                   >
-                    <div className="flex items-center gap-4">
-                      <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: C.white, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: `1px solid ${C.danger}22` }}>
+                    <div className="flex items-center gap-3">
+                      <div
+                        style={{
+                          width: "40px",
+                          height: "40px",
+                          borderRadius: "10px",
+                          background: C.white,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          overflow: "hidden",
+                          border: `1px solid ${C.danger}22`,
+                        }}
+                      >
                         {producto.imagenUrl ? (
-                          <img src={producto.imagenUrl} alt={producto.nombre} className="w-full h-full object-cover" />
+                          <img
+                            src={producto.imagenUrl}
+                            alt={producto.nombre}
+                            className="w-full h-full object-cover"
+                          />
                         ) : (
-                          <AlertTriangle style={{ width: 20, height: 20, color: C.danger }} />
+                          <AlertTriangle
+                            style={{ width: 18, height: 18, color: C.danger }}
+                          />
                         )}
                       </div>
                       <div>
-                        <p style={{ fontSize: '14px', fontWeight: 700, color: C.textDark, margin: 0 }}>{producto.nombre}</p>
-                        <div className="flex gap-2 items-center mt-1">
-                          <span style={{ fontSize: '10px', padding: '1px 6px', background: `${C.danger}22`, color: C.danger, borderRadius: '4px', fontWeight: 700 }}>BAJO STOCK</span>
+                        <p
+                          style={{
+                            fontSize: "13px",
+                            fontWeight: 700,
+                            color: C.textDark,
+                            margin: 0,
+                          }}
+                        >
+                          {producto.nombre}
+                        </p>
+                        <div className="flex gap-2 items-center mt-0.5">
+                          <span
+                            style={{
+                              fontSize: "9px",
+                              padding: "1px 5px",
+                              background: `${C.danger}22`,
+                              color: C.danger,
+                              borderRadius: "3px",
+                              fontWeight: 700,
+                            }}
+                          >
+                            BAJO STOCK
+                          </span>
                         </div>
                       </div>
                     </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <p style={{ fontSize: '15px', fontWeight: 800, color: C.danger, margin: 0 }}>{producto.stock}</p>
-                      <p style={{ fontSize: '10px', color: C.textMuted, margin: 0 }}>Mín: {producto.stockMinimo}</p>
+                    <div style={{ textAlign: "right" }}>
+                      <p
+                        style={{
+                          fontSize: "14px",
+                          fontWeight: 800,
+                          color: C.danger,
+                          margin: 0,
+                        }}
+                      >
+                        {producto.stock}
+                      </p>
+                      <p
+                        style={{
+                          fontSize: "9px",
+                          color: C.textMuted,
+                          margin: 0,
+                        }}
+                      >
+                        Mín: {producto.stockMinimo}
+                      </p>
                     </div>
                   </div>
                 ))
               )}
             </div>
           </div>
-
         </div>
       </div>
 
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
         @keyframes pulse {
           0% { transform: scale(1); opacity: 1; }
           50% { transform: scale(1.5); opacity: 0; }
@@ -478,7 +1071,9 @@ export function Dashboard() {
         }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-      `}} />
+      `,
+        }}
+      />
     </div>
   );
 }
