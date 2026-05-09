@@ -799,125 +799,167 @@ export function Dashboard() {
               border: `1px solid ${C.accent}`,
             }}
           >
-            <div className="flex items-center justify-between mb-4">
-              <h3
-                style={{
-                  fontSize: "16px",
-                  fontWeight: 700,
-                  color: C.textDark,
-                  margin: 0,
-                }}
-              >
-                Productos Estrella
-              </h3>
-              <button
-                style={{
-                  fontSize: "12px",
-                  fontWeight: 700,
-                  color: C.accentDeep,
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                }}
-              >
-                VER TODOS
-              </button>
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3
+                  style={{
+                    fontSize: "18px",
+                    fontWeight: 800,
+                    color: C.textDark,
+                    margin: 0,
+                  }}
+                >
+                  Ranking del Mes
+                </h3>
+                <p style={{ fontSize: "12px", color: C.textMuted, margin: 0 }}>
+                  Top productos más vendidos ahora
+                </p>
+              </div>
+              <TrendingUp style={{ width: 20, height: 20, color: C.accentDeep, opacity: 0.5 }} />
             </div>
 
-            <div className="space-y-3">
-              {safeData.productos_mas_vendidos.map((producto, index) => {
-                const prodInfo = productos.find(
-                  (p) => p.id === producto.id_producto.toString(),
-                );
-                return (
-                  <div
-                    key={producto.id_producto}
-                    className="flex items-center justify-between p-3 rounded-xl transition-all hover:bg-gray-50"
-                    style={{
-                      background: C.bgSoft,
-                      border: "1px solid transparent",
-                    }}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        style={{
-                          width: "40px",
-                          height: "40px",
-                          borderRadius: "10px",
-                          background: C.white,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          overflow: "hidden",
-                          border: `1px solid ${C.accent}`,
-                        }}
-                      >
-                        {prodInfo?.imagenUrl ? (
-                          <img
-                            src={prodInfo.imagenUrl}
-                            alt={producto.nombre}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <span
+            <div className="space-y-5">
+              {safeData.productos_mas_vendidos.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10 opacity-40">
+                  <Package style={{ width: 40, height: 40, marginBottom: 12 }} />
+                  <p style={{ fontSize: "14px", fontWeight: 500 }}>Sin ventas este mes</p>
+                </div>
+              ) : (
+                safeData.productos_mas_vendidos.slice(0, 5).map((producto, index) => {
+                  const prodInfo = productos.find(
+                    (p) => p.id === producto.id_producto?.toString(),
+                  );
+                  const totalVendido = parseInt(producto.total_vendido) || 0;
+                  const maxVendido = parseInt(safeData.productos_mas_vendidos[0].total_vendido) || 1;
+                  const percentage = (totalVendido / maxVendido) * 100;
+
+                  // Ranking badge styles
+                  const isTop3 = index < 3;
+                  const badgeColor = index === 0 ? "#FFD700" : index === 1 ? "#C0C0C0" : index === 2 ? "#CD7F32" : C.bgSoft;
+
+                  return (
+                    <div key={producto.id_producto} className="group relative">
+                      <div className="flex items-center gap-4 mb-2">
+                        <div className="relative">
+                          <div
                             style={{
-                              fontSize: "12px",
-                              fontWeight: 800,
-                              color: C.accentDeep,
+                              width: "52px",
+                              height: "52px",
+                              borderRadius: "16px",
+                              background: C.white,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              overflow: "hidden",
+                              boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+                              border: `1.5px solid ${isTop3 ? badgeColor : C.accent}44`,
+                              transition: "all 0.3s ease",
                             }}
+                            className="group-hover:scale-105"
                           >
-                            #{index + 1}
-                          </span>
-                        )}
-                      </div>
-                      <div>
-                        <p
-                          style={{
-                            fontSize: "13px",
-                            fontWeight: 700,
-                            color: C.textDark,
-                            margin: 0,
-                          }}
-                        >
-                          {producto.nombre}
-                        </p>
-                        <p
-                          style={{
-                            fontSize: "10px",
-                            color: C.textMuted,
-                            margin: 0,
-                          }}
-                        >
-                          Cod: {producto.id_producto}
-                        </p>
+                            {prodInfo?.imagenUrl ? (
+                              <img
+                                src={prodInfo.imagenUrl}
+                                alt={producto.nombre}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div style={{ 
+                                width: '100%', 
+                                height: '100%', 
+                                background: `linear-gradient(135deg, ${badgeColor}22 0%, ${C.bgSoft} 100%)`,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: isTop3 ? badgeColor : C.accentDeep,
+                                fontWeight: 800,
+                                fontSize: '16px'
+                              }}>
+                                {index + 1}
+                              </div>
+                            )}
+                          </div>
+                          {/* Mini Badge */}
+                          <div style={{
+                            position: 'absolute',
+                            top: '-6px',
+                            left: '-6px',
+                            width: '20px',
+                            height: '20px',
+                            borderRadius: '50%',
+                            background: badgeColor,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: isTop3 ? '#fff' : C.textMuted,
+                            fontSize: '10px',
+                            fontWeight: 900,
+                            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                            border: `2px solid #fff`
+                          }}>
+                            {index + 1}
+                          </div>
+                        </div>
+                        
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between items-start mb-1">
+                            <h4
+                              style={{
+                                fontSize: "14px",
+                                fontWeight: 700,
+                                color: C.textDark,
+                                margin: 0,
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                              }}
+                            >
+                              {producto.nombre}
+                            </h4>
+                            <span
+                              style={{
+                                fontSize: "13px",
+                                fontWeight: 800,
+                                color: C.accentDeep,
+                              }}
+                            >
+                              {totalVendido}
+                            </span>
+                          </div>
+                          
+                          {/* Progress Bar - Luxury Style */}
+                          <div style={{ 
+                            width: '100%', 
+                            height: '6px', 
+                            background: `${C.accent}33`, 
+                            borderRadius: '10px',
+                            overflow: 'hidden',
+                            position: 'relative'
+                          }}>
+                            <div 
+                              style={{ 
+                                width: `${percentage}%`, 
+                                height: '100%', 
+                                background: `linear-gradient(90deg, ${C.accent} 0%, ${C.accentDeep} 100%)`,
+                                borderRadius: '10px',
+                                transition: 'width 1s ease-out'
+                              }} 
+                            />
+                          </div>
+                          <div className="flex justify-between mt-1">
+                             <span style={{ fontSize: '10px', color: C.textMuted, fontWeight: 500 }}>
+                               ID: {producto.id_producto}
+                             </span>
+                             <span style={{ fontSize: '10px', color: C.textMuted, fontWeight: 600 }}>
+                               UNIDADES
+                             </span>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    <div style={{ textAlign: "right" }}>
-                      <p
-                        style={{
-                          fontSize: "14px",
-                          fontWeight: 800,
-                          color: C.accentDeep,
-                          margin: 0,
-                        }}
-                      >
-                        {producto.total_vendido}
-                      </p>
-                      <p
-                        style={{
-                          fontSize: "9px",
-                          color: C.textMuted,
-                          margin: 0,
-                          textTransform: "uppercase",
-                          letterSpacing: "0.5px",
-                        }}
-                      >
-                        Unidades
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              )}
             </div>
           </div>
 

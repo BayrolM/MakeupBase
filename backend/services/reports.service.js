@@ -62,6 +62,7 @@ export const obtenerDashboard = async () => {
     INNER JOIN productos p ON dv.id_producto = p.id_producto
     INNER JOIN ventas v ON dv.id_venta = v.id_venta
     WHERE v.estado = true
+      AND v.fecha_venta >= DATE_TRUNC('month', CURRENT_DATE)
     GROUP BY p.id_producto, p.nombre
     ORDER BY total_vendido DESC
     LIMIT 10
