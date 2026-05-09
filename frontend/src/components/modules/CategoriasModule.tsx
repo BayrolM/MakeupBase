@@ -102,6 +102,15 @@ export function CategoriasModule() {
     setFieldErrors({});
     setIsDialogOpen(true);
   };
+  
+  const handleFieldChange = (name: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    
+    if (name === "nombre") {
+      const err = validateCategoryNombre(value, categorias, editingCategoria?.id);
+      setFieldErrors((prev) => ({ ...prev, nombre: err }));
+    }
+  };
 
   const handleSave = async () => {
     const nombreErr = validateCategoryNombre(
@@ -215,9 +224,7 @@ export function CategoriasModule() {
         fieldErrors={fieldErrors}
         isSaving={isSaving}
         onSave={handleSave}
-        validateNombre={(val) =>
-          validateCategoryNombre(val, categorias, editingCategoria?.id)
-        }
+        onFieldChange={handleFieldChange}
       />
 
       <CategoryDetailDialog

@@ -64,6 +64,7 @@ export function ProductsModule() {
         stock: prod.stock_actual || 0,
         stockMinimo: prod.stock_min || 0,
         stockMaximo: prod.stock_max || 100,
+        stockFisico: prod.stock_fisico || 0,
         imagenUrl: prod.imagen_url || "",
         estado: prod.estado ? ("activo" as const) : ("inactivo" as const),
         fechaCreacion: new Date().toISOString(),

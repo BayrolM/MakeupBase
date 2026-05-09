@@ -54,7 +54,7 @@ export const listarProductos = async (filters = {}) => {
   const items = await sql`
     SELECT
       p.id_producto, p.nombre, p.descripcion, p.id_marca, p.id_categoria,
-      p.costo_promedio, p.precio_venta, p.stock_actual, p.stock_max, p.stock_min,
+      p.costo_promedio, p.precio_venta, p.stock_actual, p.stock_max, p.stock_min, p.stock_fisico,
       p.imagen_url, p.estado, m.nombre as nombre_marca, c.nombre as nombre_categoria
     FROM productos p
     LEFT JOIN marcas m ON p.id_marca = m.id_marca
@@ -71,7 +71,7 @@ export const obtenerProductoPorId = async (id) => {
   const result = await sql`
       SELECT
         p.id_producto, p.nombre, p.descripcion, p.id_marca, p.id_categoria,
-        p.costo_promedio, p.precio_venta, p.stock_actual, p.stock_max, p.stock_min,
+        p.costo_promedio, p.precio_venta, p.stock_actual, p.stock_max, p.stock_min, p.stock_fisico,
         p.imagen_url, p.estado
       FROM productos p
       WHERE p.id_producto = ${id}
@@ -90,6 +90,7 @@ export const crearProducto = async (data) => {
     stock_actual = 0,
     stock_max = 0,
     stock_min = 0,
+    stock_fisico = 0,
     imagen_url,
     estado = 1,
   } = data;
@@ -111,9 +112,9 @@ export const crearProducto = async (data) => {
 
   const result = await sql`
       INSERT INTO productos
-        (nombre, id_marca, id_categoria, descripcion, costo_promedio, precio_venta, stock_actual, stock_max, stock_min, imagen_url, estado)
+        (nombre, id_marca, id_categoria, descripcion, costo_promedio, precio_venta, stock_actual, stock_max, stock_min, stock_fisico, imagen_url, estado)
       VALUES
-        (${nombre}, ${id_marca}, ${id_categoria}, ${descripcion}, ${costo_promedio}, ${precio_venta}, ${stock_actual}, ${stock_max}, ${stock_min}, ${imagen_url}, ${estado})
+        (${nombre}, ${id_marca}, ${id_categoria}, ${descripcion}, ${costo_promedio}, ${precio_venta}, ${stock_actual}, ${stock_max}, ${stock_min}, ${stock_fisico}, ${imagen_url}, ${estado})
       RETURNING id_producto
     `;
 
@@ -131,6 +132,7 @@ export const actualizarProducto = async (id, data) => {
     stock_actual,
     stock_max,
     stock_min,
+    stock_fisico,
     imagen_url,
     estado,
   } = data;
@@ -199,6 +201,7 @@ export const actualizarProducto = async (id, data) => {
   if (stock_actual !== undefined) updateData.stock_actual = stock_actual;
   if (stock_max !== undefined) updateData.stock_max = stock_max;
   if (stock_min !== undefined) updateData.stock_min = stock_min;
+  if (stock_fisico !== undefined) updateData.stock_fisico = stock_fisico;
   if (imagen_url !== undefined) updateData.imagen_url = imagen_url;
   if (estado !== undefined) updateData.estado = estado;
 
@@ -267,7 +270,7 @@ export const productosDestacados = async (limit = 10) => {
   const items = await sql`
       SELECT
         id_producto, nombre, descripcion, id_marca, id_categoria,
-        costo_promedio, precio_venta, stock_actual, stock_max, stock_min, imagen_url, estado
+        costo_promedio, precio_venta, stock_actual, stock_max, stock_min, stock_fisico, imagen_url, estado
       FROM productos
       WHERE estado = 1
       ORDER BY stock_actual DESC, precio_venta DESC

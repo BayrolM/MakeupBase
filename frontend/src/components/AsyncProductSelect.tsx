@@ -8,10 +8,12 @@ export function AsyncProductSelect({
   value,
   onChange,
   disabled,
+  onlyWithStock = true,
 }: {
   value: string;
   onChange: (val: string, producto?: Producto) => void;
   disabled?: boolean;
+  onlyWithStock?: boolean;
 }) {
   const [open, setOpen] = React.useState(false);
   const [inputValue, setInputValue] = React.useState("");
@@ -54,13 +56,14 @@ export function AsyncProductSelect({
         precioCompra: Number(p.costo_promedio),
         precioVenta: Number(p.precio_venta),
         stock: p.stock_actual,
+        stockFisico: p.stock_actual,
         stockMinimo: p.stock_min,
         stockMaximo: p.stock_max,
         imagenUrl: p.imagen_url || "",
         estado: p.estado ? "activo" : "inactivo",
         fechaCreacion: new Date().toISOString(),
       }));
-      setOptions(mapped.filter(p => p.estado === "activo" && p.stock > 0));
+      setOptions(mapped.filter(p => p.estado === "activo" && (onlyWithStock ? p.stock > 0 : true)));
     } catch (e) {
       console.error(e);
     } finally {

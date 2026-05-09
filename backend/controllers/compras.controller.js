@@ -108,6 +108,7 @@ export const crear = async (req, res) => {
         await sql`
           UPDATE productos 
           SET stock_actual = stock_actual + ${item.cantidad},
+              stock_fisico = stock_fisico + ${item.cantidad},
               costo_promedio = ${item.precio_unitario}
           WHERE id_producto = ${item.id_producto}
         `;
@@ -156,7 +157,8 @@ export const anular = async (req, res) => {
       for (const item of detalles) {
         await sql`
           UPDATE productos 
-          SET stock_actual = stock_actual - ${item.cantidad} 
+          SET stock_actual = stock_actual - ${item.cantidad},
+              stock_fisico = stock_fisico - ${item.cantidad}
           WHERE id_producto = ${item.id_producto}
         `;
       }

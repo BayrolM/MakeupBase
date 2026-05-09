@@ -4,7 +4,6 @@ import {
   DialogTitle,
   DialogDescription,
 } from "../../ui/dialog";
-import { Button } from "../../ui/button";
 import {
   X,
   Package,
@@ -12,9 +11,9 @@ import {
   Tag,
   DollarSign,
   Boxes,
-  Activity,
-  Calendar,
   Info,
+  Archive,
+  AlertCircle,
 } from "lucide-react";
 import { Producto, Categoria } from "../../../lib/store";
 import { formatCurrency, getStockStatus } from "../../../utils/productUtils";
@@ -39,148 +38,216 @@ export function ProductDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="p-0 overflow-hidden bg-white border-0 shadow-2xl max-w-2xl rounded-2xl">
-        {/* Encabezado estandarizado (sin vinotinto) */}
-        <div className="flex items-center justify-between px-8 pt-8 pb-6 border-b border-gray-100">
-          <div className="flex items-center gap-6">
-            <div className="w-16 h-16 rounded-2xl bg-white p-1 shadow-md border border-gray-100 overflow-hidden shrink-0">
+      <DialogContent className="bg-white border-0 max-w-2xl rounded-2xl shadow-2xl p-0 overflow-hidden">
+        {/* Encabezado */}
+        <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100 bg-white">
+          <div className="flex items-center gap-4">
+            <div
+              className="flex items-center justify-center text-white font-bold text-xl flex-shrink-0 luxury-icon-gradient overflow-hidden"
+              style={{ width: 44, height: 44, borderRadius: 12 }}
+            >
               {product.imagenUrl ? (
                 <img
                   src={product.imagenUrl}
-                  alt={product.nombre}
-                  className="w-full h-full object-cover rounded-xl"
+                  alt=""
+                  className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full bg-gray-50 flex items-center justify-center rounded-xl">
-                  <Package className="w-8 h-8 text-gray-200" />
-                </div>
+                <Package className="w-5 h-5" />
               )}
             </div>
             <div>
-              <DialogTitle className="text-2xl font-bold text-gray-900 leading-tight">
-                {product.nombre}
+              <DialogTitle className="text-base font-bold text-gray-900 leading-tight">
+                Detalle del Producto
               </DialogTitle>
-              <div className="flex items-center gap-2 mt-1.5">
-                <span className="px-2 py-0.5 rounded-full bg-gray-100 border border-gray-200 text-[10px] uppercase font-bold text-gray-500 tracking-wider">
-                  ID: {product.id.slice(0, 8)}
-                </span>
-                <span className={`px-2 py-0.5 rounded-full text-[10px] uppercase font-bold tracking-wider border ${
-                  product.estado === 'activo'
-                    ? 'bg-emerald-50 border-emerald-100 text-emerald-600'
-                    : 'bg-rose-50 border-rose-100 text-rose-600'
-                }`}>
+              <DialogDescription className="text-xs text-gray-400 mt-0.5 flex items-center gap-2">
+                ID: {product.id.slice(0, 8)} •{" "}
+                {categoria?.nombre || "Sin categoría"}
+                <Badge
+                  className={`${product.estado === "activo" ? "bg-emerald-50 text-emerald-600" : "bg-gray-100 text-gray-500"} text-[8px] font-bold uppercase`}
+                >
                   {product.estado}
-                </span>
-              </div>
+                </Badge>
+              </DialogDescription>
             </div>
           </div>
           <button
             onClick={() => onOpenChange(false)}
-            className="p-2 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="pb-8 px-8 pt-6">
+        <div className="px-6 py-6 overflow-y-auto max-h-[75vh]">
           <div className="grid grid-cols-2 gap-6">
-            <div className="space-y-6">
-              <div className="space-y-3">
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                  <Info className="w-3.5 h-3.5" />
-                  Información General
-                </h3>
-                <div className="space-y-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center border border-gray-100">
-                      <Layers className="w-5 h-5 text-[#c47b96]" />
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Categoría</p>
-                      <p className="text-sm font-semibold text-gray-700">{categoria?.nombre || 'Sin categoría'}</p>
-                    </div>
+            {/* Identificación y Clasificación */}
+            <div className="space-y-4">
+              <h3 className="text-[11px] font-bold text-[#c47b96] tracking-wider uppercase">
+                Identificación y Valor
+              </h3>
+
+              <div className="bg-gray-50 rounded-xl p-4 space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm border border-gray-100">
+                    <Tag className="w-4 h-4 text-[#c47b96]" />
                   </div>
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center border border-gray-100">
-                      <Tag className="w-5 h-5 text-[#c47b96]" />
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Marca</p>
-                      <p className="text-sm font-semibold text-gray-700">{product.marca || 'Genérica'}</p>
-                    </div>
+                  <div>
+                    <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wide">
+                      Nombre
+                    </p>
+                    <p className="text-sm font-bold text-gray-800 leading-tight">
+                      {product.nombre}
+                    </p>
                   </div>
                 </div>
-              </div>
 
-              <div className="space-y-3">
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                  <DollarSign className="w-3.5 h-3.5" />
-                  Precios
-                </h3>
-                <div className="p-4 rounded-2xl bg-[#c47b96]/5 border border-[#c47b96]/10 space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-500">Precio Venta</span>
-                    <span className="text-lg font-bold text-gray-900">{formatCurrency(product.precioVenta)}</span>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm border border-gray-100">
+                    <Layers className="w-4 h-4 text-[#c47b96]" />
                   </div>
-                  <div className="h-px bg-[#c47b96]/10" />
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-gray-400">Precio Compra</span>
-                    <span className="text-sm font-semibold text-gray-600">{formatCurrency(product.precioCompra)}</span>
+                  <div>
+                    <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wide">
+                      Categoría y Marca
+                    </p>
+                    <p className="text-sm font-bold text-gray-800">
+                      {categoria?.nombre || "General"} •{" "}
+                      {product.marca || "Genérica"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm border border-gray-100">
+                    <DollarSign className="w-4 h-4 text-[#c47b96]" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex justify-between items-end">
+                      <div>
+                        <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wide">
+                          Precio de Venta
+                        </p>
+                        <p className="text-lg font-black text-gray-900 leading-none">
+                          {formatCurrency(product.precioVenta)}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[9px] text-gray-400 font-bold uppercase tracking-tight">
+                          Costo: {formatCurrency(product.precioCompra)}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="space-y-6">
-              <div className="space-y-3">
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                  <Boxes className="w-3.5 h-3.5" />
-                  Inventario
-                </h3>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="p-3 rounded-2xl bg-gray-50 border border-gray-100">
-                    <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Stock Actual</p>
-                    <p className={`text-xl font-bold ${stockStatus?.color || 'text-gray-900'}`}>{product.stock}</p>
-                    <p className="text-[10px] font-medium text-gray-500">unidades</p>
+            {/* Inventario y Estado */}
+            <div className="space-y-4">
+              <h3 className="text-[11px] font-bold text-[#c47b96] tracking-wider uppercase">
+                Control de Inventario
+              </h3>
+
+              <div className="bg-gray-50 rounded-xl p-4 space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wide mb-1">
+                      Físico
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Archive className="w-3.5 h-3.5 text-gray-400" />
+                      <span className="text-sm font-bold text-gray-800">
+                        {product.stockFisico}
+                      </span>
+                    </div>
                   </div>
-                  <div className="p-3 rounded-2xl bg-gray-50 border border-gray-100">
-                    <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Mínimo</p>
-                    <p className="text-xl font-bold text-gray-700">{product.stockMinimo}</p>
-                    <p className="text-[10px] font-medium text-gray-500">alerta</p>
+                  <div>
+                    <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wide mb-1">
+                      Mínimo
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <AlertCircle className="w-3.5 h-3.5 text-gray-400" />
+                      <span className="text-sm font-bold text-gray-800">
+                        {product.stockMinimo}
+                      </span>
+                    </div>
                   </div>
                 </div>
-                {stockStatus && (
-                  <div className={`flex items-center gap-2 p-2.5 rounded-xl border border-current/20 ${stockStatus.bgColor} ${stockStatus.color}`}>
-                    <Activity className="w-4 h-4" />
-                    <span className="text-xs font-bold">{stockStatus.message}</span>
-                  </div>
-                )}
-              </div>
 
-              <div className="space-y-3">
-                <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
-                  <Info className="w-3.5 h-3.5" />
-                  Descripción
-                </h3>
-                <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100 min-h-[100px]">
-                  <p className="text-sm text-gray-600 leading-relaxed italic">
-                    {product.descripcion || '"Sin descripción disponible para este producto."'}
-                  </p>
+                <div className="h-px bg-gray-200/50" />
+
+                <div className="flex items-center justify-between bg-white p-3 rounded-lg border border-gray-100 shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-10 h-10 rounded-full flex items-center justify-center ${stockStatus?.bgColor || "bg-gray-50"} ${stockStatus?.color || "text-gray-400"}`}
+                    >
+                      <Boxes className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+                        Disponible
+                      </p>
+                      <p
+                        className={`text-xl font-black ${stockStatus?.color || "text-gray-900"}`}
+                      >
+                        {product.stock}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end gap-1">
+                    {stockStatus && (
+                      <Badge
+                        className={`${stockStatus.bgColor} ${stockStatus.color} border-0 text-[9px] font-bold uppercase py-0.5 px-2`}
+                      >
+                        {stockStatus.message}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
+
+          {/* Descripción */}
+          <div className="mt-5 space-y-3">
+            <h3 className="text-[11px] font-bold text-[#c47b96] tracking-wider uppercase flex items-center gap-2">
+              <Info className="w-3.5 h-3.5" />
+              Descripción del Producto
+            </h3>
+            <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+              <p className="text-sm text-gray-600 leading-relaxed italic">
+                {product.descripcion ||
+                  '"Sin descripción detallada para este producto."'}
+              </p>
+            </div>
+          </div>
         </div>
 
-        <div className="px-8 pb-8 pt-2">
+        <div className="px-6 pb-6 pt-4">
           <button
             onClick={() => onOpenChange(false)}
-            className="w-full py-3 h-12 text-sm font-bold luxury-button-modal rounded-xl"
+            className="w-full h-11 rounded-xl text-white font-bold text-sm luxury-button-modal shadow-lg shadow-[#c47b96]/20 transition-all hover:scale-[1.01] active:scale-[0.99]"
           >
             Cerrar Detalle
           </button>
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function Badge({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <span
+      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${className}`}
+    >
+      {children}
+    </span>
   );
 }

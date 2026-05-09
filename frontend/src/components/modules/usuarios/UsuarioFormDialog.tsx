@@ -118,9 +118,7 @@ export function UsuarioFormDialog({
                 maxLength={80}
               />
               {fieldErrors.nombres && (
-                <p className="text-rose-500 text-[10px] mt-1">
-                  {fieldErrors.nombres}
-                </p>
+                <span className="micro-validation-error">{fieldErrors.nombres}</span>
               )}
             </div>
             <div className="space-y-2">
@@ -137,9 +135,7 @@ export function UsuarioFormDialog({
                 maxLength={80}
               />
               {fieldErrors.apellidos && (
-                <p className="text-rose-500 text-[10px] mt-1">
-                  {fieldErrors.apellidos}
-                </p>
+                <span className="micro-validation-error">{fieldErrors.apellidos}</span>
               )}
             </div>
           </div>
@@ -189,9 +185,7 @@ export function UsuarioFormDialog({
                 maxLength={10}
               />
               {fieldErrors.numeroDocumento && (
-                <p className="text-rose-500 text-[10px] mt-1">
-                  {fieldErrors.numeroDocumento}
-                </p>
+                <span className="micro-validation-error">{fieldErrors.numeroDocumento}</span>
               )}
             </div>
           </div>
@@ -215,9 +209,7 @@ export function UsuarioFormDialog({
                 maxLength={20}
               />
               {fieldErrors.telefono && (
-                <p className="text-rose-500 text-[10px] mt-1">
-                  {fieldErrors.telefono}
-                </p>
+                <span className="micro-validation-error">{fieldErrors.telefono}</span>
               )}
             </div>
             <div className="space-y-2">
@@ -235,9 +227,7 @@ export function UsuarioFormDialog({
                 maxLength={100}
               />
               {fieldErrors.email && (
-                <p className="text-rose-500 text-[10px] mt-1">
-                  {fieldErrors.email}
-                </p>
+                <span className="micro-validation-error">{fieldErrors.email}</span>
               )}
             </div>
           </div>
@@ -273,9 +263,7 @@ export function UsuarioFormDialog({
                   </button>
                 </div>
                 {fieldErrors.passwordHash && (
-                  <p className="text-rose-500 text-[10px] mt-1">
-                    {fieldErrors.passwordHash}
-                  </p>
+                  <span className="micro-validation-error">{fieldErrors.passwordHash}</span>
                 )}
               </div>
 
@@ -308,9 +296,7 @@ export function UsuarioFormDialog({
                   </button>
                 </div>
                 {fieldErrors.confirmPassword && (
-                  <p className="text-rose-500 text-[10px] mt-1">
-                    {fieldErrors.confirmPassword}
-                  </p>
+                  <span className="micro-validation-error">{fieldErrors.confirmPassword}</span>
                 )}
               </div>
             </div>
@@ -320,7 +306,7 @@ export function UsuarioFormDialog({
             <div className="space-y-2">
               <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">
                 <MapPin className="w-3.5 h-3.5 text-[#c47b96]" />
-                Dirección
+                Dirección <span className="text-rose-500">*</span>
               </Label>
               <Input
                 value={formData.direccion}
@@ -331,16 +317,14 @@ export function UsuarioFormDialog({
                 maxLength={100}
               />
               {fieldErrors.direccion && (
-                <p className="text-rose-500 text-[10px] mt-1">
-                  {fieldErrors.direccion}
-                </p>
+                <span className="micro-validation-error">{fieldErrors.direccion}</span>
               )}
             </div>
 
             <div className="space-y-2">
               <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">
                 <Building2 className="w-3.5 h-3.5 text-[#c47b96]" />
-                Departamento
+                Departamento <span className="text-rose-500">*</span>
               </Label>
               <Input
                 value={formData.departamento}
@@ -350,9 +334,7 @@ export function UsuarioFormDialog({
                 disabled={isSaving}
               />
               {fieldErrors.departamento && (
-                <p className="text-rose-500 text-[10px] mt-1">
-                  {fieldErrors.departamento}
-                </p>
+                <span className="micro-validation-error">{fieldErrors.departamento}</span>
               )}
             </div>
           </div>
@@ -361,7 +343,7 @@ export function UsuarioFormDialog({
             <div className="space-y-2">
               <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">
                 <Building2 className="w-3.5 h-3.5 text-[#c47b96]" />
-                Ciudad
+                Ciudad <span className="text-rose-500">*</span>
               </Label>
               <Input
                 value={formData.ciudad}
@@ -371,9 +353,7 @@ export function UsuarioFormDialog({
                 disabled={isSaving}
               />
               {fieldErrors.ciudad && (
-                <p className="text-rose-500 text-[10px] mt-1">
-                  {fieldErrors.ciudad}
-                </p>
+                <span className="micro-validation-error">{fieldErrors.ciudad}</span>
               )}
             </div>
           </div>
@@ -384,23 +364,28 @@ export function UsuarioFormDialog({
                 <Shield className="w-3.5 h-3.5 text-[#c47b96]" />
                 Rol <span className="text-rose-500">*</span>
               </Label>
-              <Select
-                value={formData.rol}
-                onValueChange={(v) => onSelectChange("rol", v)}
-                disabled={isSaving}
-              >
-                <SelectTrigger className="bg-gray-50 border-gray-200 rounded-xl h-11">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-white border-gray-100 rounded-xl shadow-lg">
-                  {roles &&
-                    roles.map((r: any) => (
-                      <SelectItem key={r.id} value={String(r.id)}>
-                        {r.nombre}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
+              <div className={fieldErrors.rol ? "ring-2 ring-rose-200 rounded-xl transition-all" : ""}>
+                <Select
+                  value={formData.rol}
+                  onValueChange={(v) => onSelectChange("rol", v)}
+                  disabled={isSaving}
+                >
+                  <SelectTrigger className={`bg-gray-50 border-gray-200 rounded-xl h-11 ${fieldErrors.rol ? "border-rose-400" : ""}`}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white border-gray-100 rounded-xl shadow-lg">
+                    {roles &&
+                      roles.map((r: any) => (
+                        <SelectItem key={r.id} value={String(r.id)}>
+                          {r.nombre}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {fieldErrors.rol && (
+                <span className="micro-validation-error ml-1">Requerido</span>
+              )}
             </div>
             <div className="space-y-2">
               <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">

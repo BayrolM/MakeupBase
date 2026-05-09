@@ -208,7 +208,7 @@ export function DevolucionTable({
                       {canChangeEstado(dev.estado) && (
                         <button
                           onClick={() => onChangeEstado(dev)}
-                          className="h-7 w-7 flex items-center justify-center rounded-lg text-gray-400 hover:bg-[#fff0f5] hover:text-[#c47b96] transition-all border border-transparent hover:border-[#c47b96]/30"
+                          className="h-7 w-7 flex items-center justify-center rounded-lg text-gray-400 hover:bg-[#fff0f5] hover:text-[#c47b96] transition-all border border-transparent hover:border-[#c47b96]/30 cursor-pointer"
                           title="Cambiar estado"
                         >
                           <Edit className="w-3.5 h-3.5" />
@@ -221,14 +221,14 @@ export function DevolucionTable({
                       <button
                         onClick={() => onViewPdf(dev)}
                         title="Descargar Comprobante"
-                        className="h-8 w-8 flex items-center justify-center rounded-lg transition-all duration-150 text-gray-400 hover:bg-blue-50 hover:text-blue-600"
+                        className="h-8 w-8 flex items-center justify-center rounded-lg transition-all duration-150 text-gray-400 hover:bg-blue-50 hover:text-blue-600 cursor-pointer"
                       >
                         <FileText className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => onViewDetail(dev)}
                         title="Ver Detalles"
-                        className="h-8 w-8 flex items-center justify-center rounded-lg transition-all duration-150 text-gray-400 hover:bg-indigo-50 hover:text-indigo-600"
+                        className="h-8 w-8 flex items-center justify-center rounded-lg transition-all duration-150 text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 cursor-pointer"
                       >
                         <Eye className="w-4 h-4" />
                       </button>
@@ -236,7 +236,7 @@ export function DevolucionTable({
                         <button
                           onClick={() => onAnular(dev)}
                           title="Anular Devolución"
-                          className="h-8 w-8 flex items-center justify-center rounded-lg transition-all duration-150 text-gray-400 hover:bg-rose-50 hover:text-rose-600"
+                          className="h-8 w-8 flex items-center justify-center rounded-lg transition-all duration-150 text-gray-400 hover:bg-rose-50 hover:text-rose-600 cursor-pointer"
                         >
                           <X className="w-4 h-4" />
                         </button>

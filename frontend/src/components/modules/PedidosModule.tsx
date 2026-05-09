@@ -97,6 +97,7 @@ export function PedidosModule() {
     fecha_envio: new Date().toISOString().split("T")[0],
     fecha_estimada: "",
   });
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   // Debounce search
   useEffect(() => {
@@ -208,7 +209,17 @@ export function PedidosModule() {
         { productoId: "", cantidad: 1, precioUnitario: 0, maxStock: 0 },
       ],
     });
+    setFieldErrors({});
     setIsDialogOpen(true);
+  };
+
+  const handleFieldChange = (name: string, value: any) => {
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (!value) {
+      setFieldErrors((prev) => ({ ...prev, [name]: "Requerido" }));
+    } else {
+      setFieldErrors((prev) => ({ ...prev, [name]: "" }));
+    }
   };
 
   const updateProductLine = (
@@ -236,10 +247,26 @@ export function PedidosModule() {
         maxStock: prodObj?.stock || 0,
         cantidad: 1,
       };
+      // Clear errors for this line
+      setFieldErrors((prev) => {
+        const next = { ...prev };
+        delete next[`prod_${index}_id`];
+        delete next[`prod_${index}_cant`];
+        return next;
+      });
     } else if (field === "cantidad") {
+      const parsed = parseInt(value);
+      newProductos[index].cantidad = isNaN(parsed) ? 0 : parsed;
+      
       const ms = newProductos[index].maxStock || 0;
-      const parsed = parseInt(value) || 1;
-      newProductos[index].cantidad = ms > 0 ? Math.min(parsed, ms) : parsed;
+      let error = "";
+      if (isNaN(parsed) || parsed <= 0) error = "Mínimo 1";
+      else if (parsed > ms) error = `Máx ${ms}`;
+      
+      setFieldErrors((prev) => ({
+        ...prev,
+        [`prod_${index}_cant`]: error
+      }));
     }
 
     if (isEdit) setEditFormData({ ...editFormData, productos: newProductos });
@@ -247,10 +274,24 @@ export function PedidosModule() {
   };
 
   const handleSave = async () => {
-    if (!formData.clienteId || !formData.direccionEnvio) {
-      toast.error("Cliente y dirección son obligatorios");
+    const errors: Record<string, string> = {};
+    if (!formData.clienteId) errors.clienteId = "Requerido";
+    if (!formData.direccionEnvio) errors.direccionEnvio = "Requerido";
+    if (!formData.ciudad) errors.ciudad = "Requerido";
+    if (!formData.departamento) errors.departamento = "Requerido";
+    
+    formData.productos.forEach((p, i) => {
+      if (!p.productoId) errors[`prod_${i}_id`] = "Requerido";
+      if (p.cantidad <= 0) errors[`prod_${i}_cant`] = "Mínimo 1";
+      else if (p.cantidad > p.maxStock) errors[`prod_${i}_cant`] = `Máx ${p.maxStock}`;
+    });
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      toast.error("Corrige los errores antes de continuar");
       return;
     }
+    
     setIsSaving(true);
     try {
       const payload = {
@@ -275,7 +316,6 @@ export function PedidosModule() {
       setIsSaving(false);
     }
   };
-
   const handleOpenEdit = async (pedido: any) => {
     try {
       const fullOrder = await orderService.getById(Number(pedido.id));
@@ -294,13 +334,43 @@ export function PedidosModule() {
             0,
         })),
       });
+      setFieldErrors({});
       setIsEditDialogOpen(true);
     } catch {
       toast.error("Error al cargar");
     }
   };
 
+  const handleEditFieldChange = (name: string, value: any) => {
+    setEditFormData((prev) => ({ ...prev, [name]: value }));
+    if (!value) {
+      setFieldErrors((prev) => ({ ...prev, [name]: "Requerido" }));
+    } else {
+      setFieldErrors((prev) => ({ ...prev, [name]: "" }));
+    }
+  };
+
   const handleSaveEdit = async () => {
+    const errors: Record<string, string> = {};
+    if (!editFormData.direccionEnvio) errors.direccionEnvio = "Requerido";
+    if (!editFormData.ciudad) errors.ciudad = "Requerido";
+    if (!editFormData.departamento) errors.departamento = "Requerido";
+
+    if (editingPedido.estado === "pendiente") {
+      if (!editFormData.clienteId) errors.clienteId = "Requerido";
+      editFormData.productos.forEach((p, i) => {
+        if (!p.productoId) errors[`prod_${i}_id`] = "Requerido";
+        if (p.cantidad <= 0) errors[`prod_${i}_cant`] = "Mínimo 1";
+        else if (p.cantidad > p.maxStock) errors[`prod_${i}_cant`] = `Máx ${p.maxStock}`;
+      });
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      toast.error("Corrige los errores antes de continuar");
+      return;
+    }
+
     setIsSaving(true);
     try {
       const payload: any = { 
@@ -478,9 +548,10 @@ export function PedidosModule() {
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         formData={formData}
-        setFormData={setFormData}
+        fieldErrors={fieldErrors}
         isSaving={isSaving}
         onSave={handleSave}
+        onFieldChange={handleFieldChange}
         onAddProduct={() =>
           setFormData({
             ...formData,
@@ -506,9 +577,10 @@ export function PedidosModule() {
         onOpenChange={setIsEditDialogOpen}
         editingPedido={editingPedido}
         formData={editFormData}
-        setFormData={setEditFormData}
+        fieldErrors={fieldErrors}
         isSaving={isSaving}
         onSave={handleSaveEdit}
+        onFieldChange={handleEditFieldChange}
         onAddProduct={() =>
           setEditFormData({
             ...editFormData,

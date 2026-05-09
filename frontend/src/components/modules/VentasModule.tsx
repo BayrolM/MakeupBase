@@ -138,15 +138,23 @@ export function VentasModule() {
       };
     } else if (field === "cantidad") {
       const ms = newProductos[index].maxStock || 0;
-      const parsed = parseInt(value) || 1;
-      if (parsed <= 0) {
-        toast.warning("La cantidad debe ser mayor a 0");
-        newProductos[index] = { ...newProductos[index], cantidad: 1 };
-      } else if (ms > 0 && parsed > ms) {
-        toast.warning(`Stock insuficiente. Máximo disponible: ${ms}`);
-        newProductos[index] = { ...newProductos[index], cantidad: ms };
+      const parsed = parseInt(value);
+      
+      if (isNaN(parsed)) {
+        newProductos[index] = { ...newProductos[index], cantidad: "" as any };
       } else {
         newProductos[index] = { ...newProductos[index], cantidad: parsed };
+        if (ms > 0 && parsed > ms) {
+          // Solo notificamos, pero dejamos que el valor se guarde para mostrar el error en vivo
+          toast.warning(`Stock insuficiente. Máximo disponible: ${ms}`, { id: "stock-warn" });
+        }
+      }
+    } else if (field === "precioUnitario") {
+      const parsed = parseFloat(value);
+      if (isNaN(parsed)) {
+        newProductos[index] = { ...newProductos[index], precioUnitario: "" as any };
+      } else {
+        newProductos[index] = { ...newProductos[index], precioUnitario: parsed };
       }
     } else {
       newProductos[index] = { ...newProductos[index], [field]: value };
@@ -156,9 +164,56 @@ export function VentasModule() {
   };
 
   const handleSave = async () => {
-    if (!formData.clienteId) { toast.error("Seleccione un cliente"); return; }
-    if (formData.productos.some(p => !p.productoId)) { toast.error("Productos inválidos"); return; }
-    if (formData.productos.some(p => p.cantidad <= 0)) { toast.error("Cantidades inválidas"); return; }
+    // 1. Validación de Cliente
+    if (!formData.clienteId) { 
+      toast.error("Seleccione un cliente"); 
+      return; 
+    }
+
+    // 2. Validación de Método de Pago
+    if (!formData.metodoPago) {
+      toast.error("El método de pago es obligatorio");
+      return;
+    }
+    const metodosValidos = ["Efectivo", "Transferencia"];
+    if (!metodosValidos.includes(formData.metodoPago)) {
+      toast.error("Método de pago inválido. Use Efectivo o Transferencia.");
+      return;
+    }
+
+    // 3. Validación de Productos
+    if (formData.productos.length === 0) {
+      toast.error("Debe agregar al menos un producto");
+      return;
+    }
+
+    for (const p of formData.productos) {
+      // Producto seleccionado
+      if (!p.productoId) {
+        toast.error("Uno de los productos no ha sido seleccionado correctamente");
+        return;
+      }
+
+      // Cantidad
+      if (p.cantidad <= 0) {
+        toast.error("La cantidad de los productos debe ser mayor a cero");
+        return;
+      }
+      if (p.maxStock > 0 && p.cantidad > p.maxStock) {
+        toast.error(`Stock insuficiente para uno de los productos (Máximo: ${p.maxStock})`);
+        return;
+      }
+
+      // Precio
+      if (p.precioUnitario === "" || p.precioUnitario === null || p.precioUnitario === undefined) {
+        toast.error("El precio de los productos no puede estar vacío");
+        return;
+      }
+      if (Number(p.precioUnitario) <= 0) {
+        toast.error("El precio de venta debe ser mayor a cero");
+        return;
+      }
+    }
 
     setIsSaving(true);
     try {
@@ -179,7 +234,7 @@ export function VentasModule() {
     } catch (error: any) {
       toast.error(error.response?.data?.message || "Error al guardar la venta");
     } finally {
-      setIsSaving(true); setIsSaving(false);
+      setIsSaving(false);
     }
   };
 

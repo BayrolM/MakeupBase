@@ -69,13 +69,30 @@ export function ProveedoresModule() {
   // Helper to update specific field and clear its error
   const handleFieldChange = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    if (fieldErrors[field]) {
-      setFieldErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors[field];
-        return newErrors;
-      });
+    
+    let error = "";
+    if (!value && field !== "estado") {
+      error = "Requerido";
+    } else if (field === "email") {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (value && !emailRegex.test(value.trim())) {
+        error = "Formato inválido";
+      } else {
+        const duplicateEmail = proveedores.find(
+          (p) =>
+            p.email.toLowerCase() === value.trim().toLowerCase() &&
+            p.id !== editingProveedor?.id,
+        );
+        if (duplicateEmail) error = "Ya en uso";
+      }
+    } else if (field === "nit") {
+      const duplicateNit = proveedores.find(
+        (p) => p.nit === value.trim() && p.id !== editingProveedor?.id,
+      );
+      if (duplicateNit) error = "Ya registrado";
     }
+
+    setFieldErrors((prev) => ({ ...prev, [field]: error }));
   };
 
   const refreshProveedores = async () => {

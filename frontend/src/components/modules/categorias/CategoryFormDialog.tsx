@@ -10,11 +10,10 @@ interface CategoryFormDialogProps {
   onOpenChange: (open: boolean) => void;
   editingCategoria: Categoria | null;
   formData: { nombre: string; descripcion: string; estado: "activo" | "inactivo" };
-  setFormData: (data: any) => void;
   fieldErrors: Record<string, string>;
   isSaving: boolean;
   onSave: () => void;
-  validateNombre: (val: string) => string;
+  onFieldChange: (name: string, value: string) => void;
 }
 
 export function CategoryFormDialog({
@@ -22,11 +21,10 @@ export function CategoryFormDialog({
   onOpenChange,
   editingCategoria,
   formData,
-  setFormData,
   fieldErrors,
   isSaving,
   onSave,
-  validateNombre,
+  onFieldChange,
 }: CategoryFormDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -68,10 +66,7 @@ export function CategoryFormDialog({
             </p>
             <Input
               value={formData.nombre}
-              onChange={(e) => {
-                const val = e.target.value;
-                setFormData({ ...formData, nombre: val });
-              }}
+              onChange={(e) => onFieldChange("nombre", e.target.value)}
               className={`border-gray-200 text-gray-800 rounded-lg h-9 text-sm focus:ring-[#c47b96]/20 focus:border-[#c47b96] ${
                 fieldErrors.nombre ? "border-rose-400" : ""
               }`}
@@ -79,7 +74,7 @@ export function CategoryFormDialog({
               maxLength={50}
             />
             {fieldErrors.nombre && (
-              <p className="text-rose-500 text-xs mt-1">{fieldErrors.nombre}</p>
+              <span className="micro-validation-error">{fieldErrors.nombre}</span>
             )}
           </div>
 
@@ -89,9 +84,7 @@ export function CategoryFormDialog({
             </p>
             <Textarea
               value={formData.descripcion}
-              onChange={(e) =>
-                setFormData({ ...formData, descripcion: e.target.value })
-              }
+              onChange={(e) => onFieldChange("descripcion", e.target.value)}
               placeholder="Describe brevemente esta categoría..."
               className="border-gray-200 text-gray-800 rounded-lg text-sm resize-none focus:ring-[#c47b96]/20 focus:border-[#c47b96]"
               rows={3}

@@ -63,6 +63,49 @@ export function ComprasModule() {
 
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
+  const handleFieldChange = (name: string, val: any) => {
+    setFormData(prev => ({ ...prev, [name]: val }));
+    if (!val && name === "proveedorId") {
+      setFieldErrors(prev => ({ ...prev, [name]: "Requerido" }));
+    } else {
+      setFieldErrors(prev => ({ ...prev, [name]: "" }));
+    }
+  };
+
+  const addRow = () => {
+    setFormData(prev => ({
+      ...prev,
+      detalles: [...prev.detalles, { productoId: "", cantidad: "", precioUnitario: "" }],
+    }));
+    setFieldErrors(prev => ({ ...prev, detalles: "" }));
+  };
+
+  const removeRow = (i: number) => {
+    setFormData(prev => {
+      const nd = [...prev.detalles];
+      nd.splice(i, 1);
+      return { ...prev, detalles: nd };
+    });
+  };
+
+  const updateRow = (i: number, field: string, val: any) => {
+    setFormData(prev => {
+      const nd = [...prev.detalles] as any[];
+      nd[i][field] = val;
+      return { ...prev, detalles: nd };
+    });
+
+    // Live validation for the row
+    let error = "";
+    if (field === "cantidad") {
+      if (!val || Number(val) <= 0) error = "Mínimo 1";
+    } else if (field === "precioUnitario") {
+       if (val === "" || Number(val) < 0) error = "Mínimo 0";
+    }
+
+    setFieldErrors(prev => ({ ...prev, [`${field}_${i}`]: error }));
+  };
+
 
 
   const refreshData = async () => {
@@ -253,13 +296,15 @@ export function ComprasModule() {
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         formData={formData}
-        setFormData={setFormData}
+        onFieldChange={handleFieldChange}
+        addRow={addRow}
+        removeRow={removeRow}
+        updateRow={updateRow}
         proveedores={proveedores}
         productos={productos}
         isSaving={isSaving}
         onSave={handleSave}
         fieldErrors={fieldErrors}
-        setFieldErrors={setFieldErrors}
       />
 
       <CompraDetailDialog

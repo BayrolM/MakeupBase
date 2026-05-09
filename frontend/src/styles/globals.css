@@ -223,7 +223,7 @@
 }
 
 .sidebar-nav-item::before {
-  content: '';
+  content: "";
   position: absolute;
   left: 0;
   top: 0;
@@ -254,7 +254,7 @@
 }
 
 .sidebar-nav-item .nav-label {
-  font-family: 'DM Sans', sans-serif;
+  font-family: "DM Sans", sans-serif;
   font-size: 0.8125rem;
   letter-spacing: 0.3px;
   transition: all 0.2s ease;
@@ -451,4 +451,15 @@
 
 .logout-text {
   transition: all 0.2s ease;
+}
+
+/* Micro Validation Styles */
+.micro-validation-error {
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  color: #dc2626 !important;
+  margin-top: 4px !important;
+  display: block !important;
+  letter-spacing: 0.05em !important;
+  line-height: 1 !important;
 }

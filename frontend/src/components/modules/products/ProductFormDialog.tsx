@@ -23,7 +23,7 @@ import {
   Loader2,
   Package,
 } from "lucide-react";
-import { UploadCloud, Image as ImageIcon, AlertCircle } from "lucide-react";
+import { Image as ImageIcon, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { uploadToSupabase } from "../../supabaseUpload";
 import { Categoria, Marca, Producto, useStore } from "../../../lib/store";
@@ -51,15 +51,18 @@ export function ProductFormDialog({
   const { productos, compras } = useStore();
   const hasBeenPurchased = useMemo(() => {
     if (!editingProduct) return false;
-    
+
     // Check if it exists in any confirmed purchase in the store
-    const inPurchases = compras.some(c => 
-      c.estado === "confirmada" && 
-      c.productos.some(p => p.productoId === editingProduct.id)
+    const inPurchases = compras.some(
+      (c) =>
+        c.estado === "confirmada" &&
+        c.productos.some((p) => p.productoId === editingProduct.id),
     );
 
     // Fallback: if it already has stock or price, it's considered "activated"
-    const hasData = Number(editingProduct.stock) > 0 || Number(editingProduct.precioCompra) > 0;
+    const hasData =
+      Number(editingProduct.stock) > 0 ||
+      Number(editingProduct.precioCompra) > 0;
 
     return inPurchases || hasData;
   }, [editingProduct, compras]);
@@ -74,6 +77,7 @@ export function ProductFormDialog({
     stock: "",
     stockMinimo: "",
     stockMaximo: "",
+    stockFisico: "",
     imagenUrl: "",
     estado: "activo" as "activo" | "inactivo",
   });
@@ -95,6 +99,7 @@ export function ProductFormDialog({
         stock: editingProduct.stock.toString(),
         stockMinimo: editingProduct.stockMinimo.toString(),
         stockMaximo: editingProduct.stockMaximo.toString(),
+        stockFisico: editingProduct.stockFisico.toString(),
         imagenUrl: editingProduct.imagenUrl || "",
         estado: editingProduct.estado,
       });
@@ -103,13 +108,14 @@ export function ProductFormDialog({
       setFormData({
         nombre: "",
         descripcion: "",
-        categoriaId: categorias[0]?.id || "",
-        marcaId: marcas[0]?.id || "",
+        categoriaId: "",
+        marcaId: "",
         precioCompra: "0",
         precioVenta: "0",
         stock: "0",
         stockMinimo: "0",
         stockMaximo: "100",
+        stockFisico: "0",
         imagenUrl: "",
         estado: "activo",
       });
@@ -165,7 +171,45 @@ export function ProductFormDialog({
 
     if (Object.keys(newErrors).length > 0) {
       setFieldErrors(newErrors);
-      toast.error("Corrige los errores antes de continuar");
+      toast.error("Campos obligatorios", {
+        description: "Debe seleccionar una categoría y una marca.",
+      });
+      return;
+    }
+
+    // Validación de Inventario
+    if (Number(formData.stock) > Number(formData.stockFisico)) {
+      setFieldErrors((prev) => ({ ...prev, stock: "Excede el físico" }));
+      toast.error("Error de Stock", { description: "Excede el fisico." });
+      return;
+    }
+    if (Number(formData.stock) < 0) {
+      setFieldErrors((prev) => ({ ...prev, stock: "No puede ser negativo" }));
+      toast.error("Error de Stock", {
+        description: "Stock no puede ser negativo.",
+      });
+      return;
+    }
+
+    if (Number(formData.precioVenta) < 0) {
+      setFieldErrors((prev) => ({
+        ...prev,
+        precioVenta: "No puede ser negativo",
+      }));
+      toast.error("Error de Precio", {
+        description: "El precio de venta no puede ser negativo.",
+      });
+      return;
+    }
+
+    if (Number(formData.stockMinimo) < 0) {
+      setFieldErrors((prev) => ({
+        ...prev,
+        stockMinimo: "No puede ser negativo",
+      }));
+      toast.error("Error de Stock", {
+        description: "El stock mínimo no puede ser negativo.",
+      });
       return;
     }
 
@@ -202,6 +246,7 @@ export function ProductFormDialog({
         stock_actual: Number(formData.stock),
         stock_min: Number(formData.stockMinimo),
         stock_max: Number(formData.stockMaximo),
+        stock_fisico: Number(formData.stockFisico),
         imagen_url: formData.imagenUrl,
         estado: formData.estado === "activo",
       };
@@ -261,36 +306,41 @@ export function ProductFormDialog({
         </div>
 
         <div className="px-6 py-5">
-          <div className="grid grid-cols-2 gap-5 py-6">
-            <div
-              className="space-y-4"
-              style={{ position: "relative", zIndex: 50 }}
-            >
+          <div className="space-y-6 py-6">
+            {/* Fila 1: Nombre */}
+            <div className="space-y-2">
+              <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">
+                <Tag className="w-3.5 h-3.5 text-[#c47b96]" />
+                Nombre <span className="text-rose-500">*</span>
+              </Label>
+              <Input
+                value={formData.nombre}
+                onChange={(e) => handleFieldChange("nombre", e.target.value)}
+                className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${fieldErrors.nombre ? "border-rose-400" : ""}`}
+                placeholder="Nombre del producto"
+                maxLength={80}
+              />
+              {fieldErrors.nombre && (
+                <p className="text-rose-500 text-xs mt-1">
+                  {fieldErrors.nombre}
+                </p>
+              )}
+            </div>
+
+            {/* Fila 2: Categoría | Marca */}
+            <div className="grid grid-cols-2 gap-5">
               <div className="space-y-2">
                 <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">
-                  <Tag className="w-3.5 h-3.5 text-[#c47b96]" />
-                  Nombre <span className="text-rose-500">*</span>
+                  <Layers className="w-3.5 h-3.5 text-[#c47b96]" />
+                  Categoría <span className="text-rose-500">*</span>
                 </Label>
-                <Input
-                  value={formData.nombre}
-                  onChange={(e) => handleFieldChange("nombre", e.target.value)}
-                  className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${fieldErrors.nombre ? "border-rose-400" : ""}`}
-                  placeholder="Nombre del producto"
-                  maxLength={80}
-                />
-                {fieldErrors.nombre && (
-                  <p className="text-rose-500 text-xs mt-1">
-                    {fieldErrors.nombre}
-                  </p>
-                )}
-              </div>
-
-              <div className="flex flex-col gap-4">
-                <div className="space-y-2">
-                  <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">
-                    <Layers className="w-3.5 h-3.5 text-[#c47b96]" />
-                    Categoría <span className="text-rose-500">*</span>
-                  </Label>
+                <div
+                  className={
+                    fieldErrors.categoriaId
+                      ? "ring-2 ring-rose-200 rounded-lg transition-all"
+                      : ""
+                  }
+                >
                   <GenericCombobox
                     options={categorias
                       .filter((c) => c.estado === "activo")
@@ -306,18 +356,23 @@ export function ProductFormDialog({
                     placeholder="Seleccionar categoría"
                     disabled={isSaving}
                   />
-                  {fieldErrors.categoriaId && (
-                    <p className="text-rose-500 text-xs mt-1">
-                      {fieldErrors.categoriaId}
-                    </p>
-                  )}
                 </div>
-
-                <div className="space-y-2">
-                  <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">
-                    <Building2 className="w-3.5 h-3.5 text-[#c47b96]" />
-                    Marca <span className="text-rose-500">*</span>
-                  </Label>
+                {fieldErrors.categoriaId && (
+                  <span className="micro-validation-error ml-1">Requerido</span>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">
+                  <Building2 className="w-3.5 h-3.5 text-[#c47b96]" />
+                  Marca <span className="text-rose-500">*</span>
+                </Label>
+                <div
+                  className={
+                    fieldErrors.marcaId
+                      ? "ring-2 ring-rose-200 rounded-lg transition-all"
+                      : ""
+                  }
+                >
                   <GenericCombobox
                     options={marcas.map((m) => ({
                       value: m.id,
@@ -331,19 +386,15 @@ export function ProductFormDialog({
                     placeholder="Seleccionar marca"
                     disabled={isSaving}
                   />
-                  {fieldErrors.marcaId && (
-                    <p className="text-rose-500 text-xs mt-1">
-                      {fieldErrors.marcaId}
-                    </p>
-                  )}
                 </div>
+                {fieldErrors.marcaId && (
+                  <span className="micro-validation-error ml-1">Requerido</span>
+                )}
               </div>
             </div>
 
-            <div
-              className="space-y-4"
-              style={{ position: "relative", zIndex: 40 }}
-            >
+            {/* Fila 3: Precio Compra | Precio Venta */}
+            <div className="grid grid-cols-2 gap-5">
               <div className="space-y-2">
                 <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">
                   <DollarSign className="w-3.5 h-3.5 text-[#c47b96]" />
@@ -352,15 +403,11 @@ export function ProductFormDialog({
                 <Input
                   type="number"
                   value={formData.precioCompra}
-                  onChange={(e) =>
-                    setFormData({ ...formData, precioCompra: e.target.value })
-                  }
-                  disabled={!hasBeenPurchased}
-                  className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${!hasBeenPurchased ? "opacity-60 cursor-not-allowed" : ""}`}
-                  placeholder={!hasBeenPurchased ? "Se asigna al comprar" : ""}
+                  disabled
+                  className="bg-gray-100 border-gray-200 text-gray-500 rounded-xl cursor-not-allowed transition-all h-11"
+                  title="El precio de compra se actualiza automáticamente desde el módulo de Compras"
                 />
               </div>
-
               <div className="space-y-2">
                 <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">
                   <DollarSign className="w-3.5 h-3.5 text-[#c47b96]" />
@@ -369,54 +416,101 @@ export function ProductFormDialog({
                 <Input
                   type="number"
                   value={formData.precioVenta}
-                  onChange={(e) =>
-                    setFormData({ ...formData, precioVenta: e.target.value })
-                  }
-                  disabled={!hasBeenPurchased}
-                  className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 font-bold ${!hasBeenPurchased ? "opacity-60 cursor-not-allowed" : ""}`}
-                  placeholder={!hasBeenPurchased ? "Bloqueado hasta compra" : ""}
-                />
-              </div>
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (Number(val) < 0) return;
+                    setFormData({ ...formData, precioVenta: val });
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2 whitespace-nowrap">
-                    <Boxes className="w-3.5 h-3.5 text-[#c47b96]" />
-                    Stock Actual
+                    if (fieldErrors.precioVenta) {
+                      setFieldErrors((prev) => {
+                        const { precioVenta, ...rest } = prev;
+                        return rest;
+                      });
+                    }
+                  }}
+                  className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 font-bold ${fieldErrors.precioVenta ? "border-rose-400" : ""}`}
+                />
+                {fieldErrors.precioVenta && (
+                  <span className="micro-validation-error">
+                    {fieldErrors.precioVenta}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Fila 4: Stock Físico | Stock Disponible | Stock Mínimo */}
+            <div className="space-y-4">
+              <div className="h-px bg-gray-100 my-2" />
+              <div className="flex gap-5">
+                <div className="flex-1 space-y-2">
+                  <Label className="text-gray-700 font-bold text-[11px] flex items-center gap-2 whitespace-nowrap uppercase tracking-widest">
+                    <Archive className="w-3.5 h-3.5 text-[#c47b96]" />
+                    Stock Físico
+                  </Label>
+                  <Input
+                    type="number"
+                    value={formData.stockFisico}
+                    disabled
+                    className="bg-gray-100 border-gray-200 text-gray-500 rounded-xl cursor-not-allowed transition-all h-11 text-center font-bold"
+                    title="Este campo se actualiza automáticamente desde Compras"
+                  />
+                </div>
+                <div className="flex-1 space-y-2">
+                  <Label className="text-gray-700 font-bold text-[11px] flex items-center gap-2 whitespace-nowrap uppercase tracking-widest">
+                    <Boxes
+                      className={`w-3.5 h-3.5 ${fieldErrors.stock ? "text-rose-500" : "text-[#c47b96]"}`}
+                    />
+                    Stock Disponible
                   </Label>
                   <Input
                     type="number"
                     value={formData.stock}
-                    onChange={(e) =>
-                      setFormData({ ...formData, stock: e.target.value })
-                    }
-                    disabled={!hasBeenPurchased}
-                    className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${!hasBeenPurchased ? "opacity-60 cursor-not-allowed" : ""}`}
-                  />
-                </div>
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (Number(val) < 0) return;
+                      setFormData({ ...formData, stock: val });
 
-                <div className="space-y-2">
-                  <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2 whitespace-nowrap">
+                      if (Number(val) > Number(formData.stockFisico)) {
+                        setFieldErrors((prev) => ({
+                          ...prev,
+                          stock: "Excede el stock físico",
+                        }));
+                      } else {
+                        setFieldErrors((prev) => {
+                          const { stock, ...rest } = prev;
+                          return rest;
+                        });
+                      }
+                    }}
+                    className={`bg-[#fff0f5] border-[#fce8f0] text-gray-900 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 text-center font-bold border-2 ${fieldErrors.stock ? "border-rose-400" : ""}`}
+                  />
+                  {fieldErrors.stock && (
+                    <span className="micro-validation-error text-center">
+                      {fieldErrors.stock}
+                    </span>
+                  )}
+                </div>
+                <div className="flex-1 space-y-2">
+                  <Label className="text-gray-700 font-bold text-[11px] flex items-center gap-2 whitespace-nowrap uppercase tracking-widest">
                     <AlertCircle className="w-3.5 h-3.5 text-[#c47b96]" />
                     Stock Mínimo
                   </Label>
                   <Input
                     type="number"
                     value={formData.stockMinimo}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        stockMinimo: e.target.value,
-                      })
-                    }
-                    disabled={!hasBeenPurchased}
-                    className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${!hasBeenPurchased ? "opacity-60 cursor-not-allowed" : ""}`}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (Number(val) < 0) return;
+                      setFormData({ ...formData, stockMinimo: val });
+                    }}
+                    className="bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 text-center font-bold"
                   />
                 </div>
               </div>
             </div>
 
-            <div className="col-span-2 space-y-2">
+            {/* Fila 5: Descripción */}
+            <div className="space-y-2">
               <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">
                 <Archive className="w-3.5 h-3.5 text-[#c47b96]" />
                 Descripción (Opcional)
@@ -431,7 +525,8 @@ export function ProductFormDialog({
               />
             </div>
 
-            <div className="col-span-2 space-y-4 pt-4">
+            {/* Fila 6: Imagen */}
+            <div className="space-y-4 pt-4">
               <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">
                 <Upload className="w-3.5 h-3.5 text-[#c47b96]" />
                 Imagen del Producto

@@ -195,6 +195,7 @@ export function UsuariosModule() {
       "direccion",
       "ciudad",
       "departamento",
+      "rol",
     ];
     if (!editingUser) fields.push("passwordHash");
     const newErrors: Record<string, string> = {};
@@ -408,9 +409,7 @@ export function UsuariosModule() {
         fieldErrors={fieldErrors}
         isSaving={isSaving}
         onFieldChange={handleFieldChange}
-        onSelectChange={(name, val) =>
-          setFormData((p) => ({ ...p, [name]: val }))
-        }
+        onSelectChange={handleFieldChange}
         onSave={handleSave}
         roles={roles}
       />

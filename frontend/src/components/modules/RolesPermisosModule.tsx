@@ -55,6 +55,28 @@ export function RolesPermisosModule() {
     permisos: INITIAL_PERMISOS as any,
   });
 
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  const handleFieldChange = (name: string, val: any) => {
+    setFormData((prev) => ({ ...prev, [name]: val }));
+    
+    let error = "";
+    if (name === "nombre") {
+      if (!val.trim()) {
+        error = "Requerido";
+      } else if (val.trim().length > 30) {
+        error = "Máx 30 chars";
+      } else {
+        const duplicado = roles.find(
+          (r) => r.nombre.toLowerCase() === val.trim().toLowerCase() && r.id !== editingRol?.id
+        );
+        if (duplicado) error = "Ya existe";
+      }
+    }
+
+    setFieldErrors((prev) => ({ ...prev, [name]: error }));
+  };
+
   // ── Cargar roles desde el backend al montar el módulo ──────────────────────
   const fetchRoles = async () => {
     setIsLoading(true);
@@ -394,10 +416,9 @@ export function RolesPermisosModule() {
         onOpenChange={setIsDialogOpen}
         editingRol={editingRol}
         formData={formData}
+        fieldErrors={fieldErrors}
         isSaving={isSaving}
-        onFieldChange={(name, val) =>
-          setFormData((p) => ({ ...p, [name]: val }))
-        }
+        onFieldChange={handleFieldChange}
         onPermisoChange={handleFormPermisoChange}
         onSave={handleSave}
       />

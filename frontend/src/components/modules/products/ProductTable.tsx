@@ -77,12 +77,17 @@ export function ProductTable({
             </TableHead>
             <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-3">
               <div className="flex items-center gap-1.5">
-                <Archive className="w-3.5 h-3.5" /> Stock
+                <Archive className="w-3.5 h-3.5" /> Físico
               </div>
             </TableHead>
             <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-3">
               <div className="flex items-center gap-1.5">
-                <Activity className="w-3.5 h-3.5" /> Estado
+                <Activity className="w-3.5 h-3.5" /> Disponible
+              </div>
+            </TableHead>
+            <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider py-3">
+              <div className="flex items-center gap-1.5">
+                <Layers className="w-3.5 h-3.5" /> Estado
               </div>
             </TableHead>
             <TableHead className="text-gray-700 font-semibold text-xs uppercase tracking-wider text-right py-3 pr-6">
@@ -94,7 +99,7 @@ export function ProductTable({
         <TableBody>
           {productos.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={8} className="text-center py-20 bg-white">
+              <TableCell colSpan={9} className="text-center py-20 bg-white">
                 <div className="flex flex-col items-center gap-4">
                   <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#fff0f5] to-[#fce8f0] flex items-center justify-center">
                     <Package className="w-10 h-10 text-[#c47b96]" />
@@ -149,15 +154,20 @@ export function ProductTable({
                     </span>
                   </TableCell>
                   <TableCell className="py-2.5">
+                    <span className="text-gray-800 font-bold text-sm">
+                      {product.stockFisico} <span className="text-[10px] text-gray-400 font-normal">und.</span>
+                    </span>
+                  </TableCell>
+                  <TableCell className="py-2.5">
                     <div className="flex flex-col">
                       <span
                         className={`font-semibold text-sm ${stockStatus?.color || "text-gray-800"}`}
                       >
-                        {product.stock} und.
+                        {product.stock} <span className="text-[10px] opacity-70 font-normal">und.</span>
                       </span>
                       {stockStatus && (
                         <span
-                          className={`text-[10px] ${stockStatus.color} font-medium`}
+                          className={`text-[10px] ${stockStatus.color} font-bold tracking-tight`}
                         >
                           {stockStatus.label}
                         </span>

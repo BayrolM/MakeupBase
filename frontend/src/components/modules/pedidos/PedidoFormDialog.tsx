@@ -1,17 +1,17 @@
-import { 
-  Plus, 
-  Trash2, 
-  X, 
-  User as UserIcon, 
-  MapPin, 
-  Package, 
-  ShoppingBag 
+import {
+  Plus,
+  Trash2,
+  X,
+  User as UserIcon,
+  MapPin,
+  Package,
+  ShoppingBag,
 } from "lucide-react";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogTitle, 
-  DialogDescription 
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
 } from "../../ui/dialog";
 import { Button } from "../../ui/button";
 import { Input } from "../../ui/input";
@@ -23,41 +23,49 @@ interface PedidoFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   formData: any;
-  setFormData: (data: any) => void;
+  fieldErrors: Record<string, string>;
   isSaving: boolean;
   onSave: () => void;
   onAddProduct: () => void;
   onRemoveProduct: (index: number) => void;
-  onUpdateProduct: (index: number, field: string, value: any, prodObj?: any) => void;
+  onUpdateProduct: (
+    index: number,
+    field: string,
+    value: any,
+    prodObj?: any,
+  ) => void;
+  onFieldChange: (name: string, value: any) => void;
 }
 
 export function PedidoFormDialog({
   open,
   onOpenChange,
   formData,
-  setFormData,
+  fieldErrors,
   isSaving,
   onSave,
   onAddProduct,
   onRemoveProduct,
   onUpdateProduct,
+  onFieldChange,
 }: PedidoFormDialogProps) {
-  const subtotal = formData.productos.reduce((s: number, p: any) => s + (p.cantidad * p.precioUnitario), 0);
+  const subtotal = formData.productos.reduce(
+    (s: number, p: any) => s + p.cantidad * p.precioUnitario,
+    0,
+  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-white border border-gray-100 !w-[95vw] !max-w-[95vw] rounded-2xl shadow-2xl p-0 overflow-hidden">
+      <DialogContent className="bg-white border-0 !w-[95vw] !max-w-[95vw] rounded-2xl shadow-2xl p-0 overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100 bg-white z-10">
           <div className="flex items-center gap-4">
             <div
-              className="flex items-center justify-center text-white font-bold text-lg flex-shrink-0"
+              className="flex items-center justify-center text-white font-bold text-lg flex-shrink-0 luxury-icon-gradient"
               style={{
                 width: 44,
                 height: 44,
                 borderRadius: 12,
-                background: "linear-gradient(135deg,#c47b96,#e092b2)",
-                boxShadow: "0 2px 8px rgba(196,123,150,0.3)",
               }}
             >
               <ShoppingBag className="w-5 h-5" />
@@ -79,64 +87,175 @@ export function PedidoFormDialog({
           </button>
         </div>
 
-        <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: "16px", maxHeight: "65vh", overflowY: "auto" }}>
-          {/* Cliente y Dirección - lado a lado */}
+        <div
+          style={{
+            padding: "20px 24px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "16px",
+            maxHeight: "65vh",
+            overflowY: "auto",
+          }}
+        >
           {/* Cliente */}
-          <div>
-            <p style={{ fontSize: "11px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
-              <UserIcon className="w-3.5 h-3.5" /> Cliente <span style={{ color: "#f87171" }}>*</span>
+          <div className="space-y-2">
+            <p
+              style={{
+                fontSize: "11px",
+                fontWeight: 700,
+                color: "#9ca3af",
+                letterSpacing: "0.07em",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+            >
+              <UserIcon className="w-3.5 h-3.5" /> Cliente{" "}
+              <span style={{ color: "#f87171" }}>*</span>
             </p>
-            <AsyncClientSelect
-              value={formData.clienteId}
-              onChange={(val) => setFormData({ ...formData, clienteId: val })}
-            />
+            <div
+              className={
+                fieldErrors.clienteId
+                  ? "ring-2 ring-rose-200 rounded-xl transition-all"
+                  : ""
+              }
+            >
+              <AsyncClientSelect
+                value={formData.clienteId}
+                onChange={(val) => onFieldChange("clienteId", val)}
+              />
+            </div>
+            {fieldErrors.clienteId && (
+              <span className="micro-validation-error ml-1">Requerido</span>
+            )}
           </div>
 
           {/* Dirección de Envío */}
-          <div>
-            <p style={{ fontSize: "11px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
-              <MapPin className="w-3.5 h-3.5" /> Dirección de Envío <span style={{ color: "#f87171" }}>*</span>
+          <div className="space-y-2">
+            <p
+              style={{
+                fontSize: "11px",
+                fontWeight: 700,
+                color: "#9ca3af",
+
+                letterSpacing: "0.07em",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+            >
+              <MapPin className="w-3.5 h-3.5" /> Dirección de Envío{" "}
+              <span style={{ color: "#f87171" }}>*</span>
             </p>
             <Input
               value={formData.direccionEnvio}
-              onChange={(e) => setFormData({ ...formData, direccionEnvio: e.target.value })}
+              onChange={(e) => onFieldChange("direccionEnvio", e.target.value)}
               placeholder="Ej: Carrera 50 # 10-20"
-              className="rounded-xl h-11 border-gray-200 bg-white text-sm focus:ring-2 focus:ring-[#c47b96]/20 focus:border-[#c47b96]"
+              className={`rounded-xl h-11 border-gray-200 bg-white text-sm focus:ring-2 focus:ring-[#c47b96]/20 focus:border-[#c47b96] ${fieldErrors.direccionEnvio ? "border-rose-400" : ""}`}
             />
+            {fieldErrors.direccionEnvio && (
+              <span className="micro-validation-error ml-1">
+                {fieldErrors.direccionEnvio}
+              </span>
+            )}
           </div>
 
-          {/* Ciudad y Departamento - lado a lado */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
-            <div>
-              <p style={{ fontSize: "11px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "4px" }}>
+          {/* Ciudad y Departamento */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "14px",
+            }}
+          >
+            <div className="space-y-2">
+              <p
+                style={{
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  color: "#9ca3af",
+
+                  letterSpacing: "0.07em",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
+                }}
+              >
                 Ciudad <span style={{ color: "#f87171" }}>*</span>
               </p>
               <Input
                 value={formData.ciudad}
-                onChange={(e) => setFormData({ ...formData, ciudad: e.target.value })}
+                onChange={(e) => onFieldChange("ciudad", e.target.value)}
                 placeholder="Medellín"
-                className="rounded-xl h-11 border-gray-200 bg-white text-sm"
+                className={`rounded-xl h-11 border-gray-200 bg-white text-sm ${fieldErrors.ciudad ? "border-rose-400" : ""}`}
               />
+              {fieldErrors.ciudad && (
+                <span className="micro-validation-error ml-1">
+                  {fieldErrors.ciudad}
+                </span>
+              )}
             </div>
-            <div>
-              <p style={{ fontSize: "11px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "4px" }}>
+            <div className="space-y-2">
+              <p
+                style={{
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  color: "#9ca3af",
+
+                  letterSpacing: "0.07em",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
+                }}
+              >
                 Departamento <span style={{ color: "#f87171" }}>*</span>
               </p>
               <Input
                 value={formData.departamento}
-                onChange={(e) => setFormData({ ...formData, departamento: e.target.value })}
+                onChange={(e) => onFieldChange("departamento", e.target.value)}
                 placeholder="Antioquia"
-                className="rounded-xl h-11 border-gray-200 bg-white text-sm"
+                className={`rounded-xl h-11 border-gray-200 bg-white text-sm ${fieldErrors.departamento ? "border-rose-400" : ""}`}
               />
+              {fieldErrors.departamento && (
+                <span className="micro-validation-error ml-1">
+                  {fieldErrors.departamento}
+                </span>
+              )}
             </div>
           </div>
 
           {/* Sección de Productos */}
-          <div style={{ background: "#ffffff", border: "1px solid #f3f4f6", borderRadius: "12px" }}>
-            {/* Header productos */}
-            <div className="flex items-center justify-between" style={{ background: "#f9fafb", padding: "12px 16px", borderBottom: "1px solid #f3f4f6", borderRadius: "12px 12px 0 0" }}>
-              <p style={{ fontSize: "11px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", display: "flex", alignItems: "center", gap: "6px", margin: 0 }}>
-                <Package className="w-3.5 h-3.5" /> Productos <span style={{ color: "#f87171" }}>*</span>
+          <div
+            style={{
+              background: "#ffffff",
+              border: "1px solid #f3f4f6",
+              borderRadius: "12px",
+            }}
+          >
+            <div
+              className="flex items-center justify-between"
+              style={{
+                background: "#f9fafb",
+                padding: "12px 16px",
+                borderBottom: "1px solid #f3f4f6",
+                borderRadius: "12px 12px 0 0",
+              }}
+            >
+              <p
+                style={{
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  color: "#9ca3af",
+
+                  letterSpacing: "0.07em",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  margin: 0,
+                }}
+              >
+                <Package className="w-3.5 h-3.5" /> Productos{" "}
+                <span style={{ color: "#f87171" }}>*</span>
               </p>
               <Button
                 type="button"
@@ -149,7 +268,6 @@ export function PedidoFormDialog({
               </Button>
             </div>
 
-            {/* Lista de productos */}
             <div style={{ padding: "0 16px" }}>
               {formData.productos.map((prod: any, index: number) => (
                 <div
@@ -158,51 +276,137 @@ export function PedidoFormDialog({
                     display: "flex",
                     flexDirection: "column",
                     padding: "16px 0",
-                    borderBottom: index < formData.productos.length - 1 ? "1px solid #f3f4f6" : "none",
+                    borderBottom:
+                      index < formData.productos.length - 1
+                        ? "1px solid #f3f4f6"
+                        : "none",
                     position: "relative",
                     zIndex: 100 - index,
                   }}
                 >
-                  <div className="grid grid-cols-12 gap-3 items-end">
+                  <div className="grid grid-cols-12 gap-3 items-start">
                     <div className="col-span-5">
-                      <p style={{ fontSize: "10px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", marginBottom: "6px" }}>
+                      <p
+                        style={{
+                          fontSize: "10px",
+                          fontWeight: 700,
+                          color: "#9ca3af",
+
+                          marginBottom: "6px",
+                        }}
+                      >
                         Producto
                       </p>
-                      <div style={{ background: "#ffffff", borderRadius: "8px" }}>
+                      <div
+                        className={
+                          fieldErrors[`prod_${index}_id`]
+                            ? "ring-2 ring-rose-200 rounded-xl transition-all"
+                            : ""
+                        }
+                      >
                         <AsyncProductSelect
                           value={prod.productoId}
-                          onChange={(val, prodObj) => onUpdateProduct(index, "productoId", val, prodObj)}
+                          onChange={(val, prodObj) =>
+                            onUpdateProduct(index, "productoId", val, prodObj)
+                          }
                         />
                       </div>
+                      {fieldErrors[`prod_${index}_id`] && (
+                        <span className="micro-validation-error mt-1">
+                          Requerido
+                        </span>
+                      )}
                     </div>
                     <div className="col-span-2">
-                      <p style={{ fontSize: "10px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", marginBottom: "6px" }}>
+                      <p
+                        style={{
+                          fontSize: "10px",
+                          fontWeight: 700,
+                          color: "#9ca3af",
+
+                          marginBottom: "6px",
+                        }}
+                      >
                         Cant.
                       </p>
                       <Input
                         type="number"
                         min="1"
                         value={prod.cantidad}
-                        onChange={(e) => onUpdateProduct(index, "cantidad", e.target.value)}
-                        className="border-gray-200 text-gray-800 h-9 rounded-lg"
+                        onChange={(e) =>
+                          onUpdateProduct(index, "cantidad", e.target.value)
+                        }
+                        className={`border-gray-200 text-gray-800 h-9 rounded-lg ${fieldErrors[`prod_${index}_cant`] ? "border-rose-400" : ""}`}
                       />
+                      {fieldErrors[`prod_${index}_cant`] && (
+                        <span className="micro-validation-error mt-1">
+                          {fieldErrors[`prod_${index}_cant`]}
+                        </span>
+                      )}
                     </div>
                     <div className="col-span-3">
-                      <p style={{ fontSize: "10px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", marginBottom: "6px" }}>
+                      <p
+                        style={{
+                          fontSize: "10px",
+                          fontWeight: 700,
+                          color: "#9ca3af",
+                          marginBottom: "6px",
+                        }}
+                      >
                         Precio
                       </p>
-                      <div style={{ height: "36px", padding: "0 12px", background: "#f9fafb", border: "1px solid #f3f4f6", borderRadius: "8px", display: "flex", alignItems: "center" }}>
-                        <span style={{ fontSize: "13px", fontWeight: 600, color: "#4b5563" }}>
+                      <div
+                        style={{
+                          height: "36px",
+                          padding: "0 12px",
+                          background: "#f9fafb",
+                          border: "1px solid #f3f4f6",
+                          borderRadius: "8px",
+                          display: "flex",
+                          alignItems: "center",
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: "13px",
+                            fontWeight: 600,
+                            color: "#4b5563",
+                          }}
+                        >
                           {formatCurrency(prod.precioUnitario)}
                         </span>
                       </div>
                     </div>
                     <div className="col-span-2">
-                      <p style={{ fontSize: "10px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", marginBottom: "6px" }}>
+                      <p
+                        style={{
+                          fontSize: "10px",
+                          fontWeight: 700,
+                          color: "#9ca3af",
+
+                          marginBottom: "6px",
+                        }}
+                      >
                         Total
                       </p>
-                      <div style={{ height: "36px", padding: "0 12px", background: "#f9fafb", border: "1px solid #f3f4f6", borderRadius: "8px", display: "flex", alignItems: "center" }}>
-                        <span style={{ fontSize: "13px", fontWeight: 800, color: "#1f2937" }}>
+                      <div
+                        style={{
+                          height: "36px",
+                          padding: "0 12px",
+                          background: "#f9fafb",
+                          border: "1px solid #f3f4f6",
+                          borderRadius: "8px",
+                          display: "flex",
+                          alignItems: "center",
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: "13px",
+                            fontWeight: 800,
+                            color: "#1f2937",
+                          }}
+                        >
                           {formatCurrency(prod.cantidad * prod.precioUnitario)}
                         </span>
                       </div>
@@ -229,19 +433,26 @@ export function PedidoFormDialog({
           </div>
         </div>
 
-        {/* Footer: Total + Botones */}
-        <div
-          className="flex items-center justify-between px-6 py-4 border-t border-gray-100 bg-white z-10"
-        >
-          {/* Total */}
+        {/* Footer */}
+        <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 bg-white z-10">
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <span style={{ fontSize: "13px", fontWeight: 600, color: "#9ca3af" }}>Total:</span>
-            <span style={{ fontSize: "22px", fontWeight: 900, color: "#c47b96", letterSpacing: "-0.5px" }}>
+            <span
+              style={{ fontSize: "13px", fontWeight: 600, color: "#9ca3af" }}
+            >
+              Total:
+            </span>
+            <span
+              style={{
+                fontSize: "22px",
+                fontWeight: 900,
+                color: "#c47b96",
+                letterSpacing: "-0.5px",
+              }}
+            >
               {formatCurrency(subtotal)}
             </span>
           </div>
 
-          {/* Botones */}
           <div className="flex gap-3">
             <button
               onClick={() => onOpenChange(false)}
@@ -257,8 +468,14 @@ export function PedidoFormDialog({
                 color: "#c47b96",
                 transition: "all 0.2s",
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "#fdf2f6"; e.currentTarget.style.borderColor = "#c47b96"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "#fff8fb"; e.currentTarget.style.borderColor = "#f0d5e0"; }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "#fdf2f6";
+                e.currentTarget.style.borderColor = "#c47b96";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "#fff8fb";
+                e.currentTarget.style.borderColor = "#f0d5e0";
+              }}
             >
               Cancelar
             </button>
@@ -278,12 +495,32 @@ export function PedidoFormDialog({
                 transition: "all 0.2s",
                 opacity: isSaving ? 0.7 : 1,
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 6px 16px rgba(196,123,150,0.4)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(196,123,150,0.3)"; }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-1px)";
+                e.currentTarget.style.boxShadow =
+                  "0 6px 16px rgba(196,123,150,0.4)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "none";
+                e.currentTarget.style.boxShadow =
+                  "0 4px 12px rgba(196,123,150,0.3)";
+              }}
             >
               {isSaving ? (
-                <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <span style={{ width: 16, height: 16, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.6s linear infinite", display: "inline-block" }} />
+                <span
+                  style={{ display: "flex", alignItems: "center", gap: "8px" }}
+                >
+                  <span
+                    style={{
+                      width: 16,
+                      height: 16,
+                      border: "2px solid rgba(255,255,255,0.3)",
+                      borderTopColor: "#fff",
+                      borderRadius: "50%",
+                      animation: "spin 0.6s linear infinite",
+                      display: "inline-block",
+                    }}
+                  />
                   Guardando...
                 </span>
               ) : (

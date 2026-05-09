@@ -16,7 +16,6 @@ import {
   DialogDescription,
   DialogTitle,
 } from "../../ui/dialog";
-import { formatCurrency } from "../../../utils/productUtils";
 
 interface ClientDetailDialogProps {
   open: boolean;
@@ -160,16 +159,6 @@ export function ClientDetailDialog({
               Actividad del Cliente
             </h3>
             <div className="grid grid-cols-3 gap-4">
-              <div className="bg-[#fff0f5] border border-pink-100 rounded-xl p-4 text-center">
-                <ShoppingBag className="w-5 h-5 text-[#c47b96] mx-auto mb-2" />
-                <p className="text-xl font-bold text-gray-800">
-                  {cliente.totalCompras || 0}
-                </p>
-                <p className="text-[10px] text-gray-500 uppercase font-semibold">
-                  Ventas Totales
-                </p>
-              </div>
-
               <div className="bg-gray-50 border border-gray-100 rounded-xl p-4 text-center">
                 <Activity className="w-5 h-5 text-gray-400 mx-auto mb-2" />
                 <p className="text-sm font-bold text-emerald-600 uppercase">

@@ -125,7 +125,7 @@ export function RolTable({
                 className="border-b border-gray-100 transition-all duration-200 hover:bg-gradient-to-r hover:from-[#fff0f5]/40 hover:to-transparent group bg-white"
               >
                 <TableCell className="py-2.5 pl-6">
-                  <span className="font-mono text-[11px] font-semibold text-gray-400 group-hover:text-[#c47b96]">
+                  <span className="font-mono text-[11px] font-semibold text-gray-500 group-hover:text-[#c47b96]">
                     {rol.id}
                   </span>
                 </TableCell>

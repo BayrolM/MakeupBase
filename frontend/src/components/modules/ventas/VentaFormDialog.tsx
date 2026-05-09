@@ -1,17 +1,17 @@
-import { 
-  Plus, 
-  Trash2, 
-  X, 
-  User as UserIcon, 
-  CreditCard, 
-  Package, 
-  ShoppingBag 
+import {
+  Plus,
+  Trash2,
+  X,
+  User as UserIcon,
+  CreditCard,
+  Package,
+  ShoppingBag,
 } from "lucide-react";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogTitle, 
-  DialogDescription 
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
 } from "../../ui/dialog";
 import { Button } from "../../ui/button";
 import { Input } from "../../ui/input";
@@ -29,7 +29,12 @@ interface VentaFormDialogProps {
   onSave: () => void;
   onAddProduct: () => void;
   onRemoveProduct: (index: number) => void;
-  onUpdateProduct: (index: number, field: string, value: any, prodObj?: any) => void;
+  onUpdateProduct: (
+    index: number,
+    field: string,
+    value: any,
+    prodObj?: any,
+  ) => void;
 }
 
 export function VentaFormDialog({
@@ -44,8 +49,8 @@ export function VentaFormDialog({
   onUpdateProduct,
 }: VentaFormDialogProps) {
   const totalVenta = formData.productos.reduce(
-    (sum: number, p: any) => sum + (p.cantidad * p.precioUnitario),
-    0
+    (sum: number, p: any) => sum + p.cantidad * p.precioUnitario,
+    0,
   );
 
   return (
@@ -83,21 +88,50 @@ export function VentaFormDialog({
           </button>
         </div>
 
-        <style dangerouslySetInnerHTML={{ __html: `
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
           .no-scrollbar::-webkit-scrollbar { display: none; }
           .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        `}} />
+        `,
+          }}
+        />
 
-        <div 
+        <div
           className="no-scrollbar overflow-y-auto"
-          style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: "16px", maxHeight: "65vh" }}
+          style={{
+            padding: "20px 24px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "16px",
+            maxHeight: "65vh",
+          }}
         >
           {/* Cliente y Método de Pago - lado a lado */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "14px",
+            }}
+          >
             {/* Cliente */}
             <div>
-              <p style={{ fontSize: "11px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
-                <UserIcon className="w-3.5 h-3.5" /> Cliente <span style={{ color: "#f87171" }}>*</span>
+              <p
+                style={{
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  color: "#9ca3af",
+
+                  letterSpacing: "0.07em",
+                  marginBottom: "8px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                }}
+              >
+                <UserIcon className="w-3.5 h-3.5" /> Cliente{" "}
+                <span style={{ color: "#f87171" }}>*</span>
               </p>
               <AsyncClientSelect
                 value={formData.clienteId}
@@ -107,28 +141,83 @@ export function VentaFormDialog({
 
             {/* Método de Pago */}
             <div>
-              <p style={{ fontSize: "11px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
-                <CreditCard className="w-3.5 h-3.5" /> Método de Pago <span style={{ color: "#f87171" }}>*</span>
+              <p
+                style={{
+                  fontSize: "11px",
+                  fontWeight: 600,
+                  color: "#9ca3af",
+
+                  letterSpacing: "0.07em",
+                  marginBottom: "8px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                }}
+              >
+                <CreditCard
+                  className={`w-3.5 h-3.5 ${!formData.metodoPago ? "text-rose-500 animate-pulse" : ""}`}
+                />{" "}
+                Método de Pago <span style={{ color: "#f87171" }}>*</span>
               </p>
-              <GenericCombobox
-                options={[
-                  { value: "Efectivo", label: "Efectivo" },
-                  { value: "Transferencia", label: "Transferencia" },
-                ]}
-                value={formData.metodoPago}
-                onChange={(v) => setFormData({ ...formData, metodoPago: v as any })}
-                placeholder="Seleccionar método"
-                disabled={isSaving}
-              />
+              <div
+                className={
+                  !formData.metodoPago
+                    ? "ring-2 ring-rose-200 rounded-lg transition-all"
+                    : ""
+                }
+              >
+                <GenericCombobox
+                  options={[
+                    { value: "Efectivo", label: "Efectivo" },
+                    { value: "Transferencia", label: "Transferencia" },
+                  ]}
+                  value={formData.metodoPago}
+                  onChange={(v) =>
+                    setFormData({ ...formData, metodoPago: v as any })
+                  }
+                  placeholder="Seleccionar método"
+                  disabled={isSaving}
+                />
+              </div>
+              {!formData.metodoPago && (
+                <span className="micro-validation-error ml-1">Requerido</span>
+              )}
             </div>
           </div>
 
           {/* Sección de Productos */}
-          <div style={{ background: "#ffffff", border: "1px solid #f3f4f6", borderRadius: "12px" }}>
+          <div
+            style={{
+              background: "#ffffff",
+              border: "1px solid #f3f4f6",
+              borderRadius: "12px",
+            }}
+          >
             {/* Header productos */}
-            <div className="flex items-center justify-between" style={{ background: "#f9fafb", padding: "12px 16px", borderBottom: "1px solid #f3f4f6", borderRadius: "12px 12px 0 0" }}>
-              <p style={{ fontSize: "11px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", display: "flex", alignItems: "center", gap: "6px", margin: 0 }}>
-                <Package className="w-3.5 h-3.5" /> Productos <span style={{ color: "#f87171" }}>*</span>
+            <div
+              className="flex items-center justify-between"
+              style={{
+                background: "#f9fafb",
+                padding: "12px 16px",
+                borderBottom: "1px solid #f3f4f6",
+                borderRadius: "12px 12px 0 0",
+              }}
+            >
+              <p
+                style={{
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  color: "#9ca3af",
+
+                  letterSpacing: "0.07em",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  margin: 0,
+                }}
+              >
+                <Package className="w-3.5 h-3.5" /> Productos{" "}
+                <span style={{ color: "#f87171" }}>*</span>
               </p>
               <Button
                 type="button"
@@ -142,7 +231,13 @@ export function VentaFormDialog({
             </div>
 
             {/* Lista de productos */}
-            <div style={{ padding: "0 16px", maxHeight: "300px", overflowY: "auto" }}>
+            <div
+              style={{
+                padding: "0 16px",
+                maxHeight: "300px",
+                overflowY: "auto",
+              }}
+            >
               {formData.productos.map((prod: any, index: number) => (
                 <div
                   key={index}
@@ -150,53 +245,139 @@ export function VentaFormDialog({
                     display: "flex",
                     flexDirection: "column",
                     padding: "16px 0",
-                    borderBottom: index < formData.productos.length - 1 ? "1px solid #f3f4f6" : "none",
+                    borderBottom:
+                      index < formData.productos.length - 1
+                        ? "1px solid #f3f4f6"
+                        : "none",
                     position: "relative",
                     zIndex: 100 - index,
                   }}
                 >
                   <div className="grid grid-cols-12 gap-3 items-end">
                     <div className="col-span-5">
-                      <p style={{ fontSize: "10px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", marginBottom: "6px" }}>
+                      <p
+                        style={{
+                          fontSize: "10px",
+                          fontWeight: 700,
+                          color: "#9ca3af",
+
+                          marginBottom: "6px",
+                        }}
+                      >
                         Producto
                       </p>
-                      <div style={{ background: "#ffffff", borderRadius: "8px" }}>
+                      <div
+                        style={{ background: "#ffffff", borderRadius: "8px" }}
+                      >
                         <AsyncProductSelect
                           value={prod.productoId}
-                          onChange={(val, prodObj) => onUpdateProduct(index, "productoId", val, prodObj)}
+                          onChange={(val, prodObj) =>
+                            onUpdateProduct(index, "productoId", val, prodObj)
+                          }
                         />
                       </div>
                     </div>
                     <div className="col-span-2">
-                      <p style={{ fontSize: "10px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", marginBottom: "6px" }}>
+                      <p
+                        style={{
+                          fontSize: "10px",
+                          fontWeight: 700,
+                          color: "#9ca3af",
+
+                          marginBottom: "6px",
+                        }}
+                      >
                         Cant.
                       </p>
                       <Input
                         type="number"
                         min="1"
                         value={prod.cantidad}
-                        onChange={(e) => onUpdateProduct(index, "cantidad", parseInt(e.target.value))}
-                        className="border-gray-200 text-gray-800 h-9 rounded-lg"
+                        onChange={(e) =>
+                          onUpdateProduct(index, "cantidad", e.target.value)
+                        }
+                        className={`h-9 rounded-lg transition-all ${
+                          prod.cantidad > prod.maxStock && prod.maxStock > 0
+                            ? "border-rose-400 bg-rose-50 text-rose-600 focus:ring-rose-200"
+                            : "border-gray-200 text-gray-800 focus:ring-[#c47b96]/20"
+                        }`}
                       />
+                      {prod.cantidad > prod.maxStock && prod.maxStock > 0 && (
+                        <span className="micro-validation-error text-center">
+                          Máx: {prod.maxStock}
+                        </span>
+                      )}
                     </div>
                     <div className="col-span-3">
-                      <p style={{ fontSize: "10px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", marginBottom: "6px" }}>
+                      <p
+                        style={{
+                          fontSize: "10px",
+                          fontWeight: 700,
+                          color: "#9ca3af",
+
+                          marginBottom: "6px",
+                        }}
+                      >
                         Precio
                       </p>
                       <Input
                         type="number"
                         value={prod.precioUnitario}
-                        onChange={(e) => onUpdateProduct(index, "precioUnitario", parseFloat(e.target.value))}
-                        className="border-gray-200 text-gray-800 h-9 rounded-lg"
+                        onChange={(e) =>
+                          onUpdateProduct(
+                            index,
+                            "precioUnitario",
+                            e.target.value,
+                          )
+                        }
+                        className={`h-9 rounded-lg transition-all ${
+                          Number(prod.precioUnitario) <= 0 ||
+                          !prod.precioUnitario
+                            ? "border-rose-400 bg-rose-50 text-rose-600 focus:ring-rose-200"
+                            : "border-gray-200 text-gray-800 focus:ring-[#c47b96]/20"
+                        }`}
                       />
+                      {(Number(prod.precioUnitario) <= 0 ||
+                        !prod.precioUnitario) && (
+                        <span className="micro-validation-error text-center">
+                          Requerido
+                        </span>
+                      )}
                     </div>
                     <div className="col-span-2">
-                      <p style={{ fontSize: "10px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", marginBottom: "6px" }}>
+                      <p
+                        style={{
+                          fontSize: "10px",
+                          fontWeight: 700,
+                          color: "#9ca3af",
+
+                          marginBottom: "6px",
+                        }}
+                      >
                         Total
                       </p>
-                      <div style={{ height: "36px", padding: "0 12px", background: "#f9fafb", border: "1px solid #f3f4f6", borderRadius: "8px", display: "flex", alignItems: "center" }}>
-                        <span style={{ fontSize: "13px", fontWeight: 800, color: "#1f2937" }}>
-                          {formatCurrency(prod.cantidad * prod.precioUnitario)}
+                      <div
+                        style={{
+                          height: "36px",
+                          padding: "0 12px",
+                          background: "#f9fafb",
+                          border: "1px solid #f3f4f6",
+                          borderRadius: "8px",
+                          display: "flex",
+                          alignItems: "center",
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: "13px",
+                            fontWeight: 800,
+                            color: "#1f2937",
+                          }}
+                        >
+                          {formatCurrency(
+                            (Number(prod.cantidad) || 0) *
+                              (Number(prod.precioUnitario) || 0),
+                          )}
                         </span>
                       </div>
                     </div>
@@ -226,8 +407,19 @@ export function VentaFormDialog({
         <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 bg-white z-10">
           {/* Total */}
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <span style={{ fontSize: "13px", fontWeight: 600, color: "#9ca3af" }}>Total:</span>
-            <span style={{ fontSize: "22px", fontWeight: 900, color: "#c47b96", letterSpacing: "-0.5px" }}>
+            <span
+              style={{ fontSize: "13px", fontWeight: 600, color: "#9ca3af" }}
+            >
+              Total:
+            </span>
+            <span
+              style={{
+                fontSize: "22px",
+                fontWeight: 900,
+                color: "#c47b96",
+                letterSpacing: "-0.5px",
+              }}
+            >
               {formatCurrency(totalVenta)}
             </span>
           </div>
@@ -248,8 +440,14 @@ export function VentaFormDialog({
                 color: "#c47b96",
                 transition: "all 0.2s",
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "#fdf2f6"; e.currentTarget.style.borderColor = "#c47b96"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "#fff8fb"; e.currentTarget.style.borderColor = "#f0d5e0"; }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "#fdf2f6";
+                e.currentTarget.style.borderColor = "#c47b96";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "#fff8fb";
+                e.currentTarget.style.borderColor = "#f0d5e0";
+              }}
             >
               Cancelar
             </button>
@@ -269,12 +467,32 @@ export function VentaFormDialog({
                 transition: "all 0.2s",
                 opacity: isSaving ? 0.7 : 1,
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 6px 16px rgba(196,123,150,0.4)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "0 4px 12px rgba(196,123,150,0.3)"; }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-1px)";
+                e.currentTarget.style.boxShadow =
+                  "0 6px 16px rgba(196,123,150,0.4)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "none";
+                e.currentTarget.style.boxShadow =
+                  "0 4px 12px rgba(196,123,150,0.3)";
+              }}
             >
               {isSaving ? (
-                <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <span style={{ width: 16, height: 16, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.6s linear infinite", display: "inline-block" }} />
+                <span
+                  style={{ display: "flex", alignItems: "center", gap: "8px" }}
+                >
+                  <span
+                    style={{
+                      width: 16,
+                      height: 16,
+                      border: "2px solid rgba(255,255,255,0.3)",
+                      borderTopColor: "#fff",
+                      borderRadius: "50%",
+                      animation: "spin 0.6s linear infinite",
+                      display: "inline-block",
+                    }}
+                  />
                   Guardando...
                 </span>
               ) : (

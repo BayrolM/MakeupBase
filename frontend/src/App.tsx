@@ -28,6 +28,7 @@ import { ContactoView } from "./components/client/ContactoView";
 
 import { PerfilView } from "./components/client/PerfilView";
 import { CheckoutView } from "./components/client/CheckoutView";
+import { NotificationBell } from "./components/NotificationBell";
 
 import { ClientNavbar } from "./components/client/ClientNavbar";
 import { Toaster, toast } from "sonner";
@@ -759,6 +760,7 @@ function AppContent() {
           {renderContent()}
         </main>
       </div>
+      <NotificationBell />
     </SidebarProvider>
   );
 }

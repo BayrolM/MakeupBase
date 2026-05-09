@@ -14,6 +14,7 @@ import marcasRoutes from "./routes/marcas.routes.js";
 import comprasRoutes from "./routes/compras.routes.js";
 import ventasRoutes from "./routes/ventas.routes.js";
 import devolucionesRoutes from "./routes/devoluciones.routes.js";
+import notificationsRoutes from "./routes/notifications.routes.js";
 import sql from "./config/db.js";
 
 dotenv.config();
@@ -60,6 +61,7 @@ app.use("/api/marcas", marcasRoutes);
 app.use("/api/compras", comprasRoutes);
 app.use("/api/ventas", ventasRoutes);
 app.use("/api/devoluciones", devolucionesRoutes);
+app.use("/api/notifications", notificationsRoutes);
 
 // Ruta de prueba general
 app.get("/", (req, res) => {

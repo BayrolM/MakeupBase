@@ -108,9 +108,7 @@ export function ClientFormDialog({
                 disabled={isSaving}
               />
               {fieldErrors.nombres && (
-                <p className="text-rose-500 text-[10px] mt-1">
-                  {fieldErrors.nombres}
-                </p>
+                <span className="micro-validation-error">{fieldErrors.nombres}</span>
               )}
             </div>
 
@@ -129,9 +127,7 @@ export function ClientFormDialog({
                 disabled={isSaving}
               />
               {fieldErrors.apellidos && (
-                <p className="text-rose-500 text-[10px] mt-1">
-                  {fieldErrors.apellidos}
-                </p>
+                <span className="micro-validation-error">{fieldErrors.apellidos}</span>
               )}
             </div>
           </div>
@@ -142,20 +138,25 @@ export function ClientFormDialog({
                 <CreditCard className="w-3.5 h-3.5 text-[#c47b96]" />
                 Tipo de Documento <span className="text-rose-500">*</span>
               </Label>
-              <Select
-                value={formData.tipoDocumento}
-                onValueChange={(val) => onFieldChange("tipoDocumento", val)}
-              >
-                <SelectTrigger className="bg-gray-50 border-gray-200 rounded-xl h-11">
-                  <SelectValue placeholder="Seleccione tipo" />
-                </SelectTrigger>
-                <SelectContent className="bg-white border-gray-100 rounded-xl shadow-lg">
-                  <SelectItem value="CC">Cédula de Ciudadanía</SelectItem>
-                  <SelectItem value="CE">Cédula de Extranjería</SelectItem>
-                  <SelectItem value="PAS">Pasaporte</SelectItem>
-                  <SelectItem value="TI">Tarjeta de Identidad</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className={fieldErrors.tipoDocumento ? "ring-2 ring-rose-200 rounded-xl transition-all" : ""}>
+                <Select
+                  value={formData.tipoDocumento}
+                  onValueChange={(val) => onFieldChange("tipoDocumento", val)}
+                >
+                  <SelectTrigger className={`bg-gray-50 border-gray-200 rounded-xl h-11 ${fieldErrors.tipoDocumento ? "border-rose-400" : ""}`}>
+                    <SelectValue placeholder="Seleccione tipo" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white border-gray-100 rounded-xl shadow-lg">
+                    <SelectItem value="CC">Cédula de Ciudadanía</SelectItem>
+                    <SelectItem value="CE">Cédula de Extranjería</SelectItem>
+                    <SelectItem value="PAS">Pasaporte</SelectItem>
+                    <SelectItem value="TI">Tarjeta de Identidad</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {fieldErrors.tipoDocumento && (
+                <span className="micro-validation-error ml-1">Requerido</span>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -163,24 +164,23 @@ export function ClientFormDialog({
                 <HashIcon className="w-3.5 h-3.5 text-[#c47b96]" />
                 Número de Documento <span className="text-rose-500">*</span>
               </Label>
-              <Input
-                onChange={(e) => {
-                  const letrasYNumeros = e.target.value.replace(
-                    /[^a-zA-Z0-9]/g,
-                    "",
-                  );
-                  onFieldChange("numeroDocumento", letrasYNumeros);
-                }}
-                className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${
-                  fieldErrors.numeroDocumento ? "border-rose-400" : ""
-                }`}
-                placeholder="Ej: 123456789"
-                disabled={isSaving}
-              />
+               <Input
+                 value={formData.numeroDocumento}
+                 onChange={(e) => {
+                   const letrasYNumeros = e.target.value.replace(
+                     /[^a-zA-Z0-9]/g,
+                     "",
+                   );
+                   onFieldChange("numeroDocumento", letrasYNumeros);
+                 }}
+                 className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${
+                   fieldErrors.numeroDocumento ? "border-rose-400" : ""
+                 }`}
+                 placeholder="Ej: 123456789"
+                 disabled={isSaving}
+               />
               {fieldErrors.numeroDocumento && (
-                <p className="text-rose-500 text-[10px] mt-1">
-                  {fieldErrors.numeroDocumento}
-                </p>
+                <span className="micro-validation-error">{fieldErrors.numeroDocumento}</span>
               )}
             </div>
           </div>
@@ -201,9 +201,7 @@ export function ClientFormDialog({
                 disabled={isSaving}
               />
               {fieldErrors.email && (
-                <p className="text-rose-500 text-[10px] mt-1">
-                  {fieldErrors.email}
-                </p>
+                <span className="micro-validation-error">{fieldErrors.email}</span>
               )}
             </div>
 
@@ -226,9 +224,7 @@ export function ClientFormDialog({
                 disabled={isSaving}
               />
               {fieldErrors.telefono && (
-                <p className="text-rose-500 text-[10px] mt-1">
-                  {fieldErrors.telefono}
-                </p>
+                <span className="micro-validation-error">{fieldErrors.telefono}</span>
               )}
             </div>
           </div>
@@ -266,9 +262,7 @@ export function ClientFormDialog({
                   </button>
                 </div>
                 {fieldErrors.passwordHash && (
-                  <p className="text-rose-500 text-[10px] mt-1">
-                    {fieldErrors.passwordHash}
-                  </p>
+                  <span className="micro-validation-error">{fieldErrors.passwordHash}</span>
                 )}
               </div>
 
@@ -303,9 +297,7 @@ export function ClientFormDialog({
                   </button>
                 </div>
                 {fieldErrors.confirmPassword && (
-                  <p className="text-rose-500 text-[10px] mt-1">
-                    {fieldErrors.confirmPassword}
-                  </p>
+                  <span className="micro-validation-error">{fieldErrors.confirmPassword}</span>
                 )}
               </div>
             </div>
@@ -315,7 +307,7 @@ export function ClientFormDialog({
             <div className="space-y-2">
               <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">
                 <MapPin className="w-3.5 h-3.5 text-[#c47b96]" />
-                Dirección
+                Dirección <span className="text-rose-500">*</span>
               </Label>
               <Input
                 value={formData.direccion}
@@ -327,16 +319,14 @@ export function ClientFormDialog({
                 disabled={isSaving}
               />
               {fieldErrors.direccion && (
-                <p className="text-rose-500 text-[10px] mt-1">
-                  {fieldErrors.direccion}
-                </p>
+                <span className="micro-validation-error">{fieldErrors.direccion}</span>
               )}
             </div>
 
             <div className="space-y-2">
               <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">
                 <Building2 className="w-3.5 h-3.5 text-[#c47b96]" />
-                Departamento
+                Departamento <span className="text-rose-500">*</span>
               </Label>
               <Input
                 value={formData.departamento}
@@ -348,9 +338,7 @@ export function ClientFormDialog({
                 disabled={isSaving}
               />
               {fieldErrors.departamento && (
-                <p className="text-rose-500 text-[10px] mt-1">
-                  {fieldErrors.departamento}
-                </p>
+                <span className="micro-validation-error">{fieldErrors.departamento}</span>
               )}
             </div>
           </div>
@@ -359,7 +347,7 @@ export function ClientFormDialog({
             <div className="space-y-2">
               <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">
                 <Building2 className="w-3.5 h-3.5 text-[#c47b96]" />
-                Ciudad
+                Ciudad <span className="text-rose-500">*</span>
               </Label>
               <Input
                 value={formData.ciudad}
@@ -371,9 +359,7 @@ export function ClientFormDialog({
                 disabled={isSaving}
               />
               {fieldErrors.ciudad && (
-                <p className="text-rose-500 text-[10px] mt-1">
-                  {fieldErrors.ciudad}
-                </p>
+                <span className="micro-validation-error">{fieldErrors.ciudad}</span>
               )}
             </div>
           </div>

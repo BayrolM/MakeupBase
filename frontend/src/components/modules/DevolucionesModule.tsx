@@ -148,10 +148,13 @@ export function DevolucionesModule() {
     setFormData(prev => ({ ...prev, ventaId: id }));
     setErrorMessage("");
     setProductosDevolver([]);
-
-    if (id.trim() === "") {
+    
+    if (!id.trim()) {
+      setFieldErrors(prev => ({ ...prev, ventaId: "Requerido" }));
       setVentaData(null);
       return;
+    } else {
+      setFieldErrors(prev => ({ ...prev, ventaId: "" }));
     }
 
     // Search in loaded ventas first
@@ -173,7 +176,9 @@ export function DevolucionesModule() {
     } else {
       setVentaData(null);
       setProductosDevolver([]);
-      if (id.length >= 1) setErrorMessage("La venta no existe, verifica el ID ingresado");
+      if (id.length >= 1) {
+        setFieldErrors(prev => ({ ...prev, ventaId: "No encontrada" }));
+      }
     }
   };
 
@@ -190,15 +195,21 @@ export function DevolucionesModule() {
 
   const handleCantidadChange = (index: number, cantidad: number) => {
     const newProductos = [...productosDevolver];
-    if (cantidad >= 0 && cantidad <= newProductos[index].cantidadComprada) {
+    const max = newProductos[index].cantidadComprada;
+    
+    if (cantidad >= 0) {
       newProductos[index].cantidadADevolver = cantidad;
       setProductosDevolver(newProductos);
-      setErrorMessage("");
-      setFieldErrors(prev => {
-        const nf: Record<string, string> = { ...prev, productos: "" };
-        delete nf[`cantidad_${index}`];
-        return nf;
-      });
+      
+      let error = "";
+      if (cantidad <= 0) error = "Mínimo 1";
+      else if (cantidad > max) error = `Máx ${max}`;
+      
+      setFieldErrors(prev => ({
+        ...prev,
+        [`cantidad_${index}`]: error,
+        productos: ""
+      }));
     }
   };
 
@@ -397,8 +408,17 @@ export function DevolucionesModule() {
         onVentaIdChange={handleVentaIdChange}
         onFieldChange={(name, val) => {
           setFormData(p => ({ ...p, [name]: val }));
+          
+          if (!val && name !== "estado") {
+            setFieldErrors(prev => ({ ...prev, [name]: "Requerido" }));
+          } else if (name === "motivo") {
+             if (val.length < 5) setFieldErrors(prev => ({ ...prev, [name]: "Mínimo 5 caracteres" }));
+             else setFieldErrors(prev => ({ ...prev, [name]: "" }));
+          } else {
+            setFieldErrors(prev => ({ ...prev, [name]: "" }));
+          }
+
           setErrorMessage("");
-          // Si cambia el estado a algo distinto de "aprobada", resetear defectuoso
           if (name === "estado" && val !== "aprobada") {
             setEsDefectuoso(false);
           }

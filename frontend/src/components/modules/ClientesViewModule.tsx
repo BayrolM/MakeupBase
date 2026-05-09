@@ -182,6 +182,9 @@ export function ClientesViewModule() {
       "numeroDocumento",
       "email",
       "telefono",
+      "direccion",
+      "ciudad",
+      "departamento",
     ];
     if (!editingCliente) fields.push("passwordHash");
 

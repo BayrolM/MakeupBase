@@ -6,6 +6,7 @@ import {
   useMemo,
   useEffect,
 } from "react";
+import api from "./api";
 
 export type UserRole = "admin" | "vendedor" | "cliente";
 export type OrderStatus =
@@ -113,6 +114,7 @@ export interface Producto {
   stock: number;
   stockMinimo: number;
   stockMaximo: number;
+  stockFisico: number;
   imagenUrl?: string;
   estado: Status;
   fechaCreacion: string;
@@ -175,6 +177,13 @@ export interface Devolucion {
   fechaAnulacion?: string;
 }
 
+export interface NotificationSummary {
+  pedidos: number;
+  stock: number;
+  devoluciones: number;
+  total: number;
+}
+
 interface StoreState {
   users: User[];
   clientes: Cliente[];
@@ -191,6 +200,7 @@ interface StoreState {
   userType: "admin" | "cliente";
   favoritos: string[];
   carrito: { productoId: string; cantidad: number }[];
+  notificationSummary: NotificationSummary;
 }
 
 interface StoreActions {
@@ -269,6 +279,7 @@ interface StoreActions {
   setPedidos: (pedidos: Pedido[]) => void;
   setDevoluciones: (devoluciones: Devolucion[]) => void;
   setMarcas: (marcas: Marca[]) => void;
+  fetchNotificationSummary: () => Promise<void>;
 }
 
 const StoreContext = createContext<(StoreState & StoreActions) | undefined>(
@@ -299,6 +310,23 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const saved = localStorage.getItem("gml_carrito");
     return saved ? JSON.parse(saved) : [];
   });
+  const [notificationSummary, setNotificationSummary] = useState<NotificationSummary>({
+    pedidos: 0,
+    stock: 0,
+    devoluciones: 0,
+    total: 0
+  });
+
+  const fetchNotificationSummary = async () => {
+    try {
+      const response = await api.get("/notifications/summary");
+      if (response.data.ok) {
+        setNotificationSummary(response.data.summary);
+      }
+    } catch (error) {
+      console.error("Error fetching notification summary:", error);
+    }
+  };
 
   // Persistir favoritos
   useEffect(() => {
@@ -408,6 +436,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         setProductos((prev) =>
           prev.map((p) => (p.id === id ? { ...p, ...productoData } : p)),
         );
+        fetchNotificationSummary();
       },
       deleteProducto: (id) => {
         setProductos((prev) => prev.filter((p) => p.id !== id));
@@ -433,7 +462,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         setCompras((prevCompras) => {
           const compra = prevCompras.find((c) => c.id === id);
           if (compra && !compra.confirmada) {
-            // La lógica de actualización de stock se maneja en el backend al cambiar el estado a 'entregado'
             return prevCompras.map((c) =>
               c.id === id
                 ? { ...c, confirmada: true, estado: "confirmada" as const }
@@ -442,6 +470,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           }
           return prevCompras;
         });
+        fetchNotificationSummary();
       },
 
       addVenta: (venta) => {
@@ -454,6 +483,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
               : c,
           ),
         );
+        fetchNotificationSummary();
       },
       updateVenta: (id, ventaData) => {
         setVentas((prev) =>
@@ -492,6 +522,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
             p.id === id ? { ...p, estado, motivoAnulacion: motivo } : p,
           ),
         );
+        fetchNotificationSummary();
       },
 
       addDevolucion: (devolucion) => {
@@ -502,6 +533,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         setDevoluciones((prev) =>
           prev.map((d) => (d.id === id ? { ...d, ...devolucionData } : d)),
         );
+        fetchNotificationSummary();
       },
 
       setRoles: (newRoles) => setRoles(newRoles),
@@ -612,6 +644,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setDevoluciones: (newDevoluciones: Devolucion[]) =>
         setDevoluciones(newDevoluciones),
       setMarcas: (newMarcas: Marca[]) => setMarcas(newMarcas),
+      notificationSummary,
+      fetchNotificationSummary,
     }),
     [
       users,
@@ -629,6 +663,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       userType,
       favoritos,
       carrito,
+      notificationSummary,
     ],
   );
 

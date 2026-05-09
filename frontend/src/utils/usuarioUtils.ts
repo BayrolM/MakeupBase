@@ -52,6 +52,7 @@ export const validateField = (
     }
     case "numeroDocumento":
       if (!value.trim()) return "El documento es obligatorio";
+      if (value.trim().length < 8) return "Mínimo 8 caracteres";
       if (value.trim().length > 10) return "Máximo 10 caracteres";
       return "";
     case "email":
@@ -83,6 +84,9 @@ export const validateField = (
       if (!/^[a-zA-Z]+$/.test(value.trim())) {
         return "No se permiten caracteres especiales o espacios.";
       }
+      return "";
+    case "rol":
+      if (!value) return "El rol es obligatorio";
       return "";
     default:
       return "";

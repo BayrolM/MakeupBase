@@ -29,12 +29,13 @@ interface PedidoEditDialogProps {
   onOpenChange: (open: boolean) => void;
   editingPedido: any;
   formData: any;
-  setFormData: (data: any) => void;
+  fieldErrors: Record<string, string>;
   isSaving: boolean;
   onSave: () => void;
   onAddProduct: () => void;
   onRemoveProduct: (index: number) => void;
   onUpdateProduct: (index: number, field: string, value: any, prodObj?: any) => void;
+  onFieldChange: (name: string, value: any) => void;
 }
 
 export function PedidoEditDialog({
@@ -42,12 +43,13 @@ export function PedidoEditDialog({
   onOpenChange,
   editingPedido,
   formData,
-  setFormData,
+  fieldErrors,
   isSaving,
   onSave,
   onAddProduct,
   onRemoveProduct,
   onUpdateProduct,
+  onFieldChange,
 }: PedidoEditDialogProps) {
   if (!editingPedido) return null;
   const isPending = editingPedido.estado === "pendiente";
@@ -55,8 +57,8 @@ export function PedidoEditDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-white border border-gray-100 w-[95vw] max-w-[1100px] sm:max-w-[1100px] max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl p-0 no-scrollbar">
-        {/* Header - Sticky like ProductFormDialog */}
+      <DialogContent className="bg-white border-0 w-[95vw] max-w-[1100px] sm:max-w-[1100px] max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl p-0 no-scrollbar">
+        {/* Header */}
         <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100 sticky top-0 bg-white z-10">
           <div className="flex items-center gap-4">
             <div className="flex items-center justify-center text-white font-bold text-lg flex-shrink-0 luxury-icon-gradient" style={{ width: 44, height: 44, borderRadius: 12 }}>
@@ -93,13 +95,16 @@ export function PedidoEditDialog({
                 <UserIcon className="w-3.5 h-3.5 text-[#c47b96]" />
                 Cliente <span className="text-rose-500">*</span>
               </Label>
-              <div className="relative">
+              <div className={fieldErrors.clienteId ? "ring-2 ring-rose-200 rounded-xl transition-all" : ""}>
                 <AsyncClientSelect
                   value={formData.clienteId}
-                  onChange={(val) => setFormData({ ...formData, clienteId: val })}
+                  onChange={(val) => onFieldChange("clienteId", val)}
                   disabled={!isPending || isSaving}
                 />
               </div>
+              {fieldErrors.clienteId && isPending && (
+                <span className="micro-validation-error ml-1">Requerido</span>
+              )}
             </div>
 
             {/* Dirección */}
@@ -111,30 +116,39 @@ export function PedidoEditDialog({
                 </Label>
                 <Input
                   value={formData.direccionEnvio || formData.direccion}
-                  onChange={(e) => setFormData({ ...formData, direccionEnvio: e.target.value })}
+                  onChange={(e) => onFieldChange("direccionEnvio", e.target.value)}
                   placeholder="Ej: Carrera 50 # 10-20"
-                  className="bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11"
+                  className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${fieldErrors.direccionEnvio ? "border-rose-400" : ""}`}
                   disabled={isSaving}
                 />
+                {fieldErrors.direccionEnvio && (
+                  <span className="micro-validation-error ml-1">{fieldErrors.direccionEnvio}</span>
+                )}
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label className="text-gray-700 font-semibold text-sm">Ciudad *</Label>
                   <Input
                     value={formData.ciudad}
-                    onChange={(e) => setFormData({ ...formData, ciudad: e.target.value })}
-                    className="bg-gray-50 border-gray-200 rounded-xl h-11"
+                    onChange={(e) => onFieldChange("ciudad", e.target.value)}
+                    className={`bg-gray-50 border-gray-200 rounded-xl h-11 ${fieldErrors.ciudad ? "border-rose-400" : ""}`}
                     disabled={isSaving}
                   />
+                  {fieldErrors.ciudad && (
+                    <span className="micro-validation-error ml-1">{fieldErrors.ciudad}</span>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label className="text-gray-700 font-semibold text-sm">Departamento *</Label>
                   <Input
                     value={formData.departamento}
-                    onChange={(e) => setFormData({ ...formData, departamento: e.target.value })}
-                    className="bg-gray-50 border-gray-200 rounded-xl h-11"
+                    onChange={(e) => onFieldChange("departamento", e.target.value)}
+                    className={`bg-gray-50 border-gray-200 rounded-xl h-11 ${fieldErrors.departamento ? "border-rose-400" : ""}`}
                     disabled={isSaving}
                   />
+                  {fieldErrors.departamento && (
+                    <span className="micro-validation-error ml-1">{fieldErrors.departamento}</span>
+                  )}
                 </div>
               </div>
             </div>
@@ -149,7 +163,7 @@ export function PedidoEditDialog({
             </div>
           )}
 
-          {/* Sección de Productos */}
+          {/* Items */}
           <div className="mt-8">
             <div className="flex items-center justify-between mb-4">
               <Label className="text-gray-700 font-bold text-sm flex items-center gap-2 uppercase tracking-wider">
@@ -176,14 +190,19 @@ export function PedidoEditDialog({
                 </div>
               ) : (
                 formData.productos.map((prod: any, index: number) => (
-                  <div key={index} className={`grid grid-cols-12 gap-4 items-end p-5 rounded-2xl border transition-all ${isPending ? "bg-white border-gray-100 hover:border-[#fce8f0] hover:shadow-sm" : "bg-gray-50/50 border-gray-100"} relative`}>
+                  <div key={index} className={`grid grid-cols-12 gap-4 items-start p-5 rounded-2xl border transition-all ${isPending ? "bg-white border-gray-100 hover:border-[#fce8f0] hover:shadow-sm" : "bg-gray-50/50 border-gray-100"} relative`}>
                     <div className="col-span-6">
                       <Label className="text-[10px] font-bold text-gray-400 uppercase mb-2 block tracking-widest">Producto</Label>
-                      <AsyncProductSelect
-                        value={prod.productoId}
-                        onChange={(val, prodObj) => onUpdateProduct(index, "productoId", val, prodObj)}
-                        disabled={!isPending || isSaving}
-                      />
+                      <div className={fieldErrors[`prod_${index}_id`] ? "ring-2 ring-rose-200 rounded-xl transition-all" : ""}>
+                        <AsyncProductSelect
+                          value={prod.productoId}
+                          onChange={(val, prodObj) => onUpdateProduct(index, "productoId", val, prodObj)}
+                          disabled={!isPending || isSaving}
+                        />
+                      </div>
+                      {fieldErrors[`prod_${index}_id`] && isPending && (
+                        <span className="micro-validation-error mt-1">Requerido</span>
+                      )}
                     </div>
                     <div className="col-span-2">
                       <Label className="text-[10px] font-bold text-gray-400 uppercase mb-2 block tracking-widest">Cantidad</Label>
@@ -192,9 +211,12 @@ export function PedidoEditDialog({
                         min="1"
                         value={prod.cantidad}
                         onChange={(e) => onUpdateProduct(index, "cantidad", e.target.value)}
-                        className="bg-gray-50 border-gray-200 rounded-xl h-11"
+                        className={`bg-gray-50 border-gray-200 rounded-xl h-11 ${fieldErrors[`prod_${index}_cant`] ? "border-rose-400" : ""}`}
                         disabled={!isPending || isSaving}
                       />
+                      {fieldErrors[`prod_${index}_cant`] && isPending && (
+                        <span className="micro-validation-error mt-1">{fieldErrors[`prod_${index}_cant`]}</span>
+                      )}
                     </div>
                     <div className="col-span-2">
                       <Label className="text-[10px] font-bold text-gray-400 uppercase mb-2 block tracking-widest">P. Unitario</Label>
@@ -224,10 +246,8 @@ export function PedidoEditDialog({
           </div>
         </div>
 
-        {/* Footer - Sticky like ProductFormDialog */}
         {/* Footer */}
         <div className="flex items-center justify-between px-6 pb-6 pt-4 border-t border-gray-100 sticky bottom-0 bg-white z-10">
-          {/* Total */}
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <span style={{ fontSize: "13px", fontWeight: 600, color: "#9ca3af" }}>Total:</span>
             <span style={{ fontSize: "22px", fontWeight: 900, color: "#c47b96", letterSpacing: "-0.5px" }}>
@@ -235,7 +255,6 @@ export function PedidoEditDialog({
             </span>
           </div>
 
-          {/* Botones */}
           <div className="flex gap-3">
             <button
               onClick={() => onOpenChange(false)}

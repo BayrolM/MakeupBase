@@ -11,6 +11,7 @@ export interface Product {
   stock_actual: number;
   stock_min: number;
   stock_max: number;
+  stock_fisico: number;
   imagen_url?: string;
   estado: boolean;
 }
