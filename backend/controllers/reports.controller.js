@@ -1,6 +1,5 @@
 import * as reportsService from "../services/reports.service.js";
 
-// Controlador para obtener el dashboard
 export const obtenerDashboard = async (req, res) => {
   try {
     const dashboard = await reportsService.obtenerDashboard();
@@ -11,7 +10,6 @@ export const obtenerDashboard = async (req, res) => {
   }
 };
 
-// Controlador para obtener el reporte de ventas
 export const obtenerReporteVentas = async (req, res) => {
   try {
     const { fecha_inicio, fecha_fin, id_usuario, limit } = req.query;
@@ -30,7 +28,6 @@ export const obtenerReporteVentas = async (req, res) => {
   }
 };
 
-// Controlador para obtener el reporte de stock
 export const obtenerReporteStock = async (req, res) => {
   try {
     const reporte = await reportsService.obtenerReporteStock();
@@ -41,7 +38,6 @@ export const obtenerReporteStock = async (req, res) => {
   }
 };
 
-// Controlador para obtener el reporte de usuarios
 export const obtenerReporteUsuarios = async (req, res) => {
   try {
     const reporte = await reportsService.obtenerReporteUsuarios();
@@ -52,7 +48,6 @@ export const obtenerReporteUsuarios = async (req, res) => {
   }
 };
 
-// Controlador para obtener el detalle de una venta
 export const obtenerDetalleVenta = async (req, res) => {
   try {
     const { id } = req.params;
@@ -66,6 +61,16 @@ export const obtenerDetalleVenta = async (req, res) => {
     }
 
     return res.json({ ok: true, data: venta });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ ok: false, message: "Error en el servidor" });
+  }
+};
+
+export const obtenerComparacionVentas = async (req, res) => {
+  try {
+    const comparacion = await reportsService.obtenerComparacionVentas();
+    return res.json({ ok: true, data: comparacion });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ ok: false, message: "Error en el servidor" });

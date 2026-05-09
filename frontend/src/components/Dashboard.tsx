@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useStore } from "../lib/store";
 import { PageHeader } from "./PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
@@ -6,11 +6,9 @@ import {
   TrendingUp,
   Package,
   ShoppingCart,
-  RotateCcw,
   AlertTriangle,
   Users,
   ArrowUpRight,
-  Calendar,
   LayoutDashboard,
 } from "lucide-react";
 import {
@@ -21,12 +19,8 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  LineChart,
-  Line,
-  AreaChart,
-  Area,
 } from "recharts";
-import { reportService, DashboardData } from "../services/reportService";
+import { reportService, DashboardData, SalesComparisonData } from "../services/reportService";
 import { toast } from "sonner";
 
 /* ── Luxury CSS variable helpers ── */
@@ -42,6 +36,8 @@ const C = {
   shadow: V('shadow'),
   white: '#ffffff',
   danger: '#ef4444',
+  success: '#10b981',
+  blue: '#3b82f6',
 };
 
 export function Dashboard() {
@@ -57,10 +53,21 @@ export function Dashboard() {
     productos_mas_vendidos: [],
     ventas_por_mes: [],
   });
+  const [salesComparison, setSalesComparison] = useState<SalesComparisonData | null>(null);
 
   useEffect(() => {
     fetchDashboardData();
+    fetchSalesComparison();
   }, []);
+
+  const fetchSalesComparison = async () => {
+    try {
+      const res = await reportService.getSalesComparison();
+      setSalesComparison(res);
+    } catch (error: any) {
+      console.error(error);
+    }
+  };
 
   const fetchDashboardData = async () => {
     try {
@@ -81,7 +88,6 @@ export function Dashboard() {
   };
 
   const safeData = data || {
-    ventas_por_mes: [],
     resumen: {
       total_ventas: 0,
       total_ordenes: 0,
@@ -90,11 +96,6 @@ export function Dashboard() {
     },
     productos_mas_vendidos: [],
   };
-
-  const salesByMonth = [...safeData.ventas_por_mes].reverse().map((v) => ({
-    mes: v.mes,
-    ventas: parseFloat(v.total) || 0,
-  }));
 
   const ordersByStatus = [
     {
@@ -122,6 +123,26 @@ export function Dashboard() {
   const productosStockCriticoList = productos.filter(
     (p) => p.stock <= p.stockMinimo,
   );
+
+  const comparisonChartData = useMemo(() => {
+    if (!salesComparison) return [];
+
+    const mesesOrden = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'];
+    const nombresMeses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+    const actualMap = new Map(
+      salesComparison.ventas_por_mes.actual.map(v => [v.mes_num, parseFloat(v.total) || 0])
+    );
+    const pasadoMap = new Map(
+      salesComparison.ventas_por_mes.pasado.map(v => [v.mes_num, parseFloat(v.total) || 0])
+    );
+
+    return mesesOrden.map((num, idx) => ({
+      mes: nombresMeses[idx],
+      anioActual: actualMap.get(num) || 0,
+      anioPasado: pasadoMap.get(num) || 0,
+    }));
+  }, [salesComparison]);
 
   return (
     <div className="min-h-screen relative" style={{ background: C.bgSoft, fontFamily: "'DM Sans', sans-serif" }}>
@@ -203,54 +224,121 @@ export function Dashboard() {
         {/* Main Analytics Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           
-          {/* Sales Performance Chart */}
+          {/* Sales Comparison Chart */}
           <div style={{ background: C.white, borderRadius: '24px', padding: '32px', boxShadow: C.shadow, border: `1px solid ${C.accent}` }}>
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center justify-between mb-6">
               <div>
-                <h3 style={{ fontSize: '18px', fontWeight: 700, color: C.textDark, margin: 0 }}>Desempeño de Ventas</h3>
-                <p style={{ fontSize: '13px', color: C.textMuted, margin: 0 }}>Ingresos mensuales proyectados</p>
+                <h3 style={{ fontSize: '18px', fontWeight: 700, color: C.textDark, margin: 0 }}>Comparación de Ventas</h3>
+                <p style={{ fontSize: '13px', color: C.textMuted, margin: 0 }}>
+                  {salesComparison ? `${salesComparison.anio_pasado} vs ${salesComparison.anio_actual}` : 'Cargando...'}
+                </p>
               </div>
-              <Calendar style={{ width: 20, height: 20, color: C.textMuted }} />
+              {salesComparison ? (
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <div style={{ width: '12px', height: '12px', borderRadius: '3px', background: C.accentDeep }} />
+                    <span style={{ fontSize: '12px', color: C.textMuted }}>{salesComparison.anio_actual}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div style={{ width: '12px', height: '12px', borderRadius: '3px', background: C.blue }} />
+                    <span style={{ fontSize: '12px', color: C.textMuted }}>{salesComparison.anio_pasado}</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <div className="w-3 h-3 rounded animate-pulse" style={{ background: V('accent-soft') }} />
+                  <div className="w-3 h-3 rounded animate-pulse" style={{ background: V('accent-soft') }} />
+                </div>
+              )}
             </div>
-            
-            <div style={{ width: '100%', height: '300px' }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={salesByMonth}>
-                  <defs>
-                    <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={V('pink')} stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor={V('pink')} stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
-                  <XAxis 
-                    dataKey="mes" 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{ fontSize: 12, fill: V('text-muted') }}
-                    dy={10}
-                  />
-                  <YAxis 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{ fontSize: 12, fill: V('text-muted') }}
-                    tickFormatter={(value) => `$${(value / 1000000).toFixed(1)}M`}
-                  />
-                  <Tooltip 
-                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: C.shadow, padding: '12px' }}
-                    itemStyle={{ color: V('pink'), fontWeight: 700 }}
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="ventas" 
-                    stroke={V('pink')} 
-                    strokeWidth={4}
-                    fillOpacity={1} 
-                    fill="url(#colorSales)" 
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
+
+            {!salesComparison ? (
+              <div className="w-full flex flex-col gap-3" style={{ height: '320px', justifyContent: 'center' }}>
+                {[60, 80, 45, 90, 70, 55, 85, 65, 75, 50, 95, 40].map((h, i) => (
+                  <div key={i} className="flex gap-2 items-end" style={{ height: `${h}%` }}>
+                    <div className="w-8 rounded-t animate-pulse" style={{ height: '100%', background: V('accent-soft') }} />
+                    <div className="w-8 rounded-t animate-pulse" style={{ height: `${h * 0.7}%`, background: V('accent-soft') }} />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <>
+                <div style={{ width: '100%', height: '320px' }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={comparisonChartData} barGap={8}>
+                      <defs>
+                        <linearGradient id="gradientThisYear" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor={C.accentDeep} stopOpacity={1}/>
+                          <stop offset="100%" stopColor={C.accent} stopOpacity={0.8}/>
+                        </linearGradient>
+                        <linearGradient id="gradientLastYear" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor={C.blue} stopOpacity={1}/>
+                          <stop offset="100%" stopColor="#60a5fa" stopOpacity={0.8}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
+                      <XAxis 
+                        dataKey="mes" 
+                        axisLine={false} 
+                        tickLine={false} 
+                        tick={{ fontSize: 12, fill: V('text-muted'), fontWeight: 500 }}
+                        dy={10}
+                      />
+                      <YAxis 
+                        axisLine={false} 
+                        tickLine={false} 
+                        tick={{ fontSize: 11, fill: V('text-muted') }}
+                        tickFormatter={(value) => `$${(value / 1000000).toFixed(1)}M`}
+                        width={55}
+                      />
+                      <Tooltip 
+                        cursor={{ fill: 'rgba(0,0,0,0.02)' }}
+                        contentStyle={{ 
+                          borderRadius: '16px', 
+                          border: 'none', 
+                          boxShadow: '0 10px 40px rgba(0,0,0,0.1)', 
+                          padding: '16px',
+                          background: C.white,
+                        }}
+                        formatter={(value: any, name: string) => [
+                          formatCurrency(value),
+                          name === 'anioActual' ? `${salesComparison.anio_actual}` : `${salesComparison.anio_pasado}`
+                        ]}
+                        labelStyle={{ fontWeight: 600, color: C.textDark, marginBottom: '8px' }}
+                      />
+                      <Bar dataKey="anioActual" fill="url(#gradientThisYear)" radius={[8, 8, 0, 0]} maxBarSize={40} />
+                      <Bar dataKey="anioPasado" fill="url(#gradientLastYear)" radius={[8, 8, 0, 0]} maxBarSize={40} opacity={0.7} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="mt-6 pt-6" style={{ borderTop: `1px solid ${V('accent-soft')}` }}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p style={{ fontSize: '12px', color: C.textMuted, margin: 0 }}>Crecimiento</p>
+                      <p style={{ 
+                        fontSize: '28px', 
+                        fontWeight: 800, 
+                        margin: 0, 
+                        color: salesComparison.resumen.crecimiento >= 0 ? C.success : C.danger 
+                      }}>
+                        {salesComparison.resumen.crecimiento >= 0 ? '+' : ''}{salesComparison.resumen.crecimiento.toFixed(1)}%
+                      </p>
+                    </div>
+                    <div className="flex gap-6">
+                      <div style={{ textAlign: 'right' }}>
+                        <p style={{ fontSize: '11px', color: C.textMuted, margin: 0 }}>Año Anterior</p>
+                        <p style={{ fontSize: '16px', fontWeight: 700, color: C.blue, margin: 0 }}>{formatCurrency(salesComparison.resumen.anio_pasado)}</p>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <p style={{ fontSize: '11px', color: C.textMuted, margin: 0 }}>Año Actual</p>
+                        <p style={{ fontSize: '16px', fontWeight: 700, color: C.accentDeep, margin: 0 }}>{formatCurrency(salesComparison.resumen.anio_actual)}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Orders Distribution */}

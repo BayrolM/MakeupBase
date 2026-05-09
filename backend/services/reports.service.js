@@ -251,3 +251,69 @@ export const obtenerDetalleVenta = async (id_venta) => {
     items,
   };
 };
+
+/**
+ * Obtener comparación de ventas año actual vs año anterior
+ */
+export const obtenerComparacionVentas = async () => {
+  const currentYear = new Date().getFullYear();
+  const lastYear = currentYear - 1;
+
+  const ventasAnioActual = await sql`
+    SELECT 
+      TO_CHAR(fecha_venta, 'MM') as mes_num,
+      TO_CHAR(fecha_venta, 'Mon') as mes_nombre,
+      SUM(total) as total
+    FROM ventas
+    WHERE EXTRACT(YEAR FROM fecha_venta) = ${currentYear}
+      AND estado = true
+    GROUP BY TO_CHAR(fecha_venta, 'MM'), TO_CHAR(fecha_venta, 'Mon')
+    ORDER BY mes_num
+  `;
+
+  const ventasAnioPasado = await sql`
+    SELECT 
+      TO_CHAR(fecha_venta, 'MM') as mes_num,
+      TO_CHAR(fecha_venta, 'Mon') as mes_nombre,
+      SUM(total) as total
+    FROM ventas
+    WHERE EXTRACT(YEAR FROM fecha_venta) = ${lastYear}
+      AND estado = true
+    GROUP BY TO_CHAR(fecha_venta, 'MM'), TO_CHAR(fecha_venta, 'Mon')
+    ORDER BY mes_num
+  `;
+
+  const totalesAnioActual = await sql`
+    SELECT COALESCE(SUM(total), 0) as total
+    FROM ventas
+    WHERE EXTRACT(YEAR FROM fecha_venta) = ${currentYear}
+      AND estado = true
+  `;
+
+  const totalesAnioPasado = await sql`
+    SELECT COALESCE(SUM(total), 0) as total
+    FROM ventas
+    WHERE EXTRACT(YEAR FROM fecha_venta) = ${lastYear}
+      AND estado = true
+  `;
+
+  const resumen = {
+    anio_actual: parseFloat(totalesAnioActual[0].total),
+    anio_pasado: parseFloat(totalesAnioPasado[0].total),
+    crecimiento: 0,
+  };
+
+  if (resumen.anio_pasado > 0) {
+    resumen.crecimiento = ((resumen.anio_actual - resumen.anio_pasado) / resumen.anio_pasado) * 100;
+  }
+
+  return {
+    anio_actual: currentYear,
+    anio_pasado: lastYear,
+    ventas_por_mes: {
+      actual: ventasAnioActual,
+      pasado: ventasAnioPasado,
+    },
+    resumen,
+  };
+};

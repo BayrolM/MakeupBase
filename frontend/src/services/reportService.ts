@@ -20,6 +20,20 @@ export interface DashboardData {
   }>;
 }
 
+export interface SalesComparisonData {
+  anio_actual: number;
+  anio_pasado: number;
+  ventas_por_mes: {
+    actual: Array<{ mes_num: string; mes_nombre: string; total: string }>;
+    pasado: Array<{ mes_num: string; mes_nombre: string; total: string }>;
+  };
+  resumen: {
+    anio_actual: number;
+    anio_pasado: number;
+    crecimiento: number;
+  };
+}
+
 export const reportService = {
   /**
    * Obtener datos para el dashboard
@@ -59,6 +73,17 @@ export const reportService = {
     } catch (error: any) {
       throw new Error(
         error.response?.data?.message || "Error al obtener reporte de stock"
+      );
+    }
+  },
+
+  async getSalesComparison(): Promise<any> {
+    try {
+      const response = await api.get("/reports/sales-comparison");
+      return response.data.data;
+    } catch (error: any) {
+      throw new Error(
+        error.response?.data?.message || "Error al obtener comparación de ventas"
       );
     }
   }
