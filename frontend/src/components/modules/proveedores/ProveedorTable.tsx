@@ -42,7 +42,10 @@ export function ProveedorTable({
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
+              onChange={(e) => {
+                const cleanValue = e.target.value.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]/g, "");
+                onSearchChange(cleanValue);
+              }}
               className="w-full h-10 pl-10 pr-10 bg-white border border-gray-200 rounded-lg text-gray-800 placeholder:text-gray-400 focus:outline-none focus:border-[#c47b96] focus:ring-2 focus:ring-[#c47b96]/20 transition-all duration-150"
               placeholder="Buscar por nombre o NIT..."
             />

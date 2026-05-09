@@ -74,7 +74,7 @@ export function ProveedorFormDialog({
           {/* Fila 1 */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
             <div>
-              <p style={{ fontSize: "11px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
+              <p style={{ fontSize: "11px", fontWeight: 700, color: "#9ca3af", letterSpacing: "0.07em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
                 Tipo Persona <span style={{ color: "#f87171" }}>*</span>
               </p>
               <select
@@ -88,7 +88,7 @@ export function ProveedorFormDialog({
             </div>
 
             <div>
-              <p style={{ fontSize: "11px", fontWeight: 700, color: fieldErrors.nombre ? "#ef4444" : "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
+              <p style={{ fontSize: "11px", fontWeight: 700, color: fieldErrors.nombre ? "#ef4444" : "#9ca3af", letterSpacing: "0.07em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
                 <Building2 className={`w-3.5 h-3.5 ${fieldErrors.nombre ? "text-red-400" : "text-gray-400"}`} /> Nombre / Razón Social <span style={{ color: "#f87171" }}>*</span>
               </p>
               <Input
@@ -108,7 +108,7 @@ export function ProveedorFormDialog({
           {/* Fila 2 */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
             <div>
-              <p style={{ fontSize: "11px", fontWeight: 700, color: fieldErrors.nit ? "#ef4444" : "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
+              <p style={{ fontSize: "11px", fontWeight: 700, color: fieldErrors.nit ? "#ef4444" : "#9ca3af", letterSpacing: "0.07em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
                 <FileText className={`w-3.5 h-3.5 ${fieldErrors.nit ? "text-red-400" : "text-gray-400"}`} /> NIT / Documento <span style={{ color: "#f87171" }}>*</span>
               </p>
               <Input
@@ -125,7 +125,7 @@ export function ProveedorFormDialog({
             </div>
 
             <div>
-              <p style={{ fontSize: "11px", fontWeight: 700, color: fieldErrors.telefono ? "#ef4444" : "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
+              <p style={{ fontSize: "11px", fontWeight: 700, color: fieldErrors.telefono ? "#ef4444" : "#9ca3af", letterSpacing: "0.07em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
                 <Phone className={`w-3.5 h-3.5 ${fieldErrors.telefono ? "text-red-400" : "text-gray-400"}`} /> Teléfono <span style={{ color: "#f87171" }}>*</span>
               </p>
               <Input
@@ -145,7 +145,7 @@ export function ProveedorFormDialog({
           {/* Fila 3 */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
             <div>
-              <p style={{ fontSize: "11px", fontWeight: 700, color: fieldErrors.email ? "#ef4444" : "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
+              <p style={{ fontSize: "11px", fontWeight: 700, color: fieldErrors.email ? "#ef4444" : "#9ca3af", letterSpacing: "0.07em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
                 <Mail className={`w-3.5 h-3.5 ${fieldErrors.email ? "text-red-400" : "text-gray-400"}`} /> Correo Electrónico <span style={{ color: "#f87171" }}>*</span>
               </p>
               <Input
@@ -163,7 +163,7 @@ export function ProveedorFormDialog({
             </div>
 
             <div>
-              <p style={{ fontSize: "11px", fontWeight: 700, color: fieldErrors.direccion ? "#ef4444" : "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
+              <p style={{ fontSize: "11px", fontWeight: 700, color: fieldErrors.direccion ? "#ef4444" : "#9ca3af", letterSpacing: "0.07em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
                 <MapPin className={`w-3.5 h-3.5 ${fieldErrors.direccion ? "text-red-400" : "text-gray-400"}`} /> Dirección <span style={{ color: "#f87171" }}>*</span>
               </p>
               <Input

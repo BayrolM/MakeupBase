@@ -73,7 +73,11 @@ function ProductSearchDropdown({
       <div style={{ position: "relative" }}>
         <input
           value={displayValue}
-          onChange={(e) => { setSearch(e.target.value); setIsOpen(true); }}
+          onChange={(e) => {
+            const cleanValue = e.target.value.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]/g, "");
+            setSearch(cleanValue);
+            setIsOpen(true);
+          }}
           onFocus={() => { setSearch(""); setIsOpen(true); if(onClearError) onClearError(); }}
           onBlur={() => setTimeout(() => setIsOpen(false), 180)}
           placeholder="Buscar y seleccionar producto..."
@@ -205,7 +209,7 @@ export function CompraFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className="bg-white border border-gray-100 !w-[95vw] !max-w-[900px] rounded-2xl shadow-2xl p-0"
-        style={{ overflow: "visible" }}
+        style={{ maxHeight: "90vh", display: "flex", flexDirection: "column", overflow: "hidden" }}
       >
         {/* ── Header ── */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "22px 24px 20px", borderBottom: "1px solid #f3f4f6" }}>
@@ -233,7 +237,7 @@ export function CompraFormDialog({
         </div>
 
         {/* ── Body ── */}
-        <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: 18, maxHeight: "72vh", overflowY: "auto" }}>
+        <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: 18, flex: 1, overflowY: "auto" }}>
 
           {/* Fila superior: Proveedor + Observaciones */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
@@ -248,10 +252,12 @@ export function CompraFormDialog({
                 <SelectTrigger className={`h-10 rounded-lg bg-white text-sm focus:ring-[#c47b96]/10 ${fieldErrors?.proveedorId ? "border-red-500 focus:border-red-500 bg-red-50" : "border-gray-200 focus:border-[#c47b96]"}`}>
                   <SelectValue placeholder="Seleccionar proveedor..." />
                 </SelectTrigger>
-                <SelectContent className="bg-white border-gray-100 shadow-xl rounded-xl z-[9999]">
-                  {proveedores.map((p) => (
-                    <SelectItem key={p.id} value={p.id} className="text-sm">{p.nombre}</SelectItem>
-                  ))}
+                <SelectContent position="popper" sideOffset={4} className="bg-white border-gray-100 shadow-xl rounded-xl" style={{ zIndex: 99999 }}>
+                  {proveedores
+                    .filter((p) => p.estado === "activo")
+                    .map((p) => (
+                      <SelectItem key={p.id} value={p.id} className="text-sm">{p.nombre}</SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
               {fieldErrors?.proveedorId && <p style={{ fontSize: 10, color: "#ef4444", margin: "4px 0 0", fontWeight: 600 }}>{fieldErrors.proveedorId}</p>}
@@ -354,10 +360,30 @@ export function CompraFormDialog({
                           type="number"
                           min="1"
                           value={d.cantidad === "" ? "" : d.cantidad}
-                          onChange={(e) => updateRow(i, "cantidad", e.target.value === "" ? "" : parseInt(e.target.value) || 0)}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === "") {
+                              updateRow(i, "cantidad", "");
+                            } else {
+                              const truncated = val.slice(0, 5);
+                              const parsed = parseInt(truncated);
+                              updateRow(i, "cantidad", isNaN(parsed) ? "" : Math.max(1, parsed));
+                            }
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "-" || e.key === "+" || e.key === "e" || e.key === "E") {
+                              e.preventDefault();
+                              return;
+                            }
+                            const isControlKey = e.key === "Backspace" || e.key === "Delete" || e.key === "ArrowLeft" || e.key === "ArrowRight" || e.key === "Tab";
+                            if (!isControlKey && (e.target as HTMLInputElement).value.length >= 5) {
+                              e.preventDefault();
+                            }
+                          }}
                           placeholder="Cant."
                           style={{
                             width: "100%",
+                            minWidth: 0,
                             height: 38,
                             padding: "0 10px",
                             border: fieldErrors?.[`cantidad_${i}`] ? "1px solid #ef4444" : "1px solid #e5e7eb",
@@ -390,10 +416,30 @@ export function CompraFormDialog({
                           type="number"
                           min="0"
                           value={d.precioUnitario === "" ? "" : d.precioUnitario}
-                          onChange={(e) => updateRow(i, "precioUnitario", e.target.value === "" ? "" : parseFloat(e.target.value) || 0)}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === "") {
+                              updateRow(i, "precioUnitario", "");
+                            } else {
+                              const truncated = val.slice(0, 10);
+                              const parsed = parseFloat(truncated);
+                              updateRow(i, "precioUnitario", isNaN(parsed) ? "" : Math.max(0, parsed));
+                            }
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "-" || e.key === "+" || e.key === "e" || e.key === "E") {
+                              e.preventDefault();
+                              return;
+                            }
+                            const isControlKey = e.key === "Backspace" || e.key === "Delete" || e.key === "ArrowLeft" || e.key === "ArrowRight" || e.key === "Tab";
+                            if (!isControlKey && (e.target as HTMLInputElement).value.length >= 10) {
+                              e.preventDefault();
+                            }
+                          }}
                           placeholder="$ Precio unitario"
                           style={{
                             width: "100%",
+                            minWidth: 0,
                             height: 38,
                             padding: "0 10px",
                             border: fieldErrors?.[`precio_${i}`] ? "1px solid #ef4444" : "1px solid #e5e7eb",
@@ -428,9 +474,10 @@ export function CompraFormDialog({
                             alignItems: "center",
                             justifyContent: "flex-end",
                             padding: "0 10px",
+                            overflow: "hidden",
                           }}
                         >
-                          <span style={{ fontSize: 13, fontWeight: 800, color: subtotal > 0 ? "#c47b96" : "#9ca3af", whiteSpace: "nowrap" }}>
+                          <span style={{ fontSize: 13, fontWeight: 800, color: subtotal > 0 ? "#c47b96" : "#9ca3af", whiteSpace: "nowrap", textOverflow: "ellipsis", overflow: "hidden" }}>
                             {subtotal > 0 ? formatCurrency(subtotal) : "—"}
                           </span>
                         </div>
@@ -462,17 +509,17 @@ export function CompraFormDialog({
         </div>
 
         {/* ── Footer ── */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 24px 22px", borderTop: "1px solid #f3f4f6", background: "#fff" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 14, padding: "18px 24px 22px", borderTop: "1px solid #f3f4f6", background: "#fff" }}>
           {/* Total */}
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: "#9ca3af" }}>Inversión Total:</span>
-            <span style={{ fontSize: 22, fontWeight: 900, color: "#c47b96", letterSpacing: "-0.5px" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em" }}>Inversión Total:</span>
+            <span style={{ fontSize: 24, fontWeight: 900, color: "#c47b96", letterSpacing: "-0.5px" }}>
               {formatCurrency(totalPurchase)}
             </span>
           </div>
 
           {/* Botones */}
-          <div style={{ display: "flex", gap: 10 }}>
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
             <button
               onClick={() => onOpenChange(false)}
               disabled={isSaving}
