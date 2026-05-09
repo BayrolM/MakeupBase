@@ -165,9 +165,7 @@ export function AppSidebar({
   const userInitial = currentUser?.nombres?.charAt(0) || "U";
   const userName = currentUser?.nombres || "Usuario";
   const userRole =
-    userType === "admin"
-      ? "Administrador"
-      : currentUser?.rol || "Cliente";
+    userType === "admin" ? "Administrador" : currentUser?.rol || "Cliente";
 
   return (
     <Sidebar
@@ -191,9 +189,11 @@ export function AppSidebar({
           <div
             className="w-20 h-20 rounded-full flex items-center justify-center shadow-lg"
             style={{
-              background: "radial-gradient(circle at 40% 35%, #3a1525, #160810)",
+              background:
+                "radial-gradient(circle at 40% 35%, #3a1525, #160810)",
               border: "1.5px solid rgba(210,140,165,0.5)",
-              boxShadow: "0 0 20px rgba(140,60,90,0.4), inset 0 0 20px rgba(140,60,90,0.1)",
+              boxShadow:
+                "0 0 20px rgba(140,60,90,0.4), inset 0 0 20px rgba(140,60,90,0.1)",
             }}
           >
             <img
@@ -319,7 +319,8 @@ export function AppSidebar({
             <div
               className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
               style={{
-                background: "linear-gradient(135deg, rgba(196,123,150,0.15) 0%, rgba(224,160,190,0.1) 100%)",
+                background:
+                  "linear-gradient(135deg, rgba(196,123,150,0.15) 0%, rgba(224,160,190,0.1) 100%)",
                 border: "1px solid rgba(196, 123, 150, 0.25)",
               }}
             >
@@ -345,7 +346,8 @@ export function AppSidebar({
               className="mt-2 text-sm leading-relaxed"
               style={{ color: "var(--luxury-text-secondary)" }}
             >
-              Tu sesión se cerrará y tendrás que volver a iniciar sesión para acceder a tu cuenta.
+              Tu sesión se cerrará y tendrás que volver a iniciar sesión para
+              acceder a tu cuenta.
             </p>
           </div>
 
