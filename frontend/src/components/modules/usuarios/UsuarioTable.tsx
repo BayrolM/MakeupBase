@@ -4,7 +4,6 @@ import {
   Hash,
   User,
   Mail,
-  Phone,
   Shield,
   Activity,
   Eye,
@@ -20,7 +19,7 @@ import {
   TableRow,
 } from "../../ui/table";
 import { StatusSwitch } from "../../StatusSwitch";
-import { getRolLabel, getRolBadgeStyles } from "../../../utils/usuarioUtils";
+import { getRolBadgeStyles } from "../../../utils/usuarioUtils";
 
 interface UsuarioTableProps {
   users: any[];

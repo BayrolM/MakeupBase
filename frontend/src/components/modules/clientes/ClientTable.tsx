@@ -1,6 +1,5 @@
 import {
   Search,
-  X,
   Hash,
   User,
   Mail,
