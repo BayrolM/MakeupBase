@@ -186,11 +186,7 @@ function AppContent() {
               : ("anulada" as const),
           confirmada: !!purch.estado,
           observaciones: purch.observaciones || "",
-          productos: (purch.detalles || []).map((d: any) => ({
-            productoId: d.id_producto.toString(),
-            cantidad: d.cantidad,
-            precioUnitario: Number(d.precio_unitario),
-          })),
+          productos: [],
         }));
         setCompras(mappedPurchases);
 
