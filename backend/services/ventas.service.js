@@ -57,7 +57,7 @@ export const listarVentas = async (filters = {}) => {
     FROM ventas v
     LEFT JOIN usuarios u ON v.id_usuario_cliente = u.id_usuario
     ${whereFragment}
-    ORDER BY v.fecha_venta DESC
+    ORDER BY v.id_venta DESC
     LIMIT ${limit} OFFSET ${offset}
   `;
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -48,7 +48,15 @@ export function ProductFormDialog({
   marcas,
   refreshProducts,
 }: ProductFormDialogProps) {
-  const { productos } = useStore();
+  const { productos, compras } = useStore();
+  const hasBeenPurchased = useMemo(() => {
+    if (!editingProduct) return false;
+    return compras.some(c => 
+      c.estado === "confirmada" && 
+      c.productos.some(p => p.productoId === editingProduct.id)
+    );
+  }, [editingProduct, compras]);
+
   const [formData, setFormData] = useState({
     nombre: "",
     descripcion: "",
@@ -340,7 +348,9 @@ export function ProductFormDialog({
                   onChange={(e) =>
                     setFormData({ ...formData, precioCompra: e.target.value })
                   }
-                  className="bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11"
+                  disabled={!hasBeenPurchased}
+                  className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${!hasBeenPurchased ? "opacity-60 cursor-not-allowed" : ""}`}
+                  placeholder={!hasBeenPurchased ? "Se asigna al comprar" : ""}
                 />
               </div>
 
@@ -355,13 +365,15 @@ export function ProductFormDialog({
                   onChange={(e) =>
                     setFormData({ ...formData, precioVenta: e.target.value })
                   }
-                  className="bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 font-bold"
+                  disabled={!hasBeenPurchased}
+                  className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 font-bold ${!hasBeenPurchased ? "opacity-60 cursor-not-allowed" : ""}`}
+                  placeholder={!hasBeenPurchased ? "Bloqueado hasta compra" : ""}
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">
+                  <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2 whitespace-nowrap">
                     <Boxes className="w-3.5 h-3.5 text-[#c47b96]" />
                     Stock Actual
                   </Label>
@@ -371,12 +383,13 @@ export function ProductFormDialog({
                     onChange={(e) =>
                       setFormData({ ...formData, stock: e.target.value })
                     }
-                    className="bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11"
+                    disabled={!hasBeenPurchased}
+                    className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${!hasBeenPurchased ? "opacity-60 cursor-not-allowed" : ""}`}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">
+                  <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2 whitespace-nowrap">
                     <AlertCircle className="w-3.5 h-3.5 text-[#c47b96]" />
                     Stock Mínimo
                   </Label>
@@ -389,7 +402,8 @@ export function ProductFormDialog({
                         stockMinimo: e.target.value,
                       })
                     }
-                    className="bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11"
+                    disabled={!hasBeenPurchased}
+                    className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${!hasBeenPurchased ? "opacity-60 cursor-not-allowed" : ""}`}
                   />
                 </div>
               </div>

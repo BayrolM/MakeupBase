@@ -156,7 +156,7 @@ export function VentaFormDialog({
                   }}
                 >
                   <div className="grid grid-cols-12 gap-3 items-end">
-                    <div className="col-span-6">
+                    <div className="col-span-5">
                       <p style={{ fontSize: "10px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", marginBottom: "6px" }}>
                         Producto
                       </p>
@@ -179,7 +179,7 @@ export function VentaFormDialog({
                         className="border-gray-200 text-gray-800 h-9 rounded-lg"
                       />
                     </div>
-                    <div className="col-span-2">
+                    <div className="col-span-3">
                       <p style={{ fontSize: "10px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", marginBottom: "6px" }}>
                         Precio
                       </p>

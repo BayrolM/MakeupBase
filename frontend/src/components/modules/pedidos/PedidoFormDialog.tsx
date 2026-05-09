@@ -81,17 +81,16 @@ export function PedidoFormDialog({
 
         <div style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: "16px", maxHeight: "65vh", overflowY: "auto" }}>
           {/* Cliente y Dirección - lado a lado */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
-            {/* Cliente */}
-            <div>
-              <p style={{ fontSize: "11px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
-                <UserIcon className="w-3.5 h-3.5" /> Cliente <span style={{ color: "#f87171" }}>*</span>
-              </p>
-              <AsyncClientSelect
-                value={formData.clienteId}
-                onChange={(val) => setFormData({ ...formData, clienteId: val })}
-              />
-            </div>
+          {/* Cliente */}
+          <div>
+            <p style={{ fontSize: "11px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
+              <UserIcon className="w-3.5 h-3.5" /> Cliente <span style={{ color: "#f87171" }}>*</span>
+            </p>
+            <AsyncClientSelect
+              value={formData.clienteId}
+              onChange={(val) => setFormData({ ...formData, clienteId: val })}
+            />
+          </div>
 
           {/* Dirección de Envío */}
           <div>
@@ -106,10 +105,10 @@ export function PedidoFormDialog({
             />
           </div>
 
-          {/* Ciudad y Departamento */}
+          {/* Ciudad y Departamento - lado a lado */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
             <div>
-              <p style={{ fontSize: "11px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "8px" }}>
+              <p style={{ fontSize: "11px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "4px" }}>
                 Ciudad <span style={{ color: "#f87171" }}>*</span>
               </p>
               <Input
@@ -120,7 +119,7 @@ export function PedidoFormDialog({
               />
             </div>
             <div>
-              <p style={{ fontSize: "11px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "8px" }}>
+              <p style={{ fontSize: "11px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "4px" }}>
                 Departamento <span style={{ color: "#f87171" }}>*</span>
               </p>
               <Input
@@ -130,7 +129,6 @@ export function PedidoFormDialog({
                 className="rounded-xl h-11 border-gray-200 bg-white text-sm"
               />
             </div>
-          </div>
           </div>
 
           {/* Sección de Productos */}
@@ -166,7 +164,7 @@ export function PedidoFormDialog({
                   }}
                 >
                   <div className="grid grid-cols-12 gap-3 items-end">
-                    <div className="col-span-6">
+                    <div className="col-span-5">
                       <p style={{ fontSize: "10px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", marginBottom: "6px" }}>
                         Producto
                       </p>
@@ -189,7 +187,7 @@ export function PedidoFormDialog({
                         className="border-gray-200 text-gray-800 h-9 rounded-lg"
                       />
                     </div>
-                    <div className="col-span-2">
+                    <div className="col-span-3">
                       <p style={{ fontSize: "10px", fontWeight: 700, color: "#9ca3af", textTransform: "uppercase", marginBottom: "6px" }}>
                         Precio
                       </p>
