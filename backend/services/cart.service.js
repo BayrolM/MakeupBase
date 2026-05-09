@@ -14,8 +14,8 @@ export const obtenerCarrito = async (id_usuario) => {
   if (pedido.length === 0) {
     // Crear un nuevo carrito
     pedido = await sql`
-      INSERT INTO pedidos (id_usuario_cliente, fecha_pedido, direccion, ciudad, subtotal, iva, total, metodo_pago, estado)
-      VALUES (${id_usuario}, NOW(), '', '', 0, 0, 0, 'efectivo', 'carrito')
+      INSERT INTO pedidos (id_usuario_cliente, fecha_pedido, direccion, ciudad, subtotal, total, metodo_pago, estado)
+      VALUES (${id_usuario}, NOW(), '', '', 0, 0, 'efectivo', 'carrito')
       RETURNING *
     `;
   }
@@ -59,8 +59,8 @@ export const agregarAlCarrito = async (id_usuario, id_producto, cantidad) => {
 
   if (pedido.length === 0) {
     pedido = await sql`
-      INSERT INTO pedidos (id_usuario_cliente, fecha_pedido, direccion, ciudad, subtotal, iva, total, metodo_pago, estado)
-      VALUES (${id_usuario}, NOW(), '', '', 0, 0, 0, 'efectivo', 'carrito')
+      INSERT INTO pedidos (id_usuario_cliente, fecha_pedido, direccion, ciudad, subtotal, total, metodo_pago, estado)
+      VALUES (${id_usuario}, NOW(), '', '', 0, 0, 'efectivo', 'carrito')
       RETURNING *
     `;
   }

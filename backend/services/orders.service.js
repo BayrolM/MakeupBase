@@ -127,8 +127,8 @@ export const crearOrdenDirecta = async (id_cliente, id_empleado, datosEnvio) => 
   return await sql.begin(async (sql) => {
     // 1. Crear el Pedido directamente en estado 'pendiente'
     const [pedido] = await sql`
-      INSERT INTO pedidos (id_usuario_cliente, id_usuario_empleado, fecha_pedido, direccion, ciudad, departamento, subtotal, iva, total, metodo_pago, estado)
-      VALUES (${id_cliente}, ${id_empleado}, NOW(), ${direccion}, ${ciudad}, ${departamento || null}, ${total}, 0, ${total}, ${metodo_pago}, 'pendiente')
+      INSERT INTO pedidos (id_usuario_cliente, id_usuario_empleado, fecha_pedido, direccion, ciudad, departamento, subtotal, total, metodo_pago, estado)
+      VALUES (${id_cliente}, ${id_empleado}, NOW(), ${direccion}, ${ciudad}, ${departamento || null}, ${total}, ${total}, ${metodo_pago}, 'pendiente')
       RETURNING id_pedido
     `;
     const id_pedido = pedido.id_pedido;
@@ -369,10 +369,10 @@ export const actualizarEstadoPedido = async (id_pedido, estado, id_usuario_emple
         const [nuevaVenta] = await sql`
           INSERT INTO ventas (
             id_pedido, id_usuario_cliente, id_usuario_empleado, 
-            fecha_venta, subtotal, iva, total, metodo_pago, estado
+            fecha_venta, subtotal, total, metodo_pago, estado
           ) VALUES (
             ${id_pedido}, ${pedido.id_usuario_cliente}, ${empId || pedido.id_usuario_empleado || null}, 
-            NOW(), ${pedido.subtotal}, ${pedido.iva}, ${pedido.total}, ${pedido.metodo_pago}, true
+            NOW(), ${pedido.subtotal}, ${pedido.total}, ${pedido.metodo_pago}, true
           ) RETURNING id_venta
         `;
 

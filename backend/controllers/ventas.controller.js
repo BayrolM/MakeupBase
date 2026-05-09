@@ -24,7 +24,6 @@ export const listar = async (req, res) => {
 export const crear = async (req, res) => {
   try {
     const { id_usuario_cliente, id_pedido, metodo_pago, productos, subtotal, total } = req.body;
-    const iva = 0;
     const id_usuario_empleado = req.user?.id_usuario;
 
     console.log("📥 Nueva Venta - Body clienteID:", id_usuario_cliente);
@@ -52,10 +51,10 @@ export const crear = async (req, res) => {
       const [nuevaVenta] = await sql`
         INSERT INTO ventas (
           id_usuario_cliente, id_usuario_empleado, id_pedido, 
-          metodo_pago, subtotal, iva, total, estado, fecha_venta
+          metodo_pago, subtotal, total, estado, fecha_venta
         ) VALUES (
           ${id_usuario_cliente}, ${id_usuario_empleado}, ${id_pedido || null}, 
-          ${metodo_pago}, ${subtotal}, ${iva}, ${total}, true, NOW()
+          ${metodo_pago}, ${subtotal}, ${total}, true, NOW()
         ) RETURNING *
       `;
 
