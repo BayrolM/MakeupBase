@@ -21,7 +21,7 @@ export function ProveedorDeleteDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-white border-0 max-w-md rounded-2xl shadow-2xl p-0 overflow-hidden">
+      <DialogContent className="bg-white border-0 max-w-md rounded-2xl shadow-2xl p-0 overflow-hidden" style={{ maxHeight: "90vh", display: "flex", flexDirection: "column" }}>
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100">
           <div className="flex items-center gap-4">
@@ -44,7 +44,7 @@ export function ProveedorDeleteDialog({
         </div>
 
         {/* Body */}
-        <div className="px-6 py-6">
+        <div className="px-6 py-6" style={{ flex: 1, overflowY: "auto" }}>
           <div className="bg-rose-50/50 rounded-2xl p-5 border border-rose-100 flex flex-col items-center text-center gap-3">
             <div className="w-12 h-12 bg-white rounded-full shadow-sm flex items-center justify-center mb-1">
               <AlertCircle className="w-6 h-6 text-rose-500" />

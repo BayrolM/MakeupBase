@@ -140,7 +140,10 @@ export function DevolucionFormDialog({
               <div style={{ position: "relative" }}>
                 <Input
                   value={formData.ventaId}
-                  onChange={(e) => onVentaIdChange(e.target.value)}
+                  onChange={(e) => {
+                    const cleanValue = e.target.value.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]/g, "");
+                    onVentaIdChange(cleanValue);
+                  }}
                   className={`h-10 rounded-lg pr-10 border-gray-200 focus:border-[#c47b96] focus:ring-[#c47b96]/10 text-sm ${fieldErrors?.ventaId ? "border-red-500 bg-red-50 focus:border-red-500" : "bg-white"}`}
                   placeholder="Ej: 6..."
                   disabled={isSaving}

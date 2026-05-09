@@ -3,6 +3,7 @@ import { useStore, Compra } from "../../lib/store";
 import { toast } from "sonner";
 import { purchaseService } from "../../services/purchaseService";
 import { productService } from "../../services/productService";
+import { providerService } from "../../services/providerService";
 import { usePagination } from "../../hooks/usePagination";
 import { Pagination } from "../Pagination";
 
@@ -15,7 +16,7 @@ import { CompraAnularDialog } from "./compras/CompraAnularDialog";
 import { generateCompraPDF } from "../../lib/pdfGenerator";
 
 export function ComprasModule() {
-  const { compras, proveedores, productos, setCompras, setProductos, currentUser, userType } = useStore();
+  const { compras, proveedores, productos, setCompras, setProductos, setProveedores, currentUser, userType } = useStore();
   const isAdmin = currentUser?.rol === "admin" || userType === "admin";
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
@@ -99,6 +100,22 @@ export function ComprasModule() {
         fechaCreacion: new Date().toISOString(),
       }));
       setProductos(mappedProducts);
+
+      const providersResp = await providerService.getAll();
+      const mappedProveedores = (
+        Array.isArray(providersResp) ? providersResp : (providersResp as any).data || []
+      ).map((prov: any) => ({
+        id: prov.id_proveedor.toString(),
+        tipo_proveedor: prov.tipo_proveedor || "Persona Natural",
+        nombre: prov.nombre,
+        email: prov.email || "",
+        telefono: prov.telefono || "",
+        nit: prov.documento_nit || "",
+        direccion: prov.direccion || "",
+        estado: prov.estado ? ("activo" as const) : ("inactivo" as const),
+        fechaRegistro: new Date().toISOString(),
+      }));
+      setProveedores(mappedProveedores);
     } catch (e) {
       console.error(e);
       toast.error("Error al cargar datos");
@@ -112,7 +129,7 @@ export function ComprasModule() {
   const handleOpenDialog = () => {
     setFieldErrors({});
     setFormData({
-      proveedorId: proveedores[0]?.id || "",
+      proveedorId: proveedores.find((p) => p.estado === "activo")?.id || "",
       observaciones: "",
       detalles: [],
     });
@@ -130,8 +147,8 @@ export function ComprasModule() {
 
     formData.detalles.forEach((d, i) => {
       if (!d.productoId) errors[`producto_${i}`] = "Seleccione un producto.";
-      if (!d.cantidad || Number(d.cantidad) <= 0) errors[`cantidad_${i}`] = "Dato inválido.";
-      if (d.precioUnitario === "" || Number(d.precioUnitario) < 0) errors[`precio_${i}`] = "Precio inválido.";
+      if (!d.cantidad || Number(d.cantidad) <= 0) errors[`cantidad_${i}`] = "La cantidad debe ser mayor a 0.";
+      if (d.precioUnitario === "" || Number(d.precioUnitario) < 0) errors[`precio_${i}`] = "El precio no puede ser negativo.";
     });
 
     if (Object.keys(errors).length > 0) {
