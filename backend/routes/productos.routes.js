@@ -8,6 +8,7 @@ import {
   actualizar,
   eliminar,
   featured,
+  moverStock,
 } from "../controllers/productos.controller.js";
 import { adminRequired } from "../middleware/adminRequired.middleware.js";
 
@@ -19,5 +20,6 @@ router.get("/:id", authOptional, obtener);
 router.post("/", authRequired, adminRequired, crear);
 router.put("/:id", authRequired, adminRequired, actualizar);
 router.delete("/:id", authRequired, adminRequired, eliminar);
+router.post("/:id/mover-stock", authRequired, adminRequired, moverStock);
 
 export default router;

@@ -120,4 +120,16 @@ export const productService = {
       );
     }
   },
+  /**
+   * Mover stock físico a disponible
+   */
+  async moveStock(id: number, cantidad: number): Promise<void> {
+    try {
+      await api.post(`/products/${id}/mover-stock`, { cantidad });
+    } catch (error: any) {
+      throw new Error(
+        error.response?.data?.message || "Error al mover stock",
+      );
+    }
+  },
 };

@@ -147,3 +147,21 @@ export const featured = async (req, res) => {
     return res.status(500).json({ ok: false, message: "Error interno" });
   }
 };
+
+// Controlador para mover stock físico a disponible
+export const moverStock = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { cantidad } = req.body;
+
+    if (!cantidad || cantidad <= 0) {
+      return res.status(400).json({ ok: false, message: "Cantidad inválida" });
+    }
+
+    await productosService.moverStockADisponible(parseInt(id, 10), parseInt(cantidad, 10));
+    return res.json({ ok: true, message: "Stock movido a disponible correctamente" });
+  } catch (err) {
+    console.error(err);
+    return res.status(400).json({ ok: false, message: err.message || "Error al mover stock" });
+  }
+};

@@ -17,6 +17,7 @@ import {
   Eye,
   Pencil,
   Trash2,
+  ArrowRightLeft,
 } from "lucide-react";
 import { StatusSwitch } from "../../StatusSwitch";
 import { Producto, Categoria } from "../../../lib/store";
@@ -32,6 +33,7 @@ interface ProductTableProps {
   onViewDetail: (product: Producto) => void;
   onEdit: (product: Producto) => void;
   onDelete: (product: Producto) => void;
+  onMoveStock: (product: Producto) => void;
   refreshProducts: () => Promise<void>;
 }
 
@@ -43,6 +45,7 @@ export function ProductTable({
   onViewDetail,
   onEdit,
   onDelete,
+  onMoveStock,
   refreshProducts,
 }: ProductTableProps) {
   return (
@@ -201,6 +204,18 @@ export function ProductTable({
                         className="h-8 w-8 flex items-center justify-center rounded-lg transition-all duration-150 cursor-pointer text-gray-400 hover:bg-indigo-50 hover:text-indigo-600"
                       >
                         <Eye className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => onMoveStock(product)}
+                        disabled={!isAdmin}
+                        title={!isAdmin ? "Acceso denegado" : "Mover a Disponible"}
+                        className={`h-8 w-8 flex items-center justify-center rounded-lg transition-all duration-150 ${
+                          isAdmin
+                            ? "cursor-pointer text-gray-400 hover:bg-[#fdf2f6] hover:text-[#c47b96]"
+                            : "text-gray-300 cursor-not-allowed"
+                        }`}
+                      >
+                        <ArrowRightLeft className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => onEdit(product)}

@@ -278,3 +278,33 @@ export const productosDestacados = async (limit = 10) => {
     `;
   return items;
 };
+
+/**
+ * Mueve stock del almacén físico al stock disponible para la venta
+ */
+export const moverStockADisponible = async (id, cantidad) => {
+  if (cantidad <= 0) throw new Error("La cantidad debe ser mayor a cero");
+
+  return await sql.begin(async (sql) => {
+    // 1. Verificar stock fisico disponible
+    const [producto] = await sql`
+      SELECT stock_fisico FROM productos WHERE id_producto = ${id} FOR UPDATE
+    `;
+    
+    if (!producto) throw new Error("Producto no encontrado");
+    
+    if (producto.stock_fisico < cantidad) {
+      throw new Error(`Stock físico insuficiente. Solo hay ${producto.stock_fisico} unidades disponibles.`);
+    }
+
+    // 2. Realizar el movimiento
+    await sql`
+      UPDATE productos 
+      SET stock_fisico = stock_fisico - ${cantidad},
+          stock_actual = stock_actual + ${cantidad}
+      WHERE id_producto = ${id}
+    `;
+
+    return true;
+  });
+};

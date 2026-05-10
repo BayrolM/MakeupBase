@@ -17,7 +17,15 @@ import { Button } from "../../ui/button";
 import { Input } from "../../ui/input";
 import { AsyncClientSelect } from "../../AsyncClientSelect";
 import { AsyncProductSelect } from "../../AsyncProductSelect";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../ui/select";
 import { formatCurrency } from "../../../utils/pedidoUtils";
+import { CreditCard } from "lucide-react";
 
 interface PedidoFormDialogProps {
   open: boolean;
@@ -222,6 +230,39 @@ export function PedidoFormDialog({
                 </span>
               )}
             </div>
+          </div>
+
+          {/* Método de Pago */}
+          <div className="space-y-2">
+            <p
+              style={{
+                fontSize: "11px",
+                fontWeight: 700,
+                color: "#9ca3af",
+                letterSpacing: "0.07em",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+            >
+              <CreditCard className="w-3.5 h-3.5" /> Método de Pago{" "}
+              <span style={{ color: "#f87171" }}>*</span>
+            </p>
+            <Select
+              value={formData.metodo_pago}
+              onValueChange={(val) => onFieldChange("metodo_pago", val)}
+            >
+              <SelectTrigger className="rounded-xl h-11 border-gray-200 bg-white text-sm focus:ring-2 focus:ring-[#c47b96]/20">
+                <SelectValue placeholder="Selecciona un método" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="transferencia">Transferencia</SelectItem>
+                <SelectItem value="efectivo">Efectivo</SelectItem>
+              </SelectContent>
+            </Select>
+            {fieldErrors.metodo_pago && (
+              <span className="micro-validation-error ml-1">Requerido</span>
+            )}
           </div>
 
           {/* Sección de Productos */}

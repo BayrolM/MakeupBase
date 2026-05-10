@@ -104,11 +104,10 @@ export const crear = async (req, res) => {
           VALUES (${compra.id_compra}, ${item.id_producto}, ${item.cantidad}, ${item.precio_unitario})
         `;
 
-        // 3. Actualizar el stock del producto y el costo promedio
+        // 3. Actualizar el stock FISICO del producto y el costo promedio
         await sql`
           UPDATE productos 
-          SET stock_actual = stock_actual + ${item.cantidad},
-              stock_fisico = stock_fisico + ${item.cantidad},
+          SET stock_fisico = stock_fisico + ${item.cantidad},
               costo_promedio = ${item.precio_unitario}
           WHERE id_producto = ${item.id_producto}
         `;
@@ -153,12 +152,11 @@ export const anular = async (req, res) => {
         SELECT id_producto, cantidad FROM detalle_compra WHERE id_compra = ${id}
       `;
 
-      // 3. Revertir el stock restando lo que se había sumado
+      // 3. Revertir el stock FISICO restando lo que se había sumado
       for (const item of detalles) {
         await sql`
           UPDATE productos 
-          SET stock_actual = stock_actual - ${item.cantidad},
-              stock_fisico = stock_fisico - ${item.cantidad}
+          SET stock_fisico = stock_fisico - ${item.cantidad}
           WHERE id_producto = ${item.id_producto}
         `;
       }

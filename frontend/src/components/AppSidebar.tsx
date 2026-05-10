@@ -29,6 +29,7 @@ import {
   ChevronRight,
   User,
   AlertCircle,
+  Tags,
 } from "lucide-react";
 import { LogoutConfirmDialog } from "./LogoutConfirmDialog";
 
@@ -63,6 +64,7 @@ const adminGroups: NavGroup[] = [
     items: [
       { icon: Package, label: "Productos", route: "productos" },
       { icon: FolderKanban, label: "Categorías", route: "categorias" },
+      { icon: Tags, label: "Marcas", route: "marcas" },
     ],
   },
   {

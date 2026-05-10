@@ -12,6 +12,7 @@ import { ProductTable } from "./products/ProductTable";
 import { ProductFormDialog } from "./products/ProductFormDialog";
 import { ProductDetailDialog } from "./products/ProductDetailDialog";
 import { ProductDeleteDialog } from "./products/ProductDeleteDialog";
+import { ProductMoveStockDialog } from "./products/ProductMoveStockDialog";
 
 export function ProductsModule() {
   const { productos, categorias, marcas, setProductos, currentUser } =
@@ -21,6 +22,7 @@ export function ProductsModule() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isMoveStockOpen, setIsMoveStockOpen] = useState(false);
 
   // Estados de Selección
   const [editingProduct, setEditingProduct] = useState<Producto | null>(null);
@@ -154,8 +156,11 @@ export function ProductsModule() {
                 return;
               }
 
-              setSelectedProduct(p);
               setIsDeleteOpen(true);
+            }}
+            onMoveStock={(p) => {
+              setSelectedProduct(p);
+              setIsMoveStockOpen(true);
             }}
             refreshProducts={refreshProductsLocal}
           />
@@ -200,6 +205,13 @@ export function ProductsModule() {
         product={selectedProduct}
         onConfirm={handleConfirmDelete}
         isSaving={isSaving}
+      />
+
+      <ProductMoveStockDialog
+        open={isMoveStockOpen}
+        onOpenChange={setIsMoveStockOpen}
+        product={selectedProduct}
+        onSuccess={refreshProductsLocal}
       />
     </div>
   );

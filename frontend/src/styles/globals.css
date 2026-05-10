@@ -52,6 +52,11 @@
   --color-input: #fce8f0;
   --color-ring: #7b1347;
 
+  /* Popover and Background colors for components */
+  --color-popover: #ffffff;
+  --color-popover-foreground: #1a1a1a;
+  --color-background: #ffffff;
+
   /* We also override the gray shades often used for borders to ensure they are pink */
   --color-gray-100: #fce8f0;
   --color-gray-200: #fad6e3; /* This is the most common visible border color */

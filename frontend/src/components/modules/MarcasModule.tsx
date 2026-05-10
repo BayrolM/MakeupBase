@@ -1,34 +1,29 @@
 import { useState, useEffect } from "react";
-import { useStore, Categoria } from "../../lib/store";
+import { useStore, Marca } from "../../lib/store";
 import { toast } from "sonner";
-import { categoryService } from "../../services/categoryService";
+import { marcaService } from "../../services/marcaService";
 import { usePagination } from "../../hooks/usePagination";
 import { Pagination } from "../Pagination";
 
 // Sub-componentes
-import { CategoryHeader } from "./categorias/CategoryHeader";
-import { CategoryTable } from "./categorias/CategoryTable";
-import { CategoryFormDialog } from "./categorias/CategoryFormDialog";
-import { CategoryDetailDialog } from "./categorias/CategoryDetailDialog";
-import { CategoryDeleteDialog } from "./categorias/CategoryDeleteDialog";
+import { MarcaHeader } from "./marcas/MarcaHeader";
+import { MarcaTable } from "./marcas/MarcaTable";
+import { MarcaFormDialog } from "./marcas/MarcaFormDialog";
+import { MarcaDetailDialog } from "./marcas/MarcaDetailDialog";
+import { MarcaDeleteDialog } from "./marcas/MarcaDeleteDialog";
 
 // Utils
 import {
-  validateCategoryNombre,
-  getCategoryProductCount,
-} from "../../utils/categoryUtils";
+  validateMarcaNombre,
+} from "../../utils/marcaUtils";
 
-export function CategoriasModule() {
-  const { categorias, productos, setCategorias, currentUser } = useStore();
+export function MarcasModule() {
+  const { marcas, productos, setMarcas, currentUser } = useStore();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [editingCategoria, setEditingCategoria] = useState<Categoria | null>(
-    null,
-  );
-  const [selectedCategoria, setSelectedCategoria] = useState<Categoria | null>(
-    null,
-  );
+  const [editingMarca, setEditingMarca] = useState<Marca | null>(null);
+  const [selectedMarca, setSelectedMarca] = useState<Marca | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [totalItems, setTotalItems] = useState(0);
@@ -52,47 +47,47 @@ export function CategoriasModule() {
 
   const isAdmin = currentUser?.rol === "admin";
 
-  const refreshCategorias = async () => {
+  const refreshMarcas = async () => {
     try {
-      const response = await categoryService.getAll({
+      const response = await marcaService.getAll({
         page: currentPage,
         limit: itemsPerPage,
         q: searchQuery,
       });
 
       setTotalItems(response.total || 0);
-      const mapped = (response.data || []).map((cat: any) => ({
-        id: cat.id_categoria.toString(),
-        nombre: cat.nombre,
-        descripcion: cat.descripcion || "",
-        estado: cat.estado ? ("activo" as const) : ("inactivo" as const),
+      const mapped = (response.data || []).map((m: any) => ({
+        id: m.id_marca.toString(),
+        nombre: m.nombre,
+        descripcion: m.descripcion || "",
+        estado: m.estado ? ("activo" as const) : ("inactivo" as const),
       }));
-      setCategorias(mapped);
+      setMarcas(mapped);
     } catch (e) {
       console.error(e);
-      toast.error("Error al cargar categorías");
+      toast.error("Error al cargar marcas");
     }
   };
 
   useEffect(() => {
-    refreshCategorias();
+    refreshMarcas();
   }, [currentPage, itemsPerPage, searchQuery]);
 
-  const handleOpenDialog = (categoria?: Categoria) => {
+  const handleOpenDialog = (marca?: Marca) => {
     if (!isAdmin) {
       toast.error("Acceso denegado");
       return;
     }
 
-    if (categoria) {
-      setEditingCategoria(categoria);
+    if (marca) {
+      setEditingMarca(marca);
       setFormData({
-        nombre: categoria.nombre,
-        descripcion: categoria.descripcion,
-        estado: categoria.estado,
+        nombre: marca.nombre,
+        descripcion: marca.descripcion,
+        estado: marca.estado,
       });
     } else {
-      setEditingCategoria(null);
+      setEditingMarca(null);
       setFormData({
         nombre: "",
         descripcion: "",
@@ -102,25 +97,21 @@ export function CategoriasModule() {
     setFieldErrors({});
     setIsDialogOpen(true);
   };
-
+  
   const handleFieldChange = (name: string, value: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
-
+    
     if (name === "nombre") {
-      const err = validateCategoryNombre(
-        value,
-        categorias,
-        editingCategoria?.id,
-      );
+      const err = validateMarcaNombre(value, marcas, editingMarca?.id);
       setFieldErrors((prev) => ({ ...prev, nombre: err }));
     }
   };
 
   const handleSave = async () => {
-    const nombreErr = validateCategoryNombre(
+    const nombreErr = validateMarcaNombre(
       formData.nombre,
-      categorias,
-      editingCategoria?.id,
+      marcas,
+      editingMarca?.id,
     );
     if (nombreErr) {
       setFieldErrors({ nombre: nombreErr });
@@ -137,16 +128,16 @@ export function CategoriasModule() {
         estado: formData.estado === "activo",
       };
 
-      if (editingCategoria) {
-        await categoryService.update(Number(editingCategoria.id), payload);
-        toast.success("Categoría actualizada");
+      if (editingMarca) {
+        await marcaService.update(Number(editingMarca.id), payload);
+        toast.success("Marca actualizada");
       } else {
-        await categoryService.create(payload);
-        toast.success("Categoría creada");
+        await marcaService.create(payload);
+        toast.success("Marca registrada");
         setCurrentPage(1);
       }
 
-      await refreshCategorias();
+      await refreshMarcas();
       setIsDialogOpen(false);
     } catch (error: any) {
       toast.error(error.message);
@@ -156,15 +147,15 @@ export function CategoriasModule() {
   };
 
   const handleConfirmDelete = async () => {
-    if (!selectedCategoria) return;
+    if (!selectedMarca) return;
 
     setIsSaving(true);
     try {
-      await categoryService.delete(Number(selectedCategoria.id));
-      await refreshCategorias();
-      toast.success("Categoría eliminada");
+      await marcaService.delete(Number(selectedMarca.id));
+      await refreshMarcas();
+      toast.success("Marca eliminada");
       setIsDeleteDialogOpen(false);
-      setSelectedCategoria(null);
+      setSelectedMarca(null);
     } catch (error: any) {
       toast.error(error.message);
     } finally {
@@ -174,55 +165,53 @@ export function CategoriasModule() {
 
   return (
     <div className="min-h-screen bg-[#f6f3f5]">
-      <CategoryHeader
+      <MarcaHeader
         isAdmin={isAdmin}
         onOpenDialog={() => handleOpenDialog()}
       />
 
-      <CategoryTable
-        categorias={categorias}
+      <MarcaTable
+        marcas={marcas}
         productos={productos}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         setCurrentPage={setCurrentPage}
         isAdmin={isAdmin}
-        onViewDetail={(cat) => {
-          setSelectedCategoria(cat);
+        onViewDetail={(m) => {
+          setSelectedMarca(m);
           setIsDetailDialogOpen(true);
         }}
         onEdit={handleOpenDialog}
-        onDelete={(cat) => {
-          if (cat.estado === "inactivo") {
-            toast.error("Categoría inactiva", {
+        onDelete={(m) => {
+          if (m.estado === "inactivo") {
+            toast.error("Marca inactiva", {
               description:
-                "No se puede eliminar una categoría que ya está inactiva.",
+                "No se puede eliminar una marca que ya está inactiva.",
             });
             return;
           }
-
-          const productCount = getCategoryProductCount(cat.id, productos);
-          if (productCount > 0) {
-            toast.error("No se puede eliminar esta categoría", {
-              description: `Tiene ${productCount} producto(s) asociado(s). Reasigna o elimina los productos primero.`,
-            });
-            return;
-          }
-
-          setSelectedCategoria(cat);
+          // Nota: La validación de productos asociados se maneja en el backend y el utility
+          setSelectedMarca(m);
           setIsDeleteDialogOpen(true);
         }}
         onStatusChange={(id, newStatus) => {
           if (!isAdmin) return;
-          categoryService
+          marcaService
             .update(Number(id), { estado: newStatus === "activo" })
-            .then(refreshCategorias);
+            .then(() => {
+              toast.success(`Marca ${newStatus === "activo" ? "activada" : "desactivada"}`);
+              refreshMarcas();
+            })
+            .catch((err) => {
+              toast.error(err.message || "Error al cambiar el estado de la marca");
+            });
         }}
       />
 
-      <CategoryFormDialog
+      <MarcaFormDialog
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
-        editingCategoria={editingCategoria}
+        editingMarca={editingMarca}
         formData={formData}
         fieldErrors={fieldErrors}
         isSaving={isSaving}
@@ -230,21 +219,21 @@ export function CategoriasModule() {
         onFieldChange={handleFieldChange}
       />
 
-      <CategoryDetailDialog
+      <MarcaDetailDialog
         open={isDetailDialogOpen}
         onOpenChange={setIsDetailDialogOpen}
-        category={selectedCategoria}
+        marca={selectedMarca}
       />
 
-      <CategoryDeleteDialog
+      <MarcaDeleteDialog
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
-        category={selectedCategoria}
+        marca={selectedMarca}
         isSaving={isSaving}
         onConfirm={handleConfirmDelete}
       />
 
-      {categorias.length > 0 && (
+      {marcas.length > 0 && (
         <div className="px-8 pb-8">
           <Pagination
             currentPage={currentPage}

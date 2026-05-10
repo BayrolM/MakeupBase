@@ -125,10 +125,12 @@ export const crearOrdenDirecta = async (id_cliente, id_empleado, datosEnvio) => 
 
   // Usar transacción para asegurar que todo se guarde bien
   return await sql.begin(async (sql) => {
+    const metodoPagoLower = metodo_pago ? metodo_pago.toLowerCase() : 'efectivo';
+
     // 1. Crear el Pedido directamente en estado 'pendiente'
     const [pedido] = await sql`
       INSERT INTO pedidos (id_usuario_cliente, id_usuario_empleado, fecha_pedido, direccion, ciudad, departamento, subtotal, total, metodo_pago, estado)
-      VALUES (${id_cliente}, ${id_empleado}, NOW(), ${direccion}, ${ciudad}, ${departamento || null}, ${total}, ${total}, ${metodo_pago}, 'pendiente')
+      VALUES (${id_cliente}, ${id_empleado}, NOW(), ${direccion}, ${ciudad}, ${departamento || null}, ${total}, ${total}, ${metodoPagoLower}, 'pendiente')
       RETURNING id_pedido
     `;
     const id_pedido = pedido.id_pedido;

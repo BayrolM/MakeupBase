@@ -14,6 +14,7 @@ import { VentasModule } from "./components/modules/VentasModule";
 import { ComprasModule } from "./components/modules/ComprasModule";
 import { PedidosModule } from "./components/modules/PedidosModule";
 import { DevolucionesModule } from "./components/modules/DevolucionesModule";
+import { MarcasModule } from "./components/modules/MarcasModule";
 import { RolesPermisosModule } from "./components/modules/RolesPermisosModule";
 import { PerfilUsuarioModule } from "./components/modules/PerfilUsuarioModule";
 import { LoginPage } from "./components/auth/LoginPage";
@@ -54,6 +55,7 @@ type Route =
   | "clientes-view"
   | "productos"
   | "categorias"
+  | "marcas"
   | "ventas"
   | "pedidos"
   | "devoluciones"
@@ -121,7 +123,7 @@ function AppContent() {
       setCategorias(mappedCategories);
 
       const brandsData = await marcaService.getAll();
-      const mappedBrands = brandsData.map((brand: any) => ({
+      const mappedBrands = brandsData.data.map((brand: any) => ({
         id: brand.id_marca.toString(),
         nombre: brand.nombre,
         descripcion: brand.descripcion || "",
@@ -141,6 +143,7 @@ function AppContent() {
         stock: prod.stock_actual || 0,
         stockMinimo: prod.stock_min || 0,
         stockMaximo: prod.stock_max || 100,
+        stockFisico: prod.stock_fisico || 0,
         imagenUrl: prod.imagen_url || undefined,
         estado: prod.estado ? ("activo" as const) : ("inactivo" as const),
         fechaCreacion: new Date().toISOString(),
@@ -616,6 +619,8 @@ function AppContent() {
         return <ProductsModule />;
       case "categorias":
         return <CategoriasModule />;
+      case "marcas":
+        return <MarcasModule />;
       case "ventas":
         return <VentasModule />;
       case "pedidos":

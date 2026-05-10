@@ -78,6 +78,7 @@ export function PedidosModule() {
     productos: [
       { productoId: "", cantidad: 1, precioUnitario: 0, maxStock: 0 },
     ],
+    metodo_pago: "transferencia",
   });
   const [editFormData, setEditFormData] = useState({
     clienteId: "",
@@ -133,6 +134,9 @@ export function PedidosModule() {
         estado: (u.estado ? "activo" : "inactivo") as Status,
         totalCompras: Number(u.total_ventas) || 0,
         fechaRegistro: u.fecha_registro || new Date().toISOString(),
+        direccion: u.direccion || "",
+        ciudad: u.ciudad || "",
+        departamento: u.departamento || "",
       }));
       setClientes(mappedClientes);
 
@@ -147,6 +151,7 @@ export function PedidosModule() {
         stock: Number(p.stock_actual) || 0,
         stockMinimo: Number(p.stock_min) || 0,
         stockMaximo: Number(p.stock_max) || 100,
+        stockFisico: Number(p.stock_actual) || 0,
         imagenUrl: p.imagen_url || "",
         estado: (p.estado ? "activo" : "inactivo") as Status,
         fechaCreacion: p.fecha_creacion || new Date().toISOString(),
@@ -208,13 +213,29 @@ export function PedidosModule() {
       productos: [
         { productoId: "", cantidad: 1, precioUnitario: 0, maxStock: 0 },
       ],
+      metodo_pago: "transferencia",
     });
     setFieldErrors({});
     setIsDialogOpen(true);
   };
 
   const handleFieldChange = (name: string, value: any) => {
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => {
+      const newState = { ...prev, [name]: value };
+      
+      // Auto-completar datos si se selecciona un cliente
+      if (name === "clienteId" && value) {
+        const selectedClient = clientes.find(c => c.id === value);
+        if (selectedClient) {
+          if (selectedClient.direccion) newState.direccionEnvio = selectedClient.direccion;
+          if (selectedClient.ciudad) newState.ciudad = selectedClient.ciudad;
+          if (selectedClient.departamento) newState.departamento = selectedClient.departamento;
+        }
+      }
+      
+      return newState;
+    });
+
     if (!value) {
       setFieldErrors((prev) => ({ ...prev, [name]: "Requerido" }));
     } else {
@@ -299,7 +320,7 @@ export function PedidosModule() {
         direccion: formData.direccionEnvio,
         ciudad: formData.ciudad || "Bogotá",
         departamento: formData.departamento,
-        metodo_pago: "Transferencia", // Valor predeterminado para pedidos directos
+        metodo_pago: formData.metodo_pago,
         items: formData.productos.map((p) => ({
           id_producto: Number(p.productoId),
           cantidad: p.cantidad,
