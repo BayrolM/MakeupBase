@@ -1,4 +1,4 @@
-import sql from '../config/db.js';
+import sql from "../config/db.js";
 
 /**
  * Crear una nueva orden desde el carrito
@@ -7,17 +7,23 @@ export const crearOrden = async (id_usuario, datosEnvio) => {
   const { direccion, ciudad, metodo_pago, items: providedItems } = datosEnvio;
 
   // Si el frontend envía los items directamente (Flujo de Carrito Local)
-  if (providedItems && Array.isArray(providedItems) && providedItems.length > 0) {
-    console.log(`🛒 Creando orden desde Carrito Local para usuario ${id_usuario}. Items: ${providedItems.length}`);
-    console.log('📦 Items recibidos:', JSON.stringify(providedItems));
-    
+  if (
+    providedItems &&
+    Array.isArray(providedItems) &&
+    providedItems.length > 0
+  ) {
+    console.log(
+      `🛒 Creando orden desde Carrito Local para usuario ${id_usuario}. Items: ${providedItems.length}`,
+    );
+    console.log("📦 Items recibidos:", JSON.stringify(providedItems));
+
     // El id_empleado es null cuando el cliente compra solo
-    return await crearOrdenDirecta(id_usuario, null, { 
-      direccion, 
-      ciudad, 
+    return await crearOrdenDirecta(id_usuario, null, {
+      direccion,
+      ciudad,
       departamento: datosEnvio.departamento,
-      metodo_pago, 
-      items: providedItems 
+      metodo_pago,
+      items: providedItems,
     });
   }
 
@@ -30,7 +36,7 @@ export const crearOrden = async (id_usuario, datosEnvio) => {
   `;
 
   if (carrito.length === 0) {
-    throw new Error('No hay items en el carrito (BD-FALLBACK)');
+    throw new Error("No hay items en el carrito (BD-FALLBACK)");
   }
 
   const id_pedido = carrito[0].id_pedido;
@@ -44,14 +50,14 @@ export const crearOrden = async (id_usuario, datosEnvio) => {
   `;
 
   if (items.length === 0) {
-    throw new Error('El carrito está vacío');
+    throw new Error("El carrito está vacío");
   }
 
   // Verificar stock de todos los productos
   for (const item of items) {
     if (item.stock_actual < item.cantidad) {
       throw new Error(
-        `Stock insuficiente para el producto ID ${item.id_producto}`
+        `Stock insuficiente para el producto ID ${item.id_producto}`,
       );
     }
   }
@@ -75,7 +81,9 @@ export const crearOrden = async (id_usuario, datosEnvio) => {
 
     // 2. Reducir stock (Reserva)
     for (const item of items) {
-       console.log(`📦 Reservando stock para Pedido ID ${id_pedido}: Producto ${item.id_producto}, Cantidad: ${item.cantidad}`);
+      console.log(
+        `📦 Reservando stock para Pedido ID ${id_pedido}: Producto ${item.id_producto}, Cantidad: ${item.cantidad}`,
+      );
       await sql`
         UPDATE productos 
         SET stock_actual = stock_actual - ${item.cantidad}
@@ -86,7 +94,7 @@ export const crearOrden = async (id_usuario, datosEnvio) => {
     return {
       id_pedido,
       total,
-      estado: 'pendiente',
+      estado: "pendiente",
     };
   });
 };
@@ -94,38 +102,48 @@ export const crearOrden = async (id_usuario, datosEnvio) => {
 /**
  * Crear una nueva orden directamente desde el panel (sin pasar por carrito)
  */
-export const crearOrdenDirecta = async (id_cliente, id_empleado, datosEnvio) => {
+export const crearOrdenDirecta = async (
+  id_cliente,
+  id_empleado,
+  datosEnvio,
+) => {
   const { direccion, ciudad, departamento, metodo_pago, items } = datosEnvio;
 
   if (!items || items.length === 0) {
-    throw new Error('El pedido debe contener al menos un producto');
+    throw new Error("El pedido debe contener al menos un producto");
   }
 
   // Verificar stock y calcular subtotales de todos los productos
   let total = 0;
   const itemsValidados = [];
-  
+
   for (const item of items) {
-    const p = await sql`SELECT precio_venta, stock_actual FROM productos WHERE id_producto = ${item.id_producto}`;
-    if (p.length === 0) throw new Error(`Producto ID ${item.id_producto} no encontrado`);
-    
+    const p =
+      await sql`SELECT precio_venta, stock_actual FROM productos WHERE id_producto = ${item.id_producto}`;
+    if (p.length === 0)
+      throw new Error(`Producto ID ${item.id_producto} no encontrado`);
+
     if (p[0].stock_actual < item.cantidad) {
-      throw new Error(`Stock insuficiente para el producto ID ${item.id_producto}`);
+      throw new Error(
+        `Stock insuficiente para el producto ID ${item.id_producto}`,
+      );
     }
-    
+
     const subtotal = p[0].precio_venta * item.cantidad;
     total += subtotal;
-    
+
     itemsValidados.push({
       ...item,
       precio_unitario: p[0].precio_venta,
-      subtotal
+      subtotal,
     });
   }
 
   // Usar transacción para asegurar que todo se guarde bien
   return await sql.begin(async (sql) => {
-    const metodoPagoLower = metodo_pago ? metodo_pago.toLowerCase() : 'efectivo';
+    const metodoPagoLower = metodo_pago
+      ? metodo_pago.toLowerCase()
+      : "efectivo";
 
     // 1. Crear el Pedido directamente en estado 'pendiente'
     const [pedido] = await sql`
@@ -145,7 +163,9 @@ export const crearOrdenDirecta = async (id_cliente, id_empleado, datosEnvio) => 
 
     // 3. Reducir stock (Reserva)
     for (const item of itemsValidados) {
-      console.log(`📦 Reservando stock para Pedido Directo ID ${id_pedido}: Producto ${item.id_producto}, Cantidad: ${item.cantidad}`);
+      console.log(
+        `📦 Reservando stock para Pedido Directo ID ${id_pedido}: Producto ${item.id_producto}, Cantidad: ${item.cantidad}`,
+      );
       await sql`
         UPDATE productos 
         SET stock_actual = stock_actual - ${item.cantidad}
@@ -156,7 +176,7 @@ export const crearOrdenDirecta = async (id_cliente, id_empleado, datosEnvio) => 
     return {
       id_pedido,
       total,
-      estado: 'pendiente',
+      estado: "pendiente",
     };
   });
 };
@@ -167,21 +187,23 @@ export const crearOrdenDirecta = async (id_cliente, id_empleado, datosEnvio) => 
  * Si es usuario normal, solo sus órdenes
  */
 export const obtenerOrdenes = async (id_usuario, rol = null, options = {}) => {
-  const { 
-    estado = null, 
-    q = null, 
-    page = 1, 
-    limit = 10 
-  } = options;
-  
+  const { estado = null, q = null, page = 1, limit = 10 } = options;
+
   const offset = (page - 1) * limit;
 
-  console.log(`📦 obtenerOrdenes - Usuario: ${id_usuario}, Rol: ${rol}, Búsqueda: ${q}`);
+  console.log(
+    `📦 obtenerOrdenes - Usuario: ${id_usuario}, Rol: ${rol}, Búsqueda: ${q}`,
+  );
 
   // Fragmentos SQL dinámicos
   const estadoFilter = estado ? sql`AND p.estado = ${estado}` : sql``;
-  const searchFilter = q ? sql`AND (u.nombre ILIKE ${'%' + q + '%'} OR u.apellido ILIKE ${'%' + q + '%'} OR p.id_pedido::text ILIKE ${'%' + q + '%'})` : sql``;
-  const userFilter = rol === 1 ? sql`WHERE p.estado != 'carrito'` : sql`WHERE p.id_usuario_cliente = ${id_usuario} AND p.estado != 'carrito'`;
+  const searchFilter = q
+    ? sql`AND (u.nombre ILIKE ${"%" + q + "%"} OR u.apellido ILIKE ${"%" + q + "%"} OR p.id_pedido::text ILIKE ${"%" + q + "%"})`
+    : sql``;
+  const userFilter =
+    rol === 1
+      ? sql`WHERE p.estado != 'carrito'`
+      : sql`WHERE p.id_usuario_cliente = ${id_usuario} AND p.estado != 'carrito'`;
 
   // 1. Contar total para paginación
   const countResult = await sql`
@@ -226,7 +248,9 @@ export const obtenerOrdenes = async (id_usuario, rol = null, options = {}) => {
     LIMIT ${limit} OFFSET ${offset}
   `;
 
-  console.log(`✅ Devolviendo página ${page} de órdenes (${data.length} de ${total})`);
+  console.log(
+    `✅ Devolviendo página ${page} de órdenes (${data.length} de ${total})`,
+  );
   return { total, page, limit, data };
 };
 
@@ -238,17 +262,17 @@ export const obtenerOrdenes = async (id_usuario, rol = null, options = {}) => {
 export const obtenerDetalleOrden = async (
   id_usuario,
   id_pedido,
-  rol = null
+  rol = null,
 ) => {
   console.log(
-    `📝 obtenerDetalleOrden - Usuario: ${id_usuario}, Pedido: ${id_pedido}, Rol: ${rol}`
+    `📝 obtenerDetalleOrden - Usuario: ${id_usuario}, Pedido: ${id_pedido}, Rol: ${rol}`,
   );
 
   let orden;
 
   // Si es admin, puede ver cualquier orden
   if (rol === 1) {
-    console.log('👑 Admin - Buscando orden sin restricción de usuario');
+    console.log("👑 Admin - Buscando orden sin restricción de usuario");
     orden = await sql`
       SELECT 
         p.id_pedido,
@@ -281,7 +305,7 @@ export const obtenerDetalleOrden = async (
     `;
   } else {
     // Usuario normal solo puede ver sus propias órdenes
-    console.log('👤 Usuario normal - Verificando que la orden le pertenece');
+    console.log("👤 Usuario normal - Verificando que la orden le pertenece");
     orden = await sql`
       SELECT 
         p.id_pedido,
@@ -309,7 +333,7 @@ export const obtenerDetalleOrden = async (
   }
 
   if (orden.length === 0) {
-    throw new Error('Orden no encontrada');
+    throw new Error("Orden no encontrada");
   }
 
   // Obtener items de la orden
@@ -337,16 +361,27 @@ export const obtenerDetalleOrden = async (
 /**
  * Actualizar el estado de un pedido
  */
-export const actualizarEstadoPedido = async (id_pedido, estado, id_usuario_empleado, motivo = null, shippingData = null) => {
-  const empId = id_usuario_empleado && !isNaN(id_usuario_empleado) ? parseInt(id_usuario_empleado, 10) : null;
-  
+export const actualizarEstadoPedido = async (
+  id_pedido,
+  estado,
+  id_usuario_empleado,
+  motivo = null,
+  shippingData = null,
+) => {
+  const empId =
+    id_usuario_empleado && !isNaN(id_usuario_empleado)
+      ? parseInt(id_usuario_empleado, 10)
+      : null;
+
   return await sql.begin(async (sql) => {
     // 1. Obtener datos del pedido
-    const [pedido] = await sql`SELECT * FROM pedidos WHERE id_pedido = ${id_pedido}`;
-    if (!pedido) throw new Error('Pedido no encontrado');
-      // 2. Si es cancelación, DEVOLVEMOS el stock reservado
-    if (estado === 'cancelado') {
-      const items = await sql`SELECT id_producto, cantidad FROM detalle_pedido WHERE id_pedido = ${id_pedido}`;
+    const [pedido] =
+      await sql`SELECT * FROM pedidos WHERE id_pedido = ${id_pedido}`;
+    if (!pedido) throw new Error("Pedido no encontrado");
+    // 2. Si es cancelación, DEVOLVEMOS el stock reservado
+    if (estado === "cancelado") {
+      const items =
+        await sql`SELECT id_producto, cantidad FROM detalle_pedido WHERE id_pedido = ${id_pedido}`;
       for (const item of items) {
         await sql`
           UPDATE productos 
@@ -359,13 +394,16 @@ export const actualizarEstadoPedido = async (id_pedido, estado, id_usuario_emple
     }
 
     // 3. Si el nuevo estado es 'entregado', crear la venta si no existe Y el pedido ya está pago
-    if (estado === 'entregado') {
+    if (estado === "entregado") {
       if (!pedido.pago_confirmado) {
-        throw new Error('No se puede marcar como Entregado un pedido que no ha sido marcado como Pagado.');
+        throw new Error(
+          "No se puede marcar como Entregado un pedido que no ha sido marcado como Pagado.",
+        );
       }
 
-      const ventaExistente = await sql`SELECT id_venta FROM ventas WHERE id_pedido = ${id_pedido} AND estado = true`;
-      
+      const ventaExistente =
+        await sql`SELECT id_venta FROM ventas WHERE id_pedido = ${id_pedido} AND estado = true`;
+
       if (ventaExistente.length === 0) {
         // Crear la venta
         const [nuevaVenta] = await sql`
@@ -379,7 +417,8 @@ export const actualizarEstadoPedido = async (id_pedido, estado, id_usuario_emple
         `;
 
         // Copiar detalles del pedido a detalles de venta (EL STOCK YA SE REDUJO AL CREAR EL PEDIDO)
-        const items = await sql`SELECT * FROM detalle_pedido WHERE id_pedido = ${id_pedido}`;
+        const items =
+          await sql`SELECT * FROM detalle_pedido WHERE id_pedido = ${id_pedido}`;
         for (const item of items) {
           // Insertar detalle de venta
           await sql`
@@ -392,15 +431,15 @@ export const actualizarEstadoPedido = async (id_pedido, estado, id_usuario_emple
 
     // 4. Actualizar el estado del pedido, el empleado que lo procesa y shipping info si aplica
     const finalEmpId = empId || pedido.id_usuario_empleado || null;
-    
+
     // Construir el objeto de actualización para evitar errores de fragmentos SQL
     const updateData = {
       estado,
       motivo_anulacion: motivo,
-      id_usuario_empleado: finalEmpId
+      id_usuario_empleado: finalEmpId,
     };
 
-    if (estado === 'enviado' && shippingData) {
+    if (estado === "enviado" && shippingData) {
       updateData.transportadora = shippingData.transportadora;
       updateData.numero_guia = shippingData.numero_guia;
       updateData.tracking_link = shippingData.tracking_link;
@@ -414,7 +453,7 @@ export const actualizarEstadoPedido = async (id_pedido, estado, id_usuario_emple
       WHERE id_pedido = ${id_pedido}
       RETURNING *
     `;
-      return updatedPedido;
+    return updatedPedido;
   });
 };
 
@@ -425,17 +464,19 @@ export const actualizarEstadoPedido = async (id_pedido, estado, id_usuario_emple
 export const cancelarOrden = async (id_pedido, motivo) => {
   return await sql.begin(async (sql) => {
     // 1. Verificar que el pedido existe y está en estado pendiente
-    const [pedido] = await sql`SELECT * FROM pedidos WHERE id_pedido = ${id_pedido}`;
+    const [pedido] =
+      await sql`SELECT * FROM pedidos WHERE id_pedido = ${id_pedido}`;
     if (!pedido) {
-      throw new Error('Pedido no encontrado');
+      throw new Error("Pedido no encontrado");
     }
 
-    if (pedido.estado !== 'pendiente') {
-      throw new Error('Solo se pueden cancelar pedidos pendientes');
+    if (pedido.estado !== "pendiente") {
+      throw new Error("Solo se pueden cancelar pedidos pendientes");
     }
 
     // 3. Devolver el stock reservado
-    const items = await sql`SELECT id_producto, cantidad FROM detalle_pedido WHERE id_pedido = ${id_pedido}`;
+    const items =
+      await sql`SELECT id_producto, cantidad FROM detalle_pedido WHERE id_pedido = ${id_pedido}`;
     for (const item of items) {
       await sql`
         UPDATE productos 
@@ -463,9 +504,16 @@ export const cancelarOrden = async (id_pedido, motivo) => {
 /**
  * Confirmar o desconfirmar el pago de un pedido
  */
-export const confirmarPago = async (id_pedido, pago_confirmado, id_usuario_empleado) => {
-  const empId = id_usuario_empleado && !isNaN(id_usuario_empleado) ? parseInt(id_usuario_empleado, 10) : null;
-  
+export const confirmarPago = async (
+  id_pedido,
+  pago_confirmado,
+  id_usuario_empleado,
+) => {
+  const empId =
+    id_usuario_empleado && !isNaN(id_usuario_empleado)
+      ? parseInt(id_usuario_empleado, 10)
+      : null;
+
   const [updatedPedido] = await sql`
     UPDATE pedidos 
     SET pago_confirmado = ${pago_confirmado},
@@ -473,7 +521,7 @@ export const confirmarPago = async (id_pedido, pago_confirmado, id_usuario_emple
     WHERE id_pedido = ${id_pedido}
     RETURNING *
   `;
-  if (!updatedPedido) throw new Error('Pedido no encontrado');
+  if (!updatedPedido) throw new Error("Pedido no encontrado");
   return updatedPedido;
 };
 
@@ -485,7 +533,7 @@ export const actualizarComprobante = async (id_pedido, url) => {
   RETURNING *
   `;
   return updatedPedido;
-}
+};
 
 /**
  * Actualizar datos de un pedido (dirección, cliente, productos)
@@ -494,34 +542,48 @@ export const actualizarComprobante = async (id_pedido, url) => {
  */
 export const actualizarPedido = async (id_pedido, datos) => {
   const { direccion, ciudad, id_cliente, items } = datos;
-  const [pedido] = await sql`SELECT * FROM pedidos WHERE id_pedido = ${id_pedido}`;
-  if (!pedido) throw new Error('Pedido no encontrado');
+  const [pedido] =
+    await sql`SELECT * FROM pedidos WHERE id_pedido = ${id_pedido}`;
+  if (!pedido) throw new Error("Pedido no encontrado");
 
-  const estadosEditables = ['pendiente', 'preparado', 'procesando'];
+  const estadosEditables = ["pendiente", "preparado", "procesando"];
   if (!estadosEditables.includes(pedido.estado)) {
-    throw new Error(`Solo se puede editar un pedido en estado pendiente, preparado o procesando. Estado actual: ${pedido.estado}`);
+    throw new Error(
+      `Solo se puede editar un pedido en estado pendiente, preparado o procesando. Estado actual: ${pedido.estado}`,
+    );
   }
 
   return await sql.begin(async (sql) => {
     // Actualizar dirección siempre que se envíe
-    if (direccion !== undefined || ciudad !== undefined || datos.departamento !== undefined) {
+    if (
+      direccion !== undefined ||
+      ciudad !== undefined ||
+      datos.departamento !== undefined
+    ) {
       const updateObj = {};
       if (direccion !== undefined) updateObj.direccion = direccion;
       if (ciudad !== undefined) updateObj.ciudad = ciudad;
-      if (datos.departamento !== undefined) updateObj.departamento = datos.departamento;
-      
+      if (datos.departamento !== undefined)
+        updateObj.departamento = datos.departamento;
+
       await sql`UPDATE pedidos SET ${sql(updateObj)} WHERE id_pedido = ${id_pedido}`;
     }
 
     // Cambiar cliente (solo pendiente)
-    if (id_cliente !== undefined && pedido.estado === 'pendiente') {
+    if (id_cliente !== undefined && pedido.estado === "pendiente") {
       await sql`UPDATE pedidos SET id_usuario_cliente = ${id_cliente} WHERE id_pedido = ${id_pedido}`;
     }
 
     // Cambiar productos (solo pendiente)
-    if (items && Array.isArray(items) && items.length > 0 && pedido.estado === 'pendiente') {
+    if (
+      items &&
+      Array.isArray(items) &&
+      items.length > 0 &&
+      pedido.estado === "pendiente"
+    ) {
       // 1. Devolver stock de los items actuales
-      const itemsActuales = await sql`SELECT id_producto, cantidad FROM detalle_pedido WHERE id_pedido = ${id_pedido}`;
+      const itemsActuales =
+        await sql`SELECT id_producto, cantidad FROM detalle_pedido WHERE id_pedido = ${id_pedido}`;
       for (const item of itemsActuales) {
         await sql`UPDATE productos SET stock_actual = stock_actual + ${item.cantidad} WHERE id_producto = ${item.id_producto}`;
       }
@@ -532,9 +594,14 @@ export const actualizarPedido = async (id_pedido, datos) => {
       // 3. Insertar nuevos items y reservar stock
       let nuevoTotal = 0;
       for (const item of items) {
-        const [p] = await sql`SELECT precio_venta, stock_actual FROM productos WHERE id_producto = ${item.id_producto}`;
-        if (!p) throw new Error(`Producto ID ${item.id_producto} no encontrado`);
-        if (p.stock_actual < item.cantidad) throw new Error(`Stock insuficiente para el producto ID ${item.id_producto}`);
+        const [p] =
+          await sql`SELECT precio_venta, stock_actual FROM productos WHERE id_producto = ${item.id_producto}`;
+        if (!p)
+          throw new Error(`Producto ID ${item.id_producto} no encontrado`);
+        if (p.stock_actual < item.cantidad)
+          throw new Error(
+            `Stock insuficiente para el producto ID ${item.id_producto}`,
+          );
 
         const subtotal = p.precio_venta * item.cantidad;
         nuevoTotal += subtotal;
@@ -550,7 +617,8 @@ export const actualizarPedido = async (id_pedido, datos) => {
       await sql`UPDATE pedidos SET total = ${nuevoTotal} WHERE id_pedido = ${id_pedido}`;
     }
 
-    const [updated] = await sql`SELECT * FROM pedidos WHERE id_pedido = ${id_pedido}`;
+    const [updated] =
+      await sql`SELECT * FROM pedidos WHERE id_pedido = ${id_pedido}`;
     return updated;
   });
 };
@@ -559,17 +627,22 @@ export const actualizarPedido = async (id_pedido, datos) => {
  * Cancelar pedido por el cliente — solo si le pertenece y está en 'pendiente'
  */
 export const cancelarOrdenCliente = async (id_pedido, id_usuario) => {
-  const [pedido] = await sql`SELECT * FROM pedidos WHERE id_pedido = ${id_pedido}`;
-  if (!pedido) throw new Error('Pedido no encontrado');
-  if (pedido.id_usuario_cliente !== id_usuario) throw new Error('No tienes permiso para cancelar este pedido');
-  if (pedido.estado !== 'pendiente') throw new Error('Solo puedes cancelar pedidos en estado pendiente');
+  const [pedido] =
+    await sql`SELECT * FROM pedidos WHERE id_pedido = ${id_pedido}`;
+  if (!pedido) throw new Error("Pedido no encontrado");
+  if (pedido.id_usuario_cliente !== id_usuario)
+    throw new Error("No tienes permiso para cancelar este pedido");
+  if (pedido.estado !== "pendiente")
+    throw new Error("Solo puedes cancelar pedidos en estado pendiente");
 
   return await sql.begin(async (sql) => {
-    const items = await sql`SELECT id_producto, cantidad FROM detalle_pedido WHERE id_pedido = ${id_pedido}`;
+    const items =
+      await sql`SELECT id_producto, cantidad FROM detalle_pedido WHERE id_pedido = ${id_pedido}`;
     for (const item of items) {
       await sql`UPDATE productos SET stock_actual = stock_actual + ${item.cantidad} WHERE id_producto = ${item.id_producto}`;
     }
-    const [updated] = await sql`UPDATE pedidos SET estado = 'cancelado', motivo_anulacion = 'Cancelado por el cliente' WHERE id_pedido = ${id_pedido} RETURNING *`;
+    const [updated] =
+      await sql`UPDATE pedidos SET estado = 'cancelado', motivo_anulacion = 'Cancelado por el cliente' WHERE id_pedido = ${id_pedido} RETURNING *`;
     return updated;
   });
 };
@@ -577,17 +650,27 @@ export const cancelarOrdenCliente = async (id_pedido, id_usuario) => {
 /**
  * Actualizar dirección de un pedido por el cliente — solo si le pertenece y está en 'pendiente'
  */
-export const actualizarDireccionCliente = async (id_pedido, id_usuario, { direccion, ciudad, departamento }) => {
-  const [pedido] = await sql`SELECT * FROM pedidos WHERE id_pedido = ${id_pedido}`;
-  if (!pedido) throw new Error('Pedido no encontrado');
-  if (pedido.id_usuario_cliente !== id_usuario) throw new Error('No tienes permiso para editar este pedido');
-  if (!['pendiente', 'preparado'].includes(pedido.estado)) throw new Error('Solo puedes cambiar la dirección si el pedido está en pendiente o preparado');
+export const actualizarDireccionCliente = async (
+  id_pedido,
+  id_usuario,
+  { direccion, ciudad, departamento },
+) => {
+  const [pedido] =
+    await sql`SELECT * FROM pedidos WHERE id_pedido = ${id_pedido}`;
+  if (!pedido) throw new Error("Pedido no encontrado");
+  if (pedido.id_usuario_cliente !== id_usuario)
+    throw new Error("No tienes permiso para editar este pedido");
+  if (!["pendiente", "preparado"].includes(pedido.estado))
+    throw new Error(
+      "Solo puedes cambiar la dirección si el pedido está en pendiente o preparado",
+    );
 
   const updateObj = {};
   if (direccion) updateObj.direccion = direccion;
   if (ciudad) updateObj.ciudad = ciudad;
   if (departamento) updateObj.departamento = departamento;
 
-  const [updated] = await sql`UPDATE pedidos SET ${sql(updateObj)} WHERE id_pedido = ${id_pedido} RETURNING *`;
+  const [updated] =
+    await sql`UPDATE pedidos SET ${sql(updateObj)} WHERE id_pedido = ${id_pedido} RETURNING *`;
   return updated;
 };

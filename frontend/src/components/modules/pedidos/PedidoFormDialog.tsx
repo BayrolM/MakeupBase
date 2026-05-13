@@ -15,8 +15,8 @@ import {
 } from "../../ui/dialog";
 import { Button } from "../../ui/button";
 import { Input } from "../../ui/input";
-import { AsyncClientSelect } from "../../AsyncClientSelect";
-import { AsyncProductSelect } from "../../AsyncProductSelect";
+import { AsyncClientSelect } from "../../forms/AsyncClientSelect";
+import { AsyncProductSelect } from "../../forms/AsyncProductSelect";
 import {
   Select,
   SelectContent,

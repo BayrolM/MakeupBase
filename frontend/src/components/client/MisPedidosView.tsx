@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useStore } from "../../lib/store";
-import { StatusBadge } from "../StatusBadge";
+import { StatusBadge } from "../common/StatusBadge";
 import {
   Dialog,
   DialogContent,

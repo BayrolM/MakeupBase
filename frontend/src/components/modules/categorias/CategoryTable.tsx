@@ -17,7 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "../../ui/table";
-import { StatusSwitch } from "../../StatusSwitch";
+import { StatusSwitch } from "../../common/StatusSwitch";
 import { Categoria, Producto } from "../../../lib/store";
 import { getCategoryProductCount } from "../../../utils/categoryUtils";
 

@@ -12,7 +12,7 @@ import {
 } from "../../ui/dialog";
 import { Button } from "../../ui/button";
 import { Textarea } from "../../ui/textarea";
-import { GenericCombobox } from "../../GenericCombobox";
+import { GenericCombobox } from "../../forms/GenericCombobox";
 import { OrderStatus } from "../../../lib/store";
 
 interface PedidoStatusDialogProps {
@@ -91,17 +91,26 @@ export function PedidoStatusDialog({
           </div>
 
           {newStatus === "cancelado" && (
-            <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
-              <label className="text-[11px] font-bold text-gray-400 uppercase flex items-center gap-2">
-                <AlertCircle className="w-3.5 h-3.5 text-rose-500" /> Motivo de Cancelación
-              </label>
-              <Textarea
-                placeholder="Indica brevemente por qué se canceló el pedido..."
-                value={motivoAnulacion}
-                onChange={(e) => setMotivoAnulacion(e.target.value)}
-                className="rounded-xl border-gray-200 focus:ring-[#c47b96]/20 focus:border-[#c47b96] resize-none min-h-[100px]"
-                disabled={isSaving}
-              />
+            <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="bg-red-50 rounded-xl p-4 flex items-start gap-3 border border-red-100/50">
+                <AlertCircle className="text-red-500 w-4.5 h-4.5 shrink-0 mt-0.5" />
+                <p className="text-sm text-gray-700 leading-relaxed font-medium">
+                  ¿Estás seguro de cancelar este pedido? Esta acción devolverá el stock al inventario y es irreversible.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[11px] font-bold text-gray-400 uppercase flex items-center gap-2">
+                  <AlertCircle className="w-3.5 h-3.5 text-rose-500" /> Motivo de Cancelación
+                </label>
+                <Textarea
+                  placeholder="Indica brevemente por qué se canceló el pedido..."
+                  value={motivoAnulacion}
+                  onChange={(e) => setMotivoAnulacion(e.target.value)}
+                  className="rounded-xl border-gray-200 focus:ring-[#c47b96]/20 focus:border-[#c47b96] resize-none min-h-[100px]"
+                  disabled={isSaving}
+                />
+              </div>
             </div>
           )}
 
@@ -116,11 +125,11 @@ export function PedidoStatusDialog({
         </div>
 
         {/* Footer */}
-        <div className="flex gap-3 px-6 pb-6 pt-2 bg-white">
+        <div className="flex justify-end gap-3 px-6 pb-6 pt-2 bg-white border-t border-gray-100">
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
-            className="border-gray-200 text-gray-600 hover:bg-gray-50 rounded-xl h-11 font-bold text-sm flex-1"
+            className="border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg px-4 h-10 text-sm"
             disabled={isSaving}
           >
             Cancelar
@@ -128,8 +137,10 @@ export function PedidoStatusDialog({
           <Button
             onClick={onUpdateStatus}
             disabled={isSaving}
-            className="rounded-xl font-bold h-11 text-sm border-0 shadow-lg shadow-[#c47b96]/20 transition-all hover:scale-[1.02] active:scale-95 text-white flex-1"
-            style={{ backgroundColor: "#c47b96" }}
+            className="rounded-lg font-semibold h-10 text-sm shadow-lg transition-all text-white px-4"
+            style={{ 
+              backgroundColor: newStatus === "cancelado" ? "#ef4444" : "#c47b96" 
+            }}
           >
             {isSaving ? "Procesando..." : "Confirmar Cambio"}
           </Button>

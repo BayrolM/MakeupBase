@@ -19,7 +19,7 @@ import {
   Trash2,
   ArrowRightLeft,
 } from "lucide-react";
-import { StatusSwitch } from "../../StatusSwitch";
+import { StatusSwitch } from "../../common/StatusSwitch";
 import { Producto, Categoria } from "../../../lib/store";
 import { getStockStatus, formatCurrency } from "../../../utils/productUtils";
 import { productService } from "../../../services/productService";

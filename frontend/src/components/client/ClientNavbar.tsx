@@ -6,20 +6,15 @@ import {
   User,
   LogOut,
   ChevronDown,
-  LogOut as LogoutIcon,
   ShoppingCart,
   Trash2,
   AlertTriangle,
   Loader2,
-  AlertCircle,
-  X,
 } from "lucide-react";
-import { LogoutConfirmDialog } from "../LogoutConfirmDialog";
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from "../ui/dialog";
+import { LogoutConfirmDialog } from "../layout/LogoutConfirmDialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "../ui/sheet";
 import { productService } from "../../services/productService";
 import { toast } from "sonner";
-import { Button } from "../ui/button";
 
 interface ClientNavbarProps {
   currentRoute: string;

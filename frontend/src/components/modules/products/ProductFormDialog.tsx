@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -9,7 +9,7 @@ import { Input } from "../../ui/input";
 import { Label } from "../../ui/label";
 
 import { Textarea } from "../../ui/textarea";
-import { GenericCombobox } from "../../GenericCombobox";
+import { GenericCombobox } from "../../forms/GenericCombobox";
 import {
   X,
   Pencil,
@@ -23,9 +23,9 @@ import {
   Loader2,
   Package,
 } from "lucide-react";
-import { Image as ImageIcon, AlertCircle } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { toast } from "sonner";
-import { uploadToSupabase } from "../../supabaseUpload";
+import { uploadToSupabase } from "../../../lib/supabaseUpload";
 import { Categoria, Marca, Producto, useStore } from "../../../lib/store";
 
 import { validateProductField } from "../../../utils/productUtils";
@@ -48,24 +48,8 @@ export function ProductFormDialog({
   marcas,
   refreshProducts,
 }: ProductFormDialogProps) {
-  const { productos, compras } = useStore();
-  const hasBeenPurchased = useMemo(() => {
-    if (!editingProduct) return false;
+  const { productos } = useStore();
 
-    // Check if it exists in any confirmed purchase in the store
-    const inPurchases = compras.some(
-      (c) =>
-        c.estado === "confirmada" &&
-        c.productos.some((p) => p.productoId === editingProduct.id),
-    );
-
-    // Fallback: if it already has stock or price, it's considered "activated"
-    const hasData =
-      Number(editingProduct.stock) > 0 ||
-      Number(editingProduct.precioCompra) > 0;
-
-    return inPurchases || hasData;
-  }, [editingProduct, compras]);
 
   const [formData, setFormData] = useState({
     nombre: "",

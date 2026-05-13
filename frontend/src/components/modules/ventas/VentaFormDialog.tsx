@@ -13,11 +13,12 @@ import {
   DialogTitle,
   DialogDescription,
 } from "../../ui/dialog";
+
 import { Button } from "../../ui/button";
 import { Input } from "../../ui/input";
-import { AsyncClientSelect } from "../../AsyncClientSelect";
-import { AsyncProductSelect } from "../../AsyncProductSelect";
-import { GenericCombobox } from "../../GenericCombobox";
+import { AsyncClientSelect } from "../../forms/AsyncClientSelect";
+import { AsyncProductSelect } from "../../forms/AsyncProductSelect";
+import { GenericCombobox } from "../../forms/GenericCombobox";
 import { formatCurrency } from "../../../utils/ventaUtils";
 
 interface VentaFormDialogProps {

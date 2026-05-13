@@ -4,8 +4,8 @@ import {
   DialogContent,
   DialogTitle,
   DialogDescription,
-} from "./ui/dialog";
-import { Button } from "./ui/button";
+} from "../ui/dialog";
+import { Button } from "../ui/button";
 
 interface LogoutConfirmDialogProps {
   open: boolean;

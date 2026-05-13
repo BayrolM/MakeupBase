@@ -20,7 +20,7 @@ import {
 import { orderService } from "../../services/orderService";
 import { productService } from "../../services/productService";
 import { toast } from "sonner";
-import { uploadToSupabase } from "../supabaseUpload";
+import { uploadToSupabase } from "../../lib/supabaseUpload";
 import { userService } from "../../services/userService";
 
 /* ── Luxury CSS variable helpers ── */

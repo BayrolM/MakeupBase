@@ -28,7 +28,7 @@ interface VentaTableProps {
   onSearchChange: (query: string) => void;
   onDownloadPDF: (venta: any) => void;
   onViewDetail: (venta: any) => void;
-  onAnnulClick: (ventaId: string) => void;
+  onAnnulClick: (venta: any) => void;
 }
 
 export function VentaTable({
@@ -208,7 +208,7 @@ export function VentaTable({
                       </button>
                       {!isAnulada && (
                         <button
-                          onClick={() => onAnnulClick(venta.id)}
+                          onClick={() => onAnnulClick(venta)}
                           title="Anular venta"
                           className="h-8 w-8 flex items-center justify-center rounded-lg transition-all duration-150 cursor-pointer text-gray-400 hover:bg-rose-50 hover:text-rose-600"
                         >

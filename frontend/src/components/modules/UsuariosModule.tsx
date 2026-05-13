@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useStore, TipoDocumento, Status, UserRole } from "../../lib/store";
-import { Pagination } from "../Pagination";
+import { Pagination } from "../common/Pagination";
 import { toast } from "sonner";
 import { userService } from "../../services/userService";
 import { getRoles } from "../../services/roleService";
@@ -103,25 +103,48 @@ export function UsuariosModule() {
   }, [searchQuery]);
 
   const handleFieldChange = (name: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    
-    if (name === "passwordHash" || name === "confirmPassword") {
-      setFieldErrors((prev) => ({ ...prev, confirmPassword: "" }));
+    let finalValue = value;
+
+    // Sanitization (Live cleaning)
+    if (name === "numeroDocumento") {
+      finalValue = value.replace(/[^a-zA-Z0-9]/g, "");
+    } else if (name === "telefono") {
+      finalValue = value.replace(/[^0-9]/g, "");
     }
 
-    const error = validateField(name, value, editingUser);
+    setFormData((prev) => ({ ...prev, [name]: finalValue }));
+
+    // Validation
+    const error = validateField(name, finalValue, editingUser);
 
     if (name === "email" && !error) {
       const emailExists = users.some(
         (u) =>
-          u.email.toLowerCase() === value.trim().toLowerCase() &&
+          u.email.toLowerCase() === finalValue.trim().toLowerCase() &&
           (!editingUser || u.id !== editingUser.id),
       );
       setFieldErrors((prev) => ({
         ...prev,
         [name]: emailExists ? "Este email ya está registrado" : "",
       }));
-    } else if (name !== "confirmPassword") {
+    } else if (name === "passwordHash") {
+      setFieldErrors((prev) => ({ ...prev, [name]: error }));
+      // Re-validate confirm password if password changes
+      if (formData.confirmPassword) {
+        setFieldErrors((prev) => ({
+          ...prev,
+          confirmPassword:
+            finalValue !== formData.confirmPassword
+              ? "Las contraseñas no coinciden"
+              : "",
+        }));
+      }
+    } else if (name === "confirmPassword") {
+      setFieldErrors((prev) => ({
+        ...prev,
+        [name]: finalValue !== formData.passwordHash ? "Las contraseñas no coinciden" : "",
+      }));
+    } else {
       setFieldErrors((prev) => ({ ...prev, [name]: error }));
     }
   };

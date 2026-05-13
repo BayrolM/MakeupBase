@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Bell, ShoppingCart, Undo2, AlertTriangle } from "lucide-react";
-import { useStore } from "../lib/store";
+import { useStore } from "../../lib/store";
 import { toast } from "sonner";
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-import { Badge } from "./ui/badge";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { Badge } from "../ui/badge";
 
 export function NotificationBell() {
   const { notificationSummary, fetchNotificationSummary, currentUser, userType } = useStore();

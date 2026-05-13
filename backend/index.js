@@ -4,7 +4,6 @@ import cors from "cors";
 import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/users.routes.js";
 import productsRoutes from "./routes/productos.routes.js";
-import cartRoutes from "./routes/cart.routes.js";
 import ordersRoutes from "./routes/orders.routes.js";
 import reportsRoutes from "./routes/reports.routes.js";
 import rolesRoutes from "./routes/roles.routes.js";
@@ -15,26 +14,10 @@ import comprasRoutes from "./routes/compras.routes.js";
 import ventasRoutes from "./routes/ventas.routes.js";
 import devolucionesRoutes from "./routes/devoluciones.routes.js";
 import notificationsRoutes from "./routes/notifications.routes.js";
-import sql from "./config/db.js";
 
 dotenv.config();
 
 const app = express();
-
-// ── Migración automática: agregar created_at a roles si no existe ──────────
-async function runMigrations() {
-  try {
-    await sql`
-      ALTER TABLE roles 
-      ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW()
-    `;
-    console.log('✅ Migración roles.created_at aplicada (o ya existía)');
-  } catch (err) {
-    console.warn('⚠️  Migración roles.created_at omitida:', err.message);
-  }
-}
-runMigrations();
-// ──────────────────────────────────────────────────────────────────────────
 
 // Configuración de CORS
 const corsOptions = {
@@ -51,7 +34,6 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/products", productsRoutes);
-app.use("/api/cart", cartRoutes);
 app.use("/api/orders", ordersRoutes);
 app.use("/api/reports", reportsRoutes);
 app.use("/api/roles", rolesRoutes);
@@ -72,116 +54,12 @@ app.get("/", (req, res) => {
   });
 });
 
-// Ruta específica para probar la conexión a la BD
-app.get("/test-db", async (req, res) => {
-  try {
-    const result = await sql`SELECT NOW() as now`;
-    res.json({
-      message: "Conexión exitosa a PostgreSQL",
-      time: result[0].now,
-    });
-  } catch (error) {
-    console.error(error);
-    res
-      .status(500)
-      .json({ message: "Error al conectar a la BD", error: error.message });
-  }
-});
-
-// Ruta de debug - Ver tablas
-app.get("/debug/tables", async (req, res) => {
-  try {
-    const permisosData = await sql`SELECT * FROM permisos`;
-    res.json(permisosData);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.post("/debug/seed-permisos", async (req, res) => {
-  try {
-    const modulos = ['usuarios', 'productos', 'ventas', 'compras', 'pedidos', 'clientes', 'proveedores', 'devoluciones', 'configuracion'];
-    const tipos = ['ver', 'crear', 'editar', 'eliminar'];
-    let count = 0;
-    
-    for (const mod of modulos) {
-      for (const t of tipos) {
-        const nombreUnico = `${t}_${mod}`;
-        // Verificar si ya existe
-        const existe = await sql`SELECT id_permiso FROM permisos WHERE nombre = ${nombreUnico}`;
-        if (existe.length === 0) {
-          await sql`
-            INSERT INTO permisos (nombre, descripcion, modulo, estado) 
-            VALUES (${nombreUnico}, ${'Permiso para ' + t + ' en ' + mod}, ${mod}, true)
-          `;
-          count++;
-        }
-      }
-    }
-    res.json({ message: `Seeded ${count} permissions` });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Ruta de debug - Ver estructura de usuarios
-app.get("/debug/usuarios-schema", async (req, res) => {
-  try {
-    const result = await sql`SELECT * FROM usuarios LIMIT 1`;
-    if (result.length > 0) {
-      const columns = Object.keys(result[0]);
-      res.json({
-        message: "Estructura de tabla usuarios",
-        columns: columns,
-        firstUser: result[0],
-      });
-    } else {
-      res.json({ message: "No hay usuarios en la BD" });
-    }
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      message: "Error al obtener estructura",
-      error: error.message,
-    });
-  }
-});
-
-// Ruta de debug - Ver usuarios por email
-app.get("/debug/usuarios/:email", async (req, res) => {
-  try {
-    const { email } = req.params;
-    const result =
-      await sql`SELECT id_usuario, email, nombre, apellido, estado FROM usuarios WHERE email = ${email}`;
-
-    if (result.length > 0) {
-      res.json({
-        message: "Usuario encontrado",
-        usuario: result[0],
-      });
-    } else {
-      res.json({ message: "Usuario no encontrado" });
-    }
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      message: "Error en búsqueda",
-      error: error.message,
-    });
-  }
-});
-
 const PORT = process.env.PORT || 3000;
 
 // Solo iniciar el servidor si no estamos en Vercel
 app.listen(PORT, () => {
   console.log(`🚀 Servidor corriendo en el puerto ${PORT}`);
 });
-
-// Mantener el proceso vivo y capturar errores fatales
-setInterval(() => {
-  // console.log('💓 Heartbeat');
-}, 50000);
 
 process.on("uncaughtException", (err) => {
   console.error("💥 UNCAUGHT EXCEPTION:", err);

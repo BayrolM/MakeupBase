@@ -13,7 +13,7 @@ import { userService } from "../../services/userService";
 import { productService } from "../../services/productService";
 import { CONFIG } from "../../lib/constants";
 import { usePagination } from "../../hooks/usePagination";
-import { Pagination } from "../Pagination";
+import { Pagination } from "../common/Pagination";
 
 // Sub-componentes
 import { PedidoHeader } from "./pedidos/PedidoHeader";

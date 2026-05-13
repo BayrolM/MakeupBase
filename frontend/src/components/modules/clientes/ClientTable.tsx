@@ -18,7 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "../../ui/table";
-import { StatusSwitch } from "../../StatusSwitch";
+import { StatusSwitch } from "../../common/StatusSwitch";
 import { Cliente, Pedido, Venta } from "../../../lib/store";
 import { checkClientActiveConstraints } from "../../../utils/clientUtils";
 import { toast } from "sonner";

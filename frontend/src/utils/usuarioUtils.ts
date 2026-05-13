@@ -1,14 +1,8 @@
-/**
- * Utilidades para el módulo de Usuarios
- * Proporciona etiquetas y estilos consistentes con el diseño Luxury Pink.
- */
-
 export const getRolLabel = (rol: string) => {
   const map: Record<string, string> = {
     admin: "Administrador",
     vendedor: "Vendedor",
     cliente: "Cliente",
-    bodeguero: "Bodeguero",
   };
   return map[rol] || rol;
 };
@@ -46,19 +40,19 @@ export const validateField = (
     case "apellidos": {
       const label = name === "nombres" ? "El nombre" : "El apellido";
       if (!value.trim()) return `${label} es obligatorio`;
-      if (value.trim().length > 80)
-        return `${label} no puede superar 80 caracteres`;
+      if (value.trim().length > 30)
+        return `${label} no puede superar 30 caracteres`;
       return "";
     }
     case "numeroDocumento":
       if (!value.trim()) return "El documento es obligatorio";
       if (value.trim().length < 8) return "Mínimo 8 caracteres";
-      if (value.trim().length > 10) return "Máximo 10 caracteres";
+      if (value.trim().length > 15) return "Máximo 15 caracteres";
       return "";
     case "email":
       if (!value.trim()) return "El email es obligatorio";
       if (!emailRegex.test(value.trim())) return "Formato de email inválido";
-      if (value.trim().length > 100) return "Máximo 100 caracteres";
+      if (value.trim().length > 40) return "Máximo 40 caracteres";
       return "";
     case "passwordHash":
       if (!editingUser) {
@@ -68,21 +62,26 @@ export const validateField = (
       return "";
     case "telefono":
       if (!value.trim()) return "El teléfono es obligatorio";
+      if (value.trim().length < 10) return "Mínimo 10 caracteres";
       if (value.trim().length > 20) return "Máximo 20 caracteres";
       return "";
     case "direccion":
-      if (value.trim() && value.trim().length < 3) return "Mínimo 3 caracteres";
+      if (!value.trim()) return "La dirección es obligatoria";
+      if (value.trim().length < 10) return "Mínimo 10 caracteres";
       if (value.trim().length > 30) return "Máximo 30 caracteres";
       return "";
     case "ciudad":
+      if (!value.trim()) return "La ciudad es obligatoria";
+      if (value.trim().length < 10) return "Mínimo 10 caracteres";
       if (value.trim().length > 50) return "Máximo 50 caracteres";
       return "";
     case "departamento":
-      if (value.trim().length > 50) return "Máximo 50 caracteres";
-      if (value.trim().length < 3) return "Mínimo 3 caracteres";
       if (!value.trim()) return "El departamento es obligatorio";
-      if (!/^[a-zA-Z]+$/.test(value.trim())) {
-        return "No se permiten caracteres especiales o espacios.";
+      if (value.trim().length < 3) return "Mínimo 3 caracteres";
+      if (value.trim().length > 50) return "Máximo 50 caracteres";
+      // Allow letters, spaces and accents (Spanish)
+      if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(value.trim())) {
+        return "Solo se permiten letras y espacios.";
       }
       return "";
     case "rol":

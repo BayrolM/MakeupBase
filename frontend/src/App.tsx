@@ -1,7 +1,7 @@
 import { StoreProvider, useStore, UserRole, Cliente } from "./lib/store";
 import { ThemeProvider } from "./lib/theme-context";
-import { AppSidebar } from "./components/AppSidebar";
-import { Dashboard } from "./components/Dashboard";
+import { AppSidebar } from "./components/layout/AppSidebar";
+import { Dashboard } from "./components/Dashboard/DashboardMain";
 import { SidebarProvider } from "./components/ui/sidebar";
 import { useState, useEffect, useRef } from "react";
 import { UsuariosModule } from "./components/modules/UsuariosModule";
@@ -29,7 +29,7 @@ import { ContactoView } from "./components/client/ContactoView";
 
 import { PerfilView } from "./components/client/PerfilView";
 import { CheckoutView } from "./components/client/CheckoutView";
-import { NotificationBell } from "./components/NotificationBell";
+import { NotificationBell } from "./components/layout/NotificationBell";
 
 import { ClientNavbar } from "./components/client/ClientNavbar";
 import { Toaster, toast } from "sonner";

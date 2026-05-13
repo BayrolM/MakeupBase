@@ -80,20 +80,16 @@ export function MarcaDeleteDialog({
                 </span>
                 ?
               </p>
-              <p className="text-xs text-gray-500 mt-1.5 leading-relaxed">
-                Esta acción no se puede deshacer y la marca desaparecerá de
-                todo el historial.
-              </p>
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-3 px-6 pb-6 pt-4 border-t border-gray-100">
+        <div className="flex justify-end gap-3 px-6 pb-6 pt-2 border-t border-gray-100">
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
-            className="border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg px-5 h-10 text-sm"
+            className="border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg px-4 h-9 text-sm"
             disabled={isSaving}
           >
             Cancelar
@@ -101,7 +97,7 @@ export function MarcaDeleteDialog({
           <Button
             onClick={onConfirm}
             disabled={isSaving}
-            className="rounded-lg text-white font-semibold px-6 h-10 text-sm"
+            className="rounded-lg text-white font-semibold px-4 h-9 text-sm"
             style={{ background: "#ef4444" }}
           >
             {isSaving ? "Eliminando..." : "Eliminar Permanentemente"}

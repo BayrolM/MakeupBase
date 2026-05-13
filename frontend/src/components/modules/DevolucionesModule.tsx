@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useStore } from "../../lib/store";
-import { Pagination } from "../Pagination";
+import { Pagination } from "../common/Pagination";
 import { toast } from "sonner";
 import { usePagination } from "../../hooks/usePagination";
 import { devolucionService } from "../../services/devolucionService";

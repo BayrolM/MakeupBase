@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useStore, Rol, Status } from "../../lib/store";
-import { Pagination } from "../Pagination";
+import { Pagination } from "../common/Pagination";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { INITIAL_PERMISOS } from "../../utils/rolUtils";

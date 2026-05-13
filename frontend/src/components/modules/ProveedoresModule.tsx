@@ -3,7 +3,7 @@ import { useStore, Proveedor } from "../../lib/store";
 import { toast } from "sonner";
 import { providerService } from "../../services/providerService";
 import { usePagination } from "../../hooks/usePagination";
-import { Pagination } from "../Pagination";
+import { Pagination } from "../common/Pagination";
 
 // Sub-componentes
 import { ProveedorHeader } from "./proveedores/ProveedorHeader";
@@ -328,7 +328,6 @@ export function ProveedoresModule() {
         onOpenChange={setIsDialogOpen}
         editingProveedor={editingProveedor}
         formData={formData}
-        setFormData={setFormData}
         onChange={handleFieldChange}
         fieldErrors={fieldErrors}
         isSaving={isSaving}

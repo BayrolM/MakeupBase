@@ -1,12 +1,11 @@
-import { useState, useEffect, useRef } from "react";
-import { createPortal } from "react-dom";
-import { X, Plus, Trash2, Search, Package, ShoppingCart, User as UserIcon, ClipboardList } from "lucide-react";
+
+import { X, Plus, Trash2, Package, ShoppingCart, User as UserIcon, ClipboardList } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "../../ui/dialog";
 import { Input } from "../../ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
 import { Button } from "../../ui/button";
 import { formatCurrency } from "../../../utils/compraUtils";
-import { AsyncProductSelect } from "../../AsyncProductSelect";
+import { AsyncProductSelect } from "../../forms/AsyncProductSelect";
 
 interface CompraFormDialogProps {
   open: boolean;
@@ -33,7 +32,6 @@ export function CompraFormDialog({
   removeRow,
   updateRow,
   proveedores,
-  productos,
   isSaving,
   onSave,
   fieldErrors,

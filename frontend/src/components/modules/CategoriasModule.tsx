@@ -3,7 +3,7 @@ import { useStore, Categoria } from "../../lib/store";
 import { toast } from "sonner";
 import { categoryService } from "../../services/categoryService";
 import { usePagination } from "../../hooks/usePagination";
-import { Pagination } from "../Pagination";
+import { Pagination } from "../common/Pagination";
 
 // Sub-componentes
 import { CategoryHeader } from "./categorias/CategoryHeader";

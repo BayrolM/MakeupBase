@@ -20,7 +20,12 @@ export function ProveedorDeleteDialog({
   if (!proveedor) return null;
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { if (!o && !isSaving) onOpenChange(false); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        if (!o && !isSaving) onOpenChange(false);
+      }}
+    >
       <DialogContent className="bg-white border border-gray-100 max-w-md rounded-2xl shadow-2xl p-0 overflow-hidden">
         {/* Encabezado */}
         <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100">
@@ -68,21 +73,22 @@ export function ProveedorDeleteDialog({
             <AlertCircle className="text-red-500 w-4.5 h-4.5 shrink-0 mt-0.5" />
             <div>
               <p className="text-sm text-gray-700 leading-relaxed font-medium">
-                ¿Estás seguro que deseas eliminar permanentemente al proveedor <span className="font-bold text-gray-900">{proveedor.nombre}</span>?
-              </p>
-              <p className="text-xs text-gray-500 mt-1.5 leading-relaxed">
-                Toda la información y facturas asociadas a este proveedor serán borradas del sistema de forma irreversible.
+                ¿Estás seguro que deseas eliminar permanentemente al proveedor{" "}
+                <span className="font-bold text-gray-900">
+                  {proveedor.nombre}
+                </span>
+                ?
               </p>
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-3 px-6 pb-6 pt-4 border-t border-gray-100">
+        <div className="flex justify-end gap-3 px-6 pb-6 pt-2 border-t border-gray-100">
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
-            className="border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg px-5 h-10 text-sm"
+            className="border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg px-4 h-9 text-sm"
             disabled={isSaving}
           >
             Cancelar
@@ -90,7 +96,7 @@ export function ProveedorDeleteDialog({
           <Button
             onClick={onConfirm}
             disabled={isSaving}
-            className="rounded-lg text-white font-semibold px-6 h-10 text-sm"
+            className="rounded-lg text-white font-semibold px-4 h-9 text-sm"
             style={{ background: "#ef4444" }}
           >
             {isSaving ? "Eliminando..." : "Eliminar Permanentemente"}

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useStore, TipoDocumento, Cliente } from "../../lib/store";
 import { toast } from "sonner";
 import { userService } from "../../services/userService";
-import { Pagination } from "../Pagination";
+import { Pagination } from "../common/Pagination";
 import { usePagination } from "../../hooks/usePagination";
 
 // Sub-componentes

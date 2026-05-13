@@ -15,12 +15,17 @@ export function UsuarioDeleteDialog({
   onOpenChange,
   user,
   isDeleting,
-  onConfirm
+  onConfirm,
 }: UsuarioDeleteDialogProps) {
   if (!user) return null;
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { if (!o && !isDeleting) onOpenChange(false); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        if (!o && !isDeleting) onOpenChange(false);
+      }}
+    >
       <DialogContent className="bg-white border border-gray-100 max-w-md rounded-2xl shadow-2xl p-0 overflow-hidden">
         {/* Encabezado */}
         <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100">
@@ -64,25 +69,26 @@ export function UsuarioDeleteDialog({
           }}
         >
           {/* Tarjeta de advertencia */}
-          <div className="bg-red-50 rounded-xl p-4 flex items-start gap-3">
+          <div className="bg-red-50 rounded-xl p-2 flex items-start gap-2">
             <AlertCircle className="text-red-500 w-4.5 h-4.5 shrink-0 mt-0.5" />
             <div>
               <p className="text-sm text-gray-700 leading-relaxed font-medium">
-                ¿Estás seguro que deseas eliminar permanentemente a <span className="font-bold text-gray-900">{user.nombres} {user.apellidos}</span>?
-              </p>
-              <p className="text-xs text-gray-500 mt-1.5 leading-relaxed">
-                Toda la información personal de este usuario será borrada del sistema de forma irreversible.
+                ¿Estás seguro que deseas eliminar permanentemente a{" "}
+                <span className="font-bold text-gray-900">
+                  {user.nombres} {user.apellidos}
+                </span>
+                ?
               </p>
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-3 px-6 pb-6 pt-4 border-t border-gray-100">
+        <div className="flex justify-end gap-3 px-6 pb-6 pt-2 border-t border-gray-100">
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
-            className="border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg px-5 h-10 text-sm"
+            className="border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg px-4 h-10 text-sm"
             disabled={isDeleting}
           >
             Cancelar

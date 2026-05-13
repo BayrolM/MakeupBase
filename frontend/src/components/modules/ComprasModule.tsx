@@ -5,7 +5,7 @@ import { purchaseService } from "../../services/purchaseService";
 import { productService } from "../../services/productService";
 import { providerService } from "../../services/providerService";
 import { usePagination } from "../../hooks/usePagination";
-import { Pagination } from "../Pagination";
+import { Pagination } from "../common/Pagination";
 
 // Sub-componentes
 import { CompraHeader } from "./compras/CompraHeader";
@@ -138,6 +138,7 @@ export function ComprasModule() {
         stock: prod.stock_actual || 0,
         stockMinimo: prod.stock_min || 0,
         stockMaximo: prod.stock_max || 100,
+        stockFisico: prod.stock_fisico || 0,
         imagenUrl: prod.imagen_url || "",
         estado: prod.estado ? ("activo" as const) : ("inactivo" as const),
         fechaCreacion: new Date().toISOString(),

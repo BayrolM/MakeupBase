@@ -1,5 +1,5 @@
-import { useStore } from "../lib/store";
-import { PageHeader } from "./PageHeader";
+import { useStore } from "../../lib/store";
+import { PageHeader } from "../layout/PageHeader";
 import { 
   TrendingUp, 
   ShoppingCart, 
@@ -7,15 +7,15 @@ import {
   LayoutDashboard,
   Package
 } from "lucide-react";
-import { useDashboardData } from "../hooks/useDashboardData";
-import { C } from "../styles/dashboardStyles";
+import { useDashboardData } from "../../hooks/useDashboardData";
+import { C } from "../../styles/dashboardStyles";
 
 // Sub-components
-import { StatCard } from "./Dashboard/StatCard";
-import { SalesTrendChart } from "./Dashboard/SalesTrendChart";
-import { OrderStatusPie } from "./Dashboard/OrderStatusPie";
-import { RankingMesCard } from "./Dashboard/RankingMesCard";
-import { CriticalStockCard } from "./Dashboard/CriticalStockCard";
+import { StatCard } from "./StatCard";
+import { SalesTrendChart } from "./SalesTrendChart";
+import { OrderStatusPie } from "./OrderStatusPie";
+import { RankingMesCard } from "./RankingMesCard";
+import { CriticalStockCard } from "./CriticalStockCard";
 
 export function Dashboard() {
   const { productos } = useStore();

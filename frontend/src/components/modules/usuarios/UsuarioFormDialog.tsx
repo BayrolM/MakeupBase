@@ -115,7 +115,7 @@ export function UsuarioFormDialog({
                 className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${fieldErrors.nombres ? "border-rose-400" : ""}`}
                 placeholder="Ej: Juan"
                 disabled={isSaving}
-                maxLength={80}
+                maxLength={30}
               />
               {fieldErrors.nombres && (
                 <span className="micro-validation-error">{fieldErrors.nombres}</span>
@@ -132,7 +132,7 @@ export function UsuarioFormDialog({
                 className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${fieldErrors.apellidos ? "border-rose-400" : ""}`}
                 placeholder="Ej: Pérez"
                 disabled={isSaving}
-                maxLength={80}
+                maxLength={30}
               />
               {fieldErrors.apellidos && (
                 <span className="micro-validation-error">{fieldErrors.apellidos}</span>
@@ -182,7 +182,7 @@ export function UsuarioFormDialog({
                 className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${fieldErrors.numeroDocumento ? "border-rose-400" : ""}`}
                 placeholder="Ej: 1234567890"
                 disabled={isSaving}
-                maxLength={10}
+                maxLength={15}
               />
               {fieldErrors.numeroDocumento && (
                 <span className="micro-validation-error">{fieldErrors.numeroDocumento}</span>
@@ -224,7 +224,7 @@ export function UsuarioFormDialog({
                 className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${fieldErrors.email ? "border-rose-400" : ""}`}
                 placeholder="Ej: usuario@correo.com"
                 disabled={isSaving}
-                maxLength={100}
+                maxLength={40}
               />
               {fieldErrors.email && (
                 <span className="micro-validation-error">{fieldErrors.email}</span>
@@ -314,7 +314,7 @@ export function UsuarioFormDialog({
                 className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${fieldErrors.direccion ? "border-rose-400" : ""}`}
                 placeholder="Ej: Calle 50 #30-20"
                 disabled={isSaving}
-                maxLength={100}
+                maxLength={30}
               />
               {fieldErrors.direccion && (
                 <span className="micro-validation-error">{fieldErrors.direccion}</span>
@@ -332,6 +332,7 @@ export function UsuarioFormDialog({
                 className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${fieldErrors.departamento ? "border-rose-400" : ""}`}
                 placeholder="Ej: Antioquia"
                 disabled={isSaving}
+                maxLength={50}
               />
               {fieldErrors.departamento && (
                 <span className="micro-validation-error">{fieldErrors.departamento}</span>
@@ -351,6 +352,7 @@ export function UsuarioFormDialog({
                 className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${fieldErrors.ciudad ? "border-rose-400" : ""}`}
                 placeholder="Ej: Medellín"
                 disabled={isSaving}
+                maxLength={50}
               />
               {fieldErrors.ciudad && (
                 <span className="micro-validation-error">{fieldErrors.ciudad}</span>

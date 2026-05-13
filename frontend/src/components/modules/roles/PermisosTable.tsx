@@ -7,7 +7,7 @@ import {
   LayoutGrid,
   X,
 } from "lucide-react";
-import { Pagination } from "../../Pagination";
+import { Pagination } from "../../common/Pagination";
 import { useState, useEffect } from "react";
 import { getPermisosPaginatedAPI } from "../../../services/roleService";
 import {

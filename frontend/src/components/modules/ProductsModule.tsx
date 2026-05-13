@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useStore, Producto } from "../../lib/store";
-import { Pagination } from "../Pagination";
+import { Pagination } from "../common/Pagination";
 import { Search, X } from "lucide-react";
 import { toast } from "sonner";
 import { productService } from "../../services/productService";
@@ -156,6 +156,7 @@ export function ProductsModule() {
                 return;
               }
 
+              setSelectedProduct(p);
               setIsDeleteOpen(true);
             }}
             onMoveStock={(p) => {

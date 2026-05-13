@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { generateSalePDF } from "../../lib/pdfGenerator";
 import { saleService } from "../../services/saleService";
 import { usePagination } from "../../hooks/usePagination";
-import { Pagination } from "../Pagination";
+import { Pagination } from "../common/Pagination";
 
 // Sub-componentes
 import { VentaHeader } from "./ventas/VentaHeader";
@@ -23,7 +23,7 @@ export function VentasModule() {
   const [selectedVenta, setSelectedVenta] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isAnnulDialogOpen, setIsAnnulDialogOpen] = useState(false);
-  const [saleToAnnul, setSaleToAnnul] = useState<string | null>(null);
+  const [saleToAnnul, setSaleToAnnul] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [totalItems, setTotalItems] = useState(0);
 
@@ -205,7 +205,7 @@ export function VentasModule() {
       }
 
       // Precio
-      if (p.precioUnitario === "" || p.precioUnitario === null || p.precioUnitario === undefined) {
+      if (p.precioUnitario === null || p.precioUnitario === undefined || String(p.precioUnitario) === "") {
         toast.error("El precio de los productos no puede estar vacío");
         return;
       }
@@ -242,7 +242,7 @@ export function VentasModule() {
     if (!saleToAnnul) return;
     setIsSaving(true);
     try {
-      await saleService.annul(Number(saleToAnnul));
+      await saleService.annul(Number(saleToAnnul.id));
       toast.success("Venta anulada");
       await refreshVentas();
       setIsAnnulDialogOpen(false);
@@ -270,7 +270,7 @@ export function VentasModule() {
           onSearchChange={(q) => { setSearchQuery(q); handlePageChange(1); }}
           onDownloadPDF={handleDownloadPDF}
           onViewDetail={(v) => { setSelectedVenta(v); setDetailDialogOpen(true); }}
-          onAnnulClick={(id) => { setSaleToAnnul(id); setIsAnnulDialogOpen(true); }}
+          onAnnulClick={(v) => { setSaleToAnnul(v); setIsAnnulDialogOpen(true); }}
         />
 
         {totalPages > 1 && (
@@ -310,6 +310,7 @@ export function VentasModule() {
       <VentaAnnulDialog
         open={isAnnulDialogOpen}
         onOpenChange={setIsAnnulDialogOpen}
+        sale={saleToAnnul}
         isSaving={isSaving}
         onConfirm={handleAnularVenta}
       />

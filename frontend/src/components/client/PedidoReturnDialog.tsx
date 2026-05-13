@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import { devolucionService } from "../../services/devolucionService";
 import { saleService } from "../../services/saleService";
 import { orderService } from "../../services/orderService";
-import { uploadToSupabase } from "../supabaseUpload";
+import { uploadToSupabase } from "../../lib/supabaseUpload";
 
 interface PedidoReturnDialogProps {
   open: boolean;

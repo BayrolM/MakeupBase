@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useStore, Rol } from "../../lib/store";
-import { PageHeader } from "../PageHeader";
+import { PageHeader } from "../layout/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import {

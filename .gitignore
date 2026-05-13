@@ -54,4 +54,6 @@ coverage/
 # Agent instruction files
 AGENTS.md
 CLAUDE.md
+diagnostico_glamourml.md
+diagnostico_glamourml.html
 .opencode/

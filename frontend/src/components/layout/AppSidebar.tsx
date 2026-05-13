@@ -1,12 +1,11 @@
-import { useStore } from "../lib/store";
+import { useStore } from "../../lib/store";
 import React, { useState } from "react";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-} from "./ui/sidebar";
-import { Dialog, DialogContent, DialogTitle } from "./ui/dialog";
+} from "../ui/sidebar";
 import {
   LayoutDashboard,
   Users,
@@ -25,10 +24,8 @@ import {
   Heart,
   Bell,
   LogOut,
-  X,
   ChevronRight,
   User,
-  AlertCircle,
   Tags,
 } from "lucide-react";
 import { LogoutConfirmDialog } from "./LogoutConfirmDialog";

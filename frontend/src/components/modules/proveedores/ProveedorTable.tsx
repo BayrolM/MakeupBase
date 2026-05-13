@@ -18,7 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "../../ui/table";
-import { StatusSwitch } from "../../StatusSwitch";
+import { StatusSwitch } from "../../common/StatusSwitch";
 import { formatNIT } from "../../../utils/proveedorUtils";
 
 interface ProveedorTableProps {

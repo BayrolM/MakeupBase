@@ -6,8 +6,6 @@ import {
   Trash2, 
   Plus,
   Info,
-  Tag,
-  DollarSign,
   ClipboardList,
   Loader2
 } from "lucide-react";
@@ -20,8 +18,8 @@ import {
 import { Button } from "../../ui/button";
 import { Input } from "../../ui/input";
 import { Label } from "../../ui/label";
-import { AsyncClientSelect } from "../../AsyncClientSelect";
-import { AsyncProductSelect } from "../../AsyncProductSelect";
+import { AsyncClientSelect } from "../../forms/AsyncClientSelect";
+import { AsyncProductSelect } from "../../forms/AsyncProductSelect";
 import { formatCurrency } from "../../../utils/pedidoUtils";
 
 interface PedidoEditDialogProps {
