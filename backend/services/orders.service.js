@@ -187,7 +187,7 @@ export const crearOrdenDirecta = async (
  * Si es usuario normal, solo sus órdenes
  */
 export const obtenerOrdenes = async (id_usuario, rol = null, options = {}) => {
-  const { estado = null, q = null, page = 1, limit = 10 } = options;
+  const { estado = null, q = null, page = 1, limit = 10, permisos = [] } = options;
 
   const offset = (page - 1) * limit;
 
@@ -200,8 +200,11 @@ export const obtenerOrdenes = async (id_usuario, rol = null, options = {}) => {
   const searchFilter = q
     ? sql`AND (u.nombre ILIKE ${"%" + q + "%"} OR u.apellido ILIKE ${"%" + q + "%"} OR p.id_pedido::text ILIKE ${"%" + q + "%"})`
     : sql``;
-  const userFilter =
-    rol === 1
+    
+  // Si el usuario tiene permisos de gestión de pedidos, puede ver todos
+  const canSeeAllOrders = rol === 1 || permisos.includes('ver_pedidos') || permisos.includes('editar_pedidos') || permisos.includes('crear_pedidos');
+  
+  const userFilter = canSeeAllOrders
       ? sql`WHERE p.estado != 'carrito'`
       : sql`WHERE p.id_usuario_cliente = ${id_usuario} AND p.estado != 'carrito'`;
 
@@ -263,6 +266,7 @@ export const obtenerDetalleOrden = async (
   id_usuario,
   id_pedido,
   rol = null,
+  permisos = []
 ) => {
   console.log(
     `📝 obtenerDetalleOrden - Usuario: ${id_usuario}, Pedido: ${id_pedido}, Rol: ${rol}`,
@@ -270,9 +274,11 @@ export const obtenerDetalleOrden = async (
 
   let orden;
 
-  // Si es admin, puede ver cualquier orden
-  if (rol === 1) {
-    console.log("👑 Admin - Buscando orden sin restricción de usuario");
+  const canSeeAllOrders = rol === 1 || permisos.includes('ver_pedidos') || permisos.includes('editar_pedidos') || permisos.includes('crear_pedidos');
+
+  // Si es admin o empleado con permisos, puede ver cualquier orden
+  if (canSeeAllOrders) {
+    console.log("👑 Admin/Staff - Buscando orden sin restricción de usuario");
     orden = await sql`
       SELECT 
         p.id_pedido,

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authRequired } from '../middleware/auth.middleware.js';
-import { adminRequired } from '../middleware/adminRequired.middleware.js';
+import { tienePermiso } from '../middleware/permisoRequired.middleware.js';
 import {
   obtenerDashboard,
   obtenerReporteVentas,
@@ -12,11 +12,11 @@ import {
 
 const router = Router();
 
-router.get('/dashboard', authRequired, adminRequired, obtenerDashboard);
-router.get('/sales', authRequired, adminRequired, obtenerReporteVentas);
-router.get('/stock', authRequired, adminRequired, obtenerReporteStock);
-router.get('/usuarios', authRequired, adminRequired, obtenerReporteUsuarios);
-router.get('/sales-comparison', authRequired, adminRequired, obtenerComparacionVentas);
-router.get('/sales/:id', authRequired, adminRequired, obtenerDetalleVenta);
+router.get('/dashboard', authRequired, tienePermiso('ver_ventas'), obtenerDashboard);
+router.get('/sales', authRequired, tienePermiso('ver_ventas'), obtenerReporteVentas);
+router.get('/stock', authRequired, tienePermiso('ver_productos'), obtenerReporteStock);
+router.get('/usuarios', authRequired, tienePermiso('ver_usuarios'), obtenerReporteUsuarios);
+router.get('/sales-comparison', authRequired, tienePermiso('ver_ventas'), obtenerComparacionVentas);
+router.get('/sales/:id', authRequired, tienePermiso('ver_ventas'), obtenerDetalleVenta);
 
 export default router;

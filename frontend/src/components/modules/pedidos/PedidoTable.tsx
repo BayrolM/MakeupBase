@@ -21,6 +21,7 @@ import {
   TableRow 
 } from "../../ui/table";
 import { formatCurrency, getStatusColor } from "../../../utils/pedidoUtils";
+import { useStore, hasPermission } from "../../../lib/store";
 
 interface PedidoTableProps {
   pedidos: any[];
@@ -45,6 +46,9 @@ export function PedidoTable({
   onConfirmPayment,
   onViewComprobante,
 }: PedidoTableProps) {
+  const { currentUser } = useStore();
+  const canEdit = hasPermission(currentUser, "editar_pedidos");
+
   return (
     <div className="bg-white/80 backdrop-blur-sm border border-white/50 rounded-2xl overflow-hidden shadow-xl">
       {/* Barra de búsqueda */}
@@ -153,8 +157,9 @@ export function PedidoTable({
                   </TableCell>
                   <TableCell className="py-2.5">
                     <button
-                      onClick={() => onStatusClick(pedido)}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all hover:scale-105 active:scale-95 ${statusColor.bg} ${statusColor.text}`}
+                      onClick={() => canEdit && onStatusClick(pedido)}
+                      disabled={!canEdit}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${canEdit ? 'hover:scale-105 active:scale-95 cursor-pointer' : 'cursor-not-allowed opacity-80'} ${statusColor.bg} ${statusColor.text}`}
                     >
                       {statusColor.icon}
                       {statusColor.label}
@@ -163,8 +168,9 @@ export function PedidoTable({
                   <TableCell className="py-2.5">
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => onConfirmPayment(pedido)}
-                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase transition-all ${
+                        onClick={() => canEdit && onConfirmPayment(pedido)}
+                        disabled={!canEdit}
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase transition-all ${canEdit ? 'cursor-pointer' : 'cursor-not-allowed opacity-80'} ${
                           pedido.pago_confirmado 
                             ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200" 
                             : "bg-gray-100 text-gray-500 hover:bg-gray-200"
@@ -177,7 +183,7 @@ export function PedidoTable({
                         <button
                           onClick={() => onViewComprobante(pedido.comprobante_url)}
                           title="Ver Comprobante"
-                          className="p-1 rounded-lg bg-pink-50 text-[#c47b96] hover:bg-pink-100 transition-colors"
+                          className="p-1 rounded-lg bg-pink-50 text-[#c47b96] hover:bg-pink-100 transition-colors cursor-pointer"
                         >
                           <Eye className="w-3.5 h-3.5" />
                         </button>
@@ -200,7 +206,7 @@ export function PedidoTable({
                       >
                         <Eye className="w-4 h-4" />
                       </button>
-                      {["pendiente", "procesando", "preparado"].includes(pedido.estado) && (
+                      {canEdit && ["pendiente", "procesando", "preparado"].includes(pedido.estado) && (
                         <button
                           onClick={() => onEdit(pedido)}
                           title="Editar Pedido"

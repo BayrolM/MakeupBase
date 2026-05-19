@@ -138,13 +138,14 @@ export function RolTable({
                 </TableCell>
                 <TableCell className="py-2.5">
                   <div className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1 bg-gray-50 rounded-lg border border-gray-100 font-mono text-xs font-bold text-gray-600">
-                    {getUsersForRole(rol.id).length}
+                    {rol.total_usuarios ?? getUsersForRole(rol.id).length}
                   </div>
                 </TableCell>
                 <TableCell className="py-2.5">
                   <StatusSwitch
                     status={rol.estado}
                     onChange={(newStatus) => onStatusChange(rol.id, newStatus)}
+                    disabled={rol.id === "1" || rol.id === "2"}
                   />
                 </TableCell>
                 <TableCell className="py-2.5 pr-6">
@@ -163,13 +164,22 @@ export function RolTable({
                     >
                       <Pencil className="w-4 h-4" />
                     </button>
-                    <button
-                      onClick={() => onDelete(rol)}
-                      title="Eliminar"
-                      className="h-8 w-8 flex items-center justify-center rounded-lg transition-all duration-150 cursor-pointer text-gray-400 hover:bg-rose-50 hover:text-rose-600"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    {rol.id !== "1" && rol.id !== "2" ? (
+                      <button
+                        onClick={() => onDelete(rol)}
+                        title="Eliminar"
+                        className="h-8 w-8 flex items-center justify-center rounded-lg transition-all duration-150 cursor-pointer text-gray-400 hover:bg-rose-50 hover:text-rose-600"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    ) : (
+                      <div 
+                        className="h-8 w-8 flex items-center justify-center rounded-lg text-gray-300 cursor-not-allowed" 
+                        title="Rol del sistema (no eliminable)"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </div>
+                    )}
                   </div>
                 </TableCell>
               </TableRow>

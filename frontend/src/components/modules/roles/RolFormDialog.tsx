@@ -18,7 +18,7 @@ import {
   TableRow,
 } from "../../ui/table";
 import { StatusSwitch } from "../../common/StatusSwitch";
-import { MODULOS } from "../../../utils/rolUtils";
+import { MODULOS, getPermisoConfig } from "../../../utils/rolUtils";
 
 interface RolFormDialogProps {
   open: boolean;
@@ -202,47 +202,93 @@ export function RolFormDialog({
                       <TableCell className="text-gray-800 font-bold text-xs pl-6 py-4">
                         {modulo.label}
                       </TableCell>
+                      
+                      {/* VER */}
                       <TableCell className="text-center py-4">
-                        <Checkbox
-                          checked={formData.permisos[modulo.key]?.ver || false}
-                          onCheckedChange={(checked) =>
-                            onPermisoChange(modulo.key, "ver", !!checked)
-                          }
-                          className="mx-auto w-5 h-5 rounded-md border-gray-300 data-[state=checked]:bg-[#c47b96] data-[state=checked]:border-[#c47b96]"
-                        />
+                        {(() => {
+                          const config = getPermisoConfig(modulo.key, "ver");
+                          if (!config.available) return <span className="text-[10px] text-gray-300 italic font-semibold">N/A</span>;
+                          return (
+                            <div className="flex flex-col items-center gap-1">
+                              <Checkbox
+                                checked={formData.permisos[modulo.key]?.ver || false}
+                                onCheckedChange={(checked) =>
+                                  onPermisoChange(modulo.key, "ver", !!checked)
+                                }
+                                className="w-5 h-5 rounded-md border-gray-300 data-[state=checked]:bg-[#c47b96] data-[state=checked]:border-[#c47b96]"
+                              />
+                              <span className="text-[9px] text-gray-400 font-medium">
+                                {config.label}
+                              </span>
+                            </div>
+                          );
+                        })()}
                       </TableCell>
+
+                      {/* CREAR */}
                       <TableCell className="text-center py-4">
-                        <Checkbox
-                          checked={
-                            formData.permisos[modulo.key]?.crear || false
-                          }
-                          onCheckedChange={(checked) =>
-                            onPermisoChange(modulo.key, "crear", !!checked)
-                          }
-                          className="mx-auto w-5 h-5 rounded-md border-gray-300 data-[state=checked]:bg-[#c47b96] data-[state=checked]:border-[#c47b96]"
-                        />
+                        {(() => {
+                          const config = getPermisoConfig(modulo.key, "crear");
+                          if (!config.available) return <span className="text-[10px] text-gray-300 italic font-semibold">N/A</span>;
+                          return (
+                            <div className="flex flex-col items-center gap-1">
+                              <Checkbox
+                                checked={formData.permisos[modulo.key]?.crear || false}
+                                onCheckedChange={(checked) =>
+                                  onPermisoChange(modulo.key, "crear", !!checked)
+                                }
+                                className="w-5 h-5 rounded-md border-gray-300 data-[state=checked]:bg-[#c47b96] data-[state=checked]:border-[#c47b96]"
+                              />
+                              <span className="text-[9px] text-gray-400 font-medium">
+                                {config.label}
+                              </span>
+                            </div>
+                          );
+                        })()}
                       </TableCell>
+
+                      {/* EDITAR */}
                       <TableCell className="text-center py-4">
-                        <Checkbox
-                          checked={
-                            formData.permisos[modulo.key]?.editar || false
-                          }
-                          onCheckedChange={(checked) =>
-                            onPermisoChange(modulo.key, "editar", !!checked)
-                          }
-                          className="mx-auto w-5 h-5 rounded-md border-gray-300 data-[state=checked]:bg-[#c47b96] data-[state=checked]:border-[#c47b96]"
-                        />
+                        {(() => {
+                          const config = getPermisoConfig(modulo.key, "editar");
+                          if (!config.available) return <span className="text-[10px] text-gray-300 italic font-semibold">N/A</span>;
+                          return (
+                            <div className="flex flex-col items-center gap-1">
+                              <Checkbox
+                                checked={formData.permisos[modulo.key]?.editar || false}
+                                onCheckedChange={(checked) =>
+                                  onPermisoChange(modulo.key, "editar", !!checked)
+                                }
+                                className="w-5 h-5 rounded-md border-gray-300 data-[state=checked]:bg-[#c47b96] data-[state=checked]:border-[#c47b96]"
+                              />
+                              <span className="text-[9px] text-gray-400 font-medium">
+                                {config.label}
+                              </span>
+                            </div>
+                          );
+                        })()}
                       </TableCell>
+
+                      {/* ELIMINAR / ANULAR */}
                       <TableCell className="text-center py-4">
-                        <Checkbox
-                          checked={
-                            formData.permisos[modulo.key]?.eliminar || false
-                          }
-                          onCheckedChange={(checked) =>
-                            onPermisoChange(modulo.key, "eliminar", !!checked)
-                          }
-                          className="mx-auto w-5 h-5 rounded-md border-gray-300 data-[state=checked]:bg-[#c47b96] data-[state=checked]:border-[#c47b96]"
-                        />
+                        {(() => {
+                          const config = getPermisoConfig(modulo.key, "eliminar");
+                          if (!config.available) return <span className="text-[10px] text-gray-300 italic font-semibold">N/A</span>;
+                          return (
+                            <div className="flex flex-col items-center gap-1">
+                              <Checkbox
+                                checked={formData.permisos[modulo.key]?.eliminar || false}
+                                onCheckedChange={(checked) =>
+                                  onPermisoChange(modulo.key, "eliminar", !!checked)
+                                }
+                                className="w-5 h-5 rounded-md border-gray-300 data-[state=checked]:bg-[#c47b96] data-[state=checked]:border-[#c47b96]"
+                              />
+                              <span className="text-[9px] text-gray-400 font-medium">
+                                {config.label}
+                              </span>
+                            </div>
+                          );
+                        })()}
                       </TableCell>
                     </TableRow>
                   ))}

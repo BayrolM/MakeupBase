@@ -10,8 +10,11 @@ export function NotificationBell() {
   const [lastTotal, setLastTotal] = useState(0);
 
   useEffect(() => {
-    // Solo para admins
+    // Solo para admins que tengan permiso de productos (o sean Super Admin)
     if (!currentUser || userType !== "admin") return;
+    
+    const hasAccess = currentUser.id_rol === 1 || currentUser.permisos?.includes("ver_productos");
+    if (!hasAccess) return;
 
     // Carga inicial
     fetchNotificationSummary();
@@ -35,8 +38,9 @@ export function NotificationBell() {
     setLastTotal(notificationSummary.total);
   }, [notificationSummary.total]);
 
-  // Si no es admin, no renderizar nada
-  if (!currentUser || userType !== "admin") {
+  // Si no tiene acceso o no es admin, no renderizar nada
+  const hasAccess = currentUser && (currentUser.id_rol === 1 || currentUser.permisos?.includes("ver_productos"));
+  if (!currentUser || userType !== "admin" || !hasAccess) {
     return null;
   }
 

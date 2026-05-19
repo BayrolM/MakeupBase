@@ -1,13 +1,13 @@
 import { Router } from "express";
 import { listar, obtener, crear, anular } from "../controllers/compras.controller.js";
 import { authRequired } from "../middleware/auth.middleware.js";
-import { adminRequired } from "../middleware/adminRequired.middleware.js";
+import { tienePermiso } from "../middleware/permisoRequired.middleware.js";
 
 const router = Router();
 
-router.get("/", adminRequired,authRequired, listar);
-router.get("/:id", adminRequired, authRequired, obtener);
-router.post("/", adminRequired, authRequired, crear);
-router.put("/:id/anular", adminRequired, authRequired, anular);
+router.get("/", authRequired, tienePermiso('ver_compras'), listar);
+router.get("/:id", authRequired, tienePermiso('ver_compras'), obtener);
+router.post("/", authRequired, tienePermiso('crear_compras'), crear);
+router.put("/:id/anular", authRequired, tienePermiso('eliminar_compras'), anular);
 
 export default router;

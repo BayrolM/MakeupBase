@@ -8,6 +8,11 @@ import {
 } from "react";
 import api from "./api";
 
+export const hasPermission = (user: any, permiso: string): boolean => {
+  if (!user) return false;
+  if (user.id_rol === 1) return true; // Super admin
+  return user.permisos?.includes(permiso) || false;
+};
 export type UserRole = "admin" | "vendedor" | "cliente";
 export type OrderStatus =
   | "pendiente"
@@ -33,6 +38,7 @@ export interface Rol {
       eliminar: boolean;
     };
   };
+  total_usuarios?: number;
 }
 
 export interface User {
@@ -55,6 +61,7 @@ export interface User {
   estado: Status;
   fechaCreacion: string;
   foto_perfil?: string;
+  permisos?: string[];
 }
 
 export interface Cliente {

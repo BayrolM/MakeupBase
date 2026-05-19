@@ -128,7 +128,7 @@ export function UsuarioTable({
           ) : (
             users.map((user) => {
               const rolNombre =
-                roles.find((r: any) => String(r.id) === String(user.rol))
+                roles.find((r: any) => String(r.id) === String(user.rolAsignadoId || user.id_rol))
                   ?.nombre || user.rol;
               const rolBadge = getRolBadgeStyles(rolNombre.toLowerCase());
               const pedidosActivos = pedidos.filter(

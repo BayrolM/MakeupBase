@@ -2,7 +2,12 @@ import * as reportsService from "../services/reports.service.js";
 
 export const obtenerDashboard = async (req, res) => {
   try {
-    const dashboard = await reportsService.obtenerDashboard();
+    let id_empleado = undefined;
+    if (req.user && req.user.rol !== 1) {
+      id_empleado = req.user.id_usuario;
+    }
+    
+    const dashboard = await reportsService.obtenerDashboard({ id_empleado });
     return res.json({ ok: true, data: dashboard });
   } catch (error) {
     console.error(error);

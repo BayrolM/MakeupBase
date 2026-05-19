@@ -21,6 +21,7 @@ import {
   TableRow,
 } from "../../ui/table";
 import { formatCurrency, getStatusColor } from "../../../utils/ventaUtils";
+import { useStore, hasPermission } from "../../../lib/store";
 
 interface VentaTableProps {
   ventas: any[];
@@ -39,6 +40,9 @@ export function VentaTable({
   onViewDetail,
   onAnnulClick,
 }: VentaTableProps) {
+  const { currentUser } = useStore();
+  const canDelete = hasPermission(currentUser, "eliminar_ventas");
+
   return (
     <div className="bg-white/80 backdrop-blur-sm border border-white/50 rounded-2xl overflow-hidden shadow-xl">
       {/* Barra de búsqueda */}
@@ -206,7 +210,7 @@ export function VentaTable({
                       >
                         <Eye className="w-4 h-4" />
                       </button>
-                      {!isAnulada && (
+                      {!isAnulada && canDelete && (
                         <button
                           onClick={() => onAnnulClick(venta)}
                           title="Anular venta"

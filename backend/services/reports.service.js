@@ -3,15 +3,18 @@ import sql from '../config/db.js';
 /**
  * Obtener estadísticas para el dashboard
  */
-export const obtenerDashboard = async () => {
+export const obtenerDashboard = async (options = {}) => {
+  const { id_empleado } = options;
+
   // Total de ventas
   const totalVentas = await sql`
     SELECT COALESCE(SUM(total), 0) as total
     FROM ventas
     WHERE estado = true
+    ${id_empleado ? sql`AND id_usuario_empleado = ${id_empleado}` : sql``}
   `;
 
-  // Total de órdenes
+  // Total de órdenes (sin filtrar por empleado para que vean todos)
   const totalOrdenes = await sql`
     SELECT COUNT(*) as total
     FROM pedidos
@@ -48,6 +51,7 @@ export const obtenerDashboard = async () => {
     FROM ventas
     WHERE fecha_venta >= NOW() - INTERVAL '6 months'
       AND estado = true
+      ${id_empleado ? sql`AND id_usuario_empleado = ${id_empleado}` : sql``}
     GROUP BY TO_CHAR(fecha_venta, 'YYYY-MM')
     ORDER BY mes DESC
   `;
@@ -63,6 +67,7 @@ export const obtenerDashboard = async () => {
     INNER JOIN ventas v ON dv.id_venta = v.id_venta
     WHERE v.estado = true
       AND v.fecha_venta >= DATE_TRUNC('month', CURRENT_DATE)
+      ${id_empleado ? sql`AND v.id_usuario_empleado = ${id_empleado}` : sql``}
     GROUP BY p.id_producto, p.nombre
     ORDER BY total_vendido DESC
     LIMIT 10
@@ -85,12 +90,14 @@ export const obtenerDashboard = async () => {
         FROM ventas v 
         WHERE TO_CHAR(v.fecha_venta, 'YYYY-MM') = TO_CHAR(m.mes_fecha, 'YYYY-MM') 
           AND v.estado = true
+          ${id_empleado ? sql`AND v.id_usuario_empleado = ${id_empleado}` : sql``}
       ) as total,
       (
         SELECT COUNT(*) 
         FROM ventas v 
         WHERE TO_CHAR(v.fecha_venta, 'YYYY-MM') = TO_CHAR(m.mes_fecha, 'YYYY-MM') 
           AND v.estado = true
+          ${id_empleado ? sql`AND v.id_usuario_empleado = ${id_empleado}` : sql``}
       ) as cantidad
     FROM meses m
     ORDER BY m.mes_fecha ASC
@@ -131,6 +138,7 @@ export const obtenerDashboard = async () => {
     FROM ventas
     WHERE fecha_venta >= DATE_TRUNC('month', CURRENT_DATE)
       AND estado = true
+      ${id_empleado ? sql`AND id_usuario_empleado = ${id_empleado}` : sql``}
     GROUP BY TO_CHAR(fecha_venta, 'DD')
     ORDER BY dia ASC
   `;

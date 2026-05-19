@@ -1,14 +1,13 @@
 import { useState } from 'react';
 import { 
   Shield, X, Users as UsersIcon, CheckCircle2, XCircle, 
-  Activity, Calendar, Info, LayoutDashboard, ShoppingBag, 
-  Package, Users, Truck, Settings, ArrowLeftRight, Tags
+  Activity, Calendar, Info, ShoppingBag, 
+  Package, Users, Settings
 } from 'lucide-react';
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from '../../ui/dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../ui/table';
+import { Dialog, DialogContent, DialogTitle } from '../../ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs";
 import { Badge } from "../../ui/badge";
-import { MODULOS } from '../../../utils/rolUtils';
+import { MODULOS, getPermisoConfig } from '../../../utils/rolUtils';
 
 interface RolDetailDialogProps {
   open: boolean;
@@ -34,12 +33,12 @@ export function RolDetailDialog({
     {
       titulo: "Operaciones y Ventas",
       icon: <ShoppingBag className="w-4 h-4" />,
-      modulos: ['ventas', 'compras', 'devoluciones']
+      modulos: ['ventas', 'compras', 'devoluciones', 'pedidos']
     },
     {
       titulo: "Catálogo e Inventario",
       icon: <Package className="w-4 h-4" />,
-      modulos: ['productos', 'categorias']
+      modulos: ['productos', 'categorias', 'marcas']
     },
     {
       titulo: "Relaciones y Terceros",
@@ -171,15 +170,19 @@ export function RolDetailDialog({
                         <div key={m.key} className="bg-white border border-gray-100 rounded-xl p-4 flex items-center justify-between transition-all hover:shadow-md hover:border-[#c47b96]/20 group">
                           <span className="text-sm font-bold text-gray-700 group-hover:text-[#c47b96] transition-colors">{m.label}</span>
                           <div className="flex items-center gap-6">
-                            {(['ver', 'crear', 'editar', 'eliminar'] as const).map(t => (
-                              <div key={t} className="flex flex-col items-center gap-1.5 min-w-[40px]">
-                                <span className="text-[9px] uppercase font-bold text-gray-300 tracking-tighter">{t.slice(0, 3)}</span>
-                                {p?.[t]
-                                  ? <div className="w-5 h-5 rounded-full bg-emerald-50 flex items-center justify-center shadow-sm"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /></div>
-                                  : <div className="w-5 h-5 rounded-full bg-gray-50 flex items-center justify-center opacity-30"><XCircle className="w-3.5 h-3.5 text-gray-300" /></div>
-                                }
-                              </div>
-                            ))}
+                            {(['ver', 'crear', 'editar', 'eliminar'] as const).map(t => {
+                              const config = getPermisoConfig(m.key, t);
+                              if (!config.available) return null;
+                              return (
+                                <div key={t} className="flex flex-col items-center gap-1.5 min-w-[50px]">
+                                  <span className="text-[9px] uppercase font-bold text-gray-400 tracking-tighter">{config.label}</span>
+                                  {p?.[t]
+                                    ? <div className="w-5 h-5 rounded-full bg-emerald-50 flex items-center justify-center shadow-sm"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /></div>
+                                    : <div className="w-5 h-5 rounded-full bg-gray-50 flex items-center justify-center opacity-30"><XCircle className="w-3.5 h-3.5 text-gray-300" /></div>
+                                  }
+                                </div>
+                              );
+                            })}
                           </div>
                         </div>
                       );

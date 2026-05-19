@@ -40,6 +40,7 @@ interface NavItem {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   route: string;
+  permiso?: string;
 }
 
 interface NavGroup {
@@ -51,34 +52,34 @@ const adminGroups: NavGroup[] = [
   {
     label: "Principal",
     items: [
-      { icon: LayoutDashboard, label: "Dashboard", route: "dashboard" },
-      { icon: Users, label: "Usuarios", route: "usuarios" },
-      { icon: UserCircle, label: "Clientes", route: "clientes-view" },
+      { icon: LayoutDashboard, label: "Dashboard", route: "dashboard", permiso: "ver_ventas" },
+      { icon: Users, label: "Usuarios", route: "usuarios", permiso: "ver_usuarios" },
+      { icon: UserCircle, label: "Clientes", route: "clientes-view", permiso: "ver_clientes" },
     ],
   },
   {
     label: "Catálogo",
     items: [
-      { icon: Package, label: "Productos", route: "productos" },
-      { icon: FolderKanban, label: "Categorías", route: "categorias" },
-      { icon: Tags, label: "Marcas", route: "marcas" },
+      { icon: Package, label: "Productos", route: "productos", permiso: "ver_productos" },
+      { icon: FolderKanban, label: "Categorías", route: "categorias", permiso: "ver_productos" },
+      { icon: Tags, label: "Marcas", route: "marcas", permiso: "ver_productos" },
     ],
   },
   {
     label: "Operaciones",
     items: [
-      { icon: ShoppingCart, label: "Ventas", route: "ventas" },
-      { icon: Truck, label: "Pedidos", route: "pedidos" },
-      { icon: RotateCcw, label: "Devoluciones", route: "devoluciones" },
-      { icon: Building, label: "Proveedores", route: "proveedores" },
-      { icon: ShoppingBag, label: "Compras", route: "compras" },
+      { icon: ShoppingCart, label: "Ventas", route: "ventas", permiso: "ver_ventas" },
+      { icon: Truck, label: "Pedidos", route: "pedidos", permiso: "ver_pedidos" },
+      { icon: RotateCcw, label: "Devoluciones", route: "devoluciones", permiso: "ver_devoluciones" },
+      { icon: Building, label: "Proveedores", route: "proveedores", permiso: "ver_proveedores" },
+      { icon: ShoppingBag, label: "Compras", route: "compras", permiso: "ver_compras" },
     ],
   },
   {
     label: "Sistema",
     items: [
-      { icon: Shield, label: "Roles y Permisos", route: "roles" },
-      { icon: Settings, label: "Configuración", route: "configuracion" },
+      { icon: Shield, label: "Roles y Permisos", route: "roles" }, // Solo para Admin (rol === 1)
+      { icon: Settings, label: "Configuración", route: "configuracion", permiso: "ver_configuracion" },
     ],
   },
 ];
@@ -254,14 +255,33 @@ export function AppSidebar({
         <SidebarContent className="flex-1 bg-transparent sidebar-scroll overflow-y-auto px-2">
           <div className="py-2">
             {userType === "admin"
-              ? adminGroups.map((group) => (
-                  <NavGroupComponent
-                    key={group.label}
-                    group={group}
-                    currentRoute={currentRoute}
-                    onNavigate={onNavigate}
-                  />
-                ))
+              ? adminGroups.map((group) => {
+                  const filteredItems = group.items.filter((item) => {
+                    // Si el rol es 1 (Administrador), tiene acceso a todo de forma automática
+                    if (currentUser?.id_rol === 1) return true;
+
+                    // El módulo de roles y permisos es estrictamente exclusivo del administrador (rol === 1)
+                    if (item.route === "roles") return false;
+
+                    // Validar si cuenta con el permiso requerido
+                    if (item.permiso) {
+                      return currentUser?.permisos?.includes(item.permiso);
+                    }
+
+                    return false;
+                  });
+
+                  if (filteredItems.length === 0) return null;
+
+                  return (
+                    <NavGroupComponent
+                      key={group.label}
+                      group={{ ...group, items: filteredItems }}
+                      currentRoute={currentRoute}
+                      onNavigate={onNavigate}
+                    />
+                  );
+                })
               : clienteItems.map((item) => (
                   <NavItemComponent
                     key={item.route}

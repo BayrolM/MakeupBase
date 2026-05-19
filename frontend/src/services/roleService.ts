@@ -38,6 +38,7 @@ export function normalizeRol(r: RolAPI) {
     created_at: r.created_at ?? null,
     permisos: permisosMap,
     permisos_asignados: r.permisos_asignados || [], // keep reference
+    total_usuarios: (r as any).total_usuarios ?? 0,
   };
 }
 

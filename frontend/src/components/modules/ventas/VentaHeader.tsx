@@ -1,10 +1,14 @@
 import { Plus, TrendingUp } from "lucide-react";
+import { useStore, hasPermission } from "../../../lib/store";
 
 interface VentaHeaderProps {
   onOpenDialog: () => void;
 }
 
 export function VentaHeader({ onOpenDialog }: VentaHeaderProps) {
+  const { currentUser } = useStore();
+  const canCreate = hasPermission(currentUser, "crear_ventas");
+
   return (
     <div className="px-8 pt-8 pb-5">
       <div className="relative overflow-hidden rounded-2xl shadow-xl">
@@ -26,10 +30,12 @@ export function VentaHeader({ onOpenDialog }: VentaHeaderProps) {
               </div>
             </div>
 
-            <button onClick={onOpenDialog} className="luxury-button-premium">
-              <Plus className="w-5 h-5" />
-              Nueva Venta
-            </button>
+            {canCreate && (
+              <button onClick={onOpenDialog} className="luxury-button-premium">
+                <Plus className="w-5 h-5" />
+                Nueva Venta
+              </button>
+            )}
           </div>
         </div>
       </div>

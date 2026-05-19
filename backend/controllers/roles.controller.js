@@ -7,30 +7,54 @@ export const listarRoles = async (req, res) => {
   try {
     const { q, estado } = req.query;
 
-    let query = sql`SELECT * FROM roles WHERE 1=1`;
+    let query;
+    const qPattern = q ? `%${q}%` : null;
+    const estadoBool = estado !== undefined ? (estado === "true" || estado === "1") : null;
 
-    // Filtro de búsqueda por nombre o descripción
-    if (q) {
+    if (q && estado !== undefined) {
       query = sql`
-        SELECT * FROM roles 
-        WHERE (nombre ILIKE ${"%" + q + "%"} OR descripcion ILIKE ${"%" + q + "%"
-        })
+        SELECT r.*, COALESCE(u.total, 0)::int as total_usuarios
+        FROM roles r
+        LEFT JOIN (
+          SELECT id_rol, COUNT(*) as total 
+          FROM usuarios 
+          GROUP BY id_rol
+        ) u ON r.id_rol = u.id_rol
+        WHERE (r.nombre ILIKE ${qPattern} OR r.descripcion ILIKE ${qPattern})
+          AND r.estado = ${estadoBool}
       `;
-    }
-
-    // Filtro por estado
-    if (estado !== undefined) {
-      const estadoBool = estado === "true" || estado === "1";
-      if (q) {
-        query = sql`
-          SELECT * FROM roles 
-          WHERE (nombre ILIKE ${"%" + q + "%"} OR descripcion ILIKE ${"%" + q + "%"
-          })
-            AND estado = ${estadoBool}
-        `;
-      } else {
-        query = sql`SELECT * FROM roles WHERE estado = ${estadoBool}`;
-      }
+    } else if (q) {
+      query = sql`
+        SELECT r.*, COALESCE(u.total, 0)::int as total_usuarios
+        FROM roles r
+        LEFT JOIN (
+          SELECT id_rol, COUNT(*) as total 
+          FROM usuarios 
+          GROUP BY id_rol
+        ) u ON r.id_rol = u.id_rol
+        WHERE (r.nombre ILIKE ${qPattern} OR r.descripcion ILIKE ${qPattern})
+      `;
+    } else if (estado !== undefined) {
+      query = sql`
+        SELECT r.*, COALESCE(u.total, 0)::int as total_usuarios
+        FROM roles r
+        LEFT JOIN (
+          SELECT id_rol, COUNT(*) as total 
+          FROM usuarios 
+          GROUP BY id_rol
+        ) u ON r.id_rol = u.id_rol
+        WHERE r.estado = ${estadoBool}
+      `;
+    } else {
+      query = sql`
+        SELECT r.*, COALESCE(u.total, 0)::int as total_usuarios
+        FROM roles r
+        LEFT JOIN (
+          SELECT id_rol, COUNT(*) as total 
+          FROM usuarios 
+          GROUP BY id_rol
+        ) u ON r.id_rol = u.id_rol
+      `;
     }
 
     const roles = await query;
@@ -320,12 +344,9 @@ export const asignarPermisos = async (req, res) => {
     const { id } = req.params; // id_rol
     const { permisos } = req.body; // array de id_permiso
 
-    if (!Array.isArray(permisos) || permisos.length === 0) {
-      return res.status(400).json({ ok: false, message: "Debe seleccionar al menos un permiso" });
+    if (!Array.isArray(permisos)) {
+      return res.status(400).json({ ok: false, message: "Los permisos deben ser un arreglo" });
     }
-
-    // Remover duplicados del array entrante
-    const permisosUnicos = [...new Set(permisos)];
 
     // Verificar que el rol existe
     const rolExiste = await sql`SELECT id_rol FROM roles WHERE id_rol = ${id}`;
@@ -333,22 +354,29 @@ export const asignarPermisos = async (req, res) => {
       return res.status(404).json({ ok: false, message: "Rol no encontrado" });
     }
 
+    // Si el array viene vacío, significa que se le quitaron todos los permisos
+    if (permisos.length === 0) {
+      return res.status(400).json({ ok: false, message: "Debe seleccionar al menos un permiso" });
+    }
+
+    const permisosUnicos = [...new Set(permisos)];
+
     // Verificar que los permisos existen en la tabla permisos
     const permisosBD = await sql`SELECT id_permiso FROM permisos WHERE id_permiso IN ${sql(permisosUnicos)}`;
     if (permisosBD.length !== permisosUnicos.length) {
       return res.status(400).json({ ok: false, message: "Uno o más permisos son inválidos" });
     }
 
-    // Verificar cuáles ya están asignados
-    const asignados = await sql`SELECT id_permiso FROM roles_permisos WHERE id_rol = ${id} AND id_permiso IN ${sql(permisosUnicos)}`;
-    if (asignados.length > 0) {
-      return res.status(400).json({ ok: false, message: "Algunos de los permisos ya están asignados a este rol" });
-    }
+    // Realizar la sincronización dentro de una transacción
+    await sql.begin(async (sqlTrans) => {
+      // 1. Eliminar todos los permisos actuales asociados al rol
+      await sqlTrans`DELETE FROM roles_permisos WHERE id_rol = ${id}`;
 
-    // Insertar
-    for (const p of permisosUnicos) {
-      await sql`INSERT INTO roles_permisos (id_rol, id_permiso) VALUES (${id}, ${p})`;
-    }
+      // 2. Insertar los nuevos permisos seleccionados
+      for (const p of permisosUnicos) {
+        await sqlTrans`INSERT INTO roles_permisos (id_rol, id_permiso) VALUES (${id}, ${p})`;
+      }
+    });
 
     return res.json({ ok: true, message: "Permisos asignados correctamente" });
   } catch (error) {

@@ -72,7 +72,7 @@ export const validateField = (
       return "";
     case "ciudad":
       if (!value.trim()) return "La ciudad es obligatoria";
-      if (value.trim().length < 10) return "Mínimo 10 caracteres";
+      if (value.trim().length < 3) return "Mínimo 3 caracteres";
       if (value.trim().length > 50) return "Máximo 50 caracteres";
       return "";
     case "departamento":
