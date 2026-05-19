@@ -13,7 +13,7 @@ import {
 import { Button } from "../../ui/button";
 import { Textarea } from "../../ui/textarea";
 import { GenericCombobox } from "../../forms/GenericCombobox";
-import { OrderStatus } from "../../../lib/store";
+import { useStore, hasPermission, OrderStatus } from "../../../lib/store";
 
 interface PedidoStatusDialogProps {
   open: boolean;
@@ -38,7 +38,21 @@ export function PedidoStatusDialog({
   isSaving,
   onUpdateStatus,
 }: PedidoStatusDialogProps) {
+  const { currentUser } = useStore();
+  const canDelete = hasPermission(currentUser, "eliminar_pedidos");
+
   if (!selectedPedido) return null;
+
+  const options = [
+    { value: "pendiente", label: "Pendiente" },
+    { value: "preparado", label: "Preparado" },
+    { value: "procesando", label: "Procesando" },
+    { value: "enviado", label: "Enviado" },
+    { value: "entregado", label: "Entregado" },
+  ];
+  if (canDelete) {
+    options.push({ value: "cancelado", label: "Cancelado" });
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -75,14 +89,7 @@ export function PedidoStatusDialog({
               <Activity className="w-3.5 h-3.5" /> Seleccionar Nuevo Estado
             </label>
             <GenericCombobox
-              options={[
-                { value: "pendiente", label: "Pendiente" },
-                { value: "preparado", label: "Preparado" },
-                { value: "procesando", label: "Procesando" },
-                { value: "enviado", label: "Enviado" },
-                { value: "entregado", label: "Entregado" },
-                { value: "cancelado", label: "Cancelado" },
-              ]}
+              options={options}
               value={newStatus}
               onChange={(val) => setNewStatus(val as OrderStatus)}
               placeholder="Elige un estado..."

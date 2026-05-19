@@ -166,11 +166,28 @@ export const login = async (req, res) => {
     if (!user.id_rol) {
       console.error("❌ ERROR: El usuario no tiene id_rol:", user);
     }
+
+    // Obtener los permisos del rol
+    let permisos = [];
+    if (user.id_rol === 1) {
+      const todosPermisos = await sql`SELECT nombre FROM permisos WHERE estado = true`;
+      permisos = todosPermisos.map((p) => p.nombre);
+    } else {
+      const permisosUsuario = await sql`
+        SELECT p.nombre
+        FROM roles_permisos rp
+        JOIN permisos p ON rp.id_permiso = p.id_permiso
+        WHERE rp.id_rol = ${user.id_rol} AND p.estado = true
+      `;
+      permisos = permisosUsuario.map((p) => p.nombre);
+    }
+
     const token = jwt.sign(
       {
         id_usuario: user.id_usuario,
         email: user.email,
         rol: user.id_rol,
+        permisos,
       },
       process.env.JWT_SECRET,
       { expiresIn: "7d" },

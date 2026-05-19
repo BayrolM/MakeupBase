@@ -1,10 +1,14 @@
 import { Plus, Users } from "lucide-react";
+import { useStore, hasPermission } from "../../../lib/store";
 
 interface ClientHeaderProps {
   onOpenDialog: () => void;
 }
 
 export function ClientHeader({ onOpenDialog }: ClientHeaderProps) {
+  const { currentUser } = useStore();
+  const canCreate = hasPermission(currentUser, "crear_clientes");
+
   return (
     <div className="px-8 pt-8 pb-5">
       <div className="relative overflow-hidden rounded-2xl shadow-xl">
@@ -26,13 +30,15 @@ export function ClientHeader({ onOpenDialog }: ClientHeaderProps) {
               </div>
             </div>
 
-            <button
-              onClick={onOpenDialog}
-              className="luxury-button-premium"
-            >
-              <Plus className="w-5 h-5" />
-              Nuevo Cliente
-            </button>
+            {canCreate && (
+              <button
+                onClick={onOpenDialog}
+                className="luxury-button-premium"
+              >
+                <Plus className="w-5 h-5" />
+                Nuevo Cliente
+              </button>
+            )}
           </div>
         </div>
       </div>

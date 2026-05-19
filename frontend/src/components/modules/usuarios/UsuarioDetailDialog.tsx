@@ -33,7 +33,7 @@ export function UsuarioDetailDialog({
   if (!user) return null;
 
   const rolNombre =
-    roles.find((r: any) => String(r.id) === String(user.rol))?.nombre ||
+    roles.find((r: any) => String(r.id) === String(user.rolAsignadoId || user.id_rol))?.nombre ||
     user.rol;
 
   return (

@@ -22,6 +22,7 @@ import { StatusSwitch } from "../../common/StatusSwitch";
 import { Cliente, Pedido, Venta } from "../../../lib/store";
 import { checkClientActiveConstraints } from "../../../utils/clientUtils";
 import { toast } from "sonner";
+import { useStore, hasPermission } from "../../../lib/store";
 
 interface ClientTableProps {
   clientes: Cliente[];
@@ -46,6 +47,10 @@ export function ClientTable({
   onDelete,
   onStatusChange,
 }: ClientTableProps) {
+  const { currentUser } = useStore();
+  const canEdit = hasPermission(currentUser, "editar_clientes");
+  const canDelete = hasPermission(currentUser, "eliminar_clientes");
+
   return (
     <div className="bg-white/80 backdrop-blur-sm border border-white/50 rounded-2xl overflow-hidden shadow-xl">
       <div className="p-4 border-b border-gray-100 bg-white space-y-3">
@@ -174,6 +179,7 @@ export function ClientTable({
                     >
                       <StatusSwitch
                         status={cliente.estado}
+                        disabled={!canEdit}
                         onChange={(newStatus) => {
                           if (hasConstraints) {
                             toast.error("No se puede cambiar el estado", {
@@ -195,20 +201,24 @@ export function ClientTable({
                       >
                         <Eye className="w-4 h-4" />
                       </button>
-                      <button
-                        onClick={() => onEdit(cliente)}
-                        title="Editar"
-                        className="h-8 w-8 flex items-center justify-center rounded-lg transition-all duration-150 cursor-pointer text-gray-400 hover:bg-blue-50 hover:text-blue-600"
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => onDelete(cliente)}
-                        title="Eliminar"
-                        className="h-8 w-8 flex items-center justify-center rounded-lg transition-all duration-150 cursor-pointer text-gray-400 hover:bg-rose-50 hover:text-rose-600"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {canEdit && (
+                        <button
+                          onClick={() => onEdit(cliente)}
+                          title="Editar"
+                          className="h-8 w-8 flex items-center justify-center rounded-lg transition-all duration-150 cursor-pointer text-gray-400 hover:bg-blue-50 hover:text-blue-600"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                      )}
+                      {canDelete && (
+                        <button
+                          onClick={() => onDelete(cliente)}
+                          title="Eliminar"
+                          className="h-8 w-8 flex items-center justify-center rounded-lg transition-all duration-150 cursor-pointer text-gray-400 hover:bg-rose-50 hover:text-rose-600"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>

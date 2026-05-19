@@ -5,9 +5,16 @@ export const listar = async (req, res) => {
   try {
     const { q, id_cliente, fecha_inicio, fecha_fin, page = 1, limit = 10 } = req.query;
 
+    // Si el usuario NO es super admin (rol 1), filtramos para que solo vea SUS ventas
+    let id_empleado = undefined;
+    if (req.user && req.user.rol !== 1) {
+      id_empleado = req.user.id_usuario;
+    }
+
     const result = await ventasService.listarVentas({
       q,
       id_cliente,
+      id_empleado,
       fecha_inicio,
       fecha_fin,
       page: parseInt(page, 10),

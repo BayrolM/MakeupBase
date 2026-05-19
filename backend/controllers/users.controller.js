@@ -30,6 +30,23 @@ export const getProfile = async (req, res) => {
 
     const user = result[0];
 
+    // Obtener permisos del rol
+    let permisos = [];
+    if (user.id_rol === 1) {
+      const todosPermisos = await sql`SELECT nombre FROM permisos WHERE estado = true`;
+      permisos = todosPermisos.map((p) => p.nombre);
+    } else {
+      const permisosUsuario = await sql`
+        SELECT p.nombre
+        FROM roles_permisos rp
+        JOIN permisos p ON rp.id_permiso = p.id_permiso
+        WHERE rp.id_rol = ${user.id_rol} AND p.estado = true
+      `;
+      permisos = permisosUsuario.map((p) => p.nombre);
+    }
+
+    user.permisos = permisos;
+
     return res.json(user);
   } catch (error) {
     console.error(error);

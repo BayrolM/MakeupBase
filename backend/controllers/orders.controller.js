@@ -116,7 +116,7 @@ export const crearOrdenDirecta = async (req, res) => {
 // Controlador para obtener todas las órdenes de un usuario
 export const obtenerOrdenes = async (req, res) => {
   try {
-    const { id_usuario, rol } = req.user;
+    const { id_usuario, rol, permisos = [] } = req.user;
     const { estado, q, page = 1, limit = 10 } = req.query;
 
     console.log(`📦 Usuario ${id_usuario} (rol: ${rol}) solicitando órdenes`);
@@ -125,7 +125,8 @@ export const obtenerOrdenes = async (req, res) => {
         estado, 
         q, 
         page: parseInt(page, 10), 
-        limit: parseInt(limit, 10) 
+        limit: parseInt(limit, 10),
+        permisos
     });
 
     return res.json({ ok: true, ...result });
@@ -139,12 +140,13 @@ export const obtenerOrdenes = async (req, res) => {
 export const obtenerDetalleOrden = async (req, res) => {
   try {
     const { id } = req.params;
-    const { id_usuario, rol } = req.user;
+    const { id_usuario, rol, permisos = [] } = req.user;
 
     const orden = await ordersService.obtenerDetalleOrden(
       id_usuario,
       parseInt(id, 10),
-      rol
+      rol,
+      permisos
     );
 
     return res.json({ ok: true, data: orden });

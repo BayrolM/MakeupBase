@@ -30,6 +30,7 @@ export interface UserProfile {
   departamento?: string;
   id_rol: number;  
   foto_perfil?: string;
+  permisos?: string[];
 }
 
 export const authService = {

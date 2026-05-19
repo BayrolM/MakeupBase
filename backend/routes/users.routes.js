@@ -11,7 +11,7 @@ import {
   changePassword,
 } from "../controllers/users.controller.js";
 import { authRequired } from "../middleware/auth.middleware.js";
-import { adminRequired } from "../middleware/adminRequired.middleware.js";
+import { tienePermisoUsuarioOCliente } from "../middleware/permisoRequired.middleware.js";
 
 const router = Router();
 
@@ -20,12 +20,12 @@ router.get("/profile", authRequired, getProfile);
 router.put("/profile", authRequired, updateProfile);
 router.put("/profile/password", authRequired, changePassword);
 
-// Rutas de administración de usuarios (requieren ser admin)
-router.get("/", authRequired, adminRequired, listarUsuarios);
-router.post("/", authRequired, adminRequired, crearUsuario);
-router.get("/:id", authRequired, adminRequired, obtenerUsuario);
-router.put("/:id", authRequired, adminRequired, actualizarUsuario);
-router.delete("/:id", authRequired, adminRequired, desactivarUsuario);
-router.delete("/:id/permanent", authRequired, adminRequired, eliminarUsuario);
+// Rutas de administración de usuarios y clientes (requieren permisos dinámicos según el tipo de registro)
+router.get("/", authRequired, tienePermisoUsuarioOCliente('ver'), listarUsuarios);
+router.post("/", authRequired, tienePermisoUsuarioOCliente('crear'), crearUsuario);
+router.get("/:id", authRequired, tienePermisoUsuarioOCliente('ver'), obtenerUsuario);
+router.put("/:id", authRequired, tienePermisoUsuarioOCliente('editar'), actualizarUsuario);
+router.delete("/:id", authRequired, tienePermisoUsuarioOCliente('eliminar'), desactivarUsuario);
+router.delete("/:id/permanent", authRequired, tienePermisoUsuarioOCliente('eliminar'), eliminarUsuario);
 
 export default router;

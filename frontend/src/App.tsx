@@ -270,7 +270,10 @@ function AppContent() {
           rol:
             Number(profile.id_rol) === 1
               ? ("admin" as const)
-              : ("cliente" as const),
+              : Number(profile.id_rol) === 2
+              ? ("cliente" as const)
+              : ("vendedor" as const),
+          permisos: profile.permisos || [],
           estado: "activo" as const,
           tipoDocumento: "CC" as const,
           numeroDocumento: "",
@@ -339,7 +342,10 @@ function AppContent() {
         rol:
           Number(profile.id_rol) === 1
             ? ("admin" as const)
-            : ("cliente" as const),
+            : Number(profile.id_rol) === 2
+            ? ("cliente" as const)
+            : ("vendedor" as const),
+        permisos: profile.permisos || [],
         estado: "activo" as const,
         tipoDocumento: "CC" as const,
         numeroDocumento: "",
@@ -585,6 +591,51 @@ function AppContent() {
     );
   }
 
+  function AccesoDenegado() {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[80vh] px-4">
+        <div 
+          className="w-full max-w-md p-8 rounded-2xl text-center space-y-6"
+          style={{
+            background: "rgba(46, 16, 32, 0.4)",
+            backdropFilter: "blur(12px)",
+            border: "1px solid rgba(210, 140, 165, 0.2)",
+            boxShadow: "0 8px 32px 0 rgba(0, 0, 0, 0.3)",
+          }}
+        >
+          <div 
+            className="w-16 h-16 mx-auto rounded-full flex items-center justify-center animate-pulse"
+            style={{
+              background: "rgba(140, 70, 90, 0.2)",
+              border: "1.5px solid rgba(210, 140, 165, 0.4)",
+              boxShadow: "0 0 20px rgba(140, 60, 90, 0.3)",
+            }}
+          >
+            <Lock className="w-8 h-8 text-[#e0a0be]" />
+          </div>
+          
+          <div className="space-y-2">
+            <h2 
+              className="text-xl font-semibold text-white tracking-wider"
+              style={{ fontFamily: "'Cormorant Garamond', serif" }}
+            >
+              ACCESO RESTRINGIDO
+            </h2>
+            <p className="text-sm text-gray-300">
+              No tienes los permisos necesarios para visualizar este módulo.
+            </p>
+          </div>
+          
+          <div className="pt-2">
+            <p className="text-xs text-gray-400 italic">
+              Comunícate con el administrador del sistema si crees que esto es un error.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const renderContent = () => {
     const adminRoutes = [
       "dashboard",
@@ -592,6 +643,7 @@ function AppContent() {
       "clientes-view",
       "productos",
       "categorias",
+      "marcas",
       "ventas",
       "pedidos",
       "devoluciones",
@@ -602,10 +654,40 @@ function AppContent() {
       "roles",
     ];
 
+    const routePermissions: Record<string, string> = {
+      dashboard: "ver_ventas",
+      usuarios: "ver_usuarios",
+      "clientes-view": "ver_clientes",
+      productos: "ver_productos",
+      categorias: "ver_productos",
+      marcas: "ver_productos",
+      ventas: "ver_ventas",
+      pedidos: "ver_pedidos",
+      devoluciones: "ver_devoluciones",
+      clientes: "ver_clientes",
+      proveedores: "ver_proveedores",
+      compras: "ver_compras",
+      configuracion: "ver_configuracion",
+    };
+
     // If trying to access admin route but user is cliente, redirect to inicio
-    if (adminRoutes.includes(currentRoute) && userType === "cliente") {
-      setCurrentRoute("inicio");
-      return <InicioView />;
+    if (adminRoutes.includes(currentRoute)) {
+      if (userType === "cliente") {
+        setCurrentRoute("inicio");
+        return <InicioView />;
+      }
+
+      // Validar permisos dinámicos si no es Super Admin (rol === 1)
+      if (currentUser && currentUser.id_rol !== 1) {
+        if (currentRoute === "roles") {
+          return <AccesoDenegado />;
+        }
+
+        const requiredPerm = routePermissions[currentRoute];
+        if (requiredPerm && !currentUser.permisos?.includes(requiredPerm)) {
+          return <AccesoDenegado />;
+        }
+      }
     }
 
     switch (currentRoute) {

@@ -4,6 +4,7 @@ export const listarVentas = async (filters = {}) => {
   const {
     q,
     id_cliente,
+    id_empleado,
     fecha_inicio,
     fecha_fin,
     page = 1,
@@ -26,6 +27,7 @@ export const listarVentas = async (filters = {}) => {
     ${q && estadoBool === null ? sql`AND (u.nombre ILIKE ${'%' + q + '%'} OR u.apellido ILIKE ${'%' + q + '%'} OR v.id_venta::text ILIKE ${'%' + q + '%'})` : sql``}
     ${estadoBool !== null ? sql`AND v.estado = ${estadoBool}` : sql``}
     ${id_cliente ? sql`AND v.id_usuario_cliente = ${id_cliente}` : sql``}
+    ${id_empleado ? sql`AND v.id_usuario_empleado = ${id_empleado}` : sql``}
     ${fecha_inicio ? sql`AND v.fecha_venta >= ${fecha_inicio}` : sql``}
     ${fecha_fin ? sql`AND v.fecha_venta <= ${fecha_fin}` : sql``}
   `;
