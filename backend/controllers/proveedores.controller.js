@@ -2,14 +2,34 @@ import sql from "../config/db.js";
 
 export const listar = async (req, res) => {
   try {
-    const result =
-      await sql`SELECT * FROM proveedores ORDER BY id_proveedor ASC`;
-    return res.json(result);
+    const { q, estado, page = 1, limit = 20 } = req.query;
+    const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+
+    const whereFragment = sql`
+      WHERE 1=1
+      ${q ? sql`AND (p.nombre ILIKE ${'%' + q + '%'} OR p.email ILIKE ${'%' + q + '%'} OR p.documento_nit ILIKE ${'%' + q + '%'})` : sql``}
+      ${estado !== undefined && estado !== '' ? sql`AND p.estado = ${estado === 'true' || estado === '1'}` : sql``}
+    `;
+
+    const [{ total }] = await sql`SELECT COUNT(1) AS total FROM proveedores p ${whereFragment}`;
+
+    const result = await sql`
+      SELECT * FROM proveedores p
+      ${whereFragment}
+      ORDER BY p.id_proveedor ASC
+      LIMIT ${parseInt(limit, 10)} OFFSET ${offset}
+    `;
+
+    return res.json({
+      ok: true,
+      total: parseInt(total, 10),
+      page: parseInt(page, 10),
+      limit: parseInt(limit, 10),
+      data: result,
+    });
   } catch (error) {
     console.error(error);
-    return res
-      .status(500)
-      .json({ ok: false, message: "Error al obtener proveedores." });
+    return res.status(500).json({ ok: false, message: "Error al obtener proveedores." });
   }
 };
 

@@ -18,9 +18,10 @@ export interface Purchase {
 }
 
 export const purchaseService = {
-  async getAll() {
-    const response = await api.get("/compras");
-    return response.data; // { ok: true, data: [...] }
+  async getAll(params: { q?: string; estado?: string; page?: number; limit?: number } = {}) {
+    const response = await api.get("/compras", { params: { limit: 200, ...params } });
+    // El endpoint ahora devuelve { ok, total, data: [...] }
+    return response.data?.data ?? response.data;
   },
 
   async getById(id: number) {

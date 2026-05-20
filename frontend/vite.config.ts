@@ -58,4 +58,9 @@
       port: 5173,
       open: true,
     },
+    // Necesario para que React Router funcione en desarrollo:
+    // todas las rutas desconocidas se sirven con index.html
+    preview: {
+      port: 4173,
+    },
   });

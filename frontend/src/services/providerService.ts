@@ -13,10 +13,11 @@ export interface Proveedor {
 }
 
 export const providerService = {
-  async getAll(): Promise<Proveedor[]> {
+  async getAll(params: { q?: string; estado?: string; page?: number; limit?: number } = {}): Promise<Proveedor[]> {
     try {
-      const response = await api.get("/proveedores");
-      return response.data;
+      const response = await api.get("/proveedores", { params: { limit: 200, ...params } });
+      // El endpoint ahora devuelve { ok, total, data: [...] }
+      return response.data?.data ?? response.data;
     } catch (error: any) {
       throw new Error(
         error.response?.data?.message || "Error al obtener proveedores",

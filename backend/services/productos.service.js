@@ -272,7 +272,7 @@ export const productosDestacados = async (limit = 10) => {
         id_producto, nombre, descripcion, id_marca, id_categoria,
         costo_promedio, precio_venta, stock_actual, stock_max, stock_min, stock_fisico, imagen_url, estado
       FROM productos
-      WHERE estado = 1
+      WHERE estado = true
       ORDER BY stock_actual DESC, precio_venta DESC
       LIMIT ${limit}
     `;

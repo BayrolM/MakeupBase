@@ -19,9 +19,22 @@ dotenv.config();
 
 const app = express();
 
-// Configuración de CORS
+// ─── CORS ────────────────────────────────────────────────────────────────────
+// Permite solo el origen configurado en FRONTEND_URL.
+// En desarrollo acepta también localhost:5173 como fallback.
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  "http://localhost:5173",
+  "http://localhost:4173", // preview de Vite
+].filter(Boolean);
+
 const corsOptions = {
-  origin: true,
+  origin: (origin, callback) => {
+    // Permitir peticiones sin origin (Postman, curl, SSR)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    callback(new Error(`CORS: origen no permitido → ${origin}`));
+  },
   credentials: true,
   optionsSuccessStatus: 200,
 };
@@ -31,6 +44,7 @@ app.use(cors(corsOptions));
 app.use(express.json());
 
 // Routes
+// Nota: los rate limiters de auth están definidos en auth.routes.js
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/products", productsRoutes);

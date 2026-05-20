@@ -1,29 +1,52 @@
 import sql from "../config/db.js";
-import { CONFIG } from "../config/constants.js";
 
 export const listar = async (req, res) => {
   try {
+    const { q, estado, page = 1, limit = 20 } = req.query;
+    const offset = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+
+    // Fragmento WHERE dinámico
+    const whereFragment = sql`
+      WHERE 1=1
+      ${q ? sql`AND (p.nombre ILIKE ${'%' + q + '%'} OR c.id_compra::text ILIKE ${'%' + q + '%'})` : sql``}
+      ${estado !== undefined && estado !== '' ? sql`AND c.estado = ${estado === 'true' || estado === '1'}` : sql``}
+    `;
+
+    const [{ total }] = await sql`
+      SELECT COUNT(1) AS total
+      FROM compras c
+      LEFT JOIN proveedores p ON c.id_proveedor = p.id_proveedor
+      ${whereFragment}
+    `;
+
     const result = await sql`
       SELECT c.*, p.nombre as nombre_proveedor, u.nombre as nombre_usuario,
       (
         SELECT json_agg(dc)
         FROM (
-          SELECT id_producto, cantidad, precio_unitario 
-          FROM detalle_compra 
+          SELECT id_producto, cantidad, precio_unitario
+          FROM detalle_compra
           WHERE id_compra = c.id_compra
         ) dc
       ) as productos
       FROM compras c
       LEFT JOIN proveedores p ON c.id_proveedor = p.id_proveedor
       LEFT JOIN usuarios u ON c.id_usuario_empleado = u.id_usuario
-      ORDER BY c.fecha_registro DESC
+      ${whereFragment}
+      ORDER BY c.fecha_compra DESC
+      LIMIT ${parseInt(limit, 10)} OFFSET ${offset}
     `;
-    return res.json(result);
+
+    return res.json({
+      ok: true,
+      total: parseInt(total, 10),
+      page: parseInt(page, 10),
+      limit: parseInt(limit, 10),
+      data: result,
+    });
   } catch (error) {
     console.error(error);
-    return res
-      .status(500)
-      .json({ ok: false, message: "Error al obtener compras." });
+    return res.status(500).json({ ok: false, message: "Error al obtener compras." });
   }
 };
 

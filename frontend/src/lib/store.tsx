@@ -2,9 +2,10 @@ import {
   createContext,
   useContext,
   useState,
+  useCallback,
   ReactNode,
-  useMemo,
   useEffect,
+  useRef,
 } from "react";
 import api from "./api";
 
@@ -13,6 +14,7 @@ export const hasPermission = (user: any, permiso: string): boolean => {
   if (user.id_rol === 1) return true; // Super admin
   return user.permisos?.includes(permiso) || false;
 };
+
 export type UserRole = "admin" | "vendedor" | "cliente";
 export type OrderStatus =
   | "pendiente"
@@ -142,14 +144,14 @@ export interface Compra {
 export interface Venta {
   id: string;
   clienteId: string;
-  pedidoId?: string; // FK opcional a Pedido - puede ser NULL para ventas directas
+  pedidoId?: string;
   fecha: string;
   productos: { productoId: string; cantidad: number; precioUnitario: number }[];
   subtotal: number;
   costoEnvio: number;
   total: number;
   estado: "activo" | "anulada";
-  metodoPago: "Efectivo" | "Transferencia"; // Solo estos dos métodos permitidos
+  metodoPago: "Efectivo" | "Transferencia";
   motivoAnulacion?: string;
 }
 
@@ -191,6 +193,10 @@ export interface NotificationSummary {
   total: number;
 }
 
+// ─── Contextos separados: estado vs acciones ─────────────────────────────────
+// Separar estado de acciones evita que un cambio en cualquier entidad
+// recalcule el objeto de acciones (que es estable) y cause re-renders en cascada.
+
 interface StoreState {
   users: User[];
   clientes: Cliente[];
@@ -211,66 +217,39 @@ interface StoreState {
 }
 
 interface StoreActions {
-  // Users
   addUser: (user: Omit<User, "id" | "fechaCreacion">) => void;
   updateUser: (id: string, user: Partial<User>) => void;
   deleteUser: (id: string) => void;
-
-  // Clientes
   addCliente: (cliente: Omit<Cliente, "id" | "fechaRegistro">) => void;
   updateCliente: (id: string, cliente: Partial<Cliente>) => void;
   deleteCliente: (id: string) => void;
-
-  // Proveedores
   addProveedor: (proveedor: Omit<Proveedor, "id" | "fechaRegistro">) => void;
   updateProveedor: (id: string, proveedor: Partial<Proveedor>) => void;
   deleteProveedor: (id: string) => void;
-
-  // Categorias
   addCategoria: (categoria: Omit<Categoria, "id">) => void;
   updateCategoria: (id: string, categoria: Partial<Categoria>) => void;
   deleteCategoria: (id: string) => void;
-
-  // Productos
   addProducto: (producto: Omit<Producto, "id" | "fechaCreacion">) => void;
   updateProducto: (id: string, producto: Partial<Producto>) => void;
   deleteProducto: (id: string) => void;
   updateStock: (productoId: string, cantidad: number) => void;
-
-  // Compras
   addCompra: (compra: Omit<Compra, "id">) => void;
   updateCompra: (id: string, compra: Partial<Compra>) => void;
   confirmarCompra: (id: string) => void;
-
-  // Ventas
   addVenta: (venta: Omit<Venta, "id">) => void;
   updateVenta: (id: string, venta: Partial<Venta>) => void;
   anularVenta: (id: string, motivo: string) => void;
-
-  // Pedidos
   addPedido: (pedido: Omit<Pedido, "id"> | Pedido) => void;
   updatePedido: (id: string, pedido: Partial<Pedido>) => void;
-  updatePedidoEstado: (
-    id: string,
-    estado: OrderStatus,
-    motivo?: string,
-  ) => void;
-
-  // Devoluciones
+  updatePedidoEstado: (id: string, estado: OrderStatus, motivo?: string) => void;
   addDevolucion: (devolucion: Omit<Devolucion, "id">) => void;
   updateDevolucion: (id: string, devolucion: Partial<Devolucion>) => void;
-
-  // Roles
   setRoles: (roles: Rol[]) => void;
   addRol: (rol: Omit<Rol, "id">) => void;
   updateRol: (id: string, rolData: Partial<Rol>) => void;
   deleteRol: (id: string) => void;
-
-  // Auth
   setCurrentUser: (user: User | null) => void;
   setUserType: (type: "admin" | "cliente") => void;
-
-  // Client Actions
   toggleFavorito: (productoId: string) => void;
   addToCarrito: (productoId: string, cantidad: number) => void;
   removeFromCarrito: (productoId: string) => void;
@@ -289,9 +268,11 @@ interface StoreActions {
   fetchNotificationSummary: () => Promise<void>;
 }
 
-const StoreContext = createContext<(StoreState & StoreActions) | undefined>(
-  undefined,
-);
+const StoreStateContext = createContext<StoreState | undefined>(undefined);
+const StoreActionsContext = createContext<StoreActions | undefined>(undefined);
+
+const generateId = () => Math.random().toString(36).substr(2, 9);
+const getCurrentDate = () => new Date().toISOString().split("T")[0];
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [users, setUsers] = useState<User[]>([]);
@@ -305,384 +286,179 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [devoluciones, setDevoluciones] = useState<Devolucion[]>([]);
   const [roles, setRoles] = useState<Rol[]>([]);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUserState] = useState<User | null>(null);
   const [userType, setUserType] = useState<"admin" | "cliente">("cliente");
   const [favoritos, setFavoritos] = useState<string[]>(() => {
     const saved = localStorage.getItem("gml_favoritos");
     return saved ? JSON.parse(saved) : [];
   });
-  const [carrito, setCarrito] = useState<
-    { productoId: string; cantidad: number }[]
-  >(() => {
+  const [carrito, setCarrito] = useState<{ productoId: string; cantidad: number }[]>(() => {
     const saved = localStorage.getItem("gml_carrito");
     return saved ? JSON.parse(saved) : [];
   });
   const [notificationSummary, setNotificationSummary] = useState<NotificationSummary>({
-    pedidos: 0,
-    stock: 0,
-    devoluciones: 0,
-    total: 0
+    pedidos: 0, stock: 0, devoluciones: 0, total: 0,
   });
 
-  const fetchNotificationSummary = async () => {
-    try {
-      const response = await api.get("/notifications/summary");
-      if (response.data.ok) {
-        setNotificationSummary(response.data.summary);
-      }
-    } catch (error) {
-      console.error("Error fetching notification summary:", error);
-    }
-  };
+  // Ref para acceder a productos dentro de callbacks estables sin re-crearlos
+  const productosRef = useRef(productos);
+  productosRef.current = productos;
 
-  // Persistir favoritos
   useEffect(() => {
     localStorage.setItem("gml_favoritos", JSON.stringify(favoritos));
   }, [favoritos]);
 
-  // Persistir carrito
   useEffect(() => {
     localStorage.setItem("gml_carrito", JSON.stringify(carrito));
   }, [carrito]);
 
-  const generateId = () => Math.random().toString(36).substr(2, 9);
-  const getCurrentDate = () => new Date().toISOString().split("T")[0];
+  // ─── Estado (se recalcula solo cuando cambia algún dato) ──────────────────
+  const state: StoreState = {
+    users, clientes, proveedores, categorias, marcas, productos,
+    compras, ventas, pedidos, devoluciones, roles,
+    currentUser, userType, favoritos, carrito, notificationSummary,
+  };
 
-  const value: StoreState & StoreActions = useMemo(
-    () => ({
-      users,
-      clientes,
-      proveedores,
-      categorias,
-      marcas,
-      productos,
-      compras,
-      ventas,
-      pedidos,
-      devoluciones,
-      roles,
-      currentUser,
-      userType,
-      favoritos,
-      carrito,
+  // ─── Acciones (estables — no dependen de estado, usan refs donde necesario) ─
+  const fetchNotificationSummary = useCallback(async () => {
+    try {
+      const response = await api.get("/notifications/summary");
+      if (response.data.ok) setNotificationSummary(response.data.summary);
+    } catch (error) {
+      console.error("Error fetching notification summary:", error);
+    }
+  }, []);
 
-      addUser: (user) => {
-        const newUser = {
-          ...user,
-          id: generateId(),
-          fechaCreacion: getCurrentDate(),
-        };
-        setUsers((prev) => [newUser, ...prev]);
-      },
-      updateUser: (id, userData) => {
-        setUsers((prev) =>
-          prev.map((u) => (u.id === id ? { ...u, ...userData } : u)),
-        );
-      },
-      deleteUser: (id) => {
-        setUsers((prev) => prev.filter((u) => u.id !== id));
-      },
+  const actions: StoreActions = {
+    // Users
+    addUser: useCallback((user) => setUsers((prev) => [{ ...user, id: generateId(), fechaCreacion: getCurrentDate() }, ...prev]), []),
+    updateUser: useCallback((id, data) => setUsers((prev) => prev.map((u) => u.id === id ? { ...u, ...data } : u)), []),
+    deleteUser: useCallback((id) => setUsers((prev) => prev.filter((u) => u.id !== id)), []),
 
-      addCliente: (cliente) => {
-        const newCliente = {
-          ...cliente,
-          id: generateId(),
-          fechaRegistro: getCurrentDate(),
-          totalCompras: 0,
-        };
-        setClientes((prev) => [newCliente, ...prev]);
-      },
-      updateCliente: (id, clienteData) => {
-        setClientes((prev) =>
-          prev.map((c) => (c.id === id ? { ...c, ...clienteData } : c)),
-        );
-      },
-      deleteCliente: (id) => {
-        setClientes((prev) => prev.filter((c) => c.id !== id));
-      },
+    // Clientes
+    addCliente: useCallback((cliente) => setClientes((prev) => [{ ...cliente, id: generateId(), fechaRegistro: getCurrentDate(), totalCompras: 0 }, ...prev]), []),
+    updateCliente: useCallback((id, data) => setClientes((prev) => prev.map((c) => c.id === id ? { ...c, ...data } : c)), []),
+    deleteCliente: useCallback((id) => setClientes((prev) => prev.filter((c) => c.id !== id)), []),
 
-      addProveedor: (proveedor) => {
-        const newProveedor = {
-          ...proveedor,
-          id: generateId(),
-          fechaRegistro: getCurrentDate(),
-        };
-        setProveedores((prev) => [newProveedor, ...prev]);
-      },
-      updateProveedor: (id, proveedorData) => {
-        setProveedores((prev) =>
-          prev.map((p) => (p.id === id ? { ...p, ...proveedorData } : p)),
-        );
-      },
-      deleteProveedor: (id) => {
-        setProveedores((prev) => prev.filter((p) => p.id !== id));
-      },
+    // Proveedores
+    addProveedor: useCallback((proveedor) => setProveedores((prev) => [{ ...proveedor, id: generateId(), fechaRegistro: getCurrentDate() }, ...prev]), []),
+    updateProveedor: useCallback((id, data) => setProveedores((prev) => prev.map((p) => p.id === id ? { ...p, ...data } : p)), []),
+    deleteProveedor: useCallback((id) => setProveedores((prev) => prev.filter((p) => p.id !== id)), []),
 
-      addCategoria: (categoria) => {
-        const newCategoria = { ...categoria, id: generateId() };
-        setCategorias((prev) => [newCategoria, ...prev]);
-      },
-      updateCategoria: (id, categoriaData) => {
-        setCategorias((prev) =>
-          prev.map((c) => (c.id === id ? { ...c, ...categoriaData } : c)),
-        );
-      },
-      deleteCategoria: (id) => {
-        setCategorias((prev) => prev.filter((c) => c.id !== id));
-      },
+    // Categorias
+    addCategoria: useCallback((categoria) => setCategorias((prev) => [{ ...categoria, id: generateId() }, ...prev]), []),
+    updateCategoria: useCallback((id, data) => setCategorias((prev) => prev.map((c) => c.id === id ? { ...c, ...data } : c)), []),
+    deleteCategoria: useCallback((id) => setCategorias((prev) => prev.filter((c) => c.id !== id)), []),
 
-      addProducto: (producto) => {
-        const newProducto = {
-          ...producto,
-          id: generateId(),
-          fechaCreacion: getCurrentDate(),
-        };
-        setProductos((prev) => [newProducto, ...prev]);
-      },
-      updateProducto: (id, productoData) => {
-        setProductos((prev) =>
-          prev.map((p) => (p.id === id ? { ...p, ...productoData } : p)),
-        );
-        fetchNotificationSummary();
-      },
-      deleteProducto: (id) => {
-        setProductos((prev) => prev.filter((p) => p.id !== id));
-      },
-      updateStock: (productoId, cantidad) => {
-        setProductos((prev) =>
-          prev.map((p) =>
-            p.id === productoId ? { ...p, stock: p.stock + cantidad } : p,
-          ),
-        );
-      },
+    // Productos
+    addProducto: useCallback((producto) => setProductos((prev) => [{ ...producto, id: generateId(), fechaCreacion: getCurrentDate() }, ...prev]), []),
+    updateProducto: useCallback((id, data) => {
+      setProductos((prev) => prev.map((p) => p.id === id ? { ...p, ...data } : p));
+      fetchNotificationSummary();
+    }, [fetchNotificationSummary]),
+    deleteProducto: useCallback((id) => setProductos((prev) => prev.filter((p) => p.id !== id)), []),
+    updateStock: useCallback((productoId, cantidad) => setProductos((prev) => prev.map((p) => p.id === productoId ? { ...p, stock: p.stock + cantidad } : p)), []),
 
-      addCompra: (compra) => {
-        const newCompra = { ...compra, id: generateId() };
-        setCompras((prev) => [newCompra, ...prev]);
-      },
-      updateCompra: (id, compraData) => {
-        setCompras((prev) =>
-          prev.map((c) => (c.id === id ? { ...c, ...compraData } : c)),
-        );
-      },
-      confirmarCompra: (id) => {
-        setCompras((prevCompras) => {
-          const compra = prevCompras.find((c) => c.id === id);
-          if (compra && !compra.confirmada) {
-            return prevCompras.map((c) =>
-              c.id === id
-                ? { ...c, confirmada: true, estado: "confirmada" as const }
-                : c,
-            );
-          }
-          return prevCompras;
-        });
-        fetchNotificationSummary();
-      },
+    // Compras
+    addCompra: useCallback((compra) => setCompras((prev) => [{ ...compra, id: generateId() }, ...prev]), []),
+    updateCompra: useCallback((id, data) => setCompras((prev) => prev.map((c) => c.id === id ? { ...c, ...data } : c)), []),
+    confirmarCompra: useCallback((id) => {
+      setCompras((prev) => prev.map((c) => c.id === id && !c.confirmada ? { ...c, confirmada: true, estado: "confirmada" as const } : c));
+      fetchNotificationSummary();
+    }, [fetchNotificationSummary]),
 
-      addVenta: (venta) => {
-        const newVenta = { ...venta, id: generateId() };
-        setVentas((prev) => [newVenta, ...prev]);
-        setClientes((prev) =>
-          prev.map((c) =>
-            c.id === venta.clienteId
-              ? { ...c, totalCompras: c.totalCompras + 1 }
-              : c,
-          ),
-        );
-        fetchNotificationSummary();
-      },
-      updateVenta: (id, ventaData) => {
-        setVentas((prev) =>
-          prev.map((v) => (v.id === id ? { ...v, ...ventaData } : v)),
-        );
-      },
-      anularVenta: (id, motivo) => {
-        setVentas((prevVentas) => {
-          const venta = prevVentas.find((v) => v.id === id);
-          if (venta && venta.estado === "activo") {
-            return prevVentas.map((v) =>
-              v.id === id
-                ? { ...v, estado: "anulada" as const, motivoAnulacion: motivo }
-                : v,
-            );
-          }
-          return prevVentas;
-        });
-      },
+    // Ventas
+    addVenta: useCallback((venta) => {
+      setVentas((prev) => [{ ...venta, id: generateId() }, ...prev]);
+      setClientes((prev) => prev.map((c) => c.id === venta.clienteId ? { ...c, totalCompras: c.totalCompras + 1 } : c));
+      fetchNotificationSummary();
+    }, [fetchNotificationSummary]),
+    updateVenta: useCallback((id, data) => setVentas((prev) => prev.map((v) => v.id === id ? { ...v, ...data } : v)), []),
+    anularVenta: useCallback((id, motivo) => setVentas((prev) => prev.map((v) => v.id === id && v.estado === "activo" ? { ...v, estado: "anulada" as const, motivoAnulacion: motivo } : v)), []),
 
-      addPedido: (pedido) => {
-        const newPedido = {
-          ...pedido,
-          id: "id" in pedido ? pedido.id : generateId(),
-        };
-        setPedidos((prev) => [newPedido, ...prev]);
-      },
-      updatePedido: (id, pedidoData) => {
-        setPedidos((prev) =>
-          prev.map((p) => (p.id === id ? { ...p, ...pedidoData } : p)),
-        );
-      },
-      updatePedidoEstado: (id, estado, motivo) => {
-        setPedidos((prev) =>
-          prev.map((p) =>
-            p.id === id ? { ...p, estado, motivoAnulacion: motivo } : p,
-          ),
-        );
-        fetchNotificationSummary();
-      },
+    // Pedidos
+    addPedido: useCallback((pedido) => setPedidos((prev) => [{ ...pedido, id: "id" in pedido ? pedido.id : generateId() }, ...prev]), []),
+    updatePedido: useCallback((id, data) => setPedidos((prev) => prev.map((p) => p.id === id ? { ...p, ...data } : p)), []),
+    updatePedidoEstado: useCallback((id, estado, motivo) => {
+      setPedidos((prev) => prev.map((p) => p.id === id ? { ...p, estado, motivoAnulacion: motivo } : p));
+      fetchNotificationSummary();
+    }, [fetchNotificationSummary]),
 
-      addDevolucion: (devolucion) => {
-        const newDevolucion = { ...devolucion, id: generateId() };
-        setDevoluciones((prev) => [newDevolucion, ...prev]);
-      },
-      updateDevolucion: (id, devolucionData) => {
-        setDevoluciones((prev) =>
-          prev.map((d) => (d.id === id ? { ...d, ...devolucionData } : d)),
-        );
-        fetchNotificationSummary();
-      },
+    // Devoluciones
+    addDevolucion: useCallback((devolucion) => setDevoluciones((prev) => [{ ...devolucion, id: generateId() }, ...prev]), []),
+    updateDevolucion: useCallback((id, data) => {
+      setDevoluciones((prev) => prev.map((d) => d.id === id ? { ...d, ...data } : d));
+      fetchNotificationSummary();
+    }, [fetchNotificationSummary]),
 
-      setRoles: (newRoles) => setRoles(newRoles),
-      addRol: (rol) => {
-        const newRol = { ...rol, id: generateId() };
-        setRoles((prev) => [newRol, ...prev]);
-      },
-      updateRol: (id, rolData) => {
-        setRoles((prev) =>
-          prev.map((r) => (r.id === id ? { ...r, ...rolData } : r)),
-        );
-      },
-      deleteRol: (id) => {
-        setRoles((prev) => prev.filter((r) => r.id !== id));
-      },
+    // Roles
+    setRoles: useCallback((newRoles) => setRoles(newRoles), []),
+    addRol: useCallback((rol) => setRoles((prev) => [{ ...rol, id: generateId() }, ...prev]), []),
+    updateRol: useCallback((id, data) => setRoles((prev) => prev.map((r) => r.id === id ? { ...r, ...data } : r)), []),
+    deleteRol: useCallback((id) => setRoles((prev) => prev.filter((r) => r.id !== id)), []),
 
-      setCurrentUser: (user: User | null) => {
-        setCurrentUser(user);
-        if (user) {
-          if (user.rol === "cliente") {
-            setUserType("cliente");
-          } else {
-            setUserType("admin");
-          }
-        } else {
-          setUserType("cliente");
+    // Auth
+    setCurrentUser: useCallback((user: User | null) => {
+      setCurrentUserState(user);
+      setUserType(user ? (user.rol === "cliente" ? "cliente" : "admin") : "cliente");
+    }, []),
+    setUserType: useCallback((type) => setUserType(type), []),
+
+    // Carrito y favoritos
+    toggleFavorito: useCallback((productoId) => setFavoritos((prev) => prev.includes(productoId) ? prev.filter((id) => id !== productoId) : [...prev, productoId]), []),
+    addToCarrito: useCallback((productoId, cantidad) => {
+      const producto = productosRef.current.find((p) => p.id === productoId);
+      if (!producto) return;
+      setCarrito((prev) => {
+        const existing = prev.find((item) => item.productoId === productoId);
+        if (existing) {
+          const newQty = Math.min(existing.cantidad + cantidad, producto.stock);
+          return prev.map((item) => item.productoId === productoId ? { ...item, cantidad: newQty } : item);
         }
-      },
-      setUserType,
+        return [...prev, { productoId, cantidad: Math.min(cantidad, producto.stock) }];
+      });
+    }, []),
+    removeFromCarrito: useCallback((productoId) => setCarrito((prev) => prev.filter((item) => item.productoId !== productoId)), []),
+    updateCarritoQuantity: useCallback((productoId, cantidad) => {
+      const producto = productosRef.current.find((p) => p.id === productoId);
+      if (!producto) return;
+      setCarrito((prev) => {
+        if (cantidad <= 0) return prev.filter((item) => item.productoId !== productoId);
+        const validated = Math.max(1, Math.min(cantidad, producto.stock));
+        return prev.map((item) => item.productoId === productoId ? { ...item, cantidad: validated } : item);
+      });
+    }, []),
+    clearCarrito: useCallback(() => setCarrito([]), []),
 
-      toggleFavorito: (productoId) => {
-        setFavoritos((prev) =>
-          prev.includes(productoId)
-            ? prev.filter((id) => id !== productoId)
-            : [...prev, productoId],
-        );
-      },
-
-      addToCarrito: (productoId, cantidad) => {
-        const producto = productos.find((p) => p.id === productoId);
-        if (!producto) return;
-
-        setCarrito((prev) => {
-          const existingItem = prev.find(
-            (item) => item.productoId === productoId,
-          );
-          if (existingItem) {
-            const newQuantity = existingItem.cantidad + cantidad;
-            if (newQuantity > producto.stock) {
-              return prev.map((item) =>
-                item.productoId === productoId
-                  ? { ...item, cantidad: producto.stock }
-                  : item,
-              );
-            }
-            return prev.map((item) =>
-              item.productoId === productoId
-                ? { ...item, cantidad: newQuantity }
-                : item,
-            );
-          }
-
-          const initialQuantity = Math.min(cantidad, producto.stock);
-          return [...prev, { productoId, cantidad: initialQuantity }];
-        });
-      },
-
-      removeFromCarrito: (productoId) => {
-        setCarrito((prev) =>
-          prev.filter((item) => item.productoId !== productoId),
-        );
-      },
-
-      updateCarritoQuantity: (productoId, cantidad) => {
-        const producto = productos.find((p) => p.id === productoId);
-        if (!producto) return;
-
-        setCarrito((prev) => {
-          if (cantidad <= 0) {
-            return prev.filter((item) => item.productoId !== productoId);
-          }
-
-          const validatedQuantity = Math.max(
-            1,
-            Math.min(cantidad, producto.stock),
-          );
-          return prev.map((item) =>
-            item.productoId === productoId
-              ? { ...item, cantidad: validatedQuantity }
-              : item,
-          );
-        });
-      },
-
-      clearCarrito: () => {
-        setCarrito([]);
-      },
-      setProductos: (newProductos: Producto[]) => setProductos(newProductos),
-      setCategorias: (newCategorias: Categoria[]) =>
-        setCategorias(newCategorias),
-      setProveedores: (newProveedores: Proveedor[]) =>
-        setProveedores(newProveedores),
-      setCompras: (newCompras: Compra[]) => setCompras(newCompras),
-      setUsers: (newUsers: User[]) => setUsers(newUsers),
-      setClientes: (newClientes: Cliente[]) => setClientes(newClientes),
-      setVentas: (newVentas: Venta[]) => setVentas(newVentas),
-      setPedidos: (newPedidos: Pedido[]) => setPedidos(newPedidos),
-      setDevoluciones: (newDevoluciones: Devolucion[]) =>
-        setDevoluciones(newDevoluciones),
-      setMarcas: (newMarcas: Marca[]) => setMarcas(newMarcas),
-      notificationSummary,
-      fetchNotificationSummary,
-    }),
-    [
-      users,
-      clientes,
-      proveedores,
-      categorias,
-      marcas,
-      productos,
-      compras,
-      ventas,
-      pedidos,
-      devoluciones,
-      roles,
-      currentUser,
-      userType,
-      favoritos,
-      carrito,
-      notificationSummary,
-    ],
-  );
+    // Setters bulk
+    setProductos: useCallback((p) => setProductos(p), []),
+    setCategorias: useCallback((c) => setCategorias(c), []),
+    setProveedores: useCallback((p) => setProveedores(p), []),
+    setCompras: useCallback((c) => setCompras(c), []),
+    setUsers: useCallback((u) => setUsers(u), []),
+    setClientes: useCallback((c) => setClientes(c), []),
+    setVentas: useCallback((v) => setVentas(v), []),
+    setPedidos: useCallback((p) => setPedidos(p), []),
+    setDevoluciones: useCallback((d) => setDevoluciones(d), []),
+    setMarcas: useCallback((m) => setMarcas(m), []),
+    fetchNotificationSummary,
+  };
 
   return (
-    <StoreContext.Provider value={value}>{children}</StoreContext.Provider>
+    <StoreStateContext.Provider value={state}>
+      <StoreActionsContext.Provider value={actions}>
+        {children}
+      </StoreActionsContext.Provider>
+    </StoreStateContext.Provider>
   );
 }
 
-export function useStore() {
-  const context = useContext(StoreContext);
-  if (context === undefined) {
+// Hook unificado — mantiene la misma API que antes para no romper nada
+export function useStore(): StoreState & StoreActions {
+  const state = useContext(StoreStateContext);
+  const actions = useContext(StoreActionsContext);
+  if (!state || !actions) {
     throw new Error("useStore must be used within a StoreProvider");
   }
-  return context;
+  return { ...state, ...actions };
 }
