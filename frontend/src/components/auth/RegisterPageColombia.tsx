@@ -50,7 +50,7 @@ interface RegisterPageProps {
     direccion: string;
     ciudad: string;
     departamento: string;
-  }) => void;
+  }) => void | Promise<void>;
   onNavigateToLogin: () => void;
   onBack?: () => void;
 }
@@ -126,7 +126,7 @@ export function RegisterPageColombia({
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const fields = [
       "nombres",
@@ -151,20 +151,23 @@ export function RegisterPageColombia({
     }
 
     setIsLoading(true);
-    onRegister({
-      nombre: formData.nombres.trim(),
-      apellido: formData.apellidos.trim(),
-      email: formData.email.trim(),
-      telefono: formData.telefono.trim(),
-      password: formData.password,
-      rol: "cliente",
-      tipoDocumento: formData.tipoDocumento,
-      documento: formData.numeroDocumento.trim(),
-      direccion: formData.direccion.trim(),
-      ciudad: formData.ciudad.trim(),
-      departamento: formData.departamento.trim(),
-    });
-    setIsLoading(false);
+    try {
+      await onRegister({
+        nombre: formData.nombres.trim(),
+        apellido: formData.apellidos.trim(),
+        email: formData.email.trim(),
+        telefono: formData.telefono.trim(),
+        password: formData.password,
+        rol: "cliente",
+        tipoDocumento: formData.tipoDocumento,
+        documento: formData.numeroDocumento.trim(),
+        direccion: formData.direccion.trim(),
+        ciudad: formData.ciudad.trim(),
+        departamento: formData.departamento.trim(),
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const fieldProps = (name: string) => ({

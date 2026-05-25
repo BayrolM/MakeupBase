@@ -73,6 +73,7 @@ export function LoginPage({ onLogin, onNavigateToRegister, onNavigateToRecover, 
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
 
   const validateEmail = (email: string) => {
@@ -80,7 +81,7 @@ export function LoginPage({ onLogin, onNavigateToRegister, onNavigateToRecover, 
     return emailRegex.test(email);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: { email?: string; password?: string } = {};
 
@@ -102,7 +103,12 @@ export function LoginPage({ onLogin, onNavigateToRegister, onNavigateToRecover, 
     }
 
     setErrors({});
-    onLogin(email, password);
+    setIsLoading(true);
+    try {
+      await onLogin(email, password);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -268,25 +274,48 @@ export function LoginPage({ onLogin, onNavigateToRegister, onNavigateToRecover, 
 
               <button
                 type="submit"
+                disabled={isLoading}
                 style={{
                   width: '100%', height: '52px', borderRadius: '12px',
-                  background: C.textDark, color: C.white, border: 'none', cursor: 'pointer',
+                  background: C.textDark, color: C.white, border: 'none',
+                  cursor: isLoading ? 'not-allowed' : 'pointer',
                   fontSize: '14px', fontWeight: 600, letterSpacing: '0.5px',
                   boxShadow: `0 8px 24px rgba(0,0,0,0.1)`, transition: 'all 0.2s',
-                  marginTop: '8px'
+                  marginTop: '8px',
+                  opacity: isLoading ? 0.7 : 1,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = `0 12px 32px rgba(0,0,0,0.15)`;
-                  e.currentTarget.style.background = '#000000';
+                  if (!isLoading) {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = `0 12px 32px rgba(0,0,0,0.15)`;
+                    e.currentTarget.style.background = '#000000';
+                  }
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = `0 8px 24px rgba(0,0,0,0.1)`;
-                  e.currentTarget.style.background = C.textDark;
+                  if (!isLoading) {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = `0 8px 24px rgba(0,0,0,0.1)`;
+                    e.currentTarget.style.background = C.textDark;
+                  }
                 }}
               >
-                INGRESAR
+                {isLoading ? (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span
+                      style={{
+                        width: '16px', height: '16px',
+                        border: '2px solid rgba(255,255,255,0.3)',
+                        borderTopColor: C.white,
+                        borderRadius: '50%',
+                        animation: 'spin 0.8s linear infinite',
+                      }}
+                    />
+                    INICIANDO SESIÓN...
+                  </span>
+                ) : (
+                  'INGRESAR'
+                )}
               </button>
             </form>
 
