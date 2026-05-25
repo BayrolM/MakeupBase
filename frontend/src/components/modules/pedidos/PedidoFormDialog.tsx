@@ -64,7 +64,7 @@ export function PedidoFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-white border-0 !w-[95vw] !max-w-[95vw] rounded-2xl shadow-2xl p-0 overflow-hidden">
+      <DialogContent className="bg-white border-0 !w-[95vw] !max-w-[95vw] rounded-2xl shadow-2xl p-0 overflow-hidden" style={{ '--input-background': '#ffffff' } as React.CSSProperties}>
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100 bg-white z-10">
           <div className="flex items-center gap-4">
@@ -160,6 +160,7 @@ export function PedidoFormDialog({
               onChange={(e) => onFieldChange("direccionEnvio", e.target.value)}
               placeholder="Ej: Carrera 50 # 10-20"
               className={`rounded-xl h-11 border-gray-200 bg-white text-sm focus:ring-2 focus:ring-[#c47b96]/20 focus:border-[#c47b96] ${fieldErrors.direccionEnvio ? "border-rose-400" : ""}`}
+              style={{ backgroundColor: '#ffffff' }}
             />
             {fieldErrors.direccionEnvio && (
               <span className="micro-validation-error ml-1">
@@ -196,6 +197,7 @@ export function PedidoFormDialog({
                 onChange={(e) => onFieldChange("ciudad", e.target.value)}
                 placeholder="Medellín"
                 className={`rounded-xl h-11 border-gray-200 bg-white text-sm ${fieldErrors.ciudad ? "border-rose-400" : ""}`}
+                style={{ backgroundColor: '#ffffff' }}
               />
               {fieldErrors.ciudad && (
                 <span className="micro-validation-error ml-1">
@@ -223,6 +225,7 @@ export function PedidoFormDialog({
                 onChange={(e) => onFieldChange("departamento", e.target.value)}
                 placeholder="Antioquia"
                 className={`rounded-xl h-11 border-gray-200 bg-white text-sm ${fieldErrors.departamento ? "border-rose-400" : ""}`}
+                style={{ backgroundColor: '#ffffff' }}
               />
               {fieldErrors.departamento && (
                 <span className="micro-validation-error ml-1">
@@ -252,7 +255,7 @@ export function PedidoFormDialog({
               value={formData.metodo_pago}
               onValueChange={(val) => onFieldChange("metodo_pago", val)}
             >
-              <SelectTrigger className="rounded-xl h-11 border-gray-200 bg-white text-sm focus:ring-2 focus:ring-[#c47b96]/20">
+              <SelectTrigger className="rounded-xl h-11 border-gray-200 bg-white text-sm focus:ring-2 focus:ring-[#c47b96]/20" style={{ backgroundColor: '#ffffff' }}>
                 <SelectValue placeholder="Selecciona un método" />
               </SelectTrigger>
               <SelectContent>
@@ -378,6 +381,7 @@ export function PedidoFormDialog({
                           onUpdateProduct(index, "cantidad", e.target.value)
                         }
                         className={`border-gray-200 text-gray-800 h-9 rounded-lg ${fieldErrors[`prod_${index}_cant`] ? "border-rose-400" : ""}`}
+                        style={{ backgroundColor: '#ffffff' }}
                       />
                       {fieldErrors[`prod_${index}_cant`] && (
                         <span className="micro-validation-error mt-1">

@@ -55,7 +55,7 @@ export function PedidoEditDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-white border-0 w-[95vw] max-w-[1100px] sm:max-w-[1100px] max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl p-0 no-scrollbar">
+      <DialogContent className="bg-white border-0 w-[95vw] max-w-[1100px] sm:max-w-[1100px] max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl p-0 no-scrollbar" style={{ '--input-background': '#ffffff' } as React.CSSProperties}>
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100 sticky top-0 bg-white z-10">
           <div className="flex items-center gap-4">
@@ -118,6 +118,7 @@ export function PedidoEditDialog({
                   placeholder="Ej: Carrera 50 # 10-20"
                   className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${fieldErrors.direccionEnvio ? "border-rose-400" : ""}`}
                   disabled={isSaving}
+                  style={{ backgroundColor: '#ffffff' }}
                 />
                 {fieldErrors.direccionEnvio && (
                   <span className="micro-validation-error ml-1">{fieldErrors.direccionEnvio}</span>
@@ -131,6 +132,7 @@ export function PedidoEditDialog({
                     onChange={(e) => onFieldChange("ciudad", e.target.value)}
                     className={`bg-gray-50 border-gray-200 rounded-xl h-11 ${fieldErrors.ciudad ? "border-rose-400" : ""}`}
                     disabled={isSaving}
+                    style={{ backgroundColor: '#ffffff' }}
                   />
                   {fieldErrors.ciudad && (
                     <span className="micro-validation-error ml-1">{fieldErrors.ciudad}</span>
@@ -143,6 +145,7 @@ export function PedidoEditDialog({
                     onChange={(e) => onFieldChange("departamento", e.target.value)}
                     className={`bg-gray-50 border-gray-200 rounded-xl h-11 ${fieldErrors.departamento ? "border-rose-400" : ""}`}
                     disabled={isSaving}
+                    style={{ backgroundColor: '#ffffff' }}
                   />
                   {fieldErrors.departamento && (
                     <span className="micro-validation-error ml-1">{fieldErrors.departamento}</span>
@@ -211,6 +214,7 @@ export function PedidoEditDialog({
                         onChange={(e) => onUpdateProduct(index, "cantidad", e.target.value)}
                         className={`bg-gray-50 border-gray-200 rounded-xl h-11 ${fieldErrors[`prod_${index}_cant`] ? "border-rose-400" : ""}`}
                         disabled={!isPending || isSaving}
+                        style={{ backgroundColor: '#ffffff' }}
                       />
                       {fieldErrors[`prod_${index}_cant`] && isPending && (
                         <span className="micro-validation-error mt-1">{fieldErrors[`prod_${index}_cant`]}</span>

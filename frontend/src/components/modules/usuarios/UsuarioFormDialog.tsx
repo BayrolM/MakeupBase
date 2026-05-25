@@ -112,7 +112,8 @@ export function UsuarioFormDialog({
               <Input
                 value={formData.nombres}
                 onChange={(e) => onFieldChange("nombres", e.target.value)}
-                className={`bg-white border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${fieldErrors.nombres ? "border-rose-400" : ""}`}
+                className={`border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${fieldErrors.nombres ? "border-rose-400" : ""}`}
+                style={{ backgroundColor: '#ffffff' }}
                 placeholder="Ej: Juan"
                 disabled={isSaving}
                 maxLength={30}
@@ -129,7 +130,8 @@ export function UsuarioFormDialog({
               <Input
                 value={formData.apellidos}
                 onChange={(e) => onFieldChange("apellidos", e.target.value)}
-                className={`bg-white border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${fieldErrors.apellidos ? "border-rose-400" : ""}`}
+                className={`border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${fieldErrors.apellidos ? "border-rose-400" : ""}`}
+                style={{ backgroundColor: '#ffffff' }}
                 placeholder="Ej: Pérez"
                 disabled={isSaving}
                 maxLength={30}
@@ -151,7 +153,7 @@ export function UsuarioFormDialog({
                 onValueChange={(v) => onSelectChange("tipoDocumento", v)}
                 disabled={isSaving}
               >
-                <SelectTrigger className="bg-white border-gray-200 rounded-xl h-11">
+                <SelectTrigger className="border-gray-200 rounded-xl h-11" style={{ backgroundColor: '#ffffff' }}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-white border-gray-100 rounded-xl shadow-lg">
@@ -179,7 +181,8 @@ export function UsuarioFormDialog({
                   );
                   onFieldChange("numeroDocumento", letrasYNumeros);
                 }}
-                className={`bg-white border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${fieldErrors.numeroDocumento ? "border-rose-400" : ""}`}
+                className={`border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${fieldErrors.numeroDocumento ? "border-rose-400" : ""}`}
+                style={{ backgroundColor: '#ffffff' }}
                 placeholder="Ej: 1234567890"
                 disabled={isSaving}
                 maxLength={15}
@@ -203,7 +206,8 @@ export function UsuarioFormDialog({
                   const soloNumeros = e.target.value.replace(/[^0-9]/g, "");
                   onFieldChange("telefono", soloNumeros);
                 }}
-                className={`bg-white border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${fieldErrors.telefono ? "border-rose-400" : ""}`}
+                className={`border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${fieldErrors.telefono ? "border-rose-400" : ""}`}
+                style={{ backgroundColor: '#ffffff' }}
                 placeholder="Ej: 3001234567"
                 disabled={isSaving}
                 maxLength={20}
@@ -221,7 +225,8 @@ export function UsuarioFormDialog({
                 type="email"
                 value={formData.email}
                 onChange={(e) => onFieldChange("email", e.target.value)}
-                className={`bg-white border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${fieldErrors.email ? "border-rose-400" : ""}`}
+                className={`border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${fieldErrors.email ? "border-rose-400" : ""}`}
+                style={{ backgroundColor: '#ffffff' }}
                 placeholder="Ej: usuario@correo.com"
                 disabled={isSaving}
                 maxLength={40}
@@ -246,7 +251,8 @@ export function UsuarioFormDialog({
                     onChange={(e) =>
                       onFieldChange("passwordHash", e.target.value)
                     }
-                    className={`bg-white border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 pr-10 ${fieldErrors.passwordHash ? "border-rose-400" : ""}`}
+                    className={`border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 pr-10 ${fieldErrors.passwordHash ? "border-rose-400" : ""}`}
+                    style={{ backgroundColor: '#ffffff' }}
                     placeholder="Mínimo 8 caracteres"
                     disabled={isSaving}
                   />
@@ -279,7 +285,8 @@ export function UsuarioFormDialog({
                     onChange={(e) =>
                       onFieldChange("confirmPassword", e.target.value)
                     }
-                    className={`bg-white border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 pr-10 ${fieldErrors.confirmPassword ? "border-rose-400" : ""}`}
+                    className={`border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 pr-10 ${fieldErrors.confirmPassword ? "border-rose-400" : ""}`}
+                    style={{ backgroundColor: '#ffffff' }}
                     placeholder="Repite la contraseña"
                     disabled={isSaving}
                   />
@@ -311,7 +318,8 @@ export function UsuarioFormDialog({
               <Input
                 value={formData.direccion}
                 onChange={(e) => onFieldChange("direccion", e.target.value)}
-                className={`bg-white border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${fieldErrors.direccion ? "border-rose-400" : ""}`}
+                className={`border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${fieldErrors.direccion ? "border-rose-400" : ""}`}
+                style={{ backgroundColor: '#ffffff' }}
                 placeholder="Ej: Calle 50 #30-20"
                 disabled={isSaving}
                 maxLength={30}
@@ -329,7 +337,8 @@ export function UsuarioFormDialog({
               <Input
                 value={formData.departamento}
                 onChange={(e) => onFieldChange("departamento", e.target.value)}
-                className={`bg-white border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${fieldErrors.departamento ? "border-rose-400" : ""}`}
+                className={`border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${fieldErrors.departamento ? "border-rose-400" : ""}`}
+                style={{ backgroundColor: '#ffffff' }}
                 placeholder="Ej: Antioquia"
                 disabled={isSaving}
                 maxLength={50}
@@ -349,7 +358,8 @@ export function UsuarioFormDialog({
               <Input
                 value={formData.ciudad}
                 onChange={(e) => onFieldChange("ciudad", e.target.value)}
-                className={`bg-white border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${fieldErrors.ciudad ? "border-rose-400" : ""}`}
+                className={`border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${fieldErrors.ciudad ? "border-rose-400" : ""}`}
+                style={{ backgroundColor: '#ffffff' }}
                 placeholder="Ej: Medellín"
                 disabled={isSaving}
                 maxLength={50}
@@ -372,7 +382,7 @@ export function UsuarioFormDialog({
                   onValueChange={(v) => onSelectChange("rol", v)}
                   disabled={isSaving}
                 >
-                  <SelectTrigger className={`bg-white border-gray-200 rounded-xl h-11 ${fieldErrors.rol ? "border-rose-400" : ""}`}>
+                  <SelectTrigger className={`border-gray-200 rounded-xl h-11 ${fieldErrors.rol ? "border-rose-400" : ""}`} style={{ backgroundColor: '#ffffff' }}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-white border-gray-100 rounded-xl shadow-lg">
@@ -397,7 +407,8 @@ export function UsuarioFormDialog({
               <Input
                 value={formData.pais}
                 onChange={(e) => onFieldChange("pais", e.target.value)}
-                className="bg-white border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11"
+                className="border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11"
+                style={{ backgroundColor: '#ffffff' }}
                 placeholder="Ej: Colombia"
                 disabled={isSaving}
               />
@@ -416,7 +427,7 @@ export function UsuarioFormDialog({
                   onValueChange={(v) => onSelectChange("estado", v)}
                   disabled={isSaving}
                 >
-                  <SelectTrigger className="bg-white border-gray-200 rounded-xl h-11">
+                  <SelectTrigger className="border-gray-200 rounded-xl h-11" style={{ backgroundColor: '#ffffff' }}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-white border-gray-100 rounded-xl shadow-lg">
