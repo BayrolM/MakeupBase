@@ -57,7 +57,17 @@ export const register = async (req, res) => {
       return res.status(400).json({ message: "El email ya está registrado" });
     }
 
-    console.log("✅ Email disponible");
+    // Verificar si el documento ya existe (si se proporciona)
+    if (documento && documento.trim() !== "") {
+      console.log("🔍 Verificando si el documento ya existe...");
+      const docExists = await sql`SELECT * FROM usuarios WHERE documento = ${documento.trim()}`;
+      if (docExists.length > 0) {
+        console.log("❌ Documento ya registrado:", documento);
+        return res.status(400).json({ message: "El número de documento ya está registrado" });
+      }
+    }
+
+    console.log("✅ Email y Documento disponibles");
     console.log("🔐 Encriptando contraseña...");
 
     // Encriptar contraseña
@@ -88,6 +98,15 @@ export const register = async (req, res) => {
   } catch (error) {
     console.error("💥 ERROR en register:", error);
     console.error("📋 Stack trace:", error.stack);
+    
+    // Capturar errores específicos de claves duplicadas de PostgreSQL
+    if (error.message && error.message.includes("usuarios_documento_key")) {
+      return res.status(400).json({ message: "El número de documento ya está registrado" });
+    }
+    if (error.message && error.message.includes("usuarios_email_key")) {
+      return res.status(400).json({ message: "El email ya está registrado" });
+    }
+    
     return res.status(500).json({
       message: "Error en el servidor",
       error: process.env.NODE_ENV === "development" ? error.message : undefined,
