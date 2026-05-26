@@ -219,49 +219,66 @@ export function MarcasModule() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f6f3f5]">
-      <MarcaHeader
-        isAdmin={isAdmin}
-        onOpenDialog={() => handleOpenDialog()}
-      />
-
-      <MarcaTable
-        marcas={marcas}
-        productos={productos}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        setCurrentPage={setCurrentPage}
-        isAdmin={isAdmin}
-        onViewDetail={(m) => {
-          setSelectedMarca(m);
-          setIsDetailDialogOpen(true);
-        }}
-        onEdit={handleOpenDialog}
-        onDelete={(m) => {
-          if (m.estado === "inactivo") {
-            toast.error("Marca inactiva", {
-              description:
-                "No se puede eliminar una marca que ya está inactiva.",
-            });
-            return;
+    <div className="min-h-screen bg-[#f6f3f5] animate-premium-fade-in-up flex flex-col justify-between">
+      <style>{`
+        @keyframes premiumFadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(12px);
           }
-          // Nota: La validación de productos asociados se maneja en el backend y el utility
-          setSelectedMarca(m);
-          setIsDeleteDialogOpen(true);
-        }}
-        onStatusChange={(id, newStatus) => {
-          if (!isAdmin) return;
-          marcaService
-            .update(Number(id), { estado: newStatus === "activo" })
-            .then(() => {
-              toast.success(`Marca ${newStatus === "activo" ? "activada" : "desactivada"}`);
-              refreshMarcas();
-            })
-            .catch((err) => {
-              toast.error(err.message || "Error al cambiar el estado de la marca");
-            });
-        }}
-      />
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-premium-fade-in-up {
+          animation: premiumFadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+      `}</style>
+      <div>
+        <MarcaHeader
+          isAdmin={isAdmin}
+          onOpenDialog={() => handleOpenDialog()}
+        />
+
+        <MarcaTable
+          marcas={marcas}
+          productos={productos}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          setCurrentPage={setCurrentPage}
+          isAdmin={isAdmin}
+          onViewDetail={(m) => {
+            setSelectedMarca(m);
+            setIsDetailDialogOpen(true);
+          }}
+          onEdit={handleOpenDialog}
+          onDelete={(m) => {
+            if (m.estado === "inactivo") {
+              toast.error("Marca inactiva", {
+                description:
+                  "No se puede eliminar una marca que ya está inactiva.",
+              });
+              return;
+            }
+            // Nota: La validación de productos asociados se maneja en el backend y el utility
+            setSelectedMarca(m);
+            setIsDeleteDialogOpen(true);
+          }}
+          onStatusChange={(id, newStatus) => {
+            if (!isAdmin) return;
+            marcaService
+              .update(Number(id), { estado: newStatus === "activo" })
+              .then(() => {
+                toast.success(`Marca ${newStatus === "activo" ? "activada" : "desactivada"}`);
+                refreshMarcas();
+              })
+              .catch((err) => {
+                toast.error(err.message || "Error al cambiar el estado de la marca");
+              });
+          }}
+        />
+      </div>
 
       <MarcaFormDialog
         open={isDialogOpen}

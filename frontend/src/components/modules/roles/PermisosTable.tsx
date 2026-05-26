@@ -67,7 +67,7 @@ export function PermisosTable() {
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
   return (
-    <div className="bg-white/80 backdrop-blur-sm border border-white/50 rounded-2xl overflow-hidden shadow-xl mx-8 mb-8">
+    <div className="bg-white/80 backdrop-blur-sm border border-white/50 rounded-2xl overflow-hidden mx-8 mt-6 mb-8">
       {/* Buscador Superior */}
       <div className="p-4 border-b border-gray-100 bg-white space-y-4">
         <div className="flex items-center gap-4">

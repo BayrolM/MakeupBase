@@ -563,62 +563,51 @@ export function PedidosModule() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f6f3f5]">
-      <PedidoHeader onOpenDialog={handleOpenDialog} />
+    <div className="min-h-screen bg-[#f6f3f5] flex flex-col justify-between">
+      <div>
+        <PedidoHeader onOpenDialog={handleOpenDialog} />
 
-      <div className="px-8 pb-8">
-        <PedidoTable
-          pedidos={pedidos}
-          searchQuery={searchQuery}
-          onSearchChange={(q) => {
-            setSearchQuery(q);
-            handlePageChange(1);
-          }}
-          onViewDetail={async (p) => {
-            const f = await orderService.getById(Number(p.id));
-            setSelectedPedido({
-              ...p,
-              productos: (f?.items || []).map((i: any) => ({
-                productoId: i.id_producto.toString(),
-                cantidad: i.cantidad,
-                precioUnitario: i.precio_unitario,
-              })),
-            });
-            setDetailDialogOpen(true);
-          }}
-          onViewPDF={handleViewPDF}
-          onEdit={handleOpenEdit}
-          onStatusClick={(p) => {
-            setSelectedPedido(p);
-            setNewStatus(p.estado);
-            setIsStatusDialogOpen(true);
-          }}
-          onConfirmPayment={(p) => {
-            setPedidoToConfirm(p);
-            setIsPaymentConfirmOpen(true);
-          }}
-          onViewComprobante={(url) => {
-            const baseUrl = (
-              import.meta.env.VITE_API_URL || "http://localhost:3000/api"
-            ).replace("/api", "");
-            const fullUrl = url.startsWith("http") ? url : `${baseUrl}${url}`;
-            setPreviewImageUrl(fullUrl);
-            setIsPreviewOpen(true);
-          }}
-        />
-
-        {totalPages > 1 && (
-          <div className="mt-6">
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              totalItems={totalItems}
-              itemsPerPage={itemsPerPage}
-              onPageChange={handlePageChange}
-              onItemsPerPageChange={handleLimitChange}
-            />
-          </div>
-        )}
+        <div className="px-8 mt-6">
+          <PedidoTable
+            pedidos={pedidos}
+            searchQuery={searchQuery}
+            onSearchChange={(q) => {
+              setSearchQuery(q);
+              handlePageChange(1);
+            }}
+            onViewDetail={async (p) => {
+              const f = await orderService.getById(Number(p.id));
+              setSelectedPedido({
+                ...p,
+                productos: (f?.items || []).map((i: any) => ({
+                  productoId: i.id_producto.toString(),
+                  cantidad: i.cantidad,
+                  precioUnitario: i.precio_unitario,
+                })),
+              });
+              setDetailDialogOpen(true);
+            }}
+            onViewPDF={handleViewPDF}
+            onEdit={handleOpenEdit}
+            onStatusClick={(p) => {
+              setSelectedPedido(p);
+              setNewStatus(p.estado);
+              setIsStatusDialogOpen(true);
+            }}
+            onConfirmPayment={(p) => {
+              setPedidoToConfirm(p);
+              setIsPaymentConfirmOpen(true);
+            }}
+            onViewComprobante={(url) => {
+              const baseUrl = (
+                import.meta.env.VITE_API_URL || "http://localhost:3000/api"
+              ).replace("/api", "");
+              const fullUrl = url.startsWith("http") ? url : `${baseUrl}${url}`;
+              setPreviewImageUrl(fullUrl);
+              setIsPreviewOpen(true);
+            }}
+          />
+        </div>
       </div>
 
       <PedidoFormDialog
@@ -719,6 +708,19 @@ export function PedidosModule() {
         onOpenChange={setIsPreviewOpen}
         imageUrl={previewImageUrl}
       />
+
+      {totalItems > 0 && (
+        <div className="px-8 pb-8">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+            onPageChange={handlePageChange}
+            onItemsPerPageChange={handleLimitChange}
+          />
+        </div>
+      )}
     </div>
   );
 }

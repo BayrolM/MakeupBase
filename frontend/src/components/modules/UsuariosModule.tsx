@@ -434,44 +434,45 @@ export function UsuariosModule() {
 
 
   return (
-    <div className="min-h-screen bg-[#f6f3f5]">
-      <UsuarioHeader isAdmin={isAdmin} onOpenDialog={handleOpenDialog} />
+    <div className="min-h-screen bg-[#f6f3f5] animate-premium-fade-in-up flex flex-col justify-between">
+      <style>{`
+        @keyframes premiumFadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(12px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-premium-fade-in-up {
+          animation: premiumFadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+      `}</style>
+      <div>
+        <UsuarioHeader isAdmin={isAdmin} onOpenDialog={handleOpenDialog} />
 
-      <div className="px-8 pb-8">
-        <UsuarioTable
-          users={paginatedUsers}
-          pedidos={pedidos}
-          searchQuery={searchQuery}
-          onSearchChange={(q) => {
-            setSearchQuery(q);
-            setCurrentPage(1);
-          }}
-          onViewDetail={(u) => {
-            setSelectedUser(u);
-            setIsDetailDialogOpen(true);
-          }}
-          onEdit={handleOpenDialog}
-          onDelete={handleOpenDeleteDialog}
-          onStatusChange={handleStatusChange}
-          isAdmin={isAdmin}
-          roles={roles}
-        />
-
-        {filteredUsers.length > 0 && (
-          <div className="mt-6">
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              totalItems={filteredUsers.length}
-              itemsPerPage={itemsPerPage}
-              onPageChange={setCurrentPage}
-              onItemsPerPageChange={(n) => {
-                setItemsPerPage(n);
-                setCurrentPage(1);
-              }}
-            />
-          </div>
-        )}
+        <div className="px-8 mt-6">
+          <UsuarioTable
+            users={paginatedUsers}
+            pedidos={pedidos}
+            searchQuery={searchQuery}
+            onSearchChange={(q) => {
+              setSearchQuery(q);
+              setCurrentPage(1);
+            }}
+            onViewDetail={(u) => {
+              setSelectedUser(u);
+              setIsDetailDialogOpen(true);
+            }}
+            onEdit={handleOpenDialog}
+            onDelete={handleOpenDeleteDialog}
+            onStatusChange={handleStatusChange}
+            isAdmin={isAdmin}
+            roles={roles}
+          />
+        </div>
       </div>
 
       <UsuarioFormDialog
@@ -501,6 +502,22 @@ export function UsuariosModule() {
         isDeleting={isDeleting}
         onConfirm={handleConfirmDelete}
       />
+
+      {filteredUsers.length > 0 && (
+        <div className="px-8 pb-8">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={filteredUsers.length}
+            itemsPerPage={itemsPerPage}
+            onPageChange={setCurrentPage}
+            onItemsPerPageChange={(n) => {
+              setItemsPerPage(n);
+              setCurrentPage(1);
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 }

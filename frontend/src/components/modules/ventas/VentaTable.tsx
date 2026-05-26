@@ -44,7 +44,7 @@ export function VentaTable({
   const canDelete = hasPermission(currentUser, "eliminar_ventas");
 
   return (
-    <div className="bg-white/80 backdrop-blur-sm border border-white/50 rounded-2xl overflow-hidden shadow-xl">
+    <div className="bg-white/80 backdrop-blur-sm border border-white/50 rounded-2xl overflow-hidden">
       {/* Barra de búsqueda */}
       <div className="p-4 border-b border-gray-100 bg-white space-y-3">
         <div className="flex items-center gap-4">

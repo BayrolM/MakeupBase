@@ -45,7 +45,7 @@ export function RolTable({
   };
 
   return (
-    <div className="bg-white/80 backdrop-blur-sm border border-white/50 rounded-2xl overflow-hidden shadow-xl mx-8 mb-8">
+    <div className="bg-white/80 backdrop-blur-sm border border-white/50 rounded-2xl overflow-hidden mx-8 mt-6 mb-8">
       <div className="p-4 border-b border-gray-100 bg-white">
         <div className="relative w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />

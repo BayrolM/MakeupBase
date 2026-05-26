@@ -315,31 +315,35 @@ export function VentasModule() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f6f3f5]">
-      <VentaHeader onOpenDialog={handleOpenDialog} />
+    <div className="min-h-screen bg-[#f6f3f5] animate-premium-fade-in-up flex flex-col justify-between">
+      <style>{`
+        @keyframes premiumFadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(12px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-premium-fade-in-up {
+          animation: premiumFadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+      `}</style>
+      <div>
+        <VentaHeader onOpenDialog={handleOpenDialog} />
 
-      <div className="px-8 pb-8">
-        <VentaTable
-          ventas={ventas}
-          searchQuery={searchQuery}
-          onSearchChange={(q) => { setSearchQuery(q); handlePageChange(1); }}
-          onDownloadPDF={handleDownloadPDF}
-          onViewDetail={(v) => { setSelectedVenta(v); setDetailDialogOpen(true); }}
-          onAnnulClick={(v) => { setSaleToAnnul(v); setIsAnnulDialogOpen(true); }}
-        />
-
-        {totalPages > 1 && (
-          <div className="mt-6">
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              totalItems={totalItems}
-              itemsPerPage={itemsPerPage}
-              onPageChange={handlePageChange}
-              onItemsPerPageChange={handleLimitChange}
-            />
-          </div>
-        )}
+        <div className="px-8 mt-6">
+          <VentaTable
+            ventas={ventas}
+            searchQuery={searchQuery}
+            onSearchChange={(q) => { setSearchQuery(q); handlePageChange(1); }}
+            onDownloadPDF={handleDownloadPDF}
+            onViewDetail={(v) => { setSelectedVenta(v); setDetailDialogOpen(true); }}
+            onAnnulClick={(v) => { setSaleToAnnul(v); setIsAnnulDialogOpen(true); }}
+          />
+        </div>
       </div>
 
       <VentaFormDialog
@@ -369,6 +373,19 @@ export function VentasModule() {
         isSaving={isSaving}
         onConfirm={handleAnularVenta}
       />
+
+      {totalItems > 0 && (
+        <div className="px-8 pb-8">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+            onPageChange={handlePageChange}
+            onItemsPerPageChange={handleLimitChange}
+          />
+        </div>
+      )}
     </div>
   );
 }

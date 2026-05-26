@@ -393,55 +393,59 @@ export function DevolucionesModule() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f6f3f5]">
-      <DevolucionHeader onOpenDialog={handleOpenCreateDialog} />
+    <div className="min-h-screen bg-[#f6f3f5] animate-premium-fade-in-up flex flex-col justify-between">
+      <style>{`
+        @keyframes premiumFadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(12px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-premium-fade-in-up {
+          animation: premiumFadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+      `}</style>
+      <div>
+        <DevolucionHeader onOpenDialog={handleOpenCreateDialog} />
 
-      <div className="px-8 pb-8">
-        <DevolucionTable
-          devoluciones={paginatedDevoluciones}
-          clientes={clientes}
-          searchQuery={searchQuery}
-          onSearchChange={(q) => { setSearchQuery(q); handlePageChange(1); }}
-          onViewDetail={async (dev) => {
-            try {
-              const fullData = await devolucionService.getById(Number(dev.id));
-              setSelectedDevolucion({
-                ...dev,
-                esDefectuoso: fullData.es_defectuoso || false,
-                productos: (fullData.detalles || []).map((det: any) => ({
-                  productoId: det.id_producto?.toString() || "",
-                  productoNombre: det.nombre_producto || "",
-                  cantidad: det.cantidad,
-                  precioUnitario: Number(det.precio_unitario || 0),
-                  subtotal: Number(det.subtotal || 0),
-                })),
-                emailCliente: fullData.email_cliente || "",
-                telefonoCliente: fullData.telefono_cliente || "",
-              });
-              setDetailDialogOpen(true);
-            } catch {
-              setSelectedDevolucion(dev);
-              setDetailDialogOpen(true);
-            }
-          }}
-          onViewPdf={handleViewPdf}
-          onAnular={(dev) => { setSelectedDevolucion(dev); setMotivoAnulacion(""); setAnularDialogOpen(true); }}
-          onChangeEstado={(dev) => { setSelectedDevolucion(dev); setMotivoDecision(""); setNuevoEstado("en_revision"); setEsDefectuoso(false); setStatusDialogOpen(true); }}
-          filteredCount={filteredDevoluciones.length}
-        />
-
-        {filteredDevoluciones.length > 0 && (
-          <div className="mt-6">
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              totalItems={filteredDevoluciones.length}
-              itemsPerPage={itemsPerPage}
-              onPageChange={handlePageChange}
-              onItemsPerPageChange={handleLimitChange}
-            />
-          </div>
-        )}
+        <div className="px-8 mt-6">
+          <DevolucionTable
+            devoluciones={paginatedDevoluciones}
+            clientes={clientes}
+            searchQuery={searchQuery}
+            onSearchChange={(q) => { setSearchQuery(q); handlePageChange(1); }}
+            onViewDetail={async (dev) => {
+              try {
+                const fullData = await devolucionService.getById(Number(dev.id));
+                setSelectedDevolucion({
+                  ...dev,
+                  esDefectuoso: fullData.es_defectuoso || false,
+                  productos: (fullData.detalles || []).map((det: any) => ({
+                    productoId: det.id_producto?.toString() || "",
+                    productoNombre: det.nombre_producto || "",
+                    cantidad: det.cantidad,
+                    precioUnitario: Number(det.precio_unitario || 0),
+                    subtotal: Number(det.subtotal || 0),
+                  })),
+                  emailCliente: fullData.email_cliente || "",
+                  telefonoCliente: fullData.telefono_cliente || "",
+                });
+                setDetailDialogOpen(true);
+              } catch {
+                setSelectedDevolucion(dev);
+                setDetailDialogOpen(true);
+              }
+            }}
+            onViewPdf={handleViewPdf}
+            onAnular={(dev) => { setSelectedDevolucion(dev); setMotivoAnulacion(""); setAnularDialogOpen(true); }}
+            onChangeEstado={(dev) => { setSelectedDevolucion(dev); setMotivoDecision(""); setNuevoEstado("en_revision"); setEsDefectuoso(false); setStatusDialogOpen(true); }}
+            filteredCount={filteredDevoluciones.length}
+          />
+        </div>
       </div>
 
       <DevolucionFormDialog
@@ -516,6 +520,19 @@ export function DevolucionesModule() {
         onMotivoChange={setMotivoAnulacion}
         onConfirm={handleConfirmAnulacion}
       />
+
+      {filteredDevoluciones.length > 0 && (
+        <div className="px-8 pb-8">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={filteredDevoluciones.length}
+            itemsPerPage={itemsPerPage}
+            onPageChange={handlePageChange}
+            onItemsPerPageChange={handleLimitChange}
+          />
+        </div>
+      )}
     </div>
   );
 }

@@ -228,51 +228,68 @@ export function CategoriasModule() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f6f3f5]">
-      <CategoryHeader
-        isAdmin={isAdmin}
-        onOpenDialog={() => handleOpenDialog()}
-      />
-
-      <CategoryTable
-        categorias={categorias}
-        productos={productos}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        setCurrentPage={setCurrentPage}
-        isAdmin={isAdmin}
-        onViewDetail={(cat) => {
-          setSelectedCategoria(cat);
-          setIsDetailDialogOpen(true);
-        }}
-        onEdit={handleOpenDialog}
-        onDelete={(cat) => {
-          if (cat.estado === "inactivo") {
-            toast.error("Categoría inactiva", {
-              description:
-                "No se puede eliminar una categoría que ya está inactiva.",
-            });
-            return;
+    <div className="min-h-screen bg-[#f6f3f5] animate-premium-fade-in-up flex flex-col justify-between">
+      <style>{`
+        @keyframes premiumFadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(12px);
           }
-
-          const productCount = getCategoryProductCount(cat.id, productos);
-          if (productCount > 0) {
-            toast.error("No se puede eliminar esta categoría", {
-              description: `Tiene ${productCount} producto(s) asociado(s). Reasigna o elimina los productos primero.`,
-            });
-            return;
+          to {
+            opacity: 1;
+            transform: translateY(0);
           }
+        }
+        .animate-premium-fade-in-up {
+          animation: premiumFadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+      `}</style>
+      <div>
+        <CategoryHeader
+          isAdmin={isAdmin}
+          onOpenDialog={() => handleOpenDialog()}
+        />
 
-          setSelectedCategoria(cat);
-          setIsDeleteDialogOpen(true);
-        }}
-        onStatusChange={(id, newStatus) => {
-          if (!isAdmin) return;
-          categoryService
-            .update(Number(id), { estado: newStatus === "activo" })
-            .then(refreshCategorias);
-        }}
-      />
+        <CategoryTable
+          categorias={categorias}
+          productos={productos}
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          setCurrentPage={setCurrentPage}
+          isAdmin={isAdmin}
+          onViewDetail={(cat) => {
+            setSelectedCategoria(cat);
+            setIsDetailDialogOpen(true);
+          }}
+          onEdit={handleOpenDialog}
+          onDelete={(cat) => {
+            if (cat.estado === "inactivo") {
+              toast.error("Categoría inactiva", {
+                description:
+                  "No se puede eliminar una categoría que ya está inactiva.",
+              });
+              return;
+            }
+
+            const productCount = getCategoryProductCount(cat.id, productos);
+            if (productCount > 0) {
+              toast.error("No se puede eliminar esta categoría", {
+                description: `Tiene ${productCount} producto(s) asociado(s). Reasigna o elimina los productos primero.`,
+              });
+              return;
+            }
+
+            setSelectedCategoria(cat);
+            setIsDeleteDialogOpen(true);
+          }}
+          onStatusChange={(id, newStatus) => {
+            if (!isAdmin) return;
+            categoryService
+              .update(Number(id), { estado: newStatus === "activo" })
+              .then(refreshCategorias);
+          }}
+        />
+      </div>
 
       <CategoryFormDialog
         open={isDialogOpen}

@@ -92,6 +92,8 @@ function AppContent() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showInactiveModal, setShowInactiveModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAuthTransitioning, setIsAuthTransitioning] = useState(false);
+  const [authTransitionMessage, setAuthTransitionMessage] = useState("");
   const [showAuthPage, setShowAuthPage] = useState(false);
   const [authPage, setAuthPage] = useState<AuthPage>("login");
   const [recoverToken, setRecoverToken] = useState<string | undefined>(
@@ -321,11 +323,17 @@ function AppContent() {
 
   const handleLogin = async (email: string, password: string) => {
     try {
-      // Llamar al backend
+      // 1. Llamar al backend primero para verificar las credenciales
       await authService.login({ email, password });
+
+      // 2. Si las credenciales son correctas, activar el cargador premium
+      setAuthTransitionMessage("Iniciando sesión...");
+      setIsAuthTransitioning(true);
 
       // Obtener perfil del usuario
       const profile = await authService.getProfile();
+
+      await new Promise((resolve) => setTimeout(resolve, 800));
 
       // Transformar al formato del frontend
       const user = {
@@ -367,12 +375,14 @@ function AppContent() {
         setCurrentRoute("dashboard");
       }
 
+      setIsAuthTransitioning(false);
       toast.success("¡Bienvenido!", {
         description: `Has iniciado sesión como ${user.nombres}`,
       });
 
       return true;
     } catch (error: any) {
+      setIsAuthTransitioning(false);
       // Cuenta inactiva — mostrar modal específico
       if (
         error.response?.status === 403 &&
@@ -382,11 +392,12 @@ function AppContent() {
         return false;
       }
       toast.error("Error al iniciar sesión", {
-        description: error.message || "Credenciales incorrectas",
+        description: error.response?.data?.message || "Credenciales incorrectas",
       });
       return false;
     }
   };
+
 
   const handleRegister = async (data: {
     nombre: string;
@@ -434,13 +445,115 @@ function AppContent() {
     console.log("Recovering password for:", email);
   };
 
-  // Mostrar loading mientras verifica autenticación
-  if (isLoading) {
+  // Mostrar loading mientras verifica autenticación o durante transiciones de login/logout
+  if (isLoading || isAuthTransitioning) {
+    const message = authTransitionMessage || "Cargando Makeup Base...";
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-foreground-secondary">Cargando...</p>
+      <div 
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 9999,
+          background: 'radial-gradient(circle at 50% 50%, #fffcfd 0%, #f7f0f3 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontFamily: "'Outfit', 'DM Sans', sans-serif",
+          animation: 'fadeInOverlay 0.4s ease-out'
+        }}
+      >
+        <style>{`
+          @keyframes fadeInOverlay {
+            from { opacity: 0; }
+            to { opacity: 1; }
+          }
+          @keyframes softPulse {
+            0%, 100% { transform: scale(1); opacity: 0.95; }
+            50% { transform: scale(1.02); opacity: 1; }
+          }
+        `}</style>
+        
+        <div 
+          style={{
+            background: 'rgba(255, 255, 255, 0.6)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            border: '1px solid rgba(123, 19, 71, 0.08)',
+            borderRadius: '24px',
+            padding: '40px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '24px',
+            maxWidth: '360px',
+            width: '90%',
+            textAlign: 'center',
+            boxShadow: '0 20px 40px rgba(123, 19, 71, 0.05)',
+            animation: 'softPulse 3s infinite ease-in-out'
+          }}
+        >
+          {/* Elegant system representative icon (smaller spinner with MB emblem) */}
+          <div 
+            style={{
+              position: 'relative',
+              width: '56px',
+              height: '56px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <div 
+              className="animate-spin"
+              style={{
+                position: 'absolute',
+                width: '100%',
+                height: '100%',
+                border: '3px solid rgba(123, 19, 71, 0.08)',
+                borderTopColor: '#7b1347',
+                borderRadius: '50%',
+                animationDuration: '1s'
+              }}
+            />
+            {/* Minimalist emblem inside */}
+            <span 
+              style={{
+                fontSize: '14px',
+                fontWeight: 800,
+                color: '#7b1347',
+                letterSpacing: '0.5px'
+              }}
+            >
+              MB
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <h2 
+              style={{
+                fontSize: '17px',
+                fontWeight: 700,
+                color: '#7b1347',
+                letterSpacing: '0.5px'
+              }}
+            >
+              {message}
+            </h2>
+            <p 
+              style={{
+                fontSize: '11px',
+                color: 'rgba(123, 19, 71, 0.6)',
+                letterSpacing: '1.5px',
+                textTransform: 'uppercase',
+                fontWeight: 700
+              }}
+            >
+              Un momento por favor
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -795,13 +908,19 @@ function AppContent() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    setAuthTransitionMessage("Cerrando sesión...");
+    setIsAuthTransitioning(true);
+
+    await new Promise((resolve) => setTimeout(resolve, 800));
+
     authService.logout();
     setCurrentUser(null);
     setIsAuthenticated(false);
     setAuthPage("login");
     setCurrentRoute("inicio");
 
+    setIsAuthTransitioning(false);
     toast.info("Sesión cerrada", {
       description: "Has cerrado sesión correctamente",
     });
