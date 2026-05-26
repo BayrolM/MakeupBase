@@ -1,25 +1,20 @@
 import { useEffect, useState } from "react";
-import { Bell, ShoppingCart, Undo2, AlertTriangle } from "lucide-react";
+import { Bell, ShoppingCart, Undo2, AlertTriangle, RefreshCw } from "lucide-react";
 import { useStore } from "../../lib/store";
 import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { Badge } from "../ui/badge";
 
 export function NotificationBell() {
   const { notificationSummary, fetchNotificationSummary, currentUser, userType } = useStore();
   const [lastTotal, setLastTotal] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
-    // Solo para admins que tengan permiso de productos (o sean Super Admin)
     if (!currentUser || userType !== "admin") return;
-    
     const hasAccess = currentUser.id_rol === 1 || currentUser.permisos?.includes("ver_productos");
     if (!hasAccess) return;
 
-    // Carga inicial
     fetchNotificationSummary();
-
-    // Polling cada 10 segundos para sensación "en vivo"
     const interval = setInterval(() => {
       fetchNotificationSummary();
     }, 10000);
@@ -28,7 +23,6 @@ export function NotificationBell() {
   }, [currentUser, userType]);
 
   useEffect(() => {
-    // Si el total aumenta, mostramos un toast
     if (notificationSummary.total > lastTotal) {
       toast("Nuevas alertas del sistema", {
         description: `Tienes ${notificationSummary.total} asuntos pendientes que requieren tu atención.`,
@@ -38,142 +32,391 @@ export function NotificationBell() {
     setLastTotal(notificationSummary.total);
   }, [notificationSummary.total]);
 
-  // Si no tiene acceso o no es admin, no renderizar nada
   const hasAccess = currentUser && (currentUser.id_rol === 1 || currentUser.permisos?.includes("ver_productos"));
   if (!currentUser || userType !== "admin" || !hasAccess) {
     return null;
   }
 
-  const S = {
-    floating: {
-      position: "fixed" as const,
-      top: "1.5rem",
-      right: "1.5rem",
-      zIndex: 100,
-    },
-    bellBtn: {
-      width: 52,
-      height: 52,
-      borderRadius: "50%",
-      background: "rgba(255, 255, 255, 0.9)",
-      backdropFilter: "blur(12px)",
-      border: "1px solid var(--luxury-pink-soft)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      cursor: "pointer",
-      boxShadow: "0 12px 40px rgba(123, 19, 71, 0.18)",
-      color: "var(--luxury-pink)",
-      transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-    },
-    badge: {
-      position: "absolute" as const,
-      top: -2,
-      right: -2,
-      background: "var(--luxury-pink)",
-      color: "white",
-      border: "2px solid white",
-      fontSize: "10px",
-      padding: "2px 6px",
-    }
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchNotificationSummary();
+    setTimeout(() => setIsRefreshing(false), 600);
   };
 
   return (
-    <div style={S.floating}>
+    <div
+      style={{
+        position: "fixed",
+        top: "1.5rem",
+        right: "1.5rem",
+        zIndex: 100,
+      }}
+    >
       <Popover>
         <PopoverTrigger asChild>
-          <button 
-            style={S.bellBtn} 
-            className="hover:scale-110 active:scale-95 hover:shadow-luxury-pink/20 group"
+          <button
+            style={{
+              position: "relative",
+              width: 52,
+              height: 52,
+              borderRadius: "50%",
+              background: "white",
+              border: "1px solid rgba(123,19,71,0.15)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              boxShadow: "0 8px 32px rgba(123,19,71,0.16), 0 2px 8px rgba(0,0,0,0.06)",
+              color: "#7b1347",
+              transition: "all 0.25s cubic-bezier(0.4,0,0.2,1)",
+            }}
+            className="hover:scale-110 active:scale-95 group"
           >
-            <Bell 
-              size={24} 
-              className={notificationSummary.total > 0 ? "animate-bounce group-hover:animate-none" : ""} 
+            <Bell
+              size={22}
+              strokeWidth={1.8}
+              className={notificationSummary.total > 0 ? "animate-bounce group-hover:animate-none" : ""}
             />
             {notificationSummary.total > 0 && (
-              <Badge style={S.badge} className="rounded-full h-5 min-w-[20px] flex items-center justify-center">
+              <span
+                style={{
+                  position: "absolute",
+                  top: -3,
+                  right: -3,
+                  minWidth: 20,
+                  height: 20,
+                  borderRadius: 10,
+                  background: "linear-gradient(135deg, #7b1347, #a85d77)",
+                  color: "white",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  border: "2px solid white",
+                  paddingInline: 4,
+                  boxShadow: "0 2px 6px rgba(123,19,71,0.4)",
+                  lineHeight: 1,
+                }}
+              >
                 {notificationSummary.total}
-              </Badge>
+              </span>
             )}
           </button>
         </PopoverTrigger>
-        <PopoverContent className="w-80 p-0 overflow-hidden rounded-2xl border-luxury-accent-soft shadow-2xl mr-4 mt-2 bg-white">
-          <div className="bg-white p-4 border-b border-luxury-accent-soft">
-            <div className="flex items-center justify-between">
-              <h3 className="font-bold text-luxury-pink flex items-center gap-2">
-                <Bell size={18} />
-                Notificaciones
-              </h3>
+
+        <PopoverContent
+          className="p-0 overflow-hidden bg-white"
+          sideOffset={10}
+          style={{
+            width: 420,
+            borderRadius: 20,
+            border: "1px solid rgba(0,0,0,0.07)",
+            boxShadow: "0 24px 48px -12px rgba(123,19,71,0.18), 0 8px 16px -4px rgba(0,0,0,0.06)",
+          }}
+        >
+          {/* Header */}
+          <div
+            style={{
+              background: "linear-gradient(135deg, #fdf2f6 0%, #fff8fb 60%, white 100%)",
+              borderBottom: "1px solid rgba(0,0,0,0.06)",
+              padding: "20px 22px 16px",
+              position: "relative",
+              overflow: "hidden",
+            }}
+          >
+            {/* Decorative glow */}
+            <div
+              style={{
+                position: "absolute",
+                top: -30,
+                right: -30,
+                width: 100,
+                height: 100,
+                borderRadius: "50%",
+                background: "rgba(196,123,150,0.12)",
+                filter: "blur(20px)",
+                pointerEvents: "none",
+              }}
+            />
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative" }}>
+              <div>
+                <h3 style={{ fontSize: 15, fontWeight: 700, color: "#1a1a1a", margin: 0 }}>
+                  Notificaciones
+                </h3>
+                <p style={{ fontSize: 11.5, color: "#999", marginTop: 3, fontWeight: 500 }}>
+                  Actividad en tiempo real
+                </p>
+              </div>
               {notificationSummary.total > 0 && (
-                <span className="text-[10px] bg-luxury-pink text-white px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
-                  Urgente
+                <span
+                  style={{
+                    background: "linear-gradient(135deg, #7b1347, #a85d77)",
+                    color: "white",
+                    fontSize: 11,
+                    fontWeight: 700,
+                    padding: "5px 12px",
+                    borderRadius: 20,
+                    letterSpacing: "0.04em",
+                    boxShadow: "0 4px 12px rgba(123,19,71,0.3)",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {notificationSummary.total} nueva{notificationSummary.total > 1 ? "s" : ""}
                 </span>
               )}
             </div>
-            <p className="text-[11px] text-luxury-text-secondary mt-1">Actividad crítica de la plataforma</p>
           </div>
-          
-          <div className="p-2 bg-white">
+
+          {/* Body */}
+          <div style={{ background: "white", maxHeight: "55vh", overflowY: "auto" }} className="sidebar-scroll">
             {notificationSummary.total === 0 ? (
-              <div className="p-10 text-center">
-                <div className="w-12 h-12 bg-luxury-bg-soft rounded-full flex items-center justify-center mx-auto mb-3">
-                  <Bell size={20} className="text-luxury-pink-soft opacity-50" />
+              <div style={{ padding: "48px 24px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center" }}>
+                <div
+                  style={{
+                    width: 60,
+                    height: 60,
+                    borderRadius: 16,
+                    background: "#f8f8f8",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginBottom: 14,
+                    boxShadow: "inset 0 2px 6px rgba(0,0,0,0.06)",
+                  }}
+                >
+                  <Bell size={24} color="#ccc" strokeWidth={1.4} />
                 </div>
-                <p className="text-sm font-medium text-luxury-text-secondary">Sin alertas pendientes</p>
-                <p className="text-xs text-luxury-text-muted mt-1">¡Buen trabajo!</p>
+                <p style={{ fontSize: 13.5, fontWeight: 600, color: "#555", margin: 0 }}>Sin alertas pendientes</p>
+                <p style={{ fontSize: 12, color: "#aaa", marginTop: 4 }}>Todo está bajo control.</p>
               </div>
             ) : (
-              <div className="flex flex-col gap-1">
+              <div>
                 {notificationSummary.pedidos > 0 && (
-                  <div className="flex items-center gap-3 p-3 hover:bg-luxury-bg-soft rounded-xl cursor-pointer transition-colors group">
-                    <div className="w-10 h-10 rounded-full bg-pink-50 flex items-center justify-center text-[#7b1347] group-hover:scale-110 transition-transform">
-                      <ShoppingCart size={18} />
+                  <div
+                    className="group"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 14,
+                      padding: "14px 20px",
+                      borderBottom: "1px solid #f5f5f5",
+                      cursor: "pointer",
+                      transition: "background 0.2s",
+                      position: "relative",
+                      overflow: "hidden",
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.background = "#fdf9fb")}
+                    onMouseLeave={e => (e.currentTarget.style.background = "white")}
+                  >
+                    <div
+                      style={{
+                        position: "absolute",
+                        left: 0,
+                        top: 0,
+                        bottom: 0,
+                        width: 3,
+                        background: "#7b1347",
+                        borderRadius: "0 2px 2px 0",
+                      }}
+                    />
+                    <div
+                      style={{
+                        width: 44,
+                        height: 44,
+                        borderRadius: 14,
+                        background: "#fef2f8",
+                        border: "1px solid rgba(123,19,71,0.1)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "#7b1347",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <ShoppingCart size={20} strokeWidth={1.6} />
                     </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-bold text-gray-800">Pedidos Nuevos</p>
-                      <p className="text-[11px] text-luxury-text-secondary">Revisión requerida ({notificationSummary.pedidos})</p>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ fontSize: 13, fontWeight: 700, color: "#1a1a1a", margin: 0 }}>Nuevos Pedidos</p>
+                      <p style={{ fontSize: 11.5, color: "#888", marginTop: 2 }}>Revisión requerida — {notificationSummary.pedidos} pendiente{notificationSummary.pedidos > 1 ? "s" : ""}</p>
                     </div>
-                    <div className="w-2 h-2 rounded-full bg-luxury-pink"></div>
+                    <span
+                      style={{
+                        width: 9,
+                        height: 9,
+                        borderRadius: "50%",
+                        background: "#7b1347",
+                        boxShadow: "0 0 8px rgba(123,19,71,0.5)",
+                        flexShrink: 0,
+                      }}
+                    />
                   </div>
                 )}
 
                 {notificationSummary.stock > 0 && (
-                  <div className="flex items-center gap-3 p-3 hover:bg-luxury-bg-soft rounded-xl cursor-pointer transition-colors group">
-                    <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center text-orange-600 group-hover:scale-110 transition-transform">
-                      <AlertTriangle size={18} />
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 14,
+                      padding: "14px 20px",
+                      borderBottom: "1px solid #f5f5f5",
+                      cursor: "pointer",
+                      transition: "background 0.2s",
+                      position: "relative",
+                      overflow: "hidden",
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.background = "#fffaf7")}
+                    onMouseLeave={e => (e.currentTarget.style.background = "white")}
+                  >
+                    <div
+                      style={{
+                        position: "absolute",
+                        left: 0,
+                        top: 0,
+                        bottom: 0,
+                        width: 3,
+                        background: "#f97316",
+                        borderRadius: "0 2px 2px 0",
+                      }}
+                    />
+                    <div
+                      style={{
+                        width: 44,
+                        height: 44,
+                        borderRadius: 14,
+                        background: "#fff7ed",
+                        border: "1px solid rgba(249,115,22,0.12)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "#ea6c00",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <AlertTriangle size={20} strokeWidth={1.6} />
                     </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-bold text-gray-800">Stock Crítico</p>
-                      <p className="text-[11px] text-luxury-text-secondary">{notificationSummary.stock} productos agotados</p>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ fontSize: 13, fontWeight: 700, color: "#1a1a1a", margin: 0 }}>Stock Crítico</p>
+                      <p style={{ fontSize: 11.5, color: "#888", marginTop: 2 }}>{notificationSummary.stock} producto{notificationSummary.stock > 1 ? "s" : ""} agotado{notificationSummary.stock > 1 ? "s" : ""}</p>
                     </div>
-                    <div className="w-2 h-2 rounded-full bg-orange-500"></div>
+                    <span
+                      style={{
+                        width: 9,
+                        height: 9,
+                        borderRadius: "50%",
+                        background: "#f97316",
+                        boxShadow: "0 0 8px rgba(249,115,22,0.5)",
+                        flexShrink: 0,
+                      }}
+                    />
                   </div>
                 )}
 
                 {notificationSummary.devoluciones > 0 && (
-                  <div className="flex items-center gap-3 p-3 hover:bg-luxury-bg-soft rounded-xl cursor-pointer transition-colors group">
-                    <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center text-purple-600 group-hover:scale-110 transition-transform">
-                      <Undo2 size={18} />
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 14,
+                      padding: "14px 20px",
+                      cursor: "pointer",
+                      transition: "background 0.2s",
+                      position: "relative",
+                      overflow: "hidden",
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.background = "#faf8ff")}
+                    onMouseLeave={e => (e.currentTarget.style.background = "white")}
+                  >
+                    <div
+                      style={{
+                        position: "absolute",
+                        left: 0,
+                        top: 0,
+                        bottom: 0,
+                        width: 3,
+                        background: "#8b5cf6",
+                        borderRadius: "0 2px 2px 0",
+                      }}
+                    />
+                    <div
+                      style={{
+                        width: 44,
+                        height: 44,
+                        borderRadius: 14,
+                        background: "#f5f3ff",
+                        border: "1px solid rgba(139,92,246,0.12)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "#7c3aed",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <Undo2 size={20} strokeWidth={1.6} />
                     </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-bold text-gray-800">Devoluciones</p>
-                      <p className="text-[11px] text-luxury-text-secondary">{notificationSummary.devoluciones} pendientes</p>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ fontSize: 13, fontWeight: 700, color: "#1a1a1a", margin: 0 }}>Devoluciones</p>
+                      <p style={{ fontSize: 11.5, color: "#888", marginTop: 2 }}>{notificationSummary.devoluciones} pendiente{notificationSummary.devoluciones > 1 ? "s" : ""}</p>
                     </div>
-                    <div className="w-2 h-2 rounded-full bg-purple-500"></div>
+                    <span
+                      style={{
+                        width: 9,
+                        height: 9,
+                        borderRadius: "50%",
+                        background: "#8b5cf6",
+                        boxShadow: "0 0 8px rgba(139,92,246,0.5)",
+                        flexShrink: 0,
+                      }}
+                    />
                   </div>
                 )}
               </div>
             )}
           </div>
-          
-          <div className="p-3 bg-white border-t border-luxury-accent-soft flex justify-between items-center">
-            <button 
-              onClick={() => fetchNotificationSummary()}
-              className="text-[10px] font-bold text-luxury-pink hover:text-luxury-pink-soft transition-colors uppercase tracking-widest"
+
+          {/* Footer */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "12px 20px",
+              background: "#fafafa",
+              borderTop: "1px solid rgba(0,0,0,0.05)",
+            }}
+          >
+            <button
+              onClick={handleRefresh}
+              title="Refrescar notificaciones"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: 32,
+                height: 32,
+                borderRadius: 8,
+                border: "1px solid rgba(123,19,71,0.15)",
+                background: "white",
+                color: "#7b1347",
+                cursor: "pointer",
+                transition: "all 0.2s",
+                boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+              }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLButtonElement).style.background = "#fef2f8";
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(123,19,71,0.3)";
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLButtonElement).style.background = "white";
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(123,19,71,0.15)";
+              }}
             >
-              Refrescar
+              <RefreshCw size={14} strokeWidth={2} className={isRefreshing ? "animate-spin" : ""} />
             </button>
-            <span className="text-[9px] text-luxury-text-muted">Glamour ML Admin</span>
+            <span style={{ fontSize: 10, color: "#bbb", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>
+              Glamour ML Admin
+            </span>
           </div>
         </PopoverContent>
       </Popover>

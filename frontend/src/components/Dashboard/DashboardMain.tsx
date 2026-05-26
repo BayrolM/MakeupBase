@@ -21,6 +21,7 @@ import { CriticalStockCard } from "./CriticalStockCard";
 export function Dashboard() {
   const { productos } = useStore();
   const { 
+    data,
     safeData, 
     salesComparison,
     ordersByStatus, 
@@ -38,9 +39,51 @@ export function Dashboard() {
 
   const crecimientoVentas = formatCrecimiento(salesComparison?.resumen?.crecimiento);
 
+  if (data === null) {
+    return (
+      <div 
+        style={{ 
+          minHeight: '100vh', 
+          background: 'radial-gradient(circle at 50% 50%, #ffffff 0%, #f6f3f5 100%)', 
+          display: 'flex', 
+          flexDirection: 'column',
+          alignItems: 'center', 
+          justifyContent: 'center',
+          gap: '24px',
+          color: '#1e1b1d',
+          fontFamily: "'DM Sans', sans-serif",
+          width: '100%',
+        }}
+      >
+        <div style={{ position: 'relative', width: '56px', height: '56px' }}>
+          <div 
+            className="animate-spin"
+            style={{
+              position: 'absolute',
+              width: '100%',
+              height: '100%',
+              border: '3px solid rgba(123, 19, 71, 0.08)',
+              borderTopColor: '#7b1347',
+              borderRadius: '50%'
+            }} 
+          />
+        </div>
+        <span style={{ 
+          fontSize: '13px', 
+          fontWeight: 600, 
+          color: '#7b1347', 
+          letterSpacing: '2px',
+          textTransform: 'uppercase'
+        }}>
+          Cargando Dashboard...
+        </span>
+      </div>
+    );
+  }
+
   return (
     <div
-      className="min-h-screen relative"
+      className="min-h-screen relative animate-premium-fade-in-up"
       style={{ background: C.bgSoft, fontFamily: "'DM Sans', sans-serif" }}
     >
       <div className="relative mb-6">
@@ -51,7 +94,7 @@ export function Dashboard() {
         />
       </div>
 
-      <div className="p-6 space-y-6">
+      <div className="px-8 pb-8 pt-2 space-y-6">
         {/* KPI Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatCard 
@@ -102,6 +145,19 @@ export function Dashboard() {
       <style
         dangerouslySetInnerHTML={{
           __html: `
+        @keyframes premiumFadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(16px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-premium-fade-in-up {
+          animation: premiumFadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
         @keyframes pulse {
           0% { transform: scale(1); opacity: 1; }
           50% { transform: scale(1.5); opacity: 0; }

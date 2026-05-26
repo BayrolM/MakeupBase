@@ -302,44 +302,48 @@ export function ComprasModule() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f6f3f5]">
-      <CompraHeader onOpenDialog={handleOpenDialog} />
+    <div className="min-h-screen bg-[#f6f3f5] animate-premium-fade-in-up flex flex-col justify-between">
+      <style>{`
+        @keyframes premiumFadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(12px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-premium-fade-in-up {
+          animation: premiumFadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+      `}</style>
+      <div>
+        <CompraHeader onOpenDialog={handleOpenDialog} />
 
-      <div className="px-8 pb-8">
-        <CompraTable
-          compras={paginatedCompras}
-          proveedores={proveedores}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          isAdmin={isAdmin}
-          onViewPdf={handleViewPdf}
-          onViewDetail={async (c) => {
-            try {
-              const fullPurchase = await purchaseService.getById(Number(c.id));
-              setSelectedCompra({ ...c, detalles: fullPurchase.detalles || [] });
-              setIsDetailDialogOpen(true);
-            } catch (error) {
-              toast.error("Error al cargar detalles de la compra");
-            }
-          }}
-          onAnular={(c) => {
-            setCompraToAnular(c);
-            setIsAnularDialogOpen(true);
-          }}
-        />
-
-        {totalPages > 1 && (
-          <div className="mt-6">
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              totalItems={filteredCompras.length}
-              itemsPerPage={itemsPerPage}
-              onPageChange={handlePageChange}
-              onItemsPerPageChange={handleLimitChange}
-            />
-          </div>
-        )}
+        <div className="px-8 mt-6">
+          <CompraTable
+            compras={paginatedCompras}
+            proveedores={proveedores}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            isAdmin={isAdmin}
+            onViewPdf={handleViewPdf}
+            onViewDetail={async (c) => {
+              try {
+                const fullPurchase = await purchaseService.getById(Number(c.id));
+                setSelectedCompra({ ...c, detalles: fullPurchase.detalles || [] });
+                setIsDetailDialogOpen(true);
+              } catch (error) {
+                toast.error("Error al cargar detalles de la compra");
+              }
+            }}
+            onAnular={(c) => {
+              setCompraToAnular(c);
+              setIsAnularDialogOpen(true);
+            }}
+          />
+        </div>
       </div>
 
       <CompraFormDialog
@@ -372,6 +376,19 @@ export function ComprasModule() {
         isSaving={isSaving}
         onConfirm={handleConfirmAnular}
       />
+
+      {filteredCompras.length > 0 && (
+        <div className="px-8 pb-8">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={filteredCompras.length}
+            itemsPerPage={itemsPerPage}
+            onPageChange={handlePageChange}
+            onItemsPerPageChange={handleLimitChange}
+          />
+        </div>
+      )}
     </div>
   );
 }

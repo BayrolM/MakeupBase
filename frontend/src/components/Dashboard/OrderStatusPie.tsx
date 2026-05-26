@@ -56,7 +56,10 @@ export const OrderStatusPie: React.FC<OrderStatusPieProps> = ({ data }) => {
                   paddingAngle={5}
                   dataKey="cantidad"
                   stroke="none"
-                  animationDuration={1000}
+                  isAnimationActive={true}
+                  animationDuration={1500}
+                  animationEasing="cubic-bezier(0.16, 1, 0.3, 1)"
+                  animationBegin={500}
                 >
                   {data.map((_, index) => (
                     <Cell

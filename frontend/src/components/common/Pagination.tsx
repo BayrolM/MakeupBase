@@ -56,67 +56,166 @@ export function Pagination({
   };
 
   return (
-    <div className="mt-6 flex flex-col items-center gap-3">
-      {/* Page navigation */}
-      <div className="flex items-center gap-2">
+    <div 
+      style={{
+        marginTop: '10px',
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        width: '100%',
+        backgroundColor: '#ffffff',
+        border: '1px solid #fbcfe8',
+        borderRadius: '10px',
+        padding: '5px 12px',
+        boxShadow: '0 1px 4px rgba(123, 19, 71, 0.01)',
+        fontFamily: "'DM Sans', sans-serif"
+      }}
+      className="flex flex-col sm:flex-row items-center justify-between gap-2"
+    >
+      {/* Left side: Records Info */}
+      <div style={{ fontSize: '13px', color: '#4b5563', fontWeight: 500 }}>
+        Mostrando <span style={{ color: '#111827', fontWeight: 600 }}>{startItem}</span>–<span style={{ color: '#111827', fontWeight: 600 }}>{endItem}</span> de <span style={{ color: '#111827', fontWeight: 600 }}>{totalItems}</span> registros
+      </div>
+
+      {/* Center: Navigation Controls */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className="px-3 py-1.5 text-foreground hover:text-primary disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-foreground transition-colors"
-          style={{ fontSize: '14px' }}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '28px',
+            height: '28px',
+            borderRadius: '50%',
+            border: '1px solid #fbcfe8',
+            color: '#7b1347',
+            backgroundColor: '#ffffff',
+            cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+            opacity: currentPage === 1 ? 0.4 : 1,
+            transition: 'all 0.2s ease',
+            outline: 'none'
+          }}
+          className="hover:bg-pink-50"
+          title="Página anterior"
         >
-          <ChevronLeft className="w-4 h-4 inline mr-1" />
-          Anterior
+          <ChevronLeft className="w-4 h-4" />
         </button>
 
-        <div className="flex items-center gap-1.5">
-          <span className="text-foreground-secondary mx-1" style={{ fontSize: '14px' }}>|</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           {getPageNumbers().map((page, index) => {
             if (page === '...') {
               return (
                 <span
                   key={`ellipsis-${index}`}
-                  className="px-2 text-foreground-secondary"
-                  style={{ fontSize: '14px' }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '28px',
+                    height: '28px',
+                    color: '#9ca3af',
+                    fontWeight: 500,
+                    fontSize: '13px'
+                  }}
                 >
                   ...
                 </span>
               );
             }
 
+            const isActive = currentPage === page;
+
             return (
               <button
                 key={page}
                 onClick={() => onPageChange(page as number)}
-                className={`min-w-[32px] px-2.5 py-1 rounded transition-all ${
-                  currentPage === page
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-foreground hover:text-primary hover:bg-primary/10'
-                }`}
-                style={{ fontSize: '14px' }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minWidth: '28px',
+                  height: '28px',
+                  padding: '0 8px',
+                  borderRadius: '8px',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  transition: 'all 0.2s ease',
+                  border: isActive ? 'none' : '1px solid transparent',
+                  backgroundColor: isActive ? '#7b1347' : 'transparent',
+                  color: isActive ? '#ffffff' : '#4b5563',
+                  boxShadow: isActive ? '0 2px 6px rgba(123, 19, 71, 0.2)' : 'none',
+                  cursor: 'pointer',
+                  outline: 'none'
+                }}
+                className={isActive ? "" : "hover:bg-pink-50 hover:text-[#7b1347]"}
               >
                 {page}
               </button>
             );
           })}
-          <span className="text-foreground-secondary mx-1" style={{ fontSize: '14px' }}>|</span>
         </div>
 
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className="px-3 py-1.5 text-foreground hover:text-primary disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-foreground transition-colors"
-          style={{ fontSize: '14px' }}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '28px',
+            height: '28px',
+            borderRadius: '50%',
+            border: '1px solid #fbcfe8',
+            color: '#7b1347',
+            backgroundColor: '#ffffff',
+            cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+            opacity: currentPage === totalPages ? 0.4 : 1,
+            transition: 'all 0.2s ease',
+            outline: 'none'
+          }}
+          className="hover:bg-pink-50"
+          title="Siguiente página"
         >
-          Siguiente
-          <ChevronRight className="w-4 h-4 inline ml-1" />
+          <ChevronRight className="w-4 h-4" />
         </button>
       </div>
 
-      {/* Info text */}
-      <span className="text-foreground-secondary" style={{ fontSize: '13px' }}>
-        Mostrando {startItem}–{endItem} de {totalItems} registros
-      </span>
+      {/* Right side: Limit Selector */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#4b5563', fontWeight: 500 }}>
+        <span>Filas por página:</span>
+        <select
+          value={itemsPerPage}
+          onChange={(e) => onItemsPerPageChange(Number(e.target.value))}
+          style={{
+            backgroundColor: '#ffffff',
+            border: '1px solid #fbcfe8',
+            color: '#374151',
+            fontSize: '13px',
+            fontWeight: 600,
+            borderRadius: '8px',
+            padding: '4px 20px 4px 8px',
+            outline: 'none',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            appearance: 'none',
+            backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%237b1347\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e")',
+            backgroundRepeat: 'no-repeat',
+            backgroundPosition: 'right 6px center',
+            backgroundSize: '12px'
+          }}
+          className="hover:border-[#7b1347] focus:border-[#7b1347]"
+        >
+          <option value={5}>5</option>
+          <option value={10}>10</option>
+          <option value={20}>20</option>
+          <option value={50}>50</option>
+        </select>
+      </div>
     </div>
   );
 }
+
+

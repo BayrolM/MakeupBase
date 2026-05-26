@@ -164,76 +164,80 @@ export function ProductsModule() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f6f3f5]">
-      <ProductHeader isAdmin={isAdmin} onOpenDialog={() => handleOpenForm()} />
+    <div className="min-h-screen bg-[#f6f3f5] animate-premium-fade-in-up flex flex-col justify-between">
+      <style>{`
+        @keyframes premiumFadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(12px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-premium-fade-in-up {
+          animation: premiumFadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+      `}</style>
+      <div>
+        <ProductHeader isAdmin={isAdmin} onOpenDialog={() => handleOpenForm()} />
 
-      <div className="px-8 pb-8">
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-          {/* Barra de búsqueda */}
-          <div className="p-4 border-b border-gray-100 bg-white">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="w-full h-10 pl-10 pr-4 bg-white border border-gray-200 rounded-lg text-gray-800 placeholder:text-gray-400 focus:outline-none focus:border-[#c47b96] focus:ring-2 focus:ring-[#c47b96]/20 transition-all duration-150"
-                placeholder="Buscar por nombre, marca o categoría..."
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
+        <div className="px-8 mt-6">
+          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+            {/* Barra de búsqueda */}
+            <div className="p-4 border-b border-gray-100 bg-white">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="w-full h-10 pl-10 pr-4 bg-white border border-gray-200 rounded-lg text-gray-800 placeholder:text-gray-400 focus:outline-none focus:border-[#c47b96] focus:ring-2 focus:ring-[#c47b96]/20 transition-all duration-150"
+                  placeholder="Buscar por nombre, marca o categoría..."
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
 
-          <ProductTable
-            productos={productos}
-            categorias={categorias}
-            isAdmin={isAdmin}
-            searchQuery={searchQuery}
-            onViewDetail={(p) => {
-              setSelectedProduct(p);
-              setIsDetailOpen(true);
-            }}
-            onEdit={handleOpenForm}
-            onDelete={(p) => {
-              if (p.estado === "inactivo") {
-                toast.error("Producto inactivo", {
-                  description: "No se puede eliminar un producto inactivo.",
-                });
-                return;
-              }
+            <ProductTable
+              productos={productos}
+              categorias={categorias}
+              isAdmin={isAdmin}
+              searchQuery={searchQuery}
+              onViewDetail={(p) => {
+                setSelectedProduct(p);
+                setIsDetailOpen(true);
+              }}
+              onEdit={handleOpenForm}
+              onDelete={(p) => {
+                if (p.estado === "inactivo") {
+                  toast.error("Producto inactivo", {
+                    description: "No se puede eliminar un producto inactivo.",
+                  });
+                  return;
+                }
 
-              setSelectedProduct(p);
-              setIsDeleteOpen(true);
-            }}
-            onMoveStock={(p) => {
-              setSelectedProduct(p);
-              setIsMoveStockOpen(true);
-            }}
-            refreshProducts={refreshProductsLocal}
-          />
-        </div>
-
-        {totalPages > 1 && (
-          <div className="mt-6">
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              totalItems={totalItems}
-              itemsPerPage={itemsPerPage}
-              onPageChange={handlePageChange}
-              onItemsPerPageChange={handleLimitChange}
+                setSelectedProduct(p);
+                setIsDeleteOpen(true);
+              }}
+              onMoveStock={(p) => {
+                setSelectedProduct(p);
+                setIsMoveStockOpen(true);
+              }}
+              refreshProducts={refreshProductsLocal}
             />
           </div>
-        )}
+        </div>
       </div>
 
       <ProductFormDialog
@@ -269,6 +273,19 @@ export function ProductsModule() {
         product={selectedProduct}
         onSuccess={refreshProductsLocal}
       />
+
+      {totalItems > 0 && (
+        <div className="px-8 pb-8">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+            onPageChange={handlePageChange}
+            onItemsPerPageChange={handleLimitChange}
+          />
+        </div>
+      )}
     </div>
   );
 }

@@ -147,8 +147,8 @@ export function ProductMoveStockDialog({
           </div>
 
           {/* Input de Cantidad */}
-          <div className="bg-gray-50 rounded-xl p-4">
-            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">
+          <div className="bg-[#fdf2f6] rounded-xl p-4 border border-[#fce8f0]">
+            <p className="text-[11px] font-bold text-[#c47b96] uppercase tracking-wider mb-2">
               Cantidad a mover <span className="text-rose-500">*</span>
             </p>
             <div className="relative">
@@ -159,11 +159,12 @@ export function ProductMoveStockDialog({
                 max={product.stockFisico}
                 value={cantidad}
                 onChange={(e) => setCantidad(e.target.value)}
-                className={`h-10 text-base font-bold rounded-lg border-gray-200 bg-white focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all ${
+                className={`h-10 text-base font-bold text-gray-800 rounded-lg border-gray-200 focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all ${
                   error ? "border-rose-400 ring-1 ring-rose-400/20" : ""
                 }`}
+                style={{ backgroundColor: '#ffffff' }}
               />
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400 bg-gray-50 px-2 py-1 rounded-md">
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#c47b96] bg-[#fce8f0] px-2 py-1 rounded-md">
                 Unidades
               </div>
             </div>

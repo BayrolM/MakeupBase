@@ -318,58 +318,62 @@ export function ProveedoresModule() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f6f3f5]">
-      <ProveedorHeader
-        onOpenDialog={() => {
-          if (!isAdmin) {
-            toast.error("Solo un administrador puede realizar esta acción");
-            return;
+    <div className="min-h-screen bg-[#f6f3f5] animate-premium-fade-in-up flex flex-col justify-between">
+      <style>{`
+        @keyframes premiumFadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(12px);
           }
-          handleOpenDialog();
-        }}
-        isAdmin={isAdmin}
-      />
-
-      <div className="px-8 pb-8">
-        <ProveedorTable
-          proveedores={paginatedProveedores}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          onViewDetail={(p) => {
-            setSelectedProveedor(p);
-            setIsDetailDialogOpen(true);
-          }}
-          onEdit={(p) => {
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-premium-fade-in-up {
+          animation: premiumFadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+      `}</style>
+      <div>
+        <ProveedorHeader
+          onOpenDialog={() => {
             if (!isAdmin) {
-              toast.error("Solo un administrador puede editar proveedores");
+              toast.error("Solo un administrador puede realizar esta acción");
               return;
             }
-            handleOpenDialog(p);
+            handleOpenDialog();
           }}
-          onDelete={(p) => {
-            if (!isAdmin) {
-              toast.error("Solo un administrador puede eliminar proveedores");
-              return;
-            }
-            setSelectedProveedor(p);
-            setIsDeleteDialogOpen(true);
-          }}
-          onStatusChange={handleStatusChange}
           isAdmin={isAdmin}
         />
 
-        {totalPages > 1 && (
-          <div className="mt-6">
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              totalItems={filteredProveedores.length}
-              itemsPerPage={itemsPerPage}
-              onPageChange={handlePageChange}
-              onItemsPerPageChange={handleLimitChange}
-            />
-          </div>
-        )}
+        <div className="px-8 mt-6">
+          <ProveedorTable
+            proveedores={paginatedProveedores}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            onViewDetail={(p) => {
+              setSelectedProveedor(p);
+              setIsDetailDialogOpen(true);
+            }}
+            onEdit={(p) => {
+              if (!isAdmin) {
+                toast.error("Solo un administrador puede editar proveedores");
+                return;
+              }
+              handleOpenDialog(p);
+            }}
+            onDelete={(p) => {
+              if (!isAdmin) {
+                toast.error("Solo un administrador puede eliminar proveedores");
+                return;
+              }
+              setSelectedProveedor(p);
+              setIsDeleteDialogOpen(true);
+            }}
+            onStatusChange={handleStatusChange}
+            isAdmin={isAdmin}
+          />
+        </div>
       </div>
 
       <ProveedorFormDialog
@@ -396,6 +400,19 @@ export function ProveedoresModule() {
         isSaving={isSaving}
         onConfirm={handleConfirmDelete}
       />
+
+      {filteredProveedores.length > 0 && (
+        <div className="px-8 pb-8">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={filteredProveedores.length}
+            itemsPerPage={itemsPerPage}
+            onPageChange={handlePageChange}
+            onItemsPerPageChange={handleLimitChange}
+          />
+        </div>
+      )}
     </div>
   );
 }
