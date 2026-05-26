@@ -254,7 +254,7 @@ export function ProductFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-white border border-gray-100 max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl p-0">
+      <DialogContent className="bg-white border border-gray-100 max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl p-0" style={{ '--input-background': '#ffffff' } as React.CSSProperties}>
         <div
           className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100 sticky top-0 bg-white"
           style={{ zIndex: 60 }}
@@ -300,7 +300,8 @@ export function ProductFormDialog({
               <Input
                 value={formData.nombre}
                 onChange={(e) => handleFieldChange("nombre", e.target.value)}
-                className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${fieldErrors.nombre ? "border-rose-400" : ""}`}
+                className={`border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${fieldErrors.nombre ? "border-rose-400" : ""}`}
+                style={{ backgroundColor: '#ffffff' }}
                 placeholder="Nombre del producto"
                 maxLength={80}
               />
@@ -412,7 +413,8 @@ export function ProductFormDialog({
                       });
                     }
                   }}
-                  className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 font-bold ${fieldErrors.precioVenta ? "border-rose-400" : ""}`}
+                  className={`border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 font-bold ${fieldErrors.precioVenta ? "border-rose-400" : ""}`}
+                  style={{ backgroundColor: '#ffffff' }}
                 />
                 {fieldErrors.precioVenta && (
                   <span className="micro-validation-error">
@@ -467,6 +469,7 @@ export function ProductFormDialog({
                       }
                     }}
                     className={`bg-[#fff0f5] border-[#fce8f0] text-gray-900 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 text-center font-bold border-2 ${fieldErrors.stock ? "border-rose-400" : ""}`}
+                    style={{ backgroundColor: '#ffffff' }}
                   />
                   {fieldErrors.stock && (
                     <span className="micro-validation-error text-center">
@@ -487,7 +490,8 @@ export function ProductFormDialog({
                       if (Number(val) < 0) return;
                       setFormData({ ...formData, stockMinimo: val });
                     }}
-                    className="bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 text-center font-bold"
+                    className="border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 text-center font-bold"
+                    style={{ backgroundColor: '#ffffff' }}
                   />
                 </div>
               </div>
@@ -504,7 +508,8 @@ export function ProductFormDialog({
                 onChange={(e) =>
                   setFormData({ ...formData, descripcion: e.target.value })
                 }
-                className="bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] min-h-[100px] transition-all"
+                className="border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] min-h-[100px] transition-all"
+                style={{ backgroundColor: '#ffffff' }}
                 placeholder="Detalles sobre el producto..."
               />
             </div>

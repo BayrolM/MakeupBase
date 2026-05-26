@@ -58,7 +58,7 @@ export function ClientFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-white border-0 max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl p-0">
+      <DialogContent className="bg-white border-0 max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl p-0" style={{ '--input-background': '#ffffff' } as React.CSSProperties}>
         {/* Encabezado */}
         <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100 sticky top-0 bg-white z-10">
           <div className="flex items-center gap-4">
@@ -101,9 +101,10 @@ export function ClientFormDialog({
               <Input
                 value={formData.nombres}
                 onChange={(e) => onFieldChange("nombres", e.target.value)}
-                className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${
+                className={`border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${
                   fieldErrors.nombres ? "border-rose-400" : ""
                 }`}
+                style={{ backgroundColor: '#ffffff' }}
                 placeholder="Ej: Juan"
                 disabled={isSaving}
               />
@@ -120,9 +121,10 @@ export function ClientFormDialog({
               <Input
                 value={formData.apellidos}
                 onChange={(e) => onFieldChange("apellidos", e.target.value)}
-                className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${
+                className={`border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${
                   fieldErrors.apellidos ? "border-rose-400" : ""
                 }`}
+                style={{ backgroundColor: '#ffffff' }}
                 placeholder="Ej: Pérez"
                 disabled={isSaving}
               />
@@ -143,7 +145,7 @@ export function ClientFormDialog({
                   value={formData.tipoDocumento}
                   onValueChange={(val) => onFieldChange("tipoDocumento", val)}
                 >
-                  <SelectTrigger className={`bg-gray-50 border-gray-200 rounded-xl h-11 ${fieldErrors.tipoDocumento ? "border-rose-400" : ""}`}>
+                  <SelectTrigger className={`border-gray-200 rounded-xl h-11 ${fieldErrors.tipoDocumento ? "border-rose-400" : ""}`} style={{ backgroundColor: '#ffffff' }}>
                     <SelectValue placeholder="Seleccione tipo" />
                   </SelectTrigger>
                   <SelectContent className="bg-white border-gray-100 rounded-xl shadow-lg">
@@ -173,9 +175,10 @@ export function ClientFormDialog({
                    );
                    onFieldChange("numeroDocumento", letrasYNumeros);
                  }}
-                 className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${
+                 className={`border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${
                    fieldErrors.numeroDocumento ? "border-rose-400" : ""
                  }`}
+                 style={{ backgroundColor: '#ffffff' }}
                  placeholder="Ej: 123456789"
                  disabled={isSaving}
                />
@@ -194,9 +197,10 @@ export function ClientFormDialog({
               <Input
                 value={formData.email}
                 onChange={(e) => onFieldChange("email", e.target.value)}
-                className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${
+                className={`border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${
                   fieldErrors.email ? "border-rose-400" : ""
                 }`}
+                style={{ backgroundColor: '#ffffff' }}
                 placeholder="ejemplo@correo.com"
                 disabled={isSaving}
               />
@@ -217,9 +221,10 @@ export function ClientFormDialog({
                   const soloNumeros = e.target.value.replace(/[^0-9]/g, "");
                   onFieldChange("telefono", soloNumeros);
                 }}
-                className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${
+                className={`border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${
                   fieldErrors.telefono ? "border-rose-400" : ""
                 }`}
+                style={{ backgroundColor: '#ffffff' }}
                 placeholder="Ej: 3001234567"
                 disabled={isSaving}
               />
@@ -243,9 +248,10 @@ export function ClientFormDialog({
                     onChange={(e) =>
                       onFieldChange("passwordHash", e.target.value)
                     }
-                    className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 pr-10 ${
+                    className={`border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 pr-10 ${
                       fieldErrors.passwordHash ? "border-rose-400" : ""
                     }`}
+                    style={{ backgroundColor: '#ffffff' }}
                     placeholder="Mínimo 8 caracteres"
                     disabled={isSaving}
                   />
@@ -278,9 +284,10 @@ export function ClientFormDialog({
                     onChange={(e) =>
                       onFieldChange("confirmPassword", e.target.value)
                     }
-                    className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 pr-10 ${
+                    className={`border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 pr-10 ${
                       fieldErrors.confirmPassword ? "border-rose-400" : ""
                     }`}
+                    style={{ backgroundColor: '#ffffff' }}
                     placeholder="Repite la contraseña"
                     disabled={isSaving}
                   />
@@ -312,9 +319,10 @@ export function ClientFormDialog({
               <Input
                 value={formData.direccion}
                 onChange={(e) => onFieldChange("direccion", e.target.value)}
-                className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${
+                className={`border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${
                   fieldErrors.direccion ? "border-rose-400" : ""
                 }`}
+                style={{ backgroundColor: '#ffffff' }}
                 placeholder="Ej: Cl. 10 # 5-10"
                 disabled={isSaving}
               />
@@ -331,9 +339,10 @@ export function ClientFormDialog({
               <Input
                 value={formData.departamento}
                 onChange={(e) => onFieldChange("departamento", e.target.value)}
-                className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${
+                className={`border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${
                   fieldErrors.departamento ? "border-rose-400" : ""
                 }`}
+                style={{ backgroundColor: '#ffffff' }}
                 placeholder="Ej: Cundinamarca"
                 disabled={isSaving}
               />
@@ -352,9 +361,10 @@ export function ClientFormDialog({
               <Input
                 value={formData.ciudad}
                 onChange={(e) => onFieldChange("ciudad", e.target.value)}
-                className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${
+                className={`border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${
                   fieldErrors.ciudad ? "border-rose-400" : ""
                 }`}
+                style={{ backgroundColor: '#ffffff' }}
                 placeholder="Ej: Bogotá"
                 disabled={isSaving}
               />

@@ -56,6 +56,7 @@ export function PedidosModule() {
   const [newStatus, setNewStatus] = useState<OrderStatus>("pendiente");
   const [motivoAnulacion, setMotivoAnulacion] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [totalItems, setTotalItems] = useState(0);
   const [previewImageUrl, setPreviewImageUrl] = useState("");
@@ -107,12 +108,25 @@ export function PedidosModule() {
   }, [searchQuery]);
 
   useEffect(() => {
-    refreshDependencies();
+    const init = async () => {
+      setIsInitialLoading(true);
+      try {
+        await Promise.all([refreshDependencies(), refreshPedidos()]);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setIsInitialLoading(false);
+      }
+    };
+    init();
   }, []);
 
   useEffect(() => {
-    refreshPedidos();
+    if (!isInitialLoading) {
+      refreshPedidos();
+    }
   }, [currentPage, itemsPerPage, debouncedSearchQuery]);
+
 
   const refreshDependencies = async () => {
     try {
@@ -505,6 +519,48 @@ export function PedidosModule() {
       toast.error("Error PDF");
     }
   };
+
+  if (isInitialLoading) {
+    return (
+      <div 
+        style={{ 
+          minHeight: '100vh', 
+          background: 'radial-gradient(circle at 50% 50%, #ffffff 0%, #f6f3f5 100%)', 
+          display: 'flex', 
+          flexDirection: 'column',
+          alignItems: 'center', 
+          justifyContent: 'center',
+          gap: '24px',
+          color: '#1e1b1d',
+          fontFamily: "'DM Sans', sans-serif",
+          width: '100%',
+        }}
+      >
+        <div style={{ position: 'relative', width: '56px', height: '56px' }}>
+          <div 
+            className="animate-spin"
+            style={{
+              position: 'absolute',
+              width: '100%',
+              height: '100%',
+              border: '3px solid rgba(123, 19, 71, 0.08)',
+              borderTopColor: '#7b1347',
+              borderRadius: '50%'
+            }} 
+          />
+        </div>
+        <span style={{ 
+          fontSize: '13px', 
+          fontWeight: 600, 
+          color: '#7b1347', 
+          letterSpacing: '2px',
+          textTransform: 'uppercase'
+        }}>
+          Cargando Pedidos...
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#f6f3f5]">

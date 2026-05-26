@@ -27,7 +27,7 @@ export function MarcaFormDialog({
 }: MarcaFormDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-white border-0 max-w-md rounded-2xl shadow-2xl p-0 overflow-hidden">
+      <DialogContent className="bg-white border-0 max-w-md rounded-2xl shadow-2xl p-0 overflow-hidden" style={{ '--input-background': '#ffffff' } as React.CSSProperties}>
         {/* Encabezado */}
         <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100">
           <div className="flex items-center gap-4">
@@ -71,6 +71,7 @@ export function MarcaFormDialog({
               }`}
               placeholder="Ej: L'Oréal, Maybelline, MAC..."
               maxLength={50}
+              style={{ backgroundColor: '#ffffff' }}
             />
             {fieldErrors.nombre && (
               <span className="micro-validation-error">{fieldErrors.nombre}</span>
@@ -87,6 +88,7 @@ export function MarcaFormDialog({
               placeholder="Describe brevemente esta marca..."
               className="border-gray-200 text-gray-800 rounded-lg text-sm resize-none focus:ring-[#c47b96]/20 focus:border-[#c47b96]"
               rows={3}
+              style={{ backgroundColor: '#ffffff' }}
             />
           </div>
         </div>

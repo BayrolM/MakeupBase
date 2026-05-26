@@ -45,6 +45,7 @@ export function CompraFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className="bg-white border border-gray-100 !w-[95vw] !max-w-[95vw] rounded-2xl shadow-2xl p-0 overflow-hidden"
+        style={{ '--input-background': '#ffffff' } as React.CSSProperties}
       >
         {/* Header (Inspired by Ventas) */}
         <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100 bg-white z-10">
@@ -94,7 +95,7 @@ export function CompraFormDialog({
                 <UserIcon className="w-3.5 h-3.5" /> Proveedor <span style={{ color: "#f87171" }}>*</span>
               </p>
               <Select value={formData.proveedorId} onValueChange={(v) => onFieldChange("proveedorId", v)}>
-                <SelectTrigger className={`h-11 rounded-xl bg-white text-sm focus:ring-[#c47b96]/10 ${fieldErrors?.proveedorId ? "border-rose-400" : "border-gray-200 focus:border-[#c47b96]"}`}>
+                <SelectTrigger className={`h-11 rounded-xl bg-white text-sm focus:ring-[#c47b96]/10 ${fieldErrors?.proveedorId ? "border-rose-400" : "border-gray-200 focus:border-[#c47b96]"}`} style={{ backgroundColor: '#ffffff' }}>
                   <SelectValue placeholder="Seleccionar proveedor..." />
                 </SelectTrigger>
                 <SelectContent position="popper" sideOffset={4} className="bg-white border-gray-100 shadow-xl rounded-xl" style={{ zIndex: 99999 }}>
@@ -115,6 +116,7 @@ export function CompraFormDialog({
                 onChange={(e) => onFieldChange("observaciones", e.target.value)}
                 className="h-11 rounded-xl border-gray-200 focus:border-[#c47b96] focus:ring-[#c47b96]/10 bg-white text-sm"
                 placeholder="Ej: Factura #12345..."
+                style={{ backgroundColor: '#ffffff' }}
               />
             </div>
           </div>
@@ -188,6 +190,7 @@ export function CompraFormDialog({
                             value={d.cantidad}
                             onChange={(e) => updateRow(i, "cantidad", e.target.value)}
                             className={`h-11 rounded-xl transition-all ${hasCantError ? "border-rose-400 bg-rose-50 text-rose-600 focus:ring-rose-200" : "border-gray-200 text-gray-800 focus:ring-[#c47b96]/20"}`}
+                            style={{ backgroundColor: '#ffffff' }}
                           />
                           {hasCantError && <span className="micro-validation-error text-center">{fieldErrors[`cantidad_${i}`]}</span>}
                         </div>
@@ -200,6 +203,7 @@ export function CompraFormDialog({
                             value={d.precioUnitario}
                             onChange={(e) => updateRow(i, "precioUnitario", e.target.value)}
                             className={`h-11 rounded-xl transition-all ${hasPriceError ? "border-rose-400 bg-rose-50 text-rose-600 focus:ring-rose-200" : "border-gray-200 text-gray-800 focus:ring-[#c47b96]/20"}`}
+                            style={{ backgroundColor: '#ffffff' }}
                           />
                           {hasPriceError && <span className="micro-validation-error text-center">{fieldErrors[`precioUnitario_${i}`]}</span>}
                         </div>
