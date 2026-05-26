@@ -337,79 +337,113 @@ export function RolesPermisosModule() {
     currentPage * itemsPerPage,
   );
 
+  if (isLoading) {
+    return (
+      <div 
+        style={{ 
+          minHeight: '100vh', 
+          background: 'radial-gradient(circle at 50% 50%, #ffffff 0%, #f6f3f5 100%)', 
+          display: 'flex', 
+          flexDirection: 'column',
+          alignItems: 'center', 
+          justifyContent: 'center',
+          gap: '24px',
+          color: '#1e1b1d',
+          fontFamily: "'DM Sans', sans-serif",
+          width: '100%',
+        }}
+      >
+        <div style={{ position: 'relative', width: '56px', height: '56px' }}>
+          <div 
+            className="animate-spin"
+            style={{
+              position: 'absolute',
+              width: '100%',
+              height: '100%',
+              border: '3px solid rgba(123, 19, 71, 0.08)',
+              borderTopColor: '#7b1347',
+              borderRadius: '50%'
+            }} 
+          />
+        </div>
+        <span style={{ 
+          fontSize: '13px', 
+          fontWeight: 600, 
+          color: '#7b1347', 
+          letterSpacing: '2px',
+          textTransform: 'uppercase'
+        }}>
+          Cargando Roles y Permisos...
+        </span>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#f6f3f5]">
       <RolHeader onOpenDialog={() => handleOpenDialog()} />
 
-      {isLoading ? (
-        <div className="flex items-center justify-center py-32">
-          <Loader2 className="w-8 h-8 animate-spin text-[#c47b96]" />
-          <span className="ml-3 text-gray-500 font-medium">
-            Cargando roles...
-          </span>
+      <div className="p-8">
+        <div className="flex border-b border-gray-200 mb-8">
+          <button
+            onClick={() => setActiveTab("roles")}
+            className={`px-6 py-3 font-semibold text-sm border-b-2 transition-colors ${
+              activeTab === "roles"
+                ? "border-[#c47b96] text-[#c47b96]"
+                : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            Gestión de Roles
+          </button>
+          <button
+            onClick={() => setActiveTab("permisos")}
+            className={`px-6 py-3 font-semibold text-sm border-b-2 transition-colors ${
+              activeTab === "permisos"
+                ? "border-[#c47b96] text-[#c47b96]"
+                : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            Catálogo de Permisos
+          </button>
         </div>
-      ) : (
-        <div className="p-8">
-          <div className="flex border-b border-gray-200 mb-8">
-            <button
-              onClick={() => setActiveTab("roles")}
-              className={`px-6 py-3 font-semibold text-sm border-b-2 transition-colors ${
-                activeTab === "roles"
-                  ? "border-[#c47b96] text-[#c47b96]"
-                  : "border-transparent text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              Gestión de Roles
-            </button>
-            <button
-              onClick={() => setActiveTab("permisos")}
-              className={`px-6 py-3 font-semibold text-sm border-b-2 transition-colors ${
-                activeTab === "permisos"
-                  ? "border-[#c47b96] text-[#c47b96]"
-                  : "border-transparent text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              Catálogo de Permisos
-            </button>
-          </div>
 
-          {activeTab === "roles" ? (
-            <div className="space-y-12">
-              <div className="space-y-6">
-                <RolTable
-                  roles={paginatedRoles}
-                  users={users}
-                  searchQuery={searchQuery}
-                  onSearchChange={(q) => {
-                    setSearchQuery(q);
+        {activeTab === "roles" ? (
+          <div className="space-y-12">
+            <div className="space-y-6">
+              <RolTable
+                roles={paginatedRoles}
+                users={users}
+                searchQuery={searchQuery}
+                onSearchChange={(q) => {
+                  setSearchQuery(q);
+                  setCurrentPage(1);
+                }}
+                onViewDetail={handleViewDetail}
+                onEdit={handleOpenDialog}
+                onDelete={handleDeleteClick}
+                onStatusChange={handleStatusChange}
+              />
+
+              {filteredRoles.length > 0 && (
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  totalItems={filteredRoles.length}
+                  itemsPerPage={itemsPerPage}
+                  onPageChange={setCurrentPage}
+                  onItemsPerPageChange={(n) => {
+                    setItemsPerPage(n);
                     setCurrentPage(1);
                   }}
-                  onViewDetail={handleViewDetail}
-                  onEdit={handleOpenDialog}
-                  onDelete={handleDeleteClick}
-                  onStatusChange={handleStatusChange}
                 />
-
-                {filteredRoles.length > 0 && (
-                  <Pagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    totalItems={filteredRoles.length}
-                    itemsPerPage={itemsPerPage}
-                    onPageChange={setCurrentPage}
-                    onItemsPerPageChange={(n) => {
-                      setItemsPerPage(n);
-                      setCurrentPage(1);
-                    }}
-                  />
-                )}
-              </div>
+              )}
             </div>
-          ) : (
-            <PermisosTable />
-          )}
-        </div>
-      )}
+          </div>
+        ) : (
+          <PermisosTable />
+        )}
+      </div>
+
 
       <RolFormDialog
         open={isDialogOpen}

@@ -25,6 +25,7 @@ export function MarcasModule() {
   const [editingMarca, setEditingMarca] = useState<Marca | null>(null);
   const [selectedMarca, setSelectedMarca] = useState<Marca | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [totalItems, setTotalItems] = useState(0);
 
@@ -70,8 +71,20 @@ export function MarcasModule() {
   };
 
   useEffect(() => {
-    refreshMarcas();
+    const init = async () => {
+      setIsInitialLoading(true);
+      await refreshMarcas();
+      setIsInitialLoading(false);
+    };
+    init();
+  }, []);
+
+  useEffect(() => {
+    if (!isInitialLoading) {
+      refreshMarcas();
+    }
   }, [currentPage, itemsPerPage, searchQuery]);
+
 
   const handleOpenDialog = (marca?: Marca) => {
     if (!isAdmin) {
@@ -162,6 +175,48 @@ export function MarcasModule() {
       setIsSaving(false);
     }
   };
+
+  if (isInitialLoading) {
+    return (
+      <div 
+        style={{ 
+          minHeight: '100vh', 
+          background: 'radial-gradient(circle at 50% 50%, #ffffff 0%, #f6f3f5 100%)', 
+          display: 'flex', 
+          flexDirection: 'column',
+          alignItems: 'center', 
+          justifyContent: 'center',
+          gap: '24px',
+          color: '#1e1b1d',
+          fontFamily: "'DM Sans', sans-serif",
+          width: '100%',
+        }}
+      >
+        <div style={{ position: 'relative', width: '56px', height: '56px' }}>
+          <div 
+            className="animate-spin"
+            style={{
+              position: 'absolute',
+              width: '100%',
+              height: '100%',
+              border: '3px solid rgba(123, 19, 71, 0.08)',
+              borderTopColor: '#7b1347',
+              borderRadius: '50%'
+            }} 
+          />
+        </div>
+        <span style={{ 
+          fontSize: '13px', 
+          fontWeight: 600, 
+          color: '#7b1347', 
+          letterSpacing: '2px',
+          textTransform: 'uppercase'
+        }}>
+          Cargando Marcas...
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#f6f3f5]">

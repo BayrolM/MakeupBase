@@ -54,6 +54,7 @@ export function ClientesViewModule() {
     estado: "activo" as "activo" | "inactivo",
   });
 
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const fetchClientes = async () => {
@@ -95,8 +96,20 @@ export function ClientesViewModule() {
   };
 
   useEffect(() => {
-    fetchClientes();
+    const init = async () => {
+      setIsInitialLoading(true);
+      await fetchClientes();
+      setIsInitialLoading(false);
+    };
+    init();
+  }, []);
+
+  useEffect(() => {
+    if (!isInitialLoading) {
+      fetchClientes();
+    }
   }, [currentPage, itemsPerPage, searchQuery]);
+
 
   const handleOpenDialog = (cliente?: any) => {
     if (cliente && cliente.estado === "inactivo") {
@@ -268,6 +281,48 @@ export function ClientesViewModule() {
   };
 
   const filteredClientes = clientes;
+
+  if (isInitialLoading) {
+    return (
+      <div 
+        style={{ 
+          minHeight: '100vh', 
+          background: 'radial-gradient(circle at 50% 50%, #ffffff 0%, #f6f3f5 100%)', 
+          display: 'flex', 
+          flexDirection: 'column',
+          alignItems: 'center', 
+          justifyContent: 'center',
+          gap: '24px',
+          color: '#1e1b1d',
+          fontFamily: "'DM Sans', sans-serif",
+          width: '100%',
+        }}
+      >
+        <div style={{ position: 'relative', width: '56px', height: '56px' }}>
+          <div 
+            className="animate-spin"
+            style={{
+              position: 'absolute',
+              width: '100%',
+              height: '100%',
+              border: '3px solid rgba(123, 19, 71, 0.08)',
+              borderTopColor: '#7b1347',
+              borderRadius: '50%'
+            }} 
+          />
+        </div>
+        <span style={{ 
+          fontSize: '13px', 
+          fontWeight: 600, 
+          color: '#7b1347', 
+          letterSpacing: '2px',
+          textTransform: 'uppercase'
+        }}>
+          Cargando Clientes...
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#f6f3f5]">

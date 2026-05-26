@@ -31,6 +31,7 @@ export function DevolucionesModule() {
   const [anularDialogOpen, setAnularDialogOpen] = useState(false);
 
   // Data & Selection States
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [selectedDevolucion, setSelectedDevolucion] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [motivoDecision, setMotivoDecision] = useState("");
@@ -124,8 +125,14 @@ export function DevolucionesModule() {
   };
 
   useEffect(() => {
-    refreshData();
+    const init = async () => {
+      setIsInitialLoading(true);
+      await refreshData();
+      setIsInitialLoading(false);
+    };
+    init();
   }, []);
+
 
   // ── Handlers ──
   const handleOpenCreateDialog = () => {
@@ -342,6 +349,48 @@ export function DevolucionesModule() {
     const cliente = clientes.find(c => c.id === dev.clienteId);
     generateDevolucionPDF(dev, cliente, productos);
   };
+
+  if (isInitialLoading) {
+    return (
+      <div 
+        style={{ 
+          minHeight: '100vh', 
+          background: 'radial-gradient(circle at 50% 50%, #ffffff 0%, #f6f3f5 100%)', 
+          display: 'flex', 
+          flexDirection: 'column',
+          alignItems: 'center', 
+          justifyContent: 'center',
+          gap: '24px',
+          color: '#1e1b1d',
+          fontFamily: "'DM Sans', sans-serif",
+          width: '100%',
+        }}
+      >
+        <div style={{ position: 'relative', width: '56px', height: '56px' }}>
+          <div 
+            className="animate-spin"
+            style={{
+              position: 'absolute',
+              width: '100%',
+              height: '100%',
+              border: '3px solid rgba(123, 19, 71, 0.08)',
+              borderTopColor: '#7b1347',
+              borderRadius: '50%'
+            }} 
+          />
+        </div>
+        <span style={{ 
+          fontSize: '13px', 
+          fontWeight: 600, 
+          color: '#7b1347', 
+          letterSpacing: '2px',
+          textTransform: 'uppercase'
+        }}>
+          Cargando Devoluciones...
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#f6f3f5]">
