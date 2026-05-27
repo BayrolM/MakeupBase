@@ -51,6 +51,7 @@ export function CheckoutView({ onBack, onComplete }: CheckoutViewProps) {
     addPedido,
     updateStock,
     clearCarrito,
+    removeFromCarrito,
   } = useStore();
   const [step, setStep] = useState(1);
   const [direccionEnvio, setDireccionEnvio] = useState(
@@ -119,8 +120,9 @@ export function CheckoutView({ onBack, onComplete }: CheckoutViewProps) {
           parseInt(item.productoId, 10),
         );
         if (freshProduct.stock_actual <= 0) {
+          removeFromCarrito(item.productoId);
           toast.error(`"${freshProduct.nombre}" se agotó mientras comprabas`, {
-            description: "Retíralo del carrito e inténtalo de nuevo",
+            description: "El producto ha sido retirado de tu carrito.",
           });
           setIsProcessing(false);
           return;
@@ -137,7 +139,17 @@ export function CheckoutView({ onBack, onComplete }: CheckoutViewProps) {
         }
       } catch {
         const producto = productos.find((p) => p.id === item.productoId);
-        if (!producto || producto.stock < item.cantidad) {
+        if (!producto || producto.stock <= 0) {
+          removeFromCarrito(item.productoId);
+          toast.error(
+            `"${producto?.nombre || "Un producto"}" se ha agotado`,
+            {
+              description: "El producto ha sido retirado de tu carrito.",
+            }
+          );
+          setIsProcessing(false);
+          return;
+        } else if (producto.stock < item.cantidad) {
           toast.error(
             `Stock insuficiente para ${producto?.nombre || "producto"}`,
           );
@@ -1024,8 +1036,18 @@ export function CheckoutView({ onBack, onComplete }: CheckoutViewProps) {
               <Button
                 variant="outline"
                 onClick={() => setShowConfirmDialog(false)}
-                className="border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg px-5 h-10 text-sm font-semibold"
                 disabled={isProcessing}
+                style={{
+                  background: "#ffffff",
+                  color: "#4b5563",
+                  border: "1px solid #e5e7eb",
+                  borderRadius: "8px",
+                  padding: "0 24px",
+                  height: "40px",
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  minWidth: "110px",
+                }}
               >
                 Cancelar
               </Button>
