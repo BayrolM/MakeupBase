@@ -110,7 +110,8 @@ function NavItemComponent({
   return (
     <button
       onClick={onClick}
-      className={`sidebar-nav-item w-full text-left ${isActive ? "active" : ""} ${state === "collapsed" ? "justify-center px-0" : ""}`}
+      className={`sidebar-nav-item w-full text-left ${isActive ? "active" : ""} ${state === "collapsed" ? "justify-center" : ""}`}
+      style={{ paddingLeft: state === "collapsed" ? 0 : undefined, paddingRight: state === "collapsed" ? 0 : undefined }}
       title={state === "collapsed" ? item.label : undefined}
     >
       <Icon className={`nav-icon ${state === "collapsed" ? "mx-auto" : "shrink-0"}`} />
@@ -326,7 +327,13 @@ export function AppSidebar({
         <SidebarFooter className={`p-4 border-none space-y-3 ${state === "collapsed" ? "px-2" : ""}`}>
           <button
             onClick={() => onNavigate("configuracion")}
-            className={`sidebar-profile-btn ${state === "collapsed" ? "justify-center p-2 rounded-full w-auto mx-auto aspect-square" : ""}`}
+            className={`sidebar-profile-btn ${state === "collapsed" ? "justify-center p-2 w-auto mx-auto aspect-square" : ""}`}
+            style={{ 
+              paddingLeft: state === "collapsed" ? 0 : undefined, 
+              paddingRight: state === "collapsed" ? 0 : undefined,
+              background: state === "collapsed" ? "transparent" : undefined,
+              border: state === "collapsed" ? "none" : undefined
+            }}
             title={state === "collapsed" ? "Configuración" : undefined}
           >
             <div
@@ -355,7 +362,13 @@ export function AppSidebar({
           <div className="sidebar-logout-wrapper">
             <button
               onClick={() => setShowLogoutDialog(true)}
-              className={`sidebar-logout-btn ${state === "collapsed" ? "justify-center p-2 rounded-full w-auto mx-auto aspect-square" : ""}`}
+              className={`sidebar-logout-btn ${state === "collapsed" ? "justify-center p-2 w-auto mx-auto aspect-square" : ""}`}
+              style={{ 
+                paddingLeft: state === "collapsed" ? 0 : undefined, 
+                paddingRight: state === "collapsed" ? 0 : undefined,
+                background: state === "collapsed" ? "transparent" : undefined,
+                border: state === "collapsed" ? "none" : undefined
+              }}
               title={state === "collapsed" ? "Cerrar sesión" : undefined}
             >
               <LogOut className={`logout-icon ${state === "collapsed" ? "mr-0" : ""}`} />
