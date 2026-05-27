@@ -44,8 +44,8 @@ export function CompraFormDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="bg-white border border-gray-100 !w-[95vw] !max-w-[95vw] rounded-2xl shadow-2xl p-0 overflow-hidden"
-        style={{ '--input-background': '#ffffff' } as React.CSSProperties}
+        className="bg-white border border-gray-100 rounded-2xl shadow-2xl p-0 overflow-hidden"
+        style={{ '--input-background': '#ffffff', maxWidth: '800px', width: '90vw' } as React.CSSProperties}
       >
         {/* Header (Inspired by Ventas) */}
         <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100 bg-white z-10">
@@ -89,13 +89,13 @@ export function CompraFormDialog({
           style={{ padding: "20px 24px", display: "flex", flexDirection: "column", gap: "16px", maxHeight: "65vh" }}
         >
           {/* Proveedor y Observaciones - Lado a Lado (Inspired by Ventas) */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", alignItems: "start" }}>
             <div>
               <p style={{ fontSize: "11px", fontWeight: 700, color: "#9ca3af", letterSpacing: "0.07em", marginBottom: "8px", display: "flex", alignItems: "center", gap: "6px" }}>
                 <UserIcon className="w-3.5 h-3.5" /> Proveedor <span style={{ color: "#f87171" }}>*</span>
               </p>
               <Select value={formData.proveedorId} onValueChange={(v) => onFieldChange("proveedorId", v)}>
-                <SelectTrigger className={`h-11 rounded-xl bg-white text-sm focus:ring-[#c47b96]/10 ${fieldErrors?.proveedorId ? "border-rose-400" : "border-gray-200 focus:border-[#c47b96]"}`} style={{ backgroundColor: '#ffffff' }}>
+                <SelectTrigger className={`h-9 rounded-xl bg-white text-sm focus:ring-[#c47b96]/10 ${fieldErrors?.proveedorId ? "border-rose-400" : "border-gray-200 focus:border-[#c47b96]"}`} style={{ backgroundColor: '#ffffff' }}>
                   <SelectValue placeholder="Seleccionar proveedor..." />
                 </SelectTrigger>
                 <SelectContent position="popper" sideOffset={4} className="bg-white border-gray-100 shadow-xl rounded-xl" style={{ zIndex: 99999 }}>
@@ -114,7 +114,7 @@ export function CompraFormDialog({
               <Input
                 value={formData.observaciones}
                 onChange={(e) => onFieldChange("observaciones", e.target.value)}
-                className="h-11 rounded-xl border-gray-200 focus:border-[#c47b96] focus:ring-[#c47b96]/10 bg-white text-sm"
+                className="h-9 rounded-xl border-gray-200 focus:border-[#c47b96] focus:ring-[#c47b96]/10 bg-white text-sm"
                 placeholder="Ej: Factura #12345..."
                 style={{ backgroundColor: '#ffffff' }}
               />
@@ -189,7 +189,7 @@ export function CompraFormDialog({
                             min="1"
                             value={d.cantidad}
                             onChange={(e) => updateRow(i, "cantidad", e.target.value)}
-                            className={`h-11 rounded-xl transition-all ${hasCantError ? "border-rose-400 bg-rose-50 text-rose-600 focus:ring-rose-200" : "border-gray-200 text-gray-800 focus:ring-[#c47b96]/20"}`}
+                            className={`h-9 rounded-xl transition-all ${hasCantError ? "border-rose-400 bg-rose-50 text-rose-600 focus:ring-rose-200" : "border-gray-200 text-gray-800 focus:ring-[#c47b96]/20"}`}
                             style={{ backgroundColor: '#ffffff' }}
                           />
                           {hasCantError && <span className="micro-validation-error text-center">{fieldErrors[`cantidad_${i}`]}</span>}
@@ -202,7 +202,7 @@ export function CompraFormDialog({
                             min="0"
                             value={d.precioUnitario}
                             onChange={(e) => updateRow(i, "precioUnitario", e.target.value)}
-                            className={`h-11 rounded-xl transition-all ${hasPriceError ? "border-rose-400 bg-rose-50 text-rose-600 focus:ring-rose-200" : "border-gray-200 text-gray-800 focus:ring-[#c47b96]/20"}`}
+                            className={`h-9 rounded-xl transition-all ${hasPriceError ? "border-rose-400 bg-rose-50 text-rose-600 focus:ring-rose-200" : "border-gray-200 text-gray-800 focus:ring-[#c47b96]/20"}`}
                             style={{ backgroundColor: '#ffffff' }}
                           />
                           {hasPriceError && <span className="micro-validation-error text-center">{fieldErrors[`precioUnitario_${i}`]}</span>}
@@ -210,7 +210,7 @@ export function CompraFormDialog({
 
                         <div className="col-span-2">
                           <p style={{ fontSize: "10px", fontWeight: 700, color: "#9ca3af", marginBottom: "6px" }}>Total</p>
-                          <div style={{ height: "44px", padding: "0 12px", background: "#f9fafb", border: "1px solid #f3f4f6", borderRadius: "12px", display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
+                          <div style={{ height: "36px", padding: "0 12px", background: "#f9fafb", border: "1px solid #f3f4f6", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "flex-end" }}>
                             <span style={{ fontSize: "13px", fontWeight: 800, color: subtotal > 0 ? "#1f2937" : "#9ca3af" }}>
                               {subtotal > 0 ? formatCurrency(subtotal) : "—"}
                             </span>

@@ -64,7 +64,7 @@ export function PedidoFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-white border-0 !w-[95vw] !max-w-[95vw] rounded-2xl shadow-2xl p-0 overflow-hidden" style={{ '--input-background': '#ffffff' } as React.CSSProperties}>
+      <DialogContent className="bg-white border-0 rounded-2xl shadow-2xl p-0 overflow-hidden" style={{ '--input-background': '#ffffff', maxWidth: '800px', width: '90vw' } as React.CSSProperties}>
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100 bg-white z-10">
           <div className="flex items-center gap-4">

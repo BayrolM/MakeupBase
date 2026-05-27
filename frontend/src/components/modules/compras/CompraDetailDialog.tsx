@@ -249,7 +249,7 @@ export function CompraDetailDialog({
           <Button
             variant="outline"
             onClick={handlePrint}
-            className="flex items-center gap-2 bg-white border-gray-200 text-gray-600 hover:bg-gray-50 rounded-xl px-6 h-11 text-sm font-semibold"
+            className="flex items-center gap-2 bg-[#fff0f5] border-[#f0d5e0] text-[#c47b96] hover:bg-[#fce8f0] rounded-xl px-6 h-11 text-sm font-semibold transition-all"
           >
             <Download className="w-4 h-4" /> Exportar PDF
           </Button>

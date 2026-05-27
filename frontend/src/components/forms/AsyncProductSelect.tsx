@@ -274,8 +274,8 @@ export function AsyncProductSelect({
           aria-expanded={open}
           aria-haspopup="listbox"
           aria-autocomplete="list"
-          className={`flex w-full items-center justify-between bg-white border border-gray-200 text-gray-800 rounded-xl px-4 h-11 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-[#c47b96]/20 focus:border-[#c47b96] ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
-          placeholder="Escribe el nombre o marca del producto..."
+          className={`flex w-full items-center justify-between bg-white border border-gray-200 text-gray-800 rounded-xl px-4 h-9 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-[#c47b96]/20 focus:border-[#c47b96] ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+          placeholder="Escribe el nombre del producto"
           value={inputValue}
           onKeyDown={handleKeyDown}
           onChange={(e) => {
@@ -286,12 +286,6 @@ export function AsyncProductSelect({
           onFocus={openDropdown}
           disabled={disabled}
         />
-        <div
-          className="absolute right-3 cursor-pointer text-gray-400 hover:text-gray-600"
-          onClick={() => (open ? closeDropdown() : openDropdown())}
-        >
-          <ChevronsUpDown className="h-4 w-4 opacity-50" />
-        </div>
       </div>
       {dropdown}
     </div>
