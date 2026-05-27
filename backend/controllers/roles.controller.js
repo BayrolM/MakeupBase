@@ -168,6 +168,21 @@ export const crearRol = async (req, res) => {
 
     const nombreTrimmed = nombre.trim();
 
+    if (nombreTrimmed.length < 3) {
+      return res.status(400).json({
+        ok: false,
+        message: "El nombre del rol debe tener al menos 3 caracteres",
+      });
+    }
+
+    const regexLetras = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
+    if (!regexLetras.test(nombreTrimmed)) {
+      return res.status(400).json({
+        ok: false,
+        message: "El nombre del rol solo puede contener letras y espacios",
+      });
+    }
+
     // Validar longitud máxima de 30 caracteres
     if (nombreTrimmed.length > 30) {
       return res.status(400).json({
@@ -240,6 +255,21 @@ export const actualizarRol = async (req, res) => {
       }
 
       const nombreTrimmed = nombre.trim();
+
+      if (nombreTrimmed.length < 3) {
+        return res.status(400).json({
+          ok: false,
+          message: "El nombre del rol debe tener al menos 3 caracteres",
+        });
+      }
+
+      const regexLetras = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
+      if (!regexLetras.test(nombreTrimmed)) {
+        return res.status(400).json({
+          ok: false,
+          message: "El nombre del rol solo puede contener letras y espacios",
+        });
+      }
 
       if (nombreTrimmed.length > 30) {
         return res.status(400).json({

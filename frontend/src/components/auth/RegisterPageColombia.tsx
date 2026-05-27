@@ -160,7 +160,11 @@ export function RegisterPageColombia({
   const handleChange = (name: string, value: string) => {
     let finalValue = value;
     if (name === "numeroDocumento") {
-      finalValue = value.replace(/[^a-zA-Z0-9]/g, "");
+      if (formData.tipoDocumento === "PAS") {
+        finalValue = value.replace(/[^a-zA-Z0-9]/g, "");
+      } else {
+        finalValue = value.replace(/[^0-9]/g, "");
+      }
     } else if (name === "telefono") {
       finalValue = value.replace(/[^0-9]/g, "");
     }
@@ -614,9 +618,15 @@ export function RegisterPageColombia({
                             />
                             <Select
                               value={formData.tipoDocumento}
-                              onValueChange={(v) =>
-                                setFormData((p) => ({ ...p, tipoDocumento: v }))
-                              }
+                              onValueChange={(v) => {
+                                setFormData((p) => {
+                                  const updated = { ...p, tipoDocumento: v };
+                                  if (v !== "PAS" && p.numeroDocumento) {
+                                    updated.numeroDocumento = p.numeroDocumento.replace(/[^0-9]/g, "");
+                                  }
+                                  return updated;
+                                });
+                              }}
                             >
                               <SelectTrigger
                                 style={inputStyle(!!errors.tipoDocumento)}

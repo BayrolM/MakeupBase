@@ -58,14 +58,21 @@ export function RolesPermisosModule() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const handleFieldChange = (name: string, val: any) => {
+    if (name === "nombre" && typeof val === "string") {
+      val = val.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, "");
+    }
     setFormData((prev) => ({ ...prev, [name]: val }));
     
     let error = "";
     if (name === "nombre") {
       if (!val.trim()) {
         error = "Requerido";
+      } else if (val.trim().length < 3) {
+        error = "Mínimo 3 caracteres";
       } else if (val.trim().length > 30) {
-        error = "Máx 30 chars";
+        error = "Máx 30 caracteres";
+      } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(val.trim())) {
+        error = "Solo letras y espacios";
       } else {
         const duplicado = roles.find(
           (r) => r.nombre.toLowerCase() === val.trim().toLowerCase() && r.id !== editingRol?.id
@@ -152,6 +159,20 @@ export function RolesPermisosModule() {
     if (!formData.nombre.trim()) {
       toast.error("Campo requerido", {
         description: "El nombre del rol es obligatorio.",
+      });
+      return;
+    }
+
+    if (formData.nombre.trim().length < 3) {
+      toast.error("Nombre muy corto", {
+        description: "El nombre del rol debe tener al menos 3 caracteres.",
+      });
+      return;
+    }
+
+    if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(formData.nombre.trim())) {
+      toast.error("Formato inválido", {
+        description: "El nombre del rol solo puede contener letras y espacios.",
       });
       return;
     }
