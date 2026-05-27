@@ -31,6 +31,7 @@ interface ProductCardProps {
   onAddToCart?: (e: React.MouseEvent) => void;
   isFavorite?: boolean;
   onToggleFavorite?: (e: React.MouseEvent) => void;
+  isMaxStock?: boolean;
 }
 
 export function ProductCard({
@@ -42,6 +43,7 @@ export function ProductCard({
   onAddToCart,
   isFavorite,
   onToggleFavorite,
+  isMaxStock,
 }: ProductCardProps) {
   return (
     <div
@@ -268,20 +270,20 @@ export function ProductCard({
                 width: "40px",
                 height: "40px",
                 borderRadius: "50%",
-                background: `linear-gradient(135deg, ${C.accent}, ${C.accentDeep})`,
-                color: "white",
+                background: isMaxStock ? "#e5e7eb" : `linear-gradient(135deg, ${C.accent}, ${C.accentDeep})`,
+                color: isMaxStock ? "#9ca3af" : "white",
                 border: "none",
                 fontSize: "24px",
-                cursor: "pointer",
+                cursor: isMaxStock ? "not-allowed" : "pointer",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 transition: "transform 0.2s",
-                boxShadow: `0 5px 15px ${C.shadowLg}`,
+                boxShadow: isMaxStock ? "none" : `0 5px 15px ${C.shadowLg}`,
               }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.transform = "scale(1.15)")
-              }
+              onMouseEnter={(e) => {
+                if (!isMaxStock) e.currentTarget.style.transform = "scale(1.15)";
+              }}
               onMouseLeave={(e) =>
                 (e.currentTarget.style.transform = "scale(1)")
               }

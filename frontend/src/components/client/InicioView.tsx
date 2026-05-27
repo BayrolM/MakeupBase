@@ -71,6 +71,7 @@ export function InicioView({
     productos,
     categorias,
     addToCarrito,
+    carrito,
     setProductos,
     setCategorias,
     setMarcas,
@@ -190,8 +191,16 @@ export function InicioView({
   // Get featured categories (first 6)
   const categoriasDestacadas = categorias.slice(0, 6);
 
-  // ALERT PARA AGREGAR AL CARRITO DE COMPRAS
   const handleAddToCart = (productoId: string) => {
+    const producto = productos.find((p) => p.id === productoId);
+    if (!producto) return;
+    const currentCartQty = carrito.find((item) => item.productoId === productoId)?.cantidad || 0;
+    if (currentCartQty >= producto.stock) {
+      toast.error("Stock máximo alcanzado", {
+        description: `No puedes agregar más unidades de este producto.`,
+      });
+      return;
+    }
     addToCarrito(productoId, 1);
     toast.success("Producto agregado", {
       description: "El producto se agregó a tu carrito",
@@ -711,6 +720,8 @@ export function InicioView({
                     { label: "MÁS VENDIDO", color: C.accentDeep },
                     { label: "NUEVO", color: C.accent },
                   ];
+                  const currentCartQty = carrito.find((item) => item.productoId === producto.id)?.cantidad || 0;
+                  const isMaxStock = currentCartQty >= producto.stock;
                   return (
                     <ProductCard
                       key={producto.id}
@@ -719,6 +730,7 @@ export function InicioView({
                       badge={badges[index]?.label}
                       badgeColor={badges[index]?.color}
                       onAddToCart={() => handleAddToCart(producto.id)}
+                      isMaxStock={isMaxStock}
                     />
                   );
                 })}

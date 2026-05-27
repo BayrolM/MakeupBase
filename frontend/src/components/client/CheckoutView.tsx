@@ -111,6 +111,7 @@ export function CheckoutView({ onBack, onComplete }: CheckoutViewProps) {
 
   const handleConfirmPayment = async () => {
     if (!currentUser) return;
+    setIsProcessing(true);
 
     for (const item of carrito) {
       try {
@@ -146,7 +147,6 @@ export function CheckoutView({ onBack, onComplete }: CheckoutViewProps) {
       }
     }
 
-    setIsProcessing(true);
     try {
       setFinalTotal(total);
 
@@ -1041,7 +1041,7 @@ export function CheckoutView({ onBack, onComplete }: CheckoutViewProps) {
                 {isProcessing ? (
                   <div className="flex items-center gap-2">
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Procesando...
+                    Creando pedido...
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">

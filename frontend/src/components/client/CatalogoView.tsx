@@ -42,7 +42,7 @@ export function CatalogoView({
   initialCategory?: string;
   onClearCategory?: () => void;
 } = {}) {
-  const { productos, categorias, addToCarrito } = useStore();
+  const { productos, categorias, addToCarrito, carrito } = useStore();
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [quantity, setQuantity] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
@@ -549,6 +549,9 @@ export function CatalogoView({
                   const categoria = categorias.find(
                     (c) => c.id === producto.categoriaId,
                   );
+                  const currentCartQty = carrito.find((item) => item.productoId === producto.id)?.cantidad || 0;
+                  const isMaxStock = currentCartQty >= producto.stock;
+
                   return (
                     <ProductCard
                       key={producto.id}
@@ -556,11 +559,18 @@ export function CatalogoView({
                       categoryName={categoria?.nombre}
                       onCardClick={() => setSelectedProduct(producto)}
                       onAddToCart={() => {
+                        if (isMaxStock) {
+                          toast.error("Stock máximo alcanzado", {
+                            description: `No puedes agregar más unidades de ${producto.nombre}.`,
+                          });
+                          return;
+                        }
                         addToCarrito(producto.id, 1);
                         toast.success("Producto agregado", {
                           description: `${producto.nombre} se agregó al carrito`,
                         });
                       }}
+                      isMaxStock={isMaxStock}
                     />
                   );
                 })}
@@ -799,6 +809,13 @@ export function CatalogoView({
 
                   <button
                     onClick={() => {
+                      const currentCartQty = carrito.find((item) => item.productoId === selectedProduct.id)?.cantidad || 0;
+                      if (currentCartQty + quantity > selectedProduct.stock) {
+                        toast.error("Stock insuficiente", {
+                          description: `Solo puedes agregar ${Math.max(0, selectedProduct.stock - currentCartQty)} unidades más.`,
+                        });
+                        return;
+                      }
                       addToCarrito(selectedProduct.id, quantity);
                       // Reset and notify
                       toast.success("Producto agregado", {

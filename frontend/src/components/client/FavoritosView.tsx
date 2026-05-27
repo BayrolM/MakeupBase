@@ -23,7 +23,7 @@ const C = {
 export function FavoritosView({
   onNavigate,
 }: { onNavigate?: (route: string) => void } = {}) {
-  const { favoritos, toggleFavorito, addToCarrito, productos, categorias } =
+  const { favoritos, toggleFavorito, addToCarrito, productos, categorias, carrito } =
     useStore();
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
 
@@ -229,6 +229,8 @@ export function FavoritosView({
               const categoria = categorias.find(
                 (c) => c.id === producto.categoriaId,
               );
+              const currentCartQty = carrito.find((item) => item.productoId === producto.id)?.cantidad || 0;
+              const isMaxStock = currentCartQty >= producto.stock;
               return (
                 <ProductCard
                   key={producto.id}
@@ -243,11 +245,19 @@ export function FavoritosView({
                   }}
                   onCardClick={() => setSelectedProduct(producto)}
                   onAddToCart={() => {
+                    const currentCartQty = carrito.find((item) => item.productoId === producto.id)?.cantidad || 0;
+                    if (currentCartQty >= producto.stock) {
+                      toast.error("Stock máximo alcanzado", {
+                        description: `No puedes agregar más unidades de ${producto.nombre}.`,
+                      });
+                      return;
+                    }
                     addToCarrito(producto.id, 1);
                     toast.success("Producto agregado", {
                       description: `${producto.nombre} se agregó al carrito`,
                     });
                   }}
+                  isMaxStock={isMaxStock}
                 />
               );
             })}
@@ -429,6 +439,13 @@ export function FavoritosView({
                   <button
                     disabled={selectedProduct.stock === 0}
                     onClick={() => {
+                      const currentCartQty = carrito.find((item) => item.productoId === selectedProduct.id)?.cantidad || 0;
+                      if (currentCartQty >= selectedProduct.stock) {
+                        toast.error("Stock máximo alcanzado", {
+                          description: `No puedes agregar más unidades de ${selectedProduct.nombre}.`,
+                        });
+                        return;
+                      }
                       addToCarrito(selectedProduct.id, 1);
                       toast.success("Producto agregado", {
                         description: `${selectedProduct.nombre} se agregó al carrito`,
