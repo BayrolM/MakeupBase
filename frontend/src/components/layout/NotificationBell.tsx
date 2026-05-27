@@ -4,10 +4,16 @@ import { useStore } from "../../lib/store";
 import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 
-export function NotificationBell() {
+interface NotificationBellProps {
+  currentRoute?: string;
+  onNavigate?: (route: string) => void;
+}
+
+export function NotificationBell({ currentRoute, onNavigate }: NotificationBellProps) {
   const { notificationSummary, fetchNotificationSummary, currentUser, userType } = useStore();
   const [lastTotal, setLastTotal] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [dismissed, setDismissed] = useState({ pedidos: 0, stock: 0, devoluciones: 0 });
 
   useEffect(() => {
     if (!currentUser || userType !== "admin") return;
@@ -31,6 +37,44 @@ export function NotificationBell() {
     }
     setLastTotal(notificationSummary.total);
   }, [notificationSummary.total]);
+
+  useEffect(() => {
+    setDismissed(prev => {
+      let updated = false;
+      const next = { ...prev };
+
+      // Pedidos
+      if (currentRoute === "pedidos" || notificationSummary.pedidos < prev.pedidos) {
+        if (next.pedidos !== notificationSummary.pedidos) {
+          next.pedidos = notificationSummary.pedidos;
+          updated = true;
+        }
+      }
+      
+      // Stock
+      if (currentRoute === "productos" || notificationSummary.stock < prev.stock) {
+        if (next.stock !== notificationSummary.stock) {
+          next.stock = notificationSummary.stock;
+          updated = true;
+        }
+      }
+      
+      // Devoluciones
+      if (currentRoute === "devoluciones" || notificationSummary.devoluciones < prev.devoluciones) {
+        if (next.devoluciones !== notificationSummary.devoluciones) {
+          next.devoluciones = notificationSummary.devoluciones;
+          updated = true;
+        }
+      }
+
+      return updated ? next : prev;
+    });
+  }, [currentRoute, notificationSummary]);
+
+  const activePedidos = Math.max(0, notificationSummary.pedidos - dismissed.pedidos);
+  const activeStock = Math.max(0, notificationSummary.stock - dismissed.stock);
+  const activeDevoluciones = Math.max(0, notificationSummary.devoluciones - dismissed.devoluciones);
+  const activeTotal = activePedidos + activeStock + activeDevoluciones;
 
   const hasAccess = currentUser && (currentUser.id_rol === 1 || currentUser.permisos?.includes("ver_productos"));
   if (!currentUser || userType !== "admin" || !hasAccess) {
@@ -75,9 +119,9 @@ export function NotificationBell() {
             <Bell
               size={22}
               strokeWidth={1.8}
-              className={notificationSummary.total > 0 ? "animate-bounce group-hover:animate-none" : ""}
+              className={activeTotal > 0 ? "animate-bounce group-hover:animate-none" : ""}
             />
-            {notificationSummary.total > 0 && (
+            {activeTotal > 0 && (
               <span
                 style={{
                   position: "absolute",
@@ -99,7 +143,7 @@ export function NotificationBell() {
                   lineHeight: 1,
                 }}
               >
-                {notificationSummary.total}
+                {activeTotal}
               </span>
             )}
           </button>
@@ -148,7 +192,7 @@ export function NotificationBell() {
                   Actividad en tiempo real
                 </p>
               </div>
-              {notificationSummary.total > 0 && (
+              {activeTotal > 0 && (
                 <span
                   style={{
                     background: "linear-gradient(135deg, #7b1347, #a85d77)",
@@ -162,7 +206,7 @@ export function NotificationBell() {
                     whiteSpace: "nowrap",
                   }}
                 >
-                  {notificationSummary.total} nueva{notificationSummary.total > 1 ? "s" : ""}
+                  {activeTotal} nueva{activeTotal > 1 ? "s" : ""}
                 </span>
               )}
             </div>
@@ -170,7 +214,7 @@ export function NotificationBell() {
 
           {/* Body */}
           <div style={{ background: "white", maxHeight: "55vh", overflowY: "auto" }} className="sidebar-scroll">
-            {notificationSummary.total === 0 ? (
+            {activeTotal === 0 ? (
               <div style={{ padding: "48px 24px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center" }}>
                 <div
                   style={{
@@ -192,9 +236,15 @@ export function NotificationBell() {
               </div>
             ) : (
               <div>
-                {notificationSummary.pedidos > 0 && (
+                {activePedidos > 0 && (
                   <div
                     className="group"
+                    onClick={() => {
+                      if (onNavigate) {
+                        onNavigate("pedidos");
+                        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+                      }
+                    }}
                     style={{
                       display: "flex",
                       alignItems: "center",
@@ -238,7 +288,7 @@ export function NotificationBell() {
                     </div>
                     <div style={{ flex: 1 }}>
                       <p style={{ fontSize: 13, fontWeight: 700, color: "#1a1a1a", margin: 0 }}>Nuevos Pedidos</p>
-                      <p style={{ fontSize: 11.5, color: "#888", marginTop: 2 }}>Revisión requerida — {notificationSummary.pedidos} pendiente{notificationSummary.pedidos > 1 ? "s" : ""}</p>
+                      <p style={{ fontSize: 11.5, color: "#888", marginTop: 2 }}>Revisión requerida — {activePedidos} pendiente{activePedidos > 1 ? "s" : ""}</p>
                     </div>
                     <span
                       style={{
@@ -253,8 +303,14 @@ export function NotificationBell() {
                   </div>
                 )}
 
-                {notificationSummary.stock > 0 && (
+                {activeStock > 0 && (
                   <div
+                    onClick={() => {
+                      if (onNavigate) {
+                        onNavigate("productos");
+                        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+                      }
+                    }}
                     style={{
                       display: "flex",
                       alignItems: "center",
@@ -298,7 +354,7 @@ export function NotificationBell() {
                     </div>
                     <div style={{ flex: 1 }}>
                       <p style={{ fontSize: 13, fontWeight: 700, color: "#1a1a1a", margin: 0 }}>Stock Crítico</p>
-                      <p style={{ fontSize: 11.5, color: "#888", marginTop: 2 }}>{notificationSummary.stock} producto{notificationSummary.stock > 1 ? "s" : ""} agotado{notificationSummary.stock > 1 ? "s" : ""}</p>
+                      <p style={{ fontSize: 11.5, color: "#888", marginTop: 2 }}>Reabastecer — {activeStock} producto{activeStock > 1 ? "s" : ""}</p>
                     </div>
                     <span
                       style={{
@@ -313,8 +369,14 @@ export function NotificationBell() {
                   </div>
                 )}
 
-                {notificationSummary.devoluciones > 0 && (
+                {activeDevoluciones > 0 && (
                   <div
+                    onClick={() => {
+                      if (onNavigate) {
+                        onNavigate("devoluciones");
+                        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+                      }
+                    }}
                     style={{
                       display: "flex",
                       alignItems: "center",
@@ -325,7 +387,7 @@ export function NotificationBell() {
                       position: "relative",
                       overflow: "hidden",
                     }}
-                    onMouseEnter={e => (e.currentTarget.style.background = "#faf8ff")}
+                    onMouseEnter={e => (e.currentTarget.style.background = "#faf8fc")}
                     onMouseLeave={e => (e.currentTarget.style.background = "white")}
                   >
                     <div
@@ -357,7 +419,7 @@ export function NotificationBell() {
                     </div>
                     <div style={{ flex: 1 }}>
                       <p style={{ fontSize: 13, fontWeight: 700, color: "#1a1a1a", margin: 0 }}>Devoluciones</p>
-                      <p style={{ fontSize: 11.5, color: "#888", marginTop: 2 }}>{notificationSummary.devoluciones} pendiente{notificationSummary.devoluciones > 1 ? "s" : ""}</p>
+                      <p style={{ fontSize: 11.5, color: "#888", marginTop: 2 }}>Acción requerida — {activeDevoluciones} solicitud{activeDevoluciones > 1 ? "es" : ""}</p>
                     </div>
                     <span
                       style={{

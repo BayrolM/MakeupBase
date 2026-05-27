@@ -966,7 +966,10 @@ function AppContent() {
           {renderContent()}
         </main>
       </div>
-      <NotificationBell />
+      <NotificationBell 
+        currentRoute={currentRoute}
+        onNavigate={(route) => setCurrentRoute(route as Route)}
+      />
     </SidebarProvider>
   );
 }

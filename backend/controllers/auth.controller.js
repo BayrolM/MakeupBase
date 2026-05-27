@@ -37,6 +37,7 @@ export const register = async (req, res) => {
 
     if (
       password.length < 8 ||
+      !/[a-z]/.test(password) ||
       !/[A-Z]/.test(password) ||
       !/[0-9]/.test(password) ||
       !/[!@#$%^&*(),.?":{}|<>]/.test(password)
@@ -290,13 +291,9 @@ export const resetPassword = async (req, res) => {
         .json({ message: "Token y nueva contraseña son requeridos" });
     }
 
-    if (new_password.length < 8) {
-      return res
-        .status(400)
-        .json({ message: "La contraseña debe tener al menos 8 caracteres" });
-    }
-
     if (
+      new_password.length < 8 ||
+      !/[a-z]/.test(new_password) ||
       !/[A-Z]/.test(new_password) ||
       !/[0-9]/.test(new_password) ||
       !/[!@#$%^&*(),.?":{}|<>]/.test(new_password)
