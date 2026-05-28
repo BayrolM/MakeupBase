@@ -107,6 +107,7 @@ export function DevolucionesModule() {
         motivoAnulacion: dev.motivo_anulacion || "",
         fechaAnulacion: dev.fecha_anulacion ? new Date(dev.fecha_anulacion).toLocaleDateString() : "",
         esDefectuoso: dev.es_defectuoso || false,
+        evidenciaUrl: dev.evidencia_url || "",
         evidencias: [],
         productos: (dev.detalles || []).map((det: any) => ({
           productoId: det.id_producto?.toString() || "",

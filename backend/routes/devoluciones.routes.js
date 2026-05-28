@@ -7,7 +7,12 @@ const router = Router();
 
 router.get("/", authRequired, tienePermiso('ver_devoluciones'), listar);
 router.get("/:id", authRequired, tienePermiso('ver_devoluciones'), obtener);
-router.post("/", authRequired, tienePermiso('crear_devoluciones'), crear);
+router.post("/", authRequired, (req, res, next) => {
+  if (req.user && req.user.rol === 2) {
+    return next();
+  }
+  return tienePermiso('crear_devoluciones')(req, res, next);
+}, crear);
 router.put("/:id/estado", authRequired, tienePermiso('editar_devoluciones'), cambiarEstado);
 router.put("/:id/anular", authRequired, tienePermiso('eliminar_devoluciones'), anular);
 

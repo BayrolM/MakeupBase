@@ -104,11 +104,11 @@ export const obtener = async (req, res) => {
  */
 export const crear = async (req, res) => {
   try {
-    const { id_venta, id_usuario_cliente, motivo, estado, productos, fecha_devolucion, evidencia_url, es_defectuoso } = req.body;
-    const id_usuario_empleado = req.user.id_usuario;
+    const { id_venta, id_pedido, id_usuario_cliente, motivo, estado, productos, fecha_devolucion, evidencia_url, es_defectuoso } = req.body;
+    const id_usuario_empleado = req.user?.rol === 1 ? req.user.id_usuario : null;
 
-    if (!id_venta) {
-      return res.status(400).json({ ok: false, message: "Debe ingresar el ID de la venta." });
+    if (!id_venta && !id_pedido) {
+      return res.status(400).json({ ok: false, message: "Debe ingresar el ID de la venta o pedido." });
     }
     if (!motivo || motivo.trim().length < 5) {
       return res.status(400).json({ ok: false, message: "El motivo debe tener al menos 5 caracteres." });
@@ -125,8 +125,16 @@ export const crear = async (req, res) => {
 
     const resultado = await sql.begin(async (sql) => {
       // 1. Verificar que la venta existe y está activa
-      const [venta] = await sql`SELECT * FROM ventas WHERE id_venta = ${id_venta}`;
-      if (!venta) throw new Error("La venta no existe.");
+      let queryVenta;
+      if (id_venta) {
+        queryVenta = await sql`SELECT * FROM ventas WHERE id_venta = ${id_venta}`;
+      } else {
+        queryVenta = await sql`SELECT * FROM ventas WHERE id_pedido = ${id_pedido}`;
+      }
+      const [venta] = queryVenta;
+      if (!venta) throw new Error("La venta no existe o el pedido no tiene una venta asociada.");
+      
+      const final_id_venta = venta.id_venta;
       if (venta.estado === false || venta.estado === 0) {
         throw new Error("La venta está anulada y no permite devoluciones.");
       }
@@ -135,7 +143,7 @@ export const crear = async (req, res) => {
       const devolucionesExistentes = await sql`
         SELECT dd.id_producto FROM detalle_devoluciones dd
         INNER JOIN devoluciones d ON dd.id_devolucion = d.id_devolucion
-        WHERE d.id_venta = ${id_venta} AND d.estado != 'anulada'
+        WHERE d.id_venta = ${final_id_venta} AND d.estado != 'anulada'
       `;
       const productosYaDevueltos = devolucionesExistentes.map(d => d.id_producto);
 
@@ -150,7 +158,7 @@ export const crear = async (req, res) => {
       for (const prod of productos) {
         const [detalleVenta] = await sql`
           SELECT cantidad FROM detalle_ventas
-          WHERE id_venta = ${id_venta} AND id_producto = ${prod.id_producto}
+          WHERE id_venta = ${final_id_venta} AND id_producto = ${prod.id_producto}
         `;
         if (!detalleVenta) throw new Error(`El producto ID ${prod.id_producto} no pertenece a esta venta.`);
         if (prod.cantidad > detalleVenta.cantidad) {
@@ -167,7 +175,7 @@ export const crear = async (req, res) => {
       const [devolucion] = await sql`
         INSERT INTO devoluciones (id_usuario_cliente, id_usuario_empleado, id_venta, fecha_devolucion, motivo, total_devuelto, estado, evidencia_url, es_defectuoso)
         VALUES (
-          ${id_usuario_cliente}, ${id_usuario_empleado}, ${id_venta},
+          ${id_usuario_cliente}, ${id_usuario_empleado}, ${final_id_venta},
           ${fecha_devolucion || new Date()}, ${motivo.trim()}, ${totalDevuelto},
           ${estadoFinal}, ${evidencia_url || null}, ${es_defectuoso || false}
         )
@@ -248,7 +256,8 @@ export const cambiarEstado = async (req, res) => {
         UPDATE devoluciones
         SET estado = ${estado},
             motivo_decision = ${motivo_decision.trim()},
-            es_defectuoso = ${es_defectuoso || false}
+            es_defectuoso = ${es_defectuoso || false},
+            id_usuario_empleado = COALESCE(id_usuario_empleado, ${id_usuario_empleado})
         WHERE id_devolucion = ${id}
       `;
 

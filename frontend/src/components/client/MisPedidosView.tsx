@@ -207,9 +207,12 @@ export function MisPedidosView({
       const fullOrder = await orderService.getById(Number(pedido.id));
       const completePedido = {
         ...pedido,
+        ...fullOrder,
         clienteNombre: currentUser
           ? `${currentUser.nombres || ""} ${currentUser.apellidos || ""}`.trim()
           : "",
+        email: fullOrder.email || currentUser?.email || "",
+        telefono: fullOrder.telefono || currentUser?.telefono || "",
         productos: (fullOrder.items || []).map((i: any) => ({
           productoId: i.id_producto.toString(),
           cantidad: i.cantidad,

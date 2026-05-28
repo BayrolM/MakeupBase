@@ -29,7 +29,6 @@ export function PedidoReturnDialog({
   pedido,
   productosStore,
 }: PedidoReturnDialogProps) {
-  const [venta, setVenta] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [motivo, setMotivo] = useState("");
@@ -54,27 +53,10 @@ export function PedidoReturnDialog({
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      // Fetch both Sale and Full Order Details in parallel
-      const [saleRes, orderRes] = await Promise.all([
-        saleService.getAll({ pedidoId: pedido.id }),
-        orderService.getById(Number(pedido.id)),
-      ]);
+      // Fetch Order Details
+      const orderRes = await orderService.getById(Number(pedido.id));
 
-      const sale = saleRes.items?.[0];
-      if (sale) {
-        setVenta(sale);
-      } else {
-        toast.error("No se encontró la venta asociada a este pedido.");
-        onOpenChange(false);
-        return;
-      }
-
-      // Priorizamos los productos de la VENTA (sale.productos)
-      // ya que son los que realmente se facturaron.
-      const rawItems =
-        orderRes.items && orderRes.items.length > 0
-          ? orderRes.items
-          : sale.productos || [];
+      const rawItems = orderRes.items || [];
 
       if (rawItems && rawItems.length > 0) {
         const mapped = rawItems.map((item: any) => ({
@@ -151,9 +133,9 @@ export function PedidoReturnDialog({
         setIsUploadingImage(false);
       }
 
-      // 2. Create return request
+      // 2. Create return request using id_pedido
       await devolucionService.create({
-        id_venta: Number(venta.id_venta || venta.id),
+        id_pedido: Number(pedido.id),
         id_usuario_cliente: Number(pedido.clienteId),
         motivo: motivo.trim(),
         estado: "pendiente",
@@ -324,7 +306,8 @@ export function PedidoReturnDialog({
                   value={motivo}
                   onChange={(e) => setMotivo(e.target.value)}
                   placeholder="Describe por qué deseas devolver los productos..."
-                  className="border-gray-200 text-gray-800 rounded-lg text-sm resize-none focus:ring-[#c47b96]/20 focus:border-[#c47b96] bg-white"
+                  className="bg-white border-gray-200 text-gray-800 rounded-lg text-sm resize-none focus:ring-[#c47b96]/20 focus:border-[#c47b96]"
+                  style={{ backgroundColor: '#ffffff' }}
                   rows={3}
                 />
               </div>
@@ -378,14 +361,20 @@ export function PedidoReturnDialog({
 
         {/* Footer */}
         <div className="flex justify-end gap-3 px-6 pb-6">
-          <Button
-            variant="outline"
+          <button
             onClick={() => onOpenChange(false)}
-            className="border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg px-5 h-10 text-sm"
             disabled={isSubmitting}
+            style={{
+              padding: "10px 22px", borderRadius: "10px", fontSize: "13px", fontWeight: 700,
+              cursor: isSubmitting ? "not-allowed" : "pointer",
+              border: "1.5px solid #f0d5e0", background: "#fff8fb", color: "#c47b96",
+              transition: "all 0.2s",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "#fdf2f6"; e.currentTarget.style.borderColor = "#c47b96"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "#fff8fb"; e.currentTarget.style.borderColor = "#f0d5e0"; }}
           >
             Cancelar
-          </Button>
+          </button>
           <button
             onClick={handleSubmit}
             disabled={isSubmitting || isLoading || isUploadingImage}

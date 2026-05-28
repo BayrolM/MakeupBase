@@ -15,7 +15,10 @@ import {
   Hash,
   TrendingDown,
   ShoppingBag,
+  Image as ImageIcon,
+  ArrowLeft
 } from "lucide-react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -40,6 +43,14 @@ export function DevolucionDetailDialog({
   clientes,
   productos,
 }: DevolucionDetailDialogProps) {
+  const [viewMode, setViewMode] = useState<"detalle" | "evidencia">("detalle");
+
+  useEffect(() => {
+    if (open) {
+      setViewMode("detalle");
+    }
+  }, [open]);
+
   if (!devolucion) return null;
 
   const cliente = clientes.find((c) => c.id === devolucion.clienteId);
@@ -235,17 +246,37 @@ export function DevolucionDetailDialog({
           }}
         />
 
-        {/* ── Body ── */}
+        {/* ── Slider Container ── */}
         <div
-          className="no-scrollbar overflow-y-auto"
           style={{
-            padding: "20px 24px",
             display: "flex",
-            flexDirection: "column",
-            gap: 16,
-            maxHeight: "68vh",
+            width: "100%",
+            flexWrap: "nowrap",
+            overflow: "hidden",
           }}
         >
+          {/* ── Screen 1: Detalle ── */}
+          <div
+            style={{
+              width: "100%",
+              flexShrink: 0,
+              display: "flex",
+              flexDirection: "column",
+              transform: viewMode === "detalle" ? "translateX(0)" : "translateX(-100%)",
+              transition: "transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)",
+            }}
+          >
+            {/* ── Body ── */}
+            <div
+              className="no-scrollbar overflow-y-auto"
+              style={{
+                padding: "20px 24px",
+                display: "flex",
+                flexDirection: "column",
+                gap: 16,
+                maxHeight: "68vh",
+              }}
+            >
           {/* Banner defectuoso */}
           {esDefectuoso && (
             <div
@@ -503,45 +534,82 @@ export function DevolucionDetailDialog({
             </div>
           </div>
 
-          {/* Motivo */}
-          <div
-            style={{
-              background: "#f9fafb",
-              borderRadius: 12,
-              padding: "14px 16px",
-              border: "1px solid #f3f4f6",
-              display: "flex",
-              alignItems: "flex-start",
-              gap: 12,
-            }}
-          >
+          {/* Motivo e Imagen */}
+          <div style={{ display: "flex", gap: 16 }}>
+            {/* Motivo */}
             <div
               style={{
-                width: 34,
-                height: 34,
-                borderRadius: 10,
-                background: "linear-gradient(135deg,#c47b96,#e092b2)",
+                flex: 1,
+                background: "#f9fafb",
+                borderRadius: 12,
+                padding: "14px 16px",
+                border: "1px solid #f3f4f6",
                 display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0,
+                alignItems: "flex-start",
+                gap: 12,
               }}
             >
-              <MessageSquare className="w-4 h-4 text-white" />
-            </div>
-            <div>
-              <p style={labelStyle}>Motivo de Devolución</p>
-              <p
+              <div
                 style={{
-                  fontSize: 13,
-                  color: "#374151",
-                  fontStyle: "italic",
-                  margin: 0,
+                  width: 34,
+                  height: 34,
+                  borderRadius: 10,
+                  background: "linear-gradient(135deg,#c47b96,#e092b2)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
                 }}
               >
-                "{devolucion.motivo}"
-              </p>
+                <MessageSquare className="w-4 h-4 text-white" />
+              </div>
+              <div>
+                <p style={labelStyle}>Motivo de Devolución</p>
+                <p
+                  style={{
+                    fontSize: 13,
+                    color: "#374151",
+                    fontStyle: "italic",
+                    margin: 0,
+                  }}
+                >
+                  "{devolucion.motivo}"
+                </p>
+              </div>
             </div>
+
+            {/* Evidencia (si existe) */}
+            {devolucion.evidenciaUrl && (
+              <button
+                onClick={() => setViewMode("evidencia")}
+                style={{
+                  width: 200,
+                  background: "#fdf2f6",
+                  borderRadius: 12,
+                  padding: "14px 16px",
+                  border: "1px solid #f0d5e0",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 8,
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  textAlign: "left",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "#fce8f0"; e.currentTarget.style.borderColor = "#c47b96"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "#fdf2f6"; e.currentTarget.style.borderColor = "#f0d5e0"; }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                  <ImageIcon className="w-4 h-4 text-[#c47b96]" />
+                  <p style={{ ...labelStyle, color: "#c47b96", marginBottom: 0 }}>Evidencia</p>
+                </div>
+                <div style={{ position: "relative", width: "100%", height: 100, borderRadius: 8, overflow: "hidden", border: "1px solid #e5e7eb" }}>
+                  <img src={devolucion.evidenciaUrl} alt="Evidencia" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.3)", display: "flex", alignItems: "center", justifyContent: "center", opacity: 0, transition: "opacity 0.2s" }} onMouseEnter={(e) => e.currentTarget.style.opacity = "1"} onMouseLeave={(e) => e.currentTarget.style.opacity = "0"}>
+                    <span style={{ color: "white", fontSize: 12, fontWeight: 700 }}>Ver Grande</span>
+                  </div>
+                </div>
+              </button>
+            )}
           </div>
 
           {/* Lista de productos */}
@@ -879,6 +947,65 @@ export function DevolucionDetailDialog({
             Cerrar Detalle
           </button>
         </div>
+        </div>
+
+        {/* ── Screen 2: Evidencia ── */}
+        <div 
+          style={{ 
+            width: "100%", 
+            flexShrink: 0, 
+            display: "flex", 
+            flexDirection: "column", 
+            height: "100%", 
+            background: "#111827",
+            transform: viewMode === "detalle" ? "translateX(0)" : "translateX(-100%)",
+            transition: "transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)",
+          }}
+        >
+          {/* Header Evidencia */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 24px", borderBottom: "1px solid #374151" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <button
+                onClick={() => setViewMode("detalle")}
+                style={{
+                  padding: 8, borderRadius: "50%", border: "none", background: "rgba(255,255,255,0.1)",
+                  color: "white", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.2s"
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.2)"}
+                onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+              <span style={{ color: "white", fontSize: 16, fontWeight: 700 }}>Evidencia Fotográfica</span>
+            </div>
+            <a
+              href={devolucion.evidenciaUrl}
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                color: "#c47b96", fontSize: 13, fontWeight: 700, background: "transparent",
+                border: "1px solid #c47b96", borderRadius: 8, padding: "6px 16px", textDecoration: "none"
+              }}
+            >
+              Abrir en nueva pestaña
+            </a>
+          </div>
+          
+          {/* Imagen Grande */}
+          <div style={{ flex: 1, padding: 24, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", minHeight: "60vh" }}>
+            {devolucion.evidenciaUrl ? (
+              <img 
+                src={devolucion.evidenciaUrl} 
+                alt="Evidencia Ampliada" 
+                style={{ maxWidth: "100%", maxHeight: "65vh", objectFit: "contain", borderRadius: 12, boxShadow: "0 10px 25px rgba(0,0,0,0.5)" }} 
+              />
+            ) : (
+              <span style={{ color: "#6b7280" }}>No hay evidencia</span>
+            )}
+          </div>
+        </div>
+        </div>
+
       </DialogContent>
     </Dialog>
   );

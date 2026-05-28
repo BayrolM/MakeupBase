@@ -27,6 +27,11 @@ export function PedidoShippingDialog({
   isSaving,
   onConfirm,
 }: PedidoShippingDialogProps) {
+  const isGuiaValid = shippingFormData.numero_guia && shippingFormData.numero_guia.trim().length > 0;
+  const isEntregaValid = shippingFormData.fecha_estimada && shippingFormData.fecha_estimada.trim().length >= 3;
+  const isTransportadoraValid = !!shippingFormData.transportadora;
+  const isValid = isGuiaValid && isEntregaValid && isTransportadoraValid;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-white border border-gray-100 max-w-md rounded-2xl shadow-2xl p-0 overflow-hidden">
@@ -88,11 +93,16 @@ export function PedidoShippingDialog({
               onChange={(e) =>
                 setShippingFormData({
                   ...shippingFormData,
-                  numero_guia: e.target.value,
+                  // Remove letters
+                  numero_guia: e.target.value.replace(/[a-zA-Z]/g, ""),
                 })
               }
+              maxLength={20}
               placeholder="Ej: 1234567890"
-              className="bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11"
+              className={`bg-white text-gray-800 rounded-xl focus:ring-[#c47b96]/20 transition-all h-11 ${
+                !isGuiaValid ? "!border-rose-400 focus-visible:!ring-rose-400/20" : "border-gray-200 focus:border-[#c47b96]"
+              }`}
+              style={{ backgroundColor: '#ffffff' }}
               disabled={isSaving}
             />
           </div>
@@ -104,6 +114,7 @@ export function PedidoShippingDialog({
               </Label>
               <Input
                 type="date"
+                min={new Date().toISOString().split("T")[0]}
                 value={shippingFormData.fecha_envio}
                 onChange={(e) =>
                   setShippingFormData({
@@ -111,13 +122,15 @@ export function PedidoShippingDialog({
                     fecha_envio: e.target.value,
                   })
                 }
-                className="bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11"
+                className="bg-white border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11"
+                style={{ backgroundColor: '#ffffff' }}
                 disabled={isSaving}
               />
             </div>
             <div className="space-y-2">
               <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">
-                <Clock className="w-3.5 h-3.5 text-[#c47b96]" /> Entrega Est.
+                <Clock className="w-3.5 h-3.5 text-[#c47b96]" /> Entrega Est.{" "}
+                <span className="text-rose-500">*</span>
               </Label>
               <Input
                 placeholder="Ej: 3-5 días"
@@ -128,7 +141,11 @@ export function PedidoShippingDialog({
                     fecha_estimada: e.target.value,
                   })
                 }
-                className="bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11"
+                maxLength={20}
+                className={`bg-white text-gray-800 rounded-xl focus:ring-[#c47b96]/20 transition-all h-11 ${
+                  !isEntregaValid ? "!border-rose-400 focus-visible:!ring-rose-400/20" : "border-gray-200 focus:border-[#c47b96]"
+                }`}
+                style={{ backgroundColor: '#ffffff' }}
                 disabled={isSaving}
               />
             </div>
@@ -137,18 +154,26 @@ export function PedidoShippingDialog({
 
         {/* Footer */}
         <div className="flex justify-end gap-3 px-6 pb-6 pt-5 bg-white border-t border-gray-100">
-          <Button
-            variant="outline"
+          <button
             onClick={() => onOpenChange(false)}
-            className="border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg px-4 h-10 text-sm"
             disabled={isSaving}
+            style={{
+              padding: "10px 22px", borderRadius: "10px", fontSize: "13px", fontWeight: 700,
+              cursor: isSaving ? "not-allowed" : "pointer",
+              border: "1.5px solid #f0d5e0", background: "#fff8fb", color: "#c47b96",
+              transition: "all 0.2s",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "#fdf2f6"; e.currentTarget.style.borderColor = "#c47b96"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "#fff8fb"; e.currentTarget.style.borderColor = "#f0d5e0"; }}
           >
             Cancelar
-          </Button>
+          </button>
           <Button
             onClick={onConfirm}
-            disabled={isSaving}
-            className="rounded-lg font-semibold h-10 text-sm shadow-lg transition-all text-white px-4"
+            disabled={isSaving || !isValid}
+            className={`rounded-lg font-semibold h-10 text-sm shadow-lg transition-all text-white px-4 ${
+              !isValid ? "opacity-50 cursor-not-allowed" : ""
+            }`}
             style={{ backgroundColor: "#c47b96" }}
           >
             {isSaving ? "Confirmando..." : "Confirmar Envío"}
