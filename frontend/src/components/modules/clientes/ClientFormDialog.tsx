@@ -100,7 +100,8 @@ export function ClientFormDialog({
               </Label>
               <Input
                 value={formData.nombres}
-                onChange={(e) => onFieldChange("nombres", e.target.value)}
+                maxLength={30}
+                onChange={(e) => onFieldChange("nombres", e.target.value.slice(0, 30))}
                 className={`border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${
                   fieldErrors.nombres ? "border-rose-400" : ""
                 }`}
@@ -120,7 +121,8 @@ export function ClientFormDialog({
               </Label>
               <Input
                 value={formData.apellidos}
-                onChange={(e) => onFieldChange("apellidos", e.target.value)}
+                maxLength={30}
+                onChange={(e) => onFieldChange("apellidos", e.target.value.slice(0, 30))}
                 className={`border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${
                   fieldErrors.apellidos ? "border-rose-400" : ""
                 }`}
@@ -168,11 +170,11 @@ export function ClientFormDialog({
               </Label>
                <Input
                  value={formData.numeroDocumento}
+                 maxLength={15}
                  onChange={(e) => {
-                   const letrasYNumeros = e.target.value.replace(
-                     /[^a-zA-Z0-9]/g,
-                     "",
-                   );
+                   const letrasYNumeros = e.target.value
+                     .replace(/[^a-zA-Z0-9]/g, "")
+                     .slice(0, 15);
                    onFieldChange("numeroDocumento", letrasYNumeros);
                  }}
                  className={`border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${
@@ -196,7 +198,8 @@ export function ClientFormDialog({
               </Label>
               <Input
                 value={formData.email}
-                onChange={(e) => onFieldChange("email", e.target.value)}
+                maxLength={40}
+                onChange={(e) => onFieldChange("email", e.target.value.slice(0, 40))}
                 className={`border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${
                   fieldErrors.email ? "border-rose-400" : ""
                 }`}
@@ -216,9 +219,11 @@ export function ClientFormDialog({
               </Label>
               <Input
                 value={formData.telefono}
-                maxLength={10}
+                maxLength={15}
                 onChange={(e) => {
-                  const soloNumeros = e.target.value.replace(/[^0-9]/g, "");
+                  const soloNumeros = e.target.value
+                    .replace(/[^0-9]/g, "")
+                    .slice(0, 15);
                   onFieldChange("telefono", soloNumeros);
                 }}
                 className={`border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${
@@ -318,7 +323,8 @@ export function ClientFormDialog({
               </Label>
               <Input
                 value={formData.direccion}
-                onChange={(e) => onFieldChange("direccion", e.target.value)}
+                maxLength={30}
+                onChange={(e) => onFieldChange("direccion", e.target.value.slice(0, 30))}
                 className={`border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${
                   fieldErrors.direccion ? "border-rose-400" : ""
                 }`}
@@ -338,7 +344,8 @@ export function ClientFormDialog({
               </Label>
               <Input
                 value={formData.departamento}
-                onChange={(e) => onFieldChange("departamento", e.target.value)}
+                maxLength={50}
+                onChange={(e) => onFieldChange("departamento", e.target.value.slice(0, 50))}
                 className={`border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${
                   fieldErrors.departamento ? "border-rose-400" : ""
                 }`}
@@ -360,7 +367,8 @@ export function ClientFormDialog({
               </Label>
               <Input
                 value={formData.ciudad}
-                onChange={(e) => onFieldChange("ciudad", e.target.value)}
+                maxLength={50}
+                onChange={(e) => onFieldChange("ciudad", e.target.value.slice(0, 50))}
                 className={`border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${
                   fieldErrors.ciudad ? "border-rose-400" : ""
                 }`}
