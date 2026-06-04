@@ -26,6 +26,7 @@ import { FavoritosView } from "./components/client/FavoritosView";
 import { MisPedidosView } from "./components/client/MisPedidosView";
 import { NosotrosView } from "./components/client/NosotrosView";
 import { ContactoView } from "./components/client/ContactoView";
+import { ProductDetailScreen } from "./components/client/ProductDetailScreen";
 
 import { PerfilView } from "./components/client/PerfilView";
 import { CheckoutView } from "./components/client/CheckoutView";
@@ -71,6 +72,7 @@ type Route =
   | "historial"
   | "perfil"
   | "checkout"
+  | "producto-detalle"
   | "nosotros"
   | "contacto";
 
@@ -103,6 +105,10 @@ function AppContent() {
     userType === "admin" ? "dashboard" : "inicio",
   );
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [productDetailId, setProductDetailId] = useState<string | null>(null);
+  const [productDetailOrigin, setProductDetailOrigin] = useState<Route>(
+    userType === "admin" ? "dashboard" : "inicio",
+  );
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Solucionar el bug de scroll al cambiar de página
@@ -845,6 +851,11 @@ function AppContent() {
                 setCurrentRoute(route as Route);
               }
             }}
+            onViewProduct={(productId) => {
+              setProductDetailOrigin("inicio");
+              setProductDetailId(productId);
+              setCurrentRoute("producto-detalle");
+            }}
           />
         );
       case "catalogo":
@@ -852,12 +863,22 @@ function AppContent() {
           <CatalogoView
             initialCategory={activeCategory || "all"}
             onClearCategory={() => setActiveCategory(null)}
+            onViewProduct={(productId) => {
+              setProductDetailOrigin("catalogo");
+              setProductDetailId(productId);
+              setCurrentRoute("producto-detalle");
+            }}
           />
         );
       case "favoritos":
         return (
           <FavoritosView
             onNavigate={(route) => setCurrentRoute(route as Route)}
+            onViewProduct={(productId) => {
+              setProductDetailOrigin("favoritos");
+              setProductDetailId(productId);
+              setCurrentRoute("producto-detalle");
+            }}
           />
         );
       case "mis-pedidos":
@@ -903,8 +924,38 @@ function AppContent() {
             onComplete={() => setCurrentRoute("mis-pedidos")}
           />
         );
+      case "producto-detalle":
+        return (
+          <ProductDetailScreen
+            productId={productDetailId}
+            onBack={() => {
+              setCurrentRoute(productDetailOrigin);
+              setProductDetailId(null);
+            }}
+          />
+        );
       default:
-        return userType === "admin" ? <Dashboard /> : <InicioView />;
+        return userType === "admin" ? (
+          <Dashboard />
+        ) : (
+          <InicioView
+            isPublic={!isAuthenticated}
+            onNavigate={(route, catId) => {
+              if (route === "login" || route === "register") {
+                setShowAuthPage(true);
+                setAuthPage(route as AuthPage);
+              } else {
+                if (catId) setActiveCategory(catId);
+                setCurrentRoute(route as Route);
+              }
+            }}
+            onViewProduct={(productId) => {
+              setProductDetailOrigin("inicio");
+              setProductDetailId(productId);
+              setCurrentRoute("producto-detalle");
+            }}
+          />
+        );
     }
   };
 

@@ -37,6 +37,7 @@ import { marcaService } from "../../services/marcaService";
 interface InicioViewProps {
   isPublic?: boolean;
   onNavigate?: (route: string, categoryId?: string) => void;
+  onViewProduct?: (productId: string) => void;
   onNavigateToLogin?: () => void;
   onNavigateToRegister?: () => void;
 }
@@ -66,6 +67,7 @@ const C = {
 export function InicioView({
   isPublic = false,
   onNavigate,
+  onViewProduct,
 }: InicioViewProps = {}) {
   const {
     productos,
@@ -191,19 +193,19 @@ export function InicioView({
   // Get featured categories (first 6)
   const categoriasDestacadas = categorias.slice(0, 6);
 
-  const handleAddToCart = (productoId: string) => {
+  const handleAddToCart = (productoId: string, quantity = 1) => {
     const producto = productos.find((p) => p.id === productoId);
     if (!producto) return;
     const currentCartQty = carrito.find((item) => item.productoId === productoId)?.cantidad || 0;
-    if (currentCartQty >= producto.stock) {
+    if (currentCartQty + quantity > producto.stock) {
       toast.error("Stock máximo alcanzado", {
         description: `No puedes agregar más unidades de este producto.`,
       });
       return;
     }
-    addToCarrito(productoId, 1);
+    addToCarrito(productoId, quantity);
     toast.success("Producto agregado", {
-      description: "El producto se agregó a tu carrito",
+      description: `Se agregaron ${quantity} ${quantity === 1 ? "unidad" : "unidades"} al carrito`,
     });
   };
 
@@ -729,6 +731,7 @@ export function InicioView({
                       categoryName={categoria?.nombre}
                       badge={badges[index]?.label}
                       badgeColor={badges[index]?.color}
+                      onCardClick={() => onViewProduct?.(producto.id)}
                       onAddToCart={() => handleAddToCart(producto.id)}
                       isMaxStock={isMaxStock}
                     />

@@ -160,9 +160,35 @@ export function ClientesViewModule() {
   const handleFieldChange = (name: string, value: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
 
-    // Clear mismatch error if typing in either password field
-    if (name === "passwordHash" || name === "confirmPassword") {
-      setFieldErrors((prev) => ({ ...prev, confirmPassword: "" }));
+    if (name === "passwordHash") {
+      const passwordError = validateClientField("passwordHash", value, editingCliente);
+      const confirmPasswordValue = formData.confirmPassword;
+      const confirmPasswordError = confirmPasswordValue
+        ? value !== confirmPasswordValue
+          ? "Las contraseñas no coinciden"
+          : ""
+        : "";
+
+      setFieldErrors((prev) => ({
+        ...prev,
+        passwordHash: passwordError,
+        confirmPassword: confirmPasswordError,
+      }));
+      return;
+    }
+
+    if (name === "confirmPassword") {
+      const confirmPasswordError = !value
+        ? "Confirma tu contraseña"
+        : value !== formData.passwordHash
+        ? "Las contraseñas no coinciden"
+        : "";
+
+      setFieldErrors((prev) => ({
+        ...prev,
+        confirmPassword: confirmPasswordError,
+      }));
+      return;
     }
 
     const error = validateClientField(name, value, editingCliente);
@@ -182,7 +208,7 @@ export function ClientesViewModule() {
           ? `Este ${name === "email" ? "email" : "documento"} ya está registrado`
           : "",
       }));
-    } else if (name !== "confirmPassword") {
+    } else {
       setFieldErrors((prev) => ({ ...prev, [name]: error }));
     }
   };
