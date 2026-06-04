@@ -99,9 +99,10 @@ export function ProveedorFormDialog({
               <Input
                 value={formData.nombre}
                 onChange={(e) => onChange("nombre", e.target.value)}
-                className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${fieldErrors.nombre ? "border-rose-400" : ""}`}
+                className={`bg-white border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${fieldErrors.nombre ? "border-rose-400" : ""}`}
                 placeholder="Ej: Suministros Cosméticos S.A.S"
                 disabled={isSaving}
+                style={{ backgroundColor: '#ffffff' }}
               />
               {fieldErrors.nombre && (
                 <span className="micro-validation-error">{fieldErrors.nombre}</span>
@@ -116,9 +117,10 @@ export function ProveedorFormDialog({
               <Input
                 value={formData.nit}
                 onChange={(e) => onChange("nit", e.target.value)}
-                className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${fieldErrors.nit ? "border-rose-400" : ""}`}
+                className={`bg-white border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${fieldErrors.nit ? "border-rose-400" : ""}`}
                 placeholder="Ej: 900123456-7"
                 disabled={isSaving}
+                style={{ backgroundColor: '#ffffff' }}
               />
               {fieldErrors.nit && (
                 <span className="micro-validation-error">{fieldErrors.nit}</span>
@@ -137,7 +139,7 @@ export function ProveedorFormDialog({
                 onValueChange={(v) => onChange("tipo_proveedor", v)}
                 disabled={isSaving}
               >
-                <SelectTrigger className="bg-gray-50 border-gray-200 rounded-xl h-11">
+                <SelectTrigger className="bg-white border-gray-200 rounded-xl h-11" style={{ backgroundColor: '#ffffff' }}>
                   <SelectValue placeholder="Seleccionar tipo..." />
                 </SelectTrigger>
                 <SelectContent className="bg-white border-gray-100 rounded-xl shadow-lg">
@@ -160,10 +162,11 @@ export function ProveedorFormDialog({
                   const soloNumeros = e.target.value.replace(/[^0-9]/g, "");
                   onChange("telefono", soloNumeros);
                 }}
-                className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${fieldErrors.telefono ? "border-rose-400" : ""}`}
+                className={`bg-white border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${fieldErrors.telefono ? "border-rose-400" : ""}`}
                 placeholder="Ej: 3001234567"
                 disabled={isSaving}
                 maxLength={20}
+                style={{ backgroundColor: '#ffffff' }}
               />
               {fieldErrors.telefono && (
                 <span className="micro-validation-error">{fieldErrors.telefono}</span>
@@ -179,9 +182,10 @@ export function ProveedorFormDialog({
                 type="email"
                 value={formData.email}
                 onChange={(e) => onChange("email", e.target.value)}
-                className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${fieldErrors.email ? "border-rose-400" : ""}`}
+                className={`bg-white border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${fieldErrors.email ? "border-rose-400" : ""}`}
                 placeholder="Ej: contacto@empresa.com"
                 disabled={isSaving}
+                style={{ backgroundColor: '#ffffff' }}
               />
               {fieldErrors.email && (
                 <span className="micro-validation-error">{fieldErrors.email}</span>
@@ -198,9 +202,10 @@ export function ProveedorFormDialog({
               <Input
                 value={formData.direccion}
                 onChange={(e) => onChange("direccion", e.target.value)}
-                className={`bg-gray-50 border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${fieldErrors.direccion ? "border-rose-400" : ""}`}
+                className={`bg-white border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${fieldErrors.direccion ? "border-rose-400" : ""}`}
                 placeholder="Ej: Calle 50 #30-20"
                 disabled={isSaving}
+                style={{ backgroundColor: '#ffffff' }}
               />
               {fieldErrors.direccion && (
                 <span className="micro-validation-error">{fieldErrors.direccion}</span>
@@ -217,7 +222,7 @@ export function ProveedorFormDialog({
                 onValueChange={(v) => onChange("estado", v)}
                 disabled={isSaving}
               >
-                <SelectTrigger className="bg-gray-50 border-gray-200 rounded-xl h-11">
+                <SelectTrigger className="bg-white border-gray-200 rounded-xl h-11" style={{ backgroundColor: '#ffffff' }}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-white border-gray-100 rounded-xl shadow-lg">

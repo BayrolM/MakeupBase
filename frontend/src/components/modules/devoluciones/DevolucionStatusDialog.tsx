@@ -1,4 +1,4 @@
-import { Edit, CheckCircle2, Loader2 } from 'lucide-react';
+import { Edit, CheckCircle2, Loader2, AlertTriangle, ShieldAlert } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../../ui/dialog';
 import { Label } from '../../ui/label';
 import { Textarea } from '../../ui/textarea';
@@ -35,8 +35,8 @@ export function DevolucionStatusDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-white border border-gray-100 max-w-md rounded-3xl shadow-2xl p-0 overflow-hidden">
-        <DialogHeader className="px-8 pt-8 pb-6 border-b border-gray-100">
+      <DialogContent className="bg-white border-0 w-[90vw] max-w-[800px] max-h-[90vh] flex flex-col rounded-2xl shadow-2xl p-0 overflow-hidden" style={{ '--input-background': '#ffffff' } as React.CSSProperties}>
+        <DialogHeader className="px-8 pt-8 pb-6 border-b border-gray-100 flex-shrink-0 bg-white z-10">
           <div className="flex items-center gap-4">
             <div className="flex items-center justify-center text-white font-bold text-lg flex-shrink-0" 
               style={{ width: 44, height: 44, borderRadius: 14, background: "linear-gradient(135deg,#c47b96,#e092b2)", boxShadow: "0 4px 12px rgba(196,123,150,0.3)" }}>
@@ -49,12 +49,12 @@ export function DevolucionStatusDialog({
           </div>
         </DialogHeader>
 
-        <div className="px-8 py-6 space-y-6">
+        <div className="px-8 py-6 space-y-6 overflow-y-auto flex-1 no-scrollbar">
           <div className="space-y-4">
             <div className="space-y-2">
               <Label className="text-gray-700 font-bold text-sm">Nuevo Estado</Label>
               <Select value={nuevoEstado} onValueChange={onEstadoChange}>
-                <SelectTrigger className="bg-gray-50 border-gray-200 text-gray-800 rounded-xl h-11">
+                <SelectTrigger className="border-gray-200 text-gray-800 rounded-xl h-11" style={{ backgroundColor: '#ffffff' }}>
                   <SelectValue placeholder="Seleccione nuevo estado" />
                 </SelectTrigger>
                 <SelectContent className="bg-white border-gray-200 rounded-xl shadow-xl">
@@ -66,22 +66,31 @@ export function DevolucionStatusDialog({
             </div>
             
             {nuevoEstado === "aprobada" && (
-              <div className="flex flex-col items-center justify-center text-center p-5 rounded-2xl bg-rose-50 border border-rose-100 transition-all animate-in fade-in slide-in-from-top-2 space-y-2">
-                <div className="flex items-center gap-2.5">
-                  <input
-                    id="es_defectuoso"
-                    type="checkbox"
-                    checked={esDefectuoso}
-                    onChange={(e) => onEsDefectuosoChange(e.target.checked)}
-                    className="w-5 h-5 text-[#c47b96] border-gray-300 rounded-lg focus:ring-[#c47b96] cursor-pointer"
-                  />
-                  <label htmlFor="es_defectuoso" className="text-sm font-bold text-rose-700 cursor-pointer select-none">
-                    ¿Producto Defectuoso?
-                  </label>
+              <div className="space-y-3 animate-in fade-in slide-in-from-top-2 pt-2">
+                <Label className="text-gray-700 font-bold text-sm">Estado Físico del Producto Devuelto <span className="text-rose-500">*</span></Label>
+                <div className="grid grid-cols-2 gap-4">
+                  <div 
+                    onClick={() => onEsDefectuosoChange(false)}
+                    className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex flex-col items-center justify-center gap-2 ${!esDefectuoso ? 'border-[#c47b96] bg-[#fff0f5] shadow-sm' : 'border-gray-100 bg-white hover:border-gray-200'}`}
+                  >
+                     <div className={`p-2 rounded-full ${!esDefectuoso ? 'bg-white shadow-sm' : 'bg-gray-50'}`}>
+                       <CheckCircle2 className={`w-6 h-6 ${!esDefectuoso ? 'text-[#c47b96]' : 'text-gray-400'}`} />
+                     </div>
+                     <span className={`text-[13px] mt-1 font-bold ${!esDefectuoso ? 'text-[#c47b96]' : 'text-gray-500'}`}>Buen Estado</span>
+                     <span className="text-[11px] text-gray-400 text-center leading-tight">El producto retornará al inventario disponible para la venta.</span>
+                  </div>
+                  
+                  <div 
+                    onClick={() => onEsDefectuosoChange(true)}
+                    className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex flex-col items-center justify-center gap-2 ${esDefectuoso ? 'border-rose-400 bg-rose-50 shadow-sm' : 'border-gray-100 bg-white hover:border-gray-200'}`}
+                  >
+                     <div className={`p-2 rounded-full ${esDefectuoso ? 'bg-white shadow-sm' : 'bg-gray-50'}`}>
+                       <ShieldAlert className={`w-6 h-6 ${esDefectuoso ? 'text-rose-500' : 'text-gray-400'}`} />
+                     </div>
+                     <span className={`text-[13px] mt-1 font-bold ${esDefectuoso ? 'text-rose-600' : 'text-gray-500'}`}>Producto Defectuoso</span>
+                     <span className="text-[11px] text-gray-400 text-center leading-tight">Se registrará como pérdida y <strong>NO</strong> volverá al stock.</span>
+                  </div>
                 </div>
-                <p className="text-[11px] text-rose-500 font-semibold max-w-xs leading-relaxed">
-                  Si se marca, el producto se registrará como pérdida y <strong>NO</strong> volverá al stock.
-                </p>
               </div>
             )}
 
@@ -90,7 +99,8 @@ export function DevolucionStatusDialog({
               <Textarea
                 value={motivoDecision}
                 onChange={(e) => onMotivoChange(e.target.value)}
-                className="bg-gray-50 border-gray-200 text-gray-800 rounded-2xl min-h-[100px] focus:ring-[#c47b96]/20 focus:border-[#c47b96] py-3 text-sm font-medium"
+                className="border-gray-200 text-gray-800 rounded-xl min-h-[100px] focus:ring-[#c47b96]/20 focus:border-[#c47b96] py-3 text-sm font-medium"
+                style={{ backgroundColor: '#ffffff' }}
                 placeholder="Explica detalladamente por qué se aprobó o rechazó esta solicitud de devolución..."
                 disabled={isSaving}
               />
@@ -112,7 +122,7 @@ export function DevolucionStatusDialog({
           </div>
         </div>
 
-        <div className="flex gap-3 px-8 pb-8 pt-2">
+        <div className="flex gap-3 px-8 pb-6 pt-5 border-t border-gray-100 bg-white flex-shrink-0 z-10">
           <button
             onClick={() => onOpenChange(false)}
             disabled={isSaving}

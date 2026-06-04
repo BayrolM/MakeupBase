@@ -1,10 +1,13 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import sql from "../config/db.js";
-import { Resend } from "resend";
+import { createRequire } from "module";
 import crypto from "crypto";
+const require = createRequire(import.meta.url);
+const { BrevoClient } = require("@getbrevo/brevo");
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Inicializar el cliente de Brevo
+const brevoClient = new BrevoClient({ apiKey: process.env.BREVO_API_KEY || "" });
 
 export const register = async (req, res) => {
   try {
@@ -37,6 +40,7 @@ export const register = async (req, res) => {
 
     if (
       password.length < 8 ||
+      !/[a-z]/.test(password) ||
       !/[A-Z]/.test(password) ||
       !/[0-9]/.test(password) ||
       !/[!@#$%^&*(),.?":{}|<>]/.test(password)
@@ -57,7 +61,17 @@ export const register = async (req, res) => {
       return res.status(400).json({ message: "El email ya está registrado" });
     }
 
-    console.log("✅ Email disponible");
+    // Verificar si el documento ya existe (si se proporciona)
+    if (documento && documento.trim() !== "") {
+      console.log("🔍 Verificando si el documento ya existe...");
+      const docExists = await sql`SELECT * FROM usuarios WHERE documento = ${documento.trim()}`;
+      if (docExists.length > 0) {
+        console.log("❌ Documento ya registrado:", documento);
+        return res.status(400).json({ message: "El número de documento ya está registrado" });
+      }
+    }
+
+    console.log("✅ Email y Documento disponibles");
     console.log("🔐 Encriptando contraseña...");
 
     // Encriptar contraseña
@@ -81,6 +95,42 @@ export const register = async (req, res) => {
     `;
 
     console.log("✅ Usuario registrado exitosamente:", result[0].email);
+
+    // --- ENVIAR CORREO DE BIENVENIDA ---
+    try {
+      const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+
+      brevoClient.transactionalEmails.sendTransacEmail({
+        subject: "¡Bienvenida a Glamour ML! 💖",
+        htmlContent: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #fdf5f8; border-radius: 12px; border: 1px solid #f0d5e0;">
+            <div style="text-align: center; margin-bottom: 20px; background-color: #2e1020; padding: 30px; border-radius: 12px 12px 0 0;">
+              <img src="https://rjrafmgjtuuqtprmfhwc.supabase.co/storage/v1/object/public/comprobantes/logo.png" alt="Glamour ML Logo" style="width: 80px; height: 80px; border-radius: 16px; background-color: #000; box-shadow: 0 4px 10px rgba(0,0,0,0.3);" />
+              <h1 style="color: #fff; margin-top: 15px; margin-bottom: 0; font-size: 28px; letter-spacing: 2px;">GLAMOUR ML</h1>
+              <p style="color: #e092b2; font-size: 12px; margin-top: 5px; letter-spacing: 1px;">TIENDA DE BELLEZA & CUIDADO PERSONAL</p>
+            </div>
+            <div style="padding: 30px 20px; background-color: #fff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+              <h2 style="color: #c47b96; text-align: center; font-size: 24px; margin-top: 0;">¡Hola, ${nombre}! ✨</h2>
+              <p style="color: #4a4a4a; font-size: 16px; line-height: 1.6;">Estamos muy felices de darte la bienvenida a <strong>Glamour ML</strong>.</p>
+              <p style="color: #4a4a4a; font-size: 16px; line-height: 1.6;">Tu cuenta ha sido creada exitosamente. A partir de ahora podrás explorar nuestro catálogo completo de belleza, realizar pedidos rápidos de tus productos favoritos y llevar un registro detallado de todas tus compras.</p>
+              <div style="text-align: center; margin: 40px 0;">
+                <a href="${frontendUrl}/" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #c47b96 0%, #a85d77 100%); color: #fff; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 15px rgba(196,123,150,0.4);">Explorar el Catálogo</a>
+              </div>
+              <p style="color: #666; font-size: 14px; margin-top: 30px; text-align: center; border-top: 1px solid #f0d5e0; padding-top: 20px;">
+                Con cariño,<br/>
+                <strong style="color: #2e1020; font-size: 16px; display: inline-block; margin-top: 8px;">El equipo de Glamour ML</strong>
+              </p>
+            </div>
+          </div>
+        `,
+        sender: { name: "Glamour ML", email: process.env.BREVO_SENDER_EMAIL || "tu-correo@gmail.com" },
+        to: [{ email: email, name: nombre }],
+      }).catch(e => console.error("Error enviando email de bienvenida:", e));
+      console.log("✉️  Correo de bienvenida despachado a Brevo");
+    } catch (emailError) {
+      console.error("💥 Error preparando correo de bienvenida:", emailError);
+    }
+
     return res.status(201).json({
       message: "Usuario registrado correctamente",
       usuario: result[0],
@@ -88,6 +138,15 @@ export const register = async (req, res) => {
   } catch (error) {
     console.error("💥 ERROR en register:", error);
     console.error("📋 Stack trace:", error.stack);
+    
+    // Capturar errores específicos de claves duplicadas de PostgreSQL
+    if (error.message && error.message.includes("usuarios_documento_key")) {
+      return res.status(400).json({ message: "El número de documento ya está registrado" });
+    }
+    if (error.message && error.message.includes("usuarios_email_key")) {
+      return res.status(400).json({ message: "El email ya está registrado" });
+    }
+    
     return res.status(500).json({
       message: "Error en el servidor",
       error: process.env.NODE_ENV === "development" ? error.message : undefined,
@@ -232,14 +291,12 @@ export const forgotPassword = async (req, res) => {
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
     const resetLink = `${frontendUrl}/?token=${token}`;
 
-    await resend.emails.send({
-      from: "onboarding@resend.dev",
-      to: email,
+    await brevoClient.transactionalEmails.sendTransacEmail({
       subject: "Recuperación de contraseña",
-      html: `
+      htmlContent: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="text-align: center; margin-bottom: 20px;">
-            <img src="${frontendUrl}/logo.png" alt="Glamour ML Logo" style="width: 80px; height: 80px; border-radius: 16px; background-color: #000;" />
+            <img src="https://rjrafmgjtuuqtprmfhwc.supabase.co/storage/v1/object/public/comprobantes/logo.png" alt="Glamour ML Logo" style="width: 80px; height: 80px; border-radius: 16px; background-color: #000;" />
           </div>
           <h2 style="color: #c47b96; text-align: center;">Recuperación de contraseña</h2>
           <p>Hola <strong>${user.nombre}</strong>,</p>
@@ -250,6 +307,8 @@ export const forgotPassword = async (req, res) => {
           <p style="color: #666; font-size: 14px;">Si no solicitaste esto, puedes ignorar este correo.</p>
         </div>
       `,
+      sender: { name: "Glamour ML", email: process.env.BREVO_SENDER_EMAIL || "tu-correo@gmail.com" },
+      to: [{ email: email }],
     });
 
     return res.status(200).json({ message: "Correo de recuperación enviado" });
@@ -271,13 +330,9 @@ export const resetPassword = async (req, res) => {
         .json({ message: "Token y nueva contraseña son requeridos" });
     }
 
-    if (new_password.length < 8) {
-      return res
-        .status(400)
-        .json({ message: "La contraseña debe tener al menos 8 caracteres" });
-    }
-
     if (
+      new_password.length < 8 ||
+      !/[a-z]/.test(new_password) ||
       !/[A-Z]/.test(new_password) ||
       !/[0-9]/.test(new_password) ||
       !/[!@#$%^&*(),.?":{}|<>]/.test(new_password)

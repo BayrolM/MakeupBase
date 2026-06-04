@@ -43,14 +43,32 @@ export function PedidoStatusDialog({
 
   if (!selectedPedido) return null;
 
-  const options = [
+  const allOptions = [
     { value: "pendiente", label: "Pendiente" },
     { value: "preparado", label: "Preparado" },
     { value: "procesando", label: "Procesando" },
     { value: "enviado", label: "Enviado" },
     { value: "entregado", label: "Entregado" },
   ];
-  if (canDelete) {
+
+  const orderFlow = ["pendiente", "preparado", "procesando", "enviado", "entregado"];
+  const currentIdx = orderFlow.indexOf(selectedPedido.estado);
+
+  let options = allOptions;
+  
+  if (currentIdx !== -1) {
+    // Solo permitir el estado actual y los estados futuros (no se puede regresar)
+    options = allOptions.filter(opt => {
+      const idx = orderFlow.indexOf(opt.value);
+      if (idx < currentIdx) return false;
+      // No permitir saltar a "entregado" si no está al menos en "enviado" (para forzar el formulario de envío)
+      if (opt.value === "entregado" && currentIdx < 3) return false;
+      return true;
+    });
+  }
+
+  // Solo se puede cancelar si está en pendiente, preparado o procesando (índices 0, 1, 2)
+  if (canDelete && currentIdx >= 0 && currentIdx <= 2) {
     options.push({ value: "cancelado", label: "Cancelado" });
   }
 
@@ -133,14 +151,20 @@ export function PedidoStatusDialog({
 
         {/* Footer */}
         <div className="flex justify-end gap-3 px-6 pb-6 pt-2 bg-white border-t border-gray-100">
-          <Button
-            variant="outline"
+          <button
             onClick={() => onOpenChange(false)}
-            className="border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg px-4 h-10 text-sm"
             disabled={isSaving}
+            style={{
+              padding: "10px 22px", borderRadius: "10px", fontSize: "13px", fontWeight: 700,
+              cursor: isSaving ? "not-allowed" : "pointer",
+              border: "1.5px solid #f0d5e0", background: "#fff8fb", color: "#c47b96",
+              transition: "all 0.2s",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "#fdf2f6"; e.currentTarget.style.borderColor = "#c47b96"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "#fff8fb"; e.currentTarget.style.borderColor = "#f0d5e0"; }}
           >
             Cancelar
-          </Button>
+          </button>
           <Button
             onClick={onUpdateStatus}
             disabled={isSaving}

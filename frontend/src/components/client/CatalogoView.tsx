@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useStore } from "../../lib/store";
 import { ProductCard } from "./ProductCard";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Input } from "../ui/input";
 import {
   Select,
@@ -38,13 +37,13 @@ const C = {
 export function CatalogoView({
   initialCategory = "all",
   onClearCategory,
+  onViewProduct,
 }: {
   initialCategory?: string;
   onClearCategory?: () => void;
+  onViewProduct?: (productId: string) => void;
 } = {}) {
-  const { productos, categorias, addToCarrito } = useStore();
-  const [selectedProduct, setSelectedProduct] = useState<any>(null);
-  const [quantity, setQuantity] = useState(1);
+  const { productos, categorias, addToCarrito, carrito } = useStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState(
     initialCategory || "all",
@@ -549,18 +548,28 @@ export function CatalogoView({
                   const categoria = categorias.find(
                     (c) => c.id === producto.categoriaId,
                   );
+                  const currentCartQty = carrito.find((item) => item.productoId === producto.id)?.cantidad || 0;
+                  const isMaxStock = currentCartQty >= producto.stock;
+
                   return (
                     <ProductCard
                       key={producto.id}
                       producto={producto}
                       categoryName={categoria?.nombre}
-                      onCardClick={() => setSelectedProduct(producto)}
+                      onCardClick={() => onViewProduct?.(producto.id)}
                       onAddToCart={() => {
+                        if (isMaxStock) {
+                          toast.error("Stock máximo alcanzado", {
+                            description: `No puedes agregar más unidades de ${producto.nombre}.`,
+                          });
+                          return;
+                        }
                         addToCarrito(producto.id, 1);
                         toast.success("Producto agregado", {
                           description: `${producto.nombre} se agregó al carrito`,
                         });
                       }}
+                      isMaxStock={isMaxStock}
                     />
                   );
                 })}
@@ -570,279 +579,6 @@ export function CatalogoView({
         </div>
       </div>
 
-      {/* Product Detail Dialog */}
-      <Dialog
-        open={!!selectedProduct}
-        onOpenChange={() => setSelectedProduct(null)}
-      >
-        <DialogContent
-          className="max-w-3xl"
-          style={{
-            background: C.white,
-            border: `1px solid ${C.accentSoft}`,
-            borderRadius: "24px",
-          }}
-        >
-          <DialogHeader>
-            <DialogTitle
-              style={{
-                fontFamily: "'Cormorant Garamond', serif",
-                fontSize: "22px",
-                fontWeight: 400,
-                color: C.textDark,
-              }}
-            >
-              Detalle del Producto
-            </DialogTitle>
-          </DialogHeader>
-
-          {selectedProduct && (
-            <div className="grid md:grid-cols-2 gap-6 py-4">
-              <div
-                style={{
-                  aspectRatio: "1",
-                  background: C.bgSoft,
-                  borderRadius: "20px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  overflow: "hidden",
-                  border: `1px solid ${C.accentSoft}`,
-                }}
-              >
-                {selectedProduct.imagenUrl ? (
-                  <img
-                    src={selectedProduct.imagenUrl}
-                    alt={selectedProduct.nombre}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div
-                    style={{
-                      color: C.accent,
-                      opacity: 0.3,
-                      textAlign: "center",
-                    }}
-                  >
-                    <div style={{ fontSize: "64px" }}>💄</div>
-                  </div>
-                )}
-              </div>
-
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "1rem",
-                }}
-              >
-                <div>
-                  <p
-                    style={{
-                      fontSize: "12px",
-                      fontWeight: 600,
-                      color: C.accent,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.1em",
-                      marginBottom: "6px",
-                    }}
-                  >
-                    {
-                      categorias.find(
-                        (c) => c.id === selectedProduct.categoriaId,
-                      )?.nombre
-                    }
-                  </p>
-                  <h3
-                    style={{
-                      fontFamily: "'Cormorant Garamond', serif",
-                      fontSize: "28px",
-                      fontWeight: 700,
-                      color: C.textDark,
-                      marginBottom: "8px",
-                    }}
-                  >
-                    {selectedProduct.nombre}
-                  </h3>
-                  <p
-                    style={{
-                      fontSize: "28px",
-                      fontWeight: 800,
-                      color: C.accentDeep,
-                      marginBottom: "1rem",
-                    }}
-                  >
-                    {formatCurrency(selectedProduct.precioVenta)}
-                  </p>
-                </div>
-
-                <div>
-                  <p
-                    style={{
-                      fontSize: "13px",
-                      fontWeight: 600,
-                      color: C.textDark,
-                      marginBottom: "6px",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.05em",
-                    }}
-                  >
-                    Descripción
-                  </p>
-                  <p
-                    style={{
-                      fontSize: "14px",
-                      lineHeight: 1.7,
-                      color: C.textSecondary,
-                    }}
-                  >
-                    {selectedProduct.descripcion}
-                  </p>
-                </div>
-
-                <div
-                  style={{
-                    paddingTop: "1.5rem",
-                    borderTop: `1px solid ${C.accentSoft}`,
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "1rem",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "1rem",
-                    }}
-                  >
-                    <label
-                      style={{
-                        fontSize: "13px",
-                        fontWeight: 600,
-                        color: C.textDark,
-                      }}
-                    >
-                      Cantidad:
-                    </label>
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        border: `1px solid ${C.accentSoft}`,
-                        borderRadius: "14px",
-                        overflow: "hidden",
-                        height: "40px",
-                      }}
-                    >
-                      <button
-                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                        disabled={quantity <= 1}
-                        style={{
-                          padding: "0 14px",
-                          height: "100%",
-                          background: C.bgSoft,
-                          border: "none",
-                          cursor: "pointer",
-                          color: C.textDark,
-                          fontWeight: 600,
-                          fontSize: "16px",
-                          transition: "background 0.2s",
-                        }}
-                      >
-                        −
-                      </button>
-                      <input
-                        type="number"
-                        value={quantity}
-                        onChange={(e) =>
-                          setQuantity(
-                            Math.max(1, parseInt(e.target.value) || 1),
-                          )
-                        }
-                        style={{
-                          width: "48px",
-                          textAlign: "center",
-                          background: C.white,
-                          color: C.textDark,
-                          border: "none",
-                          borderLeft: `1px solid ${C.accentSoft}`,
-                          borderRight: `1px solid ${C.accentSoft}`,
-                          fontSize: "14px",
-                          fontWeight: 600,
-                          outline: "none",
-                        }}
-                      />
-                      <button
-                        onClick={() =>
-                          setQuantity(
-                            Math.min(selectedProduct.stock, quantity + 1),
-                          )
-                        }
-                        disabled={quantity >= selectedProduct.stock}
-                        style={{
-                          padding: "0 14px",
-                          height: "100%",
-                          background: C.bgSoft,
-                          border: "none",
-                          cursor: "pointer",
-                          color: C.textDark,
-                          fontWeight: 600,
-                          fontSize: "16px",
-                          transition: "background 0.2s",
-                        }}
-                      >
-                        +
-                      </button>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => {
-                      addToCarrito(selectedProduct.id, quantity);
-                      // Reset and notify
-                      toast.success("Producto agregado", {
-                        description: `${quantity} ${quantity === 1 ? "unidad" : "unidades"} de ${selectedProduct.nombre} agregadas al carrito`,
-                      });
-                      setSelectedProduct(null);
-                      setQuantity(1);
-                    }}
-                    disabled={selectedProduct.stock === 0}
-                    style={{
-                      width: "100%",
-                      height: "48px",
-                      borderRadius: "16px",
-                      background: `linear-gradient(135deg, ${C.accent}, ${C.accentDeep})`,
-                      color: C.white,
-                      border: "none",
-                      fontSize: "14px",
-                      fontWeight: 700,
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "8px",
-                      transition: "transform 0.2s, box-shadow 0.2s",
-                      boxShadow: `0 8px 20px ${C.shadowSm}`,
-                      opacity: selectedProduct.stock === 0 ? 0.5 : 1,
-                    }}
-                    onMouseEnter={(e) => {
-                      if (selectedProduct.stock > 0)
-                        e.currentTarget.style.transform = "scale(1.02)";
-                    }}
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.transform = "scale(1)")
-                    }
-                  >
-                    <ShoppingCart className="w-5 h-5" />
-                    AGREGAR AL CARRITO
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

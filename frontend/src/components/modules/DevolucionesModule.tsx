@@ -31,6 +31,7 @@ export function DevolucionesModule() {
   const [anularDialogOpen, setAnularDialogOpen] = useState(false);
 
   // Data & Selection States
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [selectedDevolucion, setSelectedDevolucion] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [motivoDecision, setMotivoDecision] = useState("");
@@ -106,6 +107,7 @@ export function DevolucionesModule() {
         motivoAnulacion: dev.motivo_anulacion || "",
         fechaAnulacion: dev.fecha_anulacion ? new Date(dev.fecha_anulacion).toLocaleDateString() : "",
         esDefectuoso: dev.es_defectuoso || false,
+        evidenciaUrl: dev.evidencia_url || "",
         evidencias: [],
         productos: (dev.detalles || []).map((det: any) => ({
           productoId: det.id_producto?.toString() || "",
@@ -124,8 +126,14 @@ export function DevolucionesModule() {
   };
 
   useEffect(() => {
-    refreshData();
+    const init = async () => {
+      setIsInitialLoading(true);
+      await refreshData();
+      setIsInitialLoading(false);
+    };
+    init();
   }, []);
+
 
   // ── Handlers ──
   const handleOpenCreateDialog = () => {
@@ -343,56 +351,102 @@ export function DevolucionesModule() {
     generateDevolucionPDF(dev, cliente, productos);
   };
 
+  if (isInitialLoading) {
+    return (
+      <div 
+        style={{ 
+          minHeight: '100vh', 
+          background: 'radial-gradient(circle at 50% 50%, #ffffff 0%, #f6f3f5 100%)', 
+          display: 'flex', 
+          flexDirection: 'column',
+          alignItems: 'center', 
+          justifyContent: 'center',
+          gap: '24px',
+          color: '#1e1b1d',
+          fontFamily: "'DM Sans', sans-serif",
+          width: '100%',
+        }}
+      >
+        <div style={{ position: 'relative', width: '56px', height: '56px' }}>
+          <div 
+            className="animate-spin"
+            style={{
+              position: 'absolute',
+              width: '100%',
+              height: '100%',
+              border: '3px solid rgba(123, 19, 71, 0.08)',
+              borderTopColor: '#7b1347',
+              borderRadius: '50%'
+            }} 
+          />
+        </div>
+        <span style={{ 
+          fontSize: '13px', 
+          fontWeight: 600, 
+          color: '#7b1347', 
+          letterSpacing: '2px',
+          textTransform: 'uppercase'
+        }}>
+          Cargando Devoluciones...
+        </span>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-[#f6f3f5]">
-      <DevolucionHeader onOpenDialog={handleOpenCreateDialog} />
+    <div className="min-h-screen bg-[#f6f3f5] animate-premium-fade-in-up flex flex-col justify-between">
+      <style>{`
+        @keyframes premiumFadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(12px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-premium-fade-in-up {
+          animation: premiumFadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+      `}</style>
+      <div>
+        <DevolucionHeader onOpenDialog={handleOpenCreateDialog} />
 
-      <div className="px-8 pb-8">
-        <DevolucionTable
-          devoluciones={paginatedDevoluciones}
-          clientes={clientes}
-          searchQuery={searchQuery}
-          onSearchChange={(q) => { setSearchQuery(q); handlePageChange(1); }}
-          onViewDetail={async (dev) => {
-            try {
-              const fullData = await devolucionService.getById(Number(dev.id));
-              setSelectedDevolucion({
-                ...dev,
-                esDefectuoso: fullData.es_defectuoso || false,
-                productos: (fullData.detalles || []).map((det: any) => ({
-                  productoId: det.id_producto?.toString() || "",
-                  productoNombre: det.nombre_producto || "",
-                  cantidad: det.cantidad,
-                  precioUnitario: Number(det.precio_unitario || 0),
-                  subtotal: Number(det.subtotal || 0),
-                })),
-                emailCliente: fullData.email_cliente || "",
-                telefonoCliente: fullData.telefono_cliente || "",
-              });
-              setDetailDialogOpen(true);
-            } catch {
-              setSelectedDevolucion(dev);
-              setDetailDialogOpen(true);
-            }
-          }}
-          onViewPdf={handleViewPdf}
-          onAnular={(dev) => { setSelectedDevolucion(dev); setMotivoAnulacion(""); setAnularDialogOpen(true); }}
-          onChangeEstado={(dev) => { setSelectedDevolucion(dev); setMotivoDecision(""); setNuevoEstado("en_revision"); setEsDefectuoso(false); setStatusDialogOpen(true); }}
-          filteredCount={filteredDevoluciones.length}
-        />
-
-        {filteredDevoluciones.length > 0 && (
-          <div className="mt-6">
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              totalItems={filteredDevoluciones.length}
-              itemsPerPage={itemsPerPage}
-              onPageChange={handlePageChange}
-              onItemsPerPageChange={handleLimitChange}
-            />
-          </div>
-        )}
+        <div className="px-8 mt-6">
+          <DevolucionTable
+            devoluciones={paginatedDevoluciones}
+            clientes={clientes}
+            searchQuery={searchQuery}
+            onSearchChange={(q) => { setSearchQuery(q); handlePageChange(1); }}
+            onViewDetail={async (dev) => {
+              try {
+                const fullData = await devolucionService.getById(Number(dev.id));
+                setSelectedDevolucion({
+                  ...dev,
+                  esDefectuoso: fullData.es_defectuoso || false,
+                  productos: (fullData.detalles || []).map((det: any) => ({
+                    productoId: det.id_producto?.toString() || "",
+                    productoNombre: det.nombre_producto || "",
+                    cantidad: det.cantidad,
+                    precioUnitario: Number(det.precio_unitario || 0),
+                    subtotal: Number(det.subtotal || 0),
+                  })),
+                  emailCliente: fullData.email_cliente || "",
+                  telefonoCliente: fullData.telefono_cliente || "",
+                });
+                setDetailDialogOpen(true);
+              } catch {
+                setSelectedDevolucion(dev);
+                setDetailDialogOpen(true);
+              }
+            }}
+            onViewPdf={handleViewPdf}
+            onAnular={(dev) => { setSelectedDevolucion(dev); setMotivoAnulacion(""); setAnularDialogOpen(true); }}
+            onChangeEstado={(dev) => { setSelectedDevolucion(dev); setMotivoDecision(""); setNuevoEstado("en_revision"); setEsDefectuoso(false); setStatusDialogOpen(true); }}
+            filteredCount={filteredDevoluciones.length}
+          />
+        </div>
       </div>
 
       <DevolucionFormDialog
@@ -467,6 +521,19 @@ export function DevolucionesModule() {
         onMotivoChange={setMotivoAnulacion}
         onConfirm={handleConfirmAnulacion}
       />
+
+      {filteredDevoluciones.length > 0 && (
+        <div className="px-8 pb-8">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={filteredDevoluciones.length}
+            itemsPerPage={itemsPerPage}
+            onPageChange={handlePageChange}
+            onItemsPerPageChange={handleLimitChange}
+          />
+        </div>
+      )}
     </div>
   );
 }

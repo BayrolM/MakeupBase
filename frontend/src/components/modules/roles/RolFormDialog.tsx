@@ -49,7 +49,7 @@ export function RolFormDialog({
 }: RolFormDialogProps) {
   return (
     <Dialog open={open} onOpenChange={(o) => !isSaving && onOpenChange(o)}>
-      <DialogContent className="bg-white border-0 max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl p-0">
+      <DialogContent className="bg-white border-0 max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl p-0" style={{ '--input-background': '#ffffff' } as React.CSSProperties}>
         <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100 sticky top-0 bg-white z-20">
           <div className="flex items-center gap-4">
             <div
@@ -109,6 +109,7 @@ export function RolFormDialog({
                     (editingRol &&
                       (editingRol.id === "1" || editingRol.id === "2"))
                   }
+                  style={{ backgroundColor: '#ffffff' }}
                 />
                 <div className="flex justify-between items-center px-1">
                   {fieldErrors.nombre ? (
@@ -158,6 +159,7 @@ export function RolFormDialog({
                   className="bg-gray-50 border-gray-200 text-gray-800 rounded-xl min-h-[80px] focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all"
                   placeholder="Explica brevemente para qué sirve este rol..."
                   disabled={isSaving}
+                  style={{ backgroundColor: '#ffffff' }}
                 />
               </div>
             </div>

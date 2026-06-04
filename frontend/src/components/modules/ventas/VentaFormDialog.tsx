@@ -56,7 +56,7 @@ export function VentaFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-white border border-gray-100 !w-[95vw] !max-w-[95vw] rounded-2xl shadow-2xl p-0 overflow-hidden">
+      <DialogContent className="bg-white border border-gray-100 rounded-2xl shadow-2xl p-0 overflow-hidden" style={{ '--input-background': '#ffffff', maxWidth: '800px', width: '90vw' } as React.CSSProperties}>
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100 bg-white z-10">
           <div className="flex items-center gap-4">
@@ -294,20 +294,27 @@ export function VentaFormDialog({
                         type="number"
                         min="1"
                         value={prod.cantidad}
-                        onChange={(e) =>
-                          onUpdateProduct(index, "cantidad", e.target.value)
-                        }
+                        onChange={(e) => {
+                          let val = e.target.value;
+                          if (Number(val) < 0) return;
+                          onUpdateProduct(index, "cantidad", val);
+                        }}
                         className={`h-9 rounded-lg transition-all ${
                           prod.cantidad > prod.maxStock && prod.maxStock > 0
                             ? "border-rose-400 bg-rose-50 text-rose-600 focus:ring-rose-200"
                             : "border-gray-200 text-gray-800 focus:ring-[#c47b96]/20"
                         }`}
+                        style={{ backgroundColor: '#ffffff' }}
                       />
-                      {prod.cantidad > prod.maxStock && prod.maxStock > 0 && (
+                      {prod.cantidad > prod.maxStock && prod.maxStock > 0 ? (
                         <span className="micro-validation-error text-center">
                           Máx: {prod.maxStock}
                         </span>
-                      )}
+                      ) : (Number(prod.cantidad) <= 0 || !prod.cantidad) ? (
+                        <span className="micro-validation-error text-center">
+                          Requerido
+                        </span>
+                      ) : null}
                     </div>
                     <div className="col-span-3">
                       <p
@@ -324,26 +331,28 @@ export function VentaFormDialog({
                       <Input
                         type="number"
                         value={prod.precioUnitario}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          let val = e.target.value;
+                          if (Number(val) < 0) return;
+                          if (val.length > 8) val = val.slice(0, 8);
                           onUpdateProduct(
                             index,
                             "precioUnitario",
-                            e.target.value,
-                          )
-                        }
+                            val,
+                          );
+                        }}
                         className={`h-9 rounded-lg transition-all ${
-                          Number(prod.precioUnitario) <= 0 ||
-                          !prod.precioUnitario
+                          prod.productoId && (Number(prod.precioUnitario) <= 0 || !prod.precioUnitario)
                             ? "border-rose-400 bg-rose-50 text-rose-600 focus:ring-rose-200"
                             : "border-gray-200 text-gray-800 focus:ring-[#c47b96]/20"
                         }`}
+                        style={{ backgroundColor: '#ffffff' }}
                       />
-                      {(Number(prod.precioUnitario) <= 0 ||
-                        !prod.precioUnitario) && (
+                      {prod.productoId && (Number(prod.precioUnitario) <= 0 || !prod.precioUnitario) ? (
                         <span className="micro-validation-error text-center">
                           Requerido
                         </span>
-                      )}
+                      ) : null}
                     </div>
                     <div className="col-span-2">
                       <p

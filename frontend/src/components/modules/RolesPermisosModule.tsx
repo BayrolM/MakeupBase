@@ -58,14 +58,21 @@ export function RolesPermisosModule() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const handleFieldChange = (name: string, val: any) => {
+    if (name === "nombre" && typeof val === "string") {
+      val = val.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, "");
+    }
     setFormData((prev) => ({ ...prev, [name]: val }));
     
     let error = "";
     if (name === "nombre") {
       if (!val.trim()) {
         error = "Requerido";
+      } else if (val.trim().length < 3) {
+        error = "Mínimo 3 caracteres";
       } else if (val.trim().length > 30) {
-        error = "Máx 30 chars";
+        error = "Máx 30 caracteres";
+      } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(val.trim())) {
+        error = "Solo letras y espacios";
       } else {
         const duplicado = roles.find(
           (r) => r.nombre.toLowerCase() === val.trim().toLowerCase() && r.id !== editingRol?.id
@@ -152,6 +159,20 @@ export function RolesPermisosModule() {
     if (!formData.nombre.trim()) {
       toast.error("Campo requerido", {
         description: "El nombre del rol es obligatorio.",
+      });
+      return;
+    }
+
+    if (formData.nombre.trim().length < 3) {
+      toast.error("Nombre muy corto", {
+        description: "El nombre del rol debe tener al menos 3 caracteres.",
+      });
+      return;
+    }
+
+    if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(formData.nombre.trim())) {
+      toast.error("Formato inválido", {
+        description: "El nombre del rol solo puede contener letras y espacios.",
       });
       return;
     }
@@ -337,79 +358,128 @@ export function RolesPermisosModule() {
     currentPage * itemsPerPage,
   );
 
+  if (isLoading) {
+    return (
+      <div 
+        style={{ 
+          minHeight: '100vh', 
+          background: 'radial-gradient(circle at 50% 50%, #ffffff 0%, #f6f3f5 100%)', 
+          display: 'flex', 
+          flexDirection: 'column',
+          alignItems: 'center', 
+          justifyContent: 'center',
+          gap: '24px',
+          color: '#1e1b1d',
+          fontFamily: "'DM Sans', sans-serif",
+          width: '100%',
+        }}
+      >
+        <div style={{ position: 'relative', width: '56px', height: '56px' }}>
+          <div 
+            className="animate-spin"
+            style={{
+              position: 'absolute',
+              width: '100%',
+              height: '100%',
+              border: '3px solid rgba(123, 19, 71, 0.08)',
+              borderTopColor: '#7b1347',
+              borderRadius: '50%'
+            }} 
+          />
+        </div>
+        <span style={{ 
+          fontSize: '13px', 
+          fontWeight: 600, 
+          color: '#7b1347', 
+          letterSpacing: '2px',
+          textTransform: 'uppercase'
+        }}>
+          Cargando Roles y Permisos...
+        </span>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-[#f6f3f5]">
+    <div className="min-h-screen bg-[#f6f3f5] animate-premium-fade-in-up">
+      <style>{`
+        @keyframes premiumFadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(12px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-premium-fade-in-up {
+          animation: premiumFadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+      `}</style>
       <RolHeader onOpenDialog={() => handleOpenDialog()} />
 
-      {isLoading ? (
-        <div className="flex items-center justify-center py-32">
-          <Loader2 className="w-8 h-8 animate-spin text-[#c47b96]" />
-          <span className="ml-3 text-gray-500 font-medium">
-            Cargando roles...
-          </span>
+      <div className="p-8">
+        <div className="flex border-b border-gray-200 mb-8">
+          <button
+            onClick={() => setActiveTab("roles")}
+            className={`px-6 py-3 font-semibold text-sm border-b-2 transition-colors ${
+              activeTab === "roles"
+                ? "border-[#c47b96] text-[#c47b96]"
+                : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            Gestión de Roles
+          </button>
+          <button
+            onClick={() => setActiveTab("permisos")}
+            className={`px-6 py-3 font-semibold text-sm border-b-2 transition-colors ${
+              activeTab === "permisos"
+                ? "border-[#c47b96] text-[#c47b96]"
+                : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            Catálogo de Permisos
+          </button>
         </div>
-      ) : (
-        <div className="p-8">
-          <div className="flex border-b border-gray-200 mb-8">
-            <button
-              onClick={() => setActiveTab("roles")}
-              className={`px-6 py-3 font-semibold text-sm border-b-2 transition-colors ${
-                activeTab === "roles"
-                  ? "border-[#c47b96] text-[#c47b96]"
-                  : "border-transparent text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              Gestión de Roles
-            </button>
-            <button
-              onClick={() => setActiveTab("permisos")}
-              className={`px-6 py-3 font-semibold text-sm border-b-2 transition-colors ${
-                activeTab === "permisos"
-                  ? "border-[#c47b96] text-[#c47b96]"
-                  : "border-transparent text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              Catálogo de Permisos
-            </button>
-          </div>
 
-          {activeTab === "roles" ? (
-            <div className="space-y-12">
-              <div className="space-y-6">
-                <RolTable
-                  roles={paginatedRoles}
-                  users={users}
-                  searchQuery={searchQuery}
-                  onSearchChange={(q) => {
-                    setSearchQuery(q);
+        {activeTab === "roles" ? (
+          <div className="space-y-12">
+            <div className="space-y-6">
+              <RolTable
+                roles={paginatedRoles}
+                users={users}
+                searchQuery={searchQuery}
+                onSearchChange={(q) => {
+                  setSearchQuery(q);
+                  setCurrentPage(1);
+                }}
+                onViewDetail={handleViewDetail}
+                onEdit={handleOpenDialog}
+                onDelete={handleDeleteClick}
+                onStatusChange={handleStatusChange}
+              />
+
+              {filteredRoles.length > 0 && (
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  totalItems={filteredRoles.length}
+                  itemsPerPage={itemsPerPage}
+                  onPageChange={setCurrentPage}
+                  onItemsPerPageChange={(n) => {
+                    setItemsPerPage(n);
                     setCurrentPage(1);
                   }}
-                  onViewDetail={handleViewDetail}
-                  onEdit={handleOpenDialog}
-                  onDelete={handleDeleteClick}
-                  onStatusChange={handleStatusChange}
                 />
-
-                {filteredRoles.length > 0 && (
-                  <Pagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    totalItems={filteredRoles.length}
-                    itemsPerPage={itemsPerPage}
-                    onPageChange={setCurrentPage}
-                    onItemsPerPageChange={(n) => {
-                      setItemsPerPage(n);
-                      setCurrentPage(1);
-                    }}
-                  />
-                )}
-              </div>
+              )}
             </div>
-          ) : (
-            <PermisosTable />
-          )}
-        </div>
-      )}
+          </div>
+        ) : (
+          <PermisosTable />
+        )}
+      </div>
+
 
       <RolFormDialog
         open={isDialogOpen}

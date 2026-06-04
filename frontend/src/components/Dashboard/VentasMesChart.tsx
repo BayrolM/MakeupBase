@@ -78,6 +78,10 @@ export const VentasMesChart: React.FC<VentasMesChartProps> = ({ data, formatCurr
               fill={C.accentDeep}
               radius={[4, 4, 0, 0]}
               barSize={20}
+              isAnimationActive={true}
+              animationDuration={1500}
+              animationEasing="cubic-bezier(0.16, 1, 0.3, 1)"
+              animationBegin={350}
             />
           </BarChart>
         </ResponsiveContainer>

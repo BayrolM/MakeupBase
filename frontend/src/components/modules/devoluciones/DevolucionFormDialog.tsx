@@ -71,7 +71,7 @@ export function DevolucionFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-white border-0 !w-[95vw] !max-w-[900px] rounded-2xl shadow-2xl p-0 overflow-hidden">
+      <DialogContent className="bg-white border-0 !w-[95vw] !max-w-[900px] rounded-2xl shadow-2xl p-0 overflow-hidden" style={{ '--input-background': '#ffffff' } as React.CSSProperties}>
         {/* Header */}
         <div
           style={{
@@ -187,7 +187,7 @@ export function DevolucionFormDialog({
                   className={`h-10 rounded-xl pr-10 border-gray-200 focus:border-[#c47b96] focus:ring-[#c47b96]/10 text-sm ${fieldErrors?.ventaId ? "border-rose-400" : ""}`}
                   placeholder="Ej: 6..."
                   disabled={isSaving}
-                  style={{ fontSize: 13, color: "#374151" }}
+                  style={{ fontSize: 13, color: "#374151", backgroundColor: '#ffffff' }}
                 />
                 <Search
                   className={`w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none ${fieldErrors?.ventaId ? "text-rose-400" : "text-gray-400"}`}
@@ -250,6 +250,7 @@ export function DevolucionFormDialog({
                   fontSize: 13,
                   color: "#374151",
                   background: fieldErrors?.motivo ? "#fffafb" : "#fff",
+                  backgroundColor: '#ffffff',
                 }}
               />
               <div className="flex justify-between mt-1">
@@ -274,7 +275,7 @@ export function DevolucionFormDialog({
                 value={formData.estado}
                 onValueChange={(v) => onFieldChange("estado", v)}
               >
-                <SelectTrigger className="h-10 rounded-xl bg-white border-gray-200 focus:border-[#c47b96] focus:ring-[#c47b96]/10 text-sm">
+                <SelectTrigger className="h-10 rounded-xl bg-white border-gray-200 focus:border-[#c47b96] focus:ring-[#c47b96]/10 text-sm" style={{ backgroundColor: '#ffffff' }}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent

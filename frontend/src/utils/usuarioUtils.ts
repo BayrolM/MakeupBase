@@ -58,6 +58,9 @@ export const validateField = (
       if (!editingUser) {
         if (!value) return "La contraseña es obligatoria";
         if (value.length < 8) return "Mínimo 8 caracteres";
+        if (!/[a-z]/.test(value)) return "Debe tener al menos una minúscula";
+        if (!/[A-Z]/.test(value)) return "Debe tener al menos una mayúscula";
+        if (!/[!@#$%^&*(),.?":{}|<>]/.test(value)) return "Debe tener un carácter especial";
       }
       return "";
     case "telefono":

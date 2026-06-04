@@ -24,6 +24,7 @@ export function ComprasModule() {
   const [selectedCompra, setSelectedCompra] = useState<Compra | null>(null);
   const [compraToAnular, setCompraToAnular] = useState<Compra | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
   const filteredCompras = useMemo(() => {
@@ -167,8 +168,14 @@ export function ComprasModule() {
   };
 
   useEffect(() => {
-    refreshData();
+    const init = async () => {
+      setIsInitialLoading(true);
+      await refreshData();
+      setIsInitialLoading(false);
+    };
+    init();
   }, []);
+
 
   const handleOpenDialog = () => {
     setFieldErrors({});
@@ -252,45 +259,91 @@ export function ComprasModule() {
     }
   };
 
+  if (isInitialLoading) {
+    return (
+      <div 
+        style={{ 
+          minHeight: '100vh', 
+          background: 'radial-gradient(circle at 50% 50%, #ffffff 0%, #f6f3f5 100%)', 
+          display: 'flex', 
+          flexDirection: 'column',
+          alignItems: 'center', 
+          justifyContent: 'center',
+          gap: '24px',
+          color: '#1e1b1d',
+          fontFamily: "'DM Sans', sans-serif",
+          width: '100%',
+        }}
+      >
+        <div style={{ position: 'relative', width: '56px', height: '56px' }}>
+          <div 
+            className="animate-spin"
+            style={{
+              position: 'absolute',
+              width: '100%',
+              height: '100%',
+              border: '3px solid rgba(123, 19, 71, 0.08)',
+              borderTopColor: '#7b1347',
+              borderRadius: '50%'
+            }} 
+          />
+        </div>
+        <span style={{ 
+          fontSize: '13px', 
+          fontWeight: 600, 
+          color: '#7b1347', 
+          letterSpacing: '2px',
+          textTransform: 'uppercase'
+        }}>
+          Cargando Compras...
+        </span>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-[#f6f3f5]">
-      <CompraHeader onOpenDialog={handleOpenDialog} />
+    <div className="min-h-screen bg-[#f6f3f5] animate-premium-fade-in-up flex flex-col justify-between">
+      <style>{`
+        @keyframes premiumFadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(12px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-premium-fade-in-up {
+          animation: premiumFadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+      `}</style>
+      <div>
+        <CompraHeader onOpenDialog={handleOpenDialog} />
 
-      <div className="px-8 pb-8">
-        <CompraTable
-          compras={paginatedCompras}
-          proveedores={proveedores}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          isAdmin={isAdmin}
-          onViewPdf={handleViewPdf}
-          onViewDetail={async (c) => {
-            try {
-              const fullPurchase = await purchaseService.getById(Number(c.id));
-              setSelectedCompra({ ...c, detalles: fullPurchase.detalles || [] });
-              setIsDetailDialogOpen(true);
-            } catch (error) {
-              toast.error("Error al cargar detalles de la compra");
-            }
-          }}
-          onAnular={(c) => {
-            setCompraToAnular(c);
-            setIsAnularDialogOpen(true);
-          }}
-        />
-
-        {totalPages > 1 && (
-          <div className="mt-6">
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              totalItems={filteredCompras.length}
-              itemsPerPage={itemsPerPage}
-              onPageChange={handlePageChange}
-              onItemsPerPageChange={handleLimitChange}
-            />
-          </div>
-        )}
+        <div className="px-8 mt-6">
+          <CompraTable
+            compras={paginatedCompras}
+            proveedores={proveedores}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            isAdmin={isAdmin}
+            onViewPdf={handleViewPdf}
+            onViewDetail={async (c) => {
+              try {
+                const fullPurchase = await purchaseService.getById(Number(c.id));
+                setSelectedCompra({ ...c, detalles: fullPurchase.detalles || [] });
+                setIsDetailDialogOpen(true);
+              } catch (error) {
+                toast.error("Error al cargar detalles de la compra");
+              }
+            }}
+            onAnular={(c) => {
+              setCompraToAnular(c);
+              setIsAnularDialogOpen(true);
+            }}
+          />
+        </div>
       </div>
 
       <CompraFormDialog
@@ -323,6 +376,19 @@ export function ComprasModule() {
         isSaving={isSaving}
         onConfirm={handleConfirmAnular}
       />
+
+      {filteredCompras.length > 0 && (
+        <div className="px-8 pb-8">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={filteredCompras.length}
+            itemsPerPage={itemsPerPage}
+            onPageChange={handlePageChange}
+            onItemsPerPageChange={handleLimitChange}
+          />
+        </div>
+      )}
     </div>
   );
 }

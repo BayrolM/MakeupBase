@@ -91,6 +91,10 @@ export const SalesTrendChart: React.FC<SalesTrendChartProps> = ({ data, formatCu
               connectNulls
               dot={{ r: 4, fill: C.accentDeep, strokeWidth: 2, stroke: C.white }}
               activeDot={{ r: 6, fill: C.accentDeep }}
+              isAnimationActive={true}
+              animationDuration={1500}
+              animationEasing="cubic-bezier(0.16, 1, 0.3, 1)"
+              animationBegin={200}
             />
           </AreaChart>
         </ResponsiveContainer>

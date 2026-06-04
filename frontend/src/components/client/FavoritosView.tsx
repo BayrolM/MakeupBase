@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useStore } from "../../lib/store";
 import { ProductCard } from "./ProductCard";
-import { Dialog, DialogContent } from "../ui/dialog";
 import { Heart, Package } from "lucide-react";
 import { toast } from "sonner";
 
@@ -22,10 +21,13 @@ const C = {
 
 export function FavoritosView({
   onNavigate,
-}: { onNavigate?: (route: string) => void } = {}) {
-  const { favoritos, toggleFavorito, addToCarrito, productos, categorias } =
+  onViewProduct,
+}: {
+  onNavigate?: (route: string) => void;
+  onViewProduct?: (productId: string) => void;
+} = {}) {
+  const { favoritos, toggleFavorito, addToCarrito, productos, categorias, carrito } =
     useStore();
-  const [selectedProduct, setSelectedProduct] = useState<any>(null);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("es-CO", {
@@ -229,6 +231,8 @@ export function FavoritosView({
               const categoria = categorias.find(
                 (c) => c.id === producto.categoriaId,
               );
+              const currentCartQty = carrito.find((item) => item.productoId === producto.id)?.cantidad || 0;
+              const isMaxStock = currentCartQty >= producto.stock;
               return (
                 <ProductCard
                   key={producto.id}
@@ -241,13 +245,21 @@ export function FavoritosView({
                       description: `Se eliminó ${producto.nombre} de tu lista.`,
                     });
                   }}
-                  onCardClick={() => setSelectedProduct(producto)}
+                  onCardClick={() => onViewProduct?.(producto.id)}
                   onAddToCart={() => {
+                    const currentCartQty = carrito.find((item) => item.productoId === producto.id)?.cantidad || 0;
+                    if (currentCartQty >= producto.stock) {
+                      toast.error("Stock máximo alcanzado", {
+                        description: `No puedes agregar más unidades de ${producto.nombre}.`,
+                      });
+                      return;
+                    }
                     addToCarrito(producto.id, 1);
                     toast.success("Producto agregado", {
                       description: `${producto.nombre} se agregó al carrito`,
                     });
                   }}
+                  isMaxStock={isMaxStock}
                 />
               );
             })}
@@ -255,213 +267,6 @@ export function FavoritosView({
         )}
       </div>
 
-      {/* ── DIALOG DETAIL (Estilo Luxury) ── */}
-      <Dialog
-        open={!!selectedProduct}
-        onOpenChange={() => setSelectedProduct(null)}
-      >
-        <DialogContent
-          style={{
-            background: C.white,
-            border: `1px solid ${C.accent}`,
-            borderRadius: "24px",
-            maxWidth: "800px",
-            padding: 0,
-            overflow: "hidden",
-          }}
-        >
-          {selectedProduct && (
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-              }}
-              className="md:flex-row"
-            >
-              {/* Imagen (Mitad izquierda) */}
-              <div
-                style={{
-                  flex: 1,
-                  background: C.bgSoft,
-                  minHeight: "400px",
-                  position: "relative",
-                }}
-              >
-                {selectedProduct.imagenUrl ? (
-                  <img
-                    src={selectedProduct.imagenUrl}
-                    alt={selectedProduct.nombre}
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                    }}
-                  />
-                ) : (
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      height: "100%",
-                    }}
-                  >
-                    <Package
-                      style={{
-                        width: 80,
-                        height: 80,
-                        color: C.accent,
-                        opacity: 0.3,
-                      }}
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* Info (Mitad derecha) */}
-              <div
-                style={{
-                  flex: 1,
-                  padding: "40px",
-                  display: "flex",
-                  flexDirection: "column",
-                }}
-              >
-                <p
-                  style={{
-                    fontSize: "12px",
-                    color: C.accentDeep,
-                    letterSpacing: "2px",
-                    textTransform: "uppercase",
-                    fontWeight: 700,
-                    marginBottom: "8px",
-                  }}
-                >
-                  {categorias.find((c) => c.id === selectedProduct.categoriaId)
-                    ?.nombre || "BELLEZA"}
-                </p>
-                <h3
-                  style={{
-                    fontFamily: "'Cormorant Garamond', serif",
-                    fontSize: "32px",
-                    fontWeight: 600,
-                    color: C.textDark,
-                    marginBottom: "16px",
-                    lineHeight: 1.2,
-                  }}
-                >
-                  {selectedProduct.nombre}
-                </h3>
-                <p
-                  style={{
-                    fontSize: "28px",
-                    fontWeight: 700,
-                    color: C.textDark,
-                    marginBottom: "24px",
-                  }}
-                >
-                  {formatCurrency(selectedProduct.precioVenta)}
-                </p>
-
-                <div style={{ flex: 1 }}>
-                  <p
-                    style={{
-                      fontSize: "13px",
-                      fontWeight: 700,
-                      color: C.textDark,
-                      marginBottom: "8px",
-                      textTransform: "uppercase",
-                      letterSpacing: "1px",
-                    }}
-                  >
-                    Descripción
-                  </p>
-                  <p
-                    style={{
-                      fontSize: "15px",
-                      color: C.textMuted,
-                      lineHeight: 1.6,
-                      marginBottom: "24px",
-                    }}
-                  >
-                    {selectedProduct.descripcion}
-                  </p>
-                </div>
-
-                <div
-                  style={{
-                    paddingTop: "24px",
-                    borderTop: `1px dashed ${C.accent}`,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: "8px",
-                        height: "8px",
-                        borderRadius: "50%",
-                        background:
-                          selectedProduct.stock > 0 ? "#10b981" : "#ef4444",
-                      }}
-                    />
-                    <span
-                      style={{
-                        fontSize: "14px",
-                        color: C.textMuted,
-                        fontWeight: 500,
-                      }}
-                    >
-                      {selectedProduct.stock > 0
-                        ? `${selectedProduct.stock} unidades disp.`
-                        : "Agotado"}
-                    </span>
-                  </div>
-
-                  <button
-                    disabled={selectedProduct.stock === 0}
-                    onClick={() => {
-                      addToCarrito(selectedProduct.id, 1);
-                      toast.success("Producto agregado", {
-                        description: `${selectedProduct.nombre} se agregó al carrito`,
-                      });
-                      setSelectedProduct(null);
-                    }}
-                    style={{
-                      background:
-                        selectedProduct.stock > 0
-                          ? `linear-gradient(135deg, ${C.accentDeep} 0%, #a85d77 100%)`
-                          : "#e5e7eb",
-                      color: selectedProduct.stock > 0 ? C.white : "#9ca3af",
-                      border: "none",
-                      padding: "12px 24px",
-                      borderRadius: "12px",
-                      fontSize: "14px",
-                      fontWeight: 600,
-                      cursor:
-                        selectedProduct.stock > 0 ? "pointer" : "not-allowed",
-                      boxShadow:
-                        selectedProduct.stock > 0
-                          ? `0 8px 20px ${C.shadowSm}`
-                          : "none",
-                    }}
-                  >
-                    Agregar al carrito
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

@@ -54,6 +54,7 @@ export function ClientesViewModule() {
     estado: "activo" as "activo" | "inactivo",
   });
 
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const fetchClientes = async () => {
@@ -95,8 +96,20 @@ export function ClientesViewModule() {
   };
 
   useEffect(() => {
-    fetchClientes();
+    const init = async () => {
+      setIsInitialLoading(true);
+      await fetchClientes();
+      setIsInitialLoading(false);
+    };
+    init();
+  }, []);
+
+  useEffect(() => {
+    if (!isInitialLoading) {
+      fetchClientes();
+    }
   }, [currentPage, itemsPerPage, searchQuery]);
+
 
   const handleOpenDialog = (cliente?: any) => {
     if (cliente && cliente.estado === "inactivo") {
@@ -147,9 +160,35 @@ export function ClientesViewModule() {
   const handleFieldChange = (name: string, value: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
 
-    // Clear mismatch error if typing in either password field
-    if (name === "passwordHash" || name === "confirmPassword") {
-      setFieldErrors((prev) => ({ ...prev, confirmPassword: "" }));
+    if (name === "passwordHash") {
+      const passwordError = validateClientField("passwordHash", value, editingCliente);
+      const confirmPasswordValue = formData.confirmPassword;
+      const confirmPasswordError = confirmPasswordValue
+        ? value !== confirmPasswordValue
+          ? "Las contraseñas no coinciden"
+          : ""
+        : "";
+
+      setFieldErrors((prev) => ({
+        ...prev,
+        passwordHash: passwordError,
+        confirmPassword: confirmPasswordError,
+      }));
+      return;
+    }
+
+    if (name === "confirmPassword") {
+      const confirmPasswordError = !value
+        ? "Confirma tu contraseña"
+        : value !== formData.passwordHash
+        ? "Las contraseñas no coinciden"
+        : "";
+
+      setFieldErrors((prev) => ({
+        ...prev,
+        confirmPassword: confirmPasswordError,
+      }));
+      return;
     }
 
     const error = validateClientField(name, value, editingCliente);
@@ -169,7 +208,7 @@ export function ClientesViewModule() {
           ? `Este ${name === "email" ? "email" : "documento"} ya está registrado`
           : "",
       }));
-    } else if (name !== "confirmPassword") {
+    } else {
       setFieldErrors((prev) => ({ ...prev, [name]: error }));
     }
   };
@@ -269,56 +308,102 @@ export function ClientesViewModule() {
 
   const filteredClientes = clientes;
 
+  if (isInitialLoading) {
+    return (
+      <div 
+        style={{ 
+          minHeight: '100vh', 
+          background: 'radial-gradient(circle at 50% 50%, #ffffff 0%, #f6f3f5 100%)', 
+          display: 'flex', 
+          flexDirection: 'column',
+          alignItems: 'center', 
+          justifyContent: 'center',
+          gap: '24px',
+          color: '#1e1b1d',
+          fontFamily: "'DM Sans', sans-serif",
+          width: '100%',
+        }}
+      >
+        <div style={{ position: 'relative', width: '56px', height: '56px' }}>
+          <div 
+            className="animate-spin"
+            style={{
+              position: 'absolute',
+              width: '100%',
+              height: '100%',
+              border: '3px solid rgba(123, 19, 71, 0.08)',
+              borderTopColor: '#7b1347',
+              borderRadius: '50%'
+            }} 
+          />
+        </div>
+        <span style={{ 
+          fontSize: '13px', 
+          fontWeight: 600, 
+          color: '#7b1347', 
+          letterSpacing: '2px',
+          textTransform: 'uppercase'
+        }}>
+          Cargando Clientes...
+        </span>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-[#f6f3f5]">
-      <ClientHeader onOpenDialog={() => handleOpenDialog()} />
+    <div className="min-h-screen bg-[#f6f3f5] animate-premium-fade-in-up flex flex-col justify-between">
+      <style>{`
+        @keyframes premiumFadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(12px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-premium-fade-in-up {
+          animation: premiumFadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+      `}</style>
+      <div>
+        <ClientHeader onOpenDialog={() => handleOpenDialog()} />
 
-      <div className="px-8 pb-8">
-        <ClientTable
-          clientes={filteredClientes}
-          pedidos={pedidos}
-          ventas={ventas}
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          onViewDetail={(c) => {
-            setSelectedCliente(c);
-            setIsDetailDialogOpen(true);
-          }}
-          onEdit={handleOpenDialog}
-          onDelete={(c) => {
-            if (c.estado === "inactivo") {
-              toast.error("Cliente inactivo", {
-                description: "No se puede eliminar un cliente inactivo.",
-              });
-              return;
-            }
-            setSelectedCliente(c);
-            setIsDeleteDialogOpen(true);
-          }}
-          onStatusChange={async (cliente, newStatus) => {
-            try {
-              await userService.update(cliente.id, {
-                estado: newStatus === "activo",
-              });
-              await fetchClientes();
-            } catch (e) {
-              toast.error("Error al cambiar estado");
-            }
-          }}
-        />
-
-        {totalPages > 1 && (
-          <div className="mt-6">
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              totalItems={totalItems}
-              itemsPerPage={itemsPerPage}
-              onPageChange={handlePageChange}
-              onItemsPerPageChange={handleLimitChange}
-            />
-          </div>
-        )}
+        <div className="px-8 mt-6">
+          <ClientTable
+            clientes={filteredClientes}
+            pedidos={pedidos}
+            ventas={ventas}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            onViewDetail={(c) => {
+              setSelectedCliente(c);
+              setIsDetailDialogOpen(true);
+            }}
+            onEdit={handleOpenDialog}
+            onDelete={(c) => {
+              if (c.estado === "inactivo") {
+                toast.error("Cliente inactivo", {
+                  description: "No se puede eliminar un cliente inactivo.",
+                });
+                return;
+              }
+              setSelectedCliente(c);
+              setIsDeleteDialogOpen(true);
+            }}
+            onStatusChange={async (cliente, newStatus) => {
+              try {
+                await userService.update(cliente.id, {
+                  estado: newStatus === "activo",
+                });
+                await fetchClientes();
+              } catch (e) {
+                toast.error("Error al cambiar estado");
+              }
+            }}
+          />
+        </div>
       </div>
 
       <ClientFormDialog
@@ -346,6 +431,19 @@ export function ClientesViewModule() {
         isSaving={isDeleting}
         onConfirm={handleConfirmDelete}
       />
+
+      {totalItems > 0 && (
+        <div className="px-8 pb-8">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+            onPageChange={handlePageChange}
+            onItemsPerPageChange={handleLimitChange}
+          />
+        </div>
+      )}
     </div>
   );
 }

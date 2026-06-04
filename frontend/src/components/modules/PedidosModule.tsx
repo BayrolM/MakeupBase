@@ -56,6 +56,7 @@ export function PedidosModule() {
   const [newStatus, setNewStatus] = useState<OrderStatus>("pendiente");
   const [motivoAnulacion, setMotivoAnulacion] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [totalItems, setTotalItems] = useState(0);
   const [previewImageUrl, setPreviewImageUrl] = useState("");
@@ -107,12 +108,25 @@ export function PedidosModule() {
   }, [searchQuery]);
 
   useEffect(() => {
-    refreshDependencies();
+    const init = async () => {
+      setIsInitialLoading(true);
+      try {
+        await Promise.all([refreshDependencies(), refreshPedidos()]);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setIsInitialLoading(false);
+      }
+    };
+    init();
   }, []);
 
   useEffect(() => {
-    refreshPedidos();
+    if (!isInitialLoading) {
+      refreshPedidos();
+    }
   }, [currentPage, itemsPerPage, debouncedSearchQuery]);
+
 
   const refreshDependencies = async () => {
     try {
@@ -506,63 +520,94 @@ export function PedidosModule() {
     }
   };
 
+  if (isInitialLoading) {
+    return (
+      <div 
+        style={{ 
+          minHeight: '100vh', 
+          background: 'radial-gradient(circle at 50% 50%, #ffffff 0%, #f6f3f5 100%)', 
+          display: 'flex', 
+          flexDirection: 'column',
+          alignItems: 'center', 
+          justifyContent: 'center',
+          gap: '24px',
+          color: '#1e1b1d',
+          fontFamily: "'DM Sans', sans-serif",
+          width: '100%',
+        }}
+      >
+        <div style={{ position: 'relative', width: '56px', height: '56px' }}>
+          <div 
+            className="animate-spin"
+            style={{
+              position: 'absolute',
+              width: '100%',
+              height: '100%',
+              border: '3px solid rgba(123, 19, 71, 0.08)',
+              borderTopColor: '#7b1347',
+              borderRadius: '50%'
+            }} 
+          />
+        </div>
+        <span style={{ 
+          fontSize: '13px', 
+          fontWeight: 600, 
+          color: '#7b1347', 
+          letterSpacing: '2px',
+          textTransform: 'uppercase'
+        }}>
+          Cargando Pedidos...
+        </span>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-[#f6f3f5]">
-      <PedidoHeader onOpenDialog={handleOpenDialog} />
+    <div className="min-h-screen bg-[#f6f3f5] flex flex-col justify-between">
+      <div>
+        <PedidoHeader onOpenDialog={handleOpenDialog} />
 
-      <div className="px-8 pb-8">
-        <PedidoTable
-          pedidos={pedidos}
-          searchQuery={searchQuery}
-          onSearchChange={(q) => {
-            setSearchQuery(q);
-            handlePageChange(1);
-          }}
-          onViewDetail={async (p) => {
-            const f = await orderService.getById(Number(p.id));
-            setSelectedPedido({
-              ...p,
-              productos: (f?.items || []).map((i: any) => ({
-                productoId: i.id_producto.toString(),
-                cantidad: i.cantidad,
-                precioUnitario: i.precio_unitario,
-              })),
-            });
-            setDetailDialogOpen(true);
-          }}
-          onViewPDF={handleViewPDF}
-          onEdit={handleOpenEdit}
-          onStatusClick={(p) => {
-            setSelectedPedido(p);
-            setNewStatus(p.estado);
-            setIsStatusDialogOpen(true);
-          }}
-          onConfirmPayment={(p) => {
-            setPedidoToConfirm(p);
-            setIsPaymentConfirmOpen(true);
-          }}
-          onViewComprobante={(url) => {
-            const baseUrl = (
-              import.meta.env.VITE_API_URL || "http://localhost:3000/api"
-            ).replace("/api", "");
-            const fullUrl = url.startsWith("http") ? url : `${baseUrl}${url}`;
-            setPreviewImageUrl(fullUrl);
-            setIsPreviewOpen(true);
-          }}
-        />
-
-        {totalPages > 1 && (
-          <div className="mt-6">
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              totalItems={totalItems}
-              itemsPerPage={itemsPerPage}
-              onPageChange={handlePageChange}
-              onItemsPerPageChange={handleLimitChange}
-            />
-          </div>
-        )}
+        <div className="px-8 mt-6">
+          <PedidoTable
+            pedidos={pedidos}
+            searchQuery={searchQuery}
+            onSearchChange={(q) => {
+              setSearchQuery(q);
+              handlePageChange(1);
+            }}
+            onViewDetail={async (p) => {
+              const f = await orderService.getById(Number(p.id));
+              setSelectedPedido({
+                ...p,
+                productos: (f?.items || []).map((i: any) => ({
+                  productoId: i.id_producto.toString(),
+                  cantidad: i.cantidad,
+                  precioUnitario: i.precio_unitario,
+                })),
+              });
+              setDetailDialogOpen(true);
+            }}
+            onViewPDF={handleViewPDF}
+            onEdit={handleOpenEdit}
+            onStatusClick={(p) => {
+              setSelectedPedido(p);
+              setNewStatus(p.estado);
+              setIsStatusDialogOpen(true);
+            }}
+            onConfirmPayment={(p) => {
+              setPedidoToConfirm(p);
+              setIsPaymentConfirmOpen(true);
+            }}
+            onViewComprobante={(url) => {
+              const baseUrl = (
+                import.meta.env.VITE_API_URL || "http://localhost:3000/api"
+              ).replace("/api", "");
+              const fullUrl = url.startsWith("http") ? url : `${baseUrl}${url}`;
+              setPreviewImageUrl(fullUrl);
+              setIsPreviewOpen(true);
+            }}
+          />
+        </div>
       </div>
 
       <PedidoFormDialog
@@ -663,6 +708,19 @@ export function PedidosModule() {
         onOpenChange={setIsPreviewOpen}
         imageUrl={previewImageUrl}
       />
+
+      {totalItems > 0 && (
+        <div className="px-8 pb-8">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+            onPageChange={handlePageChange}
+            onItemsPerPageChange={handleLimitChange}
+          />
+        </div>
+      )}
     </div>
   );
 }

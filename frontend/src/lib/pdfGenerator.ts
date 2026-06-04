@@ -16,6 +16,276 @@ interface VentaData {
   }[];
 }
 
+// ─────────────────────────────────────────────
+// HELPERS COMPARTIDOS
+// ─────────────────────────────────────────────
+
+const COLORS = {
+  primary:   [46,  16,  32]  as [number, number, number],   // #2e1020
+  secondary: [224, 146, 178] as [number, number, number],   // #e092b2
+  accent:    [196, 123, 150] as [number, number, number],   // #c47b96
+  border:    [225, 210, 218] as [number, number, number],
+  text:      [40,  40,  40]  as [number, number, number],
+  textLight: [130, 100, 115] as [number, number, number],
+  rowAlt:    [252, 246, 249] as [number, number, number],
+  headerBg:  [250, 242, 246] as [number, number, number],
+  white:     [255, 255, 255] as [number, number, number],
+};
+
+const formatCOP = (v: number) =>
+  new Intl.NumberFormat("es-CO", {
+    style: "currency",
+    currency: "COP",
+    minimumFractionDigits: 0,
+  }).format(isNaN(v) ? 0 : v);
+
+async function loadLogo(doc: any): Promise<void> {
+  try {
+    const img = new Image();
+    img.src = "/logo.png";
+    await new Promise((resolve) => {
+      img.onload  = () => { doc.addImage(img, "PNG", 14, 10, 22, 22); resolve(true); };
+      img.onerror = () => resolve(false);
+    });
+  } catch (_) {}
+}
+
+/**
+ * Dibuja la cabecera con fondo sólido primary y datos de empresa a la derecha.
+ * Retorna la Y donde termina el bloque de cabecera.
+ */
+async function drawHeader(
+  doc: any,
+  title: string,
+  ref: string,
+): Promise<number> {
+  const H = 38;
+
+  // Fondo cabecera
+  doc.setFillColor(...COLORS.primary);
+  doc.rect(0, 0, 210, H, "F");
+
+  // Franja accent inferior
+  doc.setFillColor(...COLORS.accent);
+  doc.rect(0, H, 210, 1.5, "F");
+
+  await loadLogo(doc);
+
+  // Nombre empresa
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(18);
+  doc.setTextColor(...COLORS.white);
+  doc.text("GLAMOUR ML", 42, 18);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7.5);
+  doc.setTextColor(224, 146, 178);
+  doc.text("TIENDA DE BELLEZA & CUIDADO PERSONAL", 42, 24);
+
+  // Separador vertical
+  doc.setDrawColor(255, 255, 255, 0.3);
+  doc.setLineWidth(0.3);
+  doc.line(42, 28, 160, 28);
+
+  // Ciudad / contacto (opcional, siempre fijo)
+  doc.setFontSize(7);
+  doc.setTextColor(200, 170, 185);
+  doc.text("Medellín, Colombia", 42, 33);
+
+  // Título documento (derecha)
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.setTextColor(...COLORS.white);
+  doc.text(title, 196, 17, { align: "right" });
+
+  // Ref / número
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9.5);
+  doc.setTextColor(...COLORS.secondary);
+  doc.text(ref, 196, 25, { align: "right" });
+
+  return H + 1.5; // Y donde termina
+}
+
+/**
+ * Dibuja un bloque de info de dos columnas (cliente/proveedor + detalles).
+ * Retorna la Y al final del bloque.
+ */
+function drawInfoBlock(
+  doc: any,
+  startY: number,
+  left: { label: string; rows: string[] },
+  right: { label: string; rows: string[] },
+): number {
+  const blockH = Math.max(left.rows.length, right.rows.length) * 6 + 18;
+
+  // Fondo bloque info
+  doc.setFillColor(...COLORS.headerBg);
+  doc.rect(14, startY, 182, blockH, "F");
+
+  // Borde izquierdo accent
+  doc.setFillColor(...COLORS.accent);
+  doc.rect(14, startY, 2.5, blockH, "F");
+
+  // Labels superiores
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(7);
+  doc.setTextColor(...COLORS.accent);
+  doc.text(left.label,  22,  startY + 8);
+  doc.text(right.label, 115, startY + 8);
+
+  // Separador
+  doc.setDrawColor(...COLORS.border);
+  doc.setLineWidth(0.2);
+  doc.line(22, startY + 10, 196, startY + 10);
+
+  // Texto izquierda
+  let ly = startY + 16;
+  left.rows.forEach((row, i) => {
+    if (i === 0) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      doc.setTextColor(...COLORS.text);
+    } else {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      doc.setTextColor(...COLORS.textLight);
+    }
+    doc.text(row, 22, ly);
+    ly += i === 0 ? 7 : 5.5;
+  });
+
+  // Texto derecha
+  let ry = startY + 16;
+  right.rows.forEach((row, i) => {
+    if (i === 0) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      doc.setTextColor(...COLORS.text);
+    } else {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      doc.setTextColor(...COLORS.textLight);
+    }
+    doc.text(row, 115, ry);
+    ry += i === 0 ? 7 : 5.5;
+  });
+
+  return startY + blockH + 6;
+}
+
+/**
+ * Dibuja el encabezado de la tabla de productos.
+ * Retorna la Y después del header.
+ */
+function drawTableHeader(doc: any, y: number, cols: { label: string; x: number; align?: string }[]): number {
+  doc.setFillColor(...COLORS.primary);
+  doc.rect(14, y, 182, 9, "F");
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.setTextColor(...COLORS.white);
+
+  cols.forEach(({ label, x, align }) => {
+    doc.text(label, x, y + 6, { align: align || "left" });
+  });
+
+  return y + 9;
+}
+
+/**
+ * Dibuja una fila de la tabla.
+ * Retorna la Y después de la fila.
+ */
+function drawTableRow(
+  doc: any,
+  y: number,
+  idx: number,
+  cells: { text: string; x: number; bold?: boolean; align?: string }[],
+  nameLines: string[],
+): number {
+  const rowH = nameLines.length * 5 + 7;
+
+  // Fondo alternado
+  if (idx % 2 !== 0) {
+    doc.setFillColor(...COLORS.rowAlt);
+    doc.rect(14, y, 182, rowH, "F");
+  }
+
+  // Línea separadora inferior
+  doc.setDrawColor(...COLORS.border);
+  doc.setLineWidth(0.15);
+  doc.line(14, y + rowH, 196, y + rowH);
+
+  cells.forEach(({ text, x, bold, align }) => {
+    doc.setFont("helvetica", bold ? "bold" : "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(...COLORS.text);
+    doc.text(text, x, y + 6, { align: align || "left" });
+  });
+
+  return y + rowH;
+}
+
+/**
+ * Dibuja el bloque de totales.
+ */
+function drawTotalsBlock(
+  doc: any,
+  y: number,
+  lines: { label: string; value: string; large?: boolean }[],
+) {
+  const blockW = 80;
+  const blockX = 196 - blockW;
+  let curY = y;
+
+  // Fondo totales
+  doc.setFillColor(...COLORS.headerBg);
+  doc.rect(blockX - 4, curY - 4, blockW + 4, lines.length * 9 + 8, "F");
+
+  // Borde superior accent
+  doc.setFillColor(...COLORS.accent);
+  doc.rect(blockX - 4, curY - 4, blockW + 4, 1.5, "F");
+
+  lines.forEach(({ label, value, large }) => {
+    if (large) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(...COLORS.primary);
+    } else {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      doc.setTextColor(...COLORS.textLight);
+    }
+    doc.text(label, blockX, curY + (large ? 7 : 5.5));
+    doc.text(value, 196, curY + (large ? 7 : 5.5), { align: "right" });
+    curY += large ? 10 : 8;
+  });
+}
+
+/**
+ * Dibuja el footer del documento.
+ */
+function drawFooter(doc: any, note: string) {
+  doc.setDrawColor(...COLORS.border);
+  doc.setLineWidth(0.3);
+  doc.line(14, 268, 196, 268);
+
+  doc.setFillColor(...COLORS.primary);
+  doc.rect(14, 271, 4, 8, "F");
+
+  doc.setFont("helvetica", "italic");
+  doc.setFontSize(7.5);
+  doc.setTextColor(...COLORS.textLight);
+  doc.text(note, 22, 275);
+  doc.text("GLAMOUR ML  ·  Medellín, Colombia", 22, 281);
+}
+
+
+// ─────────────────────────────────────────────
+// FACTURA DE VENTA
+// ─────────────────────────────────────────────
+
 export const generateSalePDF = async (
   venta: VentaData,
   cliente: Cliente | undefined,
@@ -24,146 +294,73 @@ export const generateSalePDF = async (
   try {
     const doc = new jsPDF() as any;
 
-    // COLORES (mismos que pedidos)
-    const cPrimary = [46, 16, 32];      // #2e1020
-    const cSecondary = [224, 146, 178]; // #e092b2
-    const cBorder = [220, 220, 220];
-    const cText = [40, 40, 40];
-    const cLightGray = [248, 248, 248];
+    const headerEnd = await drawHeader(
+      doc,
+      "FACTURA DE VENTA",
+      `# ${venta.id.slice(0, 8).toUpperCase()}`,
+    );
 
-    const formatP = (v: number) =>
-      new Intl.NumberFormat("es-CO", {
-        style: "currency",
-        currency: "COP",
-        minimumFractionDigits: 0,
-      }).format(isNaN(v) ? 0 : v);
+    const infoEnd = drawInfoBlock(
+      doc,
+      headerEnd + 6,
+      {
+        label: "CLIENTE",
+        rows: [
+          cliente?.nombre || "Consumidor Final",
+          `Doc: ${cliente?.documento || cliente?.numeroDocumento || "N/A"}`,
+        ],
+      },
+      {
+        label: "INFORMACIÓN",
+        rows: [
+          `Fecha: ${venta.fecha}`,
+          `Email: ${cliente?.email || "N/A"}`,
+          `Tel: ${cliente?.telefono || "N/A"}`,
+          `Método de pago: ${venta.metodoPago || "N/A"}`,
+        ],
+      },
+    );
 
-    // 1. BARRA SUPERIOR
-    doc.setFillColor(cPrimary[0], cPrimary[1], cPrimary[2]);
-    doc.rect(0, 0, 210, 4, "F");
-
-    // Logo
-    try {
-      const img = new Image();
-      img.src = "/logo.png";
-      await new Promise((resolve) => {
-        img.onload = () => { doc.addImage(img, "PNG", 20, 12, 18, 18); resolve(true); };
-        img.onerror = () => resolve(false);
-      });
-    } catch (e) {}
-
-    // Nombre empresa
+    // Etiqueta sección
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(20);
-    doc.setTextColor(cPrimary[0], cPrimary[1], cPrimary[2]);
-    doc.text("GLAMOUR ML", 45, 20);
-    doc.setFontSize(8);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(120);
-    doc.text("TIENDA DE BELLEZA & CUIDADO PERSONAL", 45, 25);
+    doc.setFontSize(7.5);
+    doc.setTextColor(...COLORS.accent);
+    doc.text("DETALLE DE PRODUCTOS", 14, infoEnd + 4);
 
-    // Número de factura (derecha)
-    doc.setFontSize(14);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(cPrimary[0], cPrimary[1], cPrimary[2]);
-    doc.text("FACTURA DE VENTA", 190, 20, { align: "right" });
-    doc.setFontSize(10);
-    doc.setTextColor(cSecondary[0], cSecondary[1], cSecondary[2]);
-    doc.text(`#${venta.id.slice(0, 8).toUpperCase()}`, 190, 26, { align: "right" });
-
-    // 2. LÍNEA DIVISORA + INFO CLIENTE
-    doc.setDrawColor(cBorder[0], cBorder[1], cBorder[2]);
-    doc.line(20, 40, 190, 40);
-
-    doc.setFontSize(9);
-    doc.setTextColor(150);
-    doc.text("CLIENTE:", 20, 50);
-    doc.text("INFORMACIÓN DE CONTACTO:", 110, 50);
-
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(cText[0], cText[1], cText[2]);
-    doc.text(cliente?.nombre || "Consumidor Final", 20, 56);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.text(`Doc: ${cliente?.documento || cliente?.numeroDocumento || "N/A"}`, 20, 62);
-
-    doc.setFont("helvetica", "bold");
-    doc.text(cliente?.email || "N/A", 110, 56);
-    doc.setFont("helvetica", "normal");
-    doc.text(`Tel: ${cliente?.telefono || "N/A"}`, 110, 62);
-    doc.text(`Fecha: ${venta.fecha}`, 110, 68);
-    doc.text(`Método de pago: ${venta.metodoPago || "N/A"}`, 110, 74);
-
-    // 3. TABLA DE PRODUCTOS
-    let tableY = 86;
-
-    // Header tabla
-    doc.setFillColor(cPrimary[0], cPrimary[1], cPrimary[2]);
-    doc.rect(20, tableY, 170, 10, "F");
-    doc.setTextColor(255);
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "bold");
-    doc.text("PRODUCTO / DESCRIPCIÓN", 25, tableY + 6.5);
-    doc.text("CANT", 115, tableY + 6.5, { align: "center" });
-    doc.text("PRECIO UNIT.", 148, tableY + 6.5, { align: "center" });
-    doc.text("TOTAL", 185, tableY + 6.5, { align: "right" });
-
-    tableY += 10;
-    doc.setTextColor(cText[0], cText[1], cText[2]);
-    doc.setFont("helvetica", "normal");
+    let tableY = drawTableHeader(doc, infoEnd + 6, [
+      { label: "PRODUCTO / DESCRIPCIÓN", x: 19 },
+      { label: "CANT",                  x: 118, align: "center" },
+      { label: "PRECIO UNIT.",          x: 152, align: "center" },
+      { label: "TOTAL",                 x: 195, align: "right"  },
+    ]);
 
     (venta.productos || []).forEach((p: any, i: number) => {
-      const prod = productosDestino.find((pr: Producto) => pr.id === p.productoId);
-      const nameLines = doc.splitTextToSize(prod?.nombre || "Producto", 80);
-      const rowHeight = nameLines.length * 5 + 6;
+      const prod     = productosDestino.find((pr: Producto) => pr.id === p.productoId);
+      const lines    = doc.splitTextToSize(prod?.nombre || "Producto", 88);
+      const total    = (p.cantidad || 0) * (p.precioUnitario || 0);
 
-      // Fondo alternado
-      if (i % 2 !== 0) {
-        doc.setFillColor(cLightGray[0], cLightGray[1], cLightGray[2]);
-        doc.rect(20, tableY, 170, rowHeight, "F");
+      tableY = drawTableRow(doc, tableY, i, [
+        { text: lines[0],                    x: 19  },
+        { text: String(p.cantidad || 0),     x: 118, align: "center" },
+        { text: formatCOP(p.precioUnitario), x: 152, align: "center" },
+        { text: formatCOP(total),            x: 195, align: "right", bold: true },
+      ], lines);
+
+      // Líneas extra si el nombre es largo
+      if (lines.length > 1) {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8.5);
+        doc.setTextColor(...COLORS.textLight);
+        doc.text(lines.slice(1).join(" "), 19, tableY - (lines.length - 1) * 5 + 1);
       }
-
-      // Bordes
-      doc.setDrawColor(cBorder[0], cBorder[1], cBorder[2]);
-      doc.setLineWidth(0.1);
-      doc.line(20, tableY + rowHeight, 190, tableY + rowHeight);
-      doc.line(20, tableY, 20, tableY + rowHeight);
-      doc.line(190, tableY, 190, tableY + rowHeight);
-
-      doc.text(nameLines, 25, tableY + 6);
-      doc.text(String(p.cantidad || 0), 115, tableY + 6, { align: "center" });
-      doc.text(formatP(p.precioUnitario || 0), 148, tableY + 6, { align: "center" });
-      doc.setFont("helvetica", "bold");
-      doc.text(formatP((p.cantidad || 0) * (p.precioUnitario || 0)), 185, tableY + 6, { align: "right" });
-      doc.setFont("helvetica", "normal");
-
-      tableY += rowHeight;
     });
 
-    // 4. TOTALES
-    const footerY = Math.max(tableY + 15, 185);
+    const footerY = Math.max(tableY + 14, 195);
+    drawTotalsBlock(doc, footerY, [
+      { label: "TOTAL", value: formatCOP(venta.total), large: true },
+    ]);
 
-    doc.setDrawColor(cPrimary[0], cPrimary[1], cPrimary[2]);
-    doc.setLineWidth(0.5);
-    doc.line(120, footerY, 190, footerY);
-
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(cPrimary[0], cPrimary[1], cPrimary[2]);
-    doc.text("TOTAL:", 125, footerY + 10);
-
-    doc.setFontSize(16);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(cPrimary[0], cPrimary[1], cPrimary[2]);
-    doc.text(formatP(venta.total), 185, footerY + 10, { align: "right" });
-
-    // 5. FOOTER
-    doc.setFontSize(8);
-    doc.setFont("helvetica", "italic");
-    doc.setTextColor(150);
-    doc.text("Gracias por su compra. Este comprobante no representa una factura fiscal legal.", 20, 275);
-    doc.text("GLAMOUR ML - Medellín, Colombia", 20, 280);
+    drawFooter(doc, "Gracias por su compra. Este comprobante no representa una factura fiscal legal.");
 
     doc.save(`GlamourML_Factura_${venta.id.slice(0, 8)}.pdf`);
     toast.success("Factura generada correctamente");
@@ -172,6 +369,11 @@ export const generateSalePDF = async (
     toast.error("Ocurrió un error al intentar generar el PDF");
   }
 };
+
+
+// ─────────────────────────────────────────────
+// COMPROBANTE DE PEDIDO / ORDEN
+// ─────────────────────────────────────────────
 
 export const generateOrderPDF = async (
   orderData: any,
@@ -182,207 +384,76 @@ export const generateOrderPDF = async (
   try {
     const doc = new jsPDF() as any;
 
-    // COLORES PROFESIONALES
-    const cPrimary = [46, 16, 32]; // #2e1020
-    const cSecondary = [224, 146, 178]; // #e092b2
-    const cBorder = [220, 220, 220];
-    const cText = [40, 40, 40];
-    const cLightGray = [248, 248, 248];
-
-    // Formateo de fecha Day Month
-    const months = [
-      "Ene",
-      "Feb",
-      "Mar",
-      "Abr",
-      "May",
-      "Jun",
-      "Jul",
-      "Ago",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dic",
-    ];
+    const months = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
     const d = new Date(orderData.fecha);
     const fechaTxt = isNaN(d.getDate())
       ? orderData.fecha
-      : `${d.getDate()} ${months[d.getMonth()]}`;
+      : `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
 
-    // 1. CABECERA LIMPIA
-    // Linea de adorno superior
-    doc.setFillColor(cPrimary[0], cPrimary[1], cPrimary[2]);
-    doc.rect(0, 0, 210, 4, "F");
+    const headerEnd = await drawHeader(
+      doc,
+      "COMPROBANTE DE PEDIDO",
+      `# ${orderData.id.slice(0, 8).toUpperCase()}`,
+    );
 
-    // Logo centrado a la izquierda
-    try {
-      const logoUrl = "/logo.png";
-      const img = new Image();
-      img.src = logoUrl;
-      await new Promise((resolve) => {
-        img.onload = () => {
-          doc.addImage(img, "PNG", 20, 12, 18, 18);
-          resolve(true);
-        };
-        img.onerror = () => resolve(false);
-      });
-    } catch (e) {}
-
-    // Titulo y Metadata a la derecha
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(20);
-    doc.setTextColor(cPrimary[0], cPrimary[1], cPrimary[2]);
-    doc.text("GLAMOUR ML", 45, 20);
-    doc.setFontSize(8);
-    doc.setTextColor(120);
-    doc.setFont("helvetica", "normal");
-    doc.text("TIENDA DE BELLEZA & CUIDADO PERSONAL", 45, 25);
-
-    doc.setFontSize(14);
-    doc.setTextColor(cPrimary[0], cPrimary[1], cPrimary[2]);
-    doc.setFont("helvetica", "bold");
-    doc.text("COMPROBANTE", 190, 20, { align: "right" });
-    doc.setFontSize(10);
-    doc.setTextColor(cSecondary[0], cSecondary[1], cSecondary[2]);
-    doc.text(`#${orderData.id.slice(0, 8).toUpperCase()}`, 190, 26, {
-      align: "right",
-    });
-
-    // 2. INFORMACIÓN DE CONTACTO (BILL TO / SHIP TO)
-    doc.setDrawColor(cBorder[0], cBorder[1], cBorder[2]);
-    doc.line(20, 40, 190, 40);
-
-    doc.setFontSize(9);
-    doc.setTextColor(150);
-    doc.text("CLIENTE:", 20, 50);
-    doc.text("METODOS DE CONTACTO:", 110, 50);
-
-    doc.setFontSize(11);
-    doc.setTextColor(cText[0], cText[1], cText[2]);
-    doc.setFont("helvetica", "bold");
-    doc.text(`${orderData.clienteNombre || cliente?.nombre || "N/A"}`, 20, 56);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.text(`${orderData.direccionEnvio}`, 20, 62);
+    const infoEnd = drawInfoBlock(
+      doc,
+      headerEnd + 6,
+      {
+        label: "CLIENTE",
+        rows: [
+          orderData.clienteNombre || cliente?.nombre || "N/A",
+          orderData.direccionEnvio || orderData.direccion || "Sin dirección",
+          (orderData.ciudad || orderData.departamento) ? `${orderData.ciudad || ''} ${orderData.departamento ? '- ' + orderData.departamento : ''}`.trim() : ""
+        ].filter(Boolean) as string[],
+      },
+      {
+        label: "DATOS DEL PEDIDO",
+        rows: [
+          `Fecha: ${fechaTxt}`,
+          `Email: ${orderData.email || cliente?.email || "N/A"}`,
+          `Tel: ${orderData.telefono || cliente?.telefono || "N/A"}`,
+        ].filter(Boolean) as string[],
+      },
+    );
 
     doc.setFont("helvetica", "bold");
-    doc.text(`${cliente?.email || "N/A"}`, 110, 56);
-    doc.setFont("helvetica", "normal");
-    doc.text(`${cliente?.telefono || "N/A"}`, 110, 62);
-    doc.text(`Fecha: ${fechaTxt}`, 110, 68);
+    doc.setFontSize(7.5);
+    doc.setTextColor(...COLORS.accent);
+    doc.text("DETALLE DE PRODUCTOS", 14, infoEnd + 4);
 
-    // 3. TABLA DE PRODUCTOS (GRID ESTRUCTURADO)
-    let tableY = 80;
-
-    // Header Table
-    doc.setFillColor(cPrimary[0], cPrimary[1], cPrimary[2]);
-    doc.rect(20, tableY, 170, 10, "F");
-    doc.setTextColor(255);
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "bold");
-    doc.text("PRODUCTO / DESCRIPCIÓN", 25, tableY + 6.5);
-    doc.text("CANT", 115, tableY + 6.5, { align: "center" });
-    doc.text("PRECIO", 145, tableY + 6.5, { align: "center" });
-    doc.text("TOTAL", 185, tableY + 6.5, { align: "right" });
-
-    tableY += 10;
-    doc.setTextColor(cText[0], cText[1], cText[2]);
-    doc.setFont("helvetica", "normal");
-
-    const formatP = (v: number) =>
-      new Intl.NumberFormat("es-CO", {
-        style: "currency",
-        currency: "COP",
-        minimumFractionDigits: 0,
-      }).format(v);
+    let tableY = drawTableHeader(doc, infoEnd + 6, [
+      { label: "PRODUCTO / DESCRIPCIÓN", x: 19 },
+      { label: "CANT",                  x: 118, align: "center" },
+      { label: "PRECIO UNIT.",          x: 152, align: "center" },
+      { label: "TOTAL",                 x: 195, align: "right"  },
+    ]);
 
     (orderData.productos || []).forEach((p: any, i: number) => {
-      const prod = productosDestino.find((pr) => pr.id === p.productoId);
-      const nameLines = doc.splitTextToSize(prod?.nombre || "Producto", 80);
-      const rowHeight = nameLines.length * 5 + 6;
+      const prod    = productosDestino.find((pr) => pr.id === p.productoId);
+      const precio  = p.precio_unit_ov || p.precio_unitario || p.precioUnitario || 0;
+      const lines   = doc.splitTextToSize(prod?.nombre || "Producto", 88);
+      const total   = p.cantidad * precio;
 
-      // Fila Fondo
-      if (i % 2 !== 0) {
-        doc.setFillColor(cLightGray[0], cLightGray[1], cLightGray[2]);
-        doc.rect(20, tableY, 170, rowHeight, "F");
-      }
-
-      // Bordes
-      doc.setDrawColor(cBorder[0], cBorder[1], cBorder[2]);
-      doc.setLineWidth(0.1);
-      doc.line(20, tableY + rowHeight, 190, tableY + rowHeight);
-      doc.line(20, tableY, 20, tableY + rowHeight);
-      doc.line(190, tableY, 190, tableY + rowHeight);
-
-      doc.text(nameLines, 25, tableY + 6);
-      doc.text(String(p.cantidad), 115, tableY + 6, { align: "center" });
-      doc.text(
-        formatP(p.precio_unit_ov || p.precio_unitario || p.precioUnitario),
-        145,
-        tableY + 6,
-        { align: "center" },
-      );
-      doc.setFont("helvetica", "bold");
-      doc.text(
-        formatP(
-          p.cantidad *
-            (p.precio_unit_ov || p.precio_unitario || p.precioUnitario),
-        ),
-        185,
-        tableY + 6,
-        { align: "right" },
-      );
-      doc.setFont("helvetica", "normal");
-
-      tableY += rowHeight;
+      tableY = drawTableRow(doc, tableY, i, [
+        { text: lines[0],              x: 19  },
+        { text: String(p.cantidad),    x: 118, align: "center" },
+        { text: formatCOP(precio),     x: 152, align: "center" },
+        { text: formatCOP(total),      x: 195, align: "right", bold: true },
+      ], lines);
     });
 
-    // 4. TOTALES
-    let footerY = Math.max(tableY + 15, 180);
+    const envio    = CONFIG.COSTO_ENVIO || 0;
+    const subtotal = orderData.total - envio;
+    const footerY  = Math.max(tableY + 14, 195);
 
-    doc.setDrawColor(cPrimary[0], cPrimary[1], cPrimary[2]);
-    doc.setLineWidth(0.5);
-    doc.line(120, footerY, 190, footerY);
+    drawTotalsBlock(doc, footerY, [
+      { label: "Subtotal", value: formatCOP(subtotal) },
+      { label: "Envío",    value: formatCOP(envio)    },
+      { label: "TOTAL",    value: formatCOP(orderData.total), large: true },
+    ]);
 
-    doc.setFontSize(10);
-    doc.setTextColor(120);
-    doc.text("Subtotal:", 125, footerY + 10);
-    doc.text("Envío:", 125, footerY + 16);
-
-    doc.setFontSize(12);
-    doc.setTextColor(cPrimary[0], cPrimary[1], cPrimary[2]);
-    doc.setFont("helvetica", "bold");
-    doc.text("TOTAL:", 125, footerY + 26);
-
-    // Valores
-    doc.setFontSize(10);
-    doc.setTextColor(cText[0], cText[1], cText[2]);
-    doc.setFont("helvetica", "normal");
-    doc.text(
-      formatP(orderData.total - (CONFIG.COSTO_ENVIO || 0)),
-      185,
-      footerY + 10,
-      { align: "right" },
-    );
-    doc.text(formatP(CONFIG.COSTO_ENVIO || 0), 185, footerY + 16, {
-      align: "right",
-    });
-
-    doc.setFontSize(16);
-    doc.setTextColor(cPrimary[0], cPrimary[1], cPrimary[2]);
-    doc.setFont("helvetica", "bold");
-    doc.text(formatP(orderData.total), 185, footerY + 26, { align: "right" });
-
-    // Notas finales
-    doc.setFontSize(8);
-    doc.setTextColor(150);
-    doc.setFont("helvetica", "italic");
-    doc.text(
-      "Gracias por su compra. Este comprobante no representa una factura fiscal legal.",
-      20,
-      275,
-    );
-    doc.text("GLAMOUR ML - Medellín, Colombia", 20, 280);
+    drawFooter(doc, "Gracias por su compra. Este comprobante no representa una factura fiscal legal.");
 
     doc.save(`GlamourML_Pedido_${orderData.id.slice(0, 5)}.pdf`);
     toast.success("Comprobante generado correctamente");
@@ -392,9 +463,11 @@ export const generateOrderPDF = async (
   }
 };
 
-/**
- * Genera un PDF de comprobante de devolución profesional.
- */
+
+// ─────────────────────────────────────────────
+// COMPROBANTE DE DEVOLUCIÓN
+// ─────────────────────────────────────────────
+
 export const generateDevolucionPDF = async (
   devolucion: any,
   cliente: Cliente | undefined,
@@ -403,211 +476,149 @@ export const generateDevolucionPDF = async (
   try {
     const doc = new jsPDF() as any;
 
-    // COLORES
-    const cPrimary = [46, 16, 32];      // #2e1020
-    const cSecondary = [224, 146, 178];  // #e092b2
-    const cAccent = [196, 123, 150];     // #c47b96
-    const cBorder = [220, 220, 220];
-    const cText = [40, 40, 40];
-    const cLightGray = [248, 248, 248];
-
-    const formatP = (v: number) =>
-      new Intl.NumberFormat("es-CO", {
-        style: "currency",
-        currency: "COP",
-        minimumFractionDigits: 0,
-      }).format(isNaN(v) ? 0 : v);
-
-    const getEstadoLabel = (estado: string) => {
-      const labels: Record<string, string> = {
-        pendiente: "PENDIENTE",
-        en_revision: "EN REVISIÓN",
-        aprobada: "APROBADA",
-        rechazada: "RECHAZADA",
-        anulada: "ANULADA",
-      };
-      return labels[estado] || estado.toUpperCase();
+    const estadoLabels: Record<string, string> = {
+      pendiente:  "PENDIENTE",
+      en_revision:"EN REVISIÓN",
+      aprobada:   "APROBADA",
+      rechazada:  "RECHAZADA",
+      anulada:    "ANULADA",
     };
+    const estadoLabel = estadoLabels[devolucion.estado] || devolucion.estado?.toUpperCase();
 
-    // 1. BARRA SUPERIOR
-    doc.setFillColor(cPrimary[0], cPrimary[1], cPrimary[2]);
-    doc.rect(0, 0, 210, 4, "F");
+    const estadoColor: [number, number, number] =
+      devolucion.estado === "aprobada"
+        ? [16, 185, 129]
+        : devolucion.estado === "rechazada" || devolucion.estado === "anulada"
+        ? [220, 60, 60]
+        : [200, 150, 10];
 
-    // Línea de acento
-    doc.setFillColor(cAccent[0], cAccent[1], cAccent[2]);
-    doc.rect(0, 4, 210, 1, "F");
+    // ── Cabecera con badge de estado ──
+    const H = 38;
+    doc.setFillColor(...COLORS.primary);
+    doc.rect(0, 0, 210, H, "F");
+    doc.setFillColor(...COLORS.accent);
+    doc.rect(0, H, 210, 1.5, "F");
 
-    // Logo
-    try {
-      const img = new Image();
-      img.src = "/logo.png";
-      await new Promise((resolve) => {
-        img.onload = () => { doc.addImage(img, "PNG", 20, 12, 18, 18); resolve(true); };
-        img.onerror = () => resolve(false);
-      });
-    } catch (e) {}
+    await loadLogo(doc);
 
-    // Nombre empresa
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(20);
-    doc.setTextColor(cPrimary[0], cPrimary[1], cPrimary[2]);
-    doc.text("GLAMOUR ML", 45, 20);
-    doc.setFontSize(8);
+    doc.setFontSize(18);
+    doc.setTextColor(...COLORS.white);
+    doc.text("GLAMOUR ML", 42, 18);
+
     doc.setFont("helvetica", "normal");
-    doc.setTextColor(120);
-    doc.text("TIENDA DE BELLEZA & CUIDADO PERSONAL", 45, 25);
+    doc.setFontSize(7.5);
+    doc.setTextColor(224, 146, 178);
+    doc.text("TIENDA DE BELLEZA & CUIDADO PERSONAL", 42, 24);
+    doc.setFontSize(7);
+    doc.setTextColor(200, 170, 185);
+    doc.text("Medellín, Colombia", 42, 33);
 
-    // Título y referencia (derecha)
-    doc.setFontSize(14);
+    // Título + ref
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(cAccent[0], cAccent[1], cAccent[2]);
-    doc.text("COMPROBANTE DE DEVOLUCIÓN", 190, 18, { align: "right" });
-    doc.setFontSize(10);
-    doc.setTextColor(cSecondary[0], cSecondary[1], cSecondary[2]);
-    doc.text(`DEV-${devolucion.id}`, 190, 24, { align: "right" });
+    doc.setFontSize(12);
+    doc.setTextColor(...COLORS.white);
+    doc.text("COMPROBANTE DE DEVOLUCIÓN", 196, 17, { align: "right" });
 
-    // Badge de estado
-    doc.setFontSize(8);
-    doc.setFont("helvetica", "bold");
-    const estadoLabel = getEstadoLabel(devolucion.estado);
-    if (devolucion.estado === "aprobada") {
-      doc.setTextColor(16, 185, 129); // emerald
-    } else if (devolucion.estado === "rechazada" || devolucion.estado === "anulada") {
-      doc.setTextColor(239, 68, 68); // rose
-    } else {
-      doc.setTextColor(234, 179, 8); // yellow
-    }
-    doc.text(`Estado: ${estadoLabel}`, 190, 30, { align: "right" });
-
-    // 2. LÍNEA DIVISORA + INFO
-    doc.setDrawColor(cBorder[0], cBorder[1], cBorder[2]);
-    doc.line(20, 40, 190, 40);
-
-    // Columna izquierda: cliente
-    doc.setFontSize(9);
-    doc.setTextColor(150);
-    doc.text("CLIENTE:", 20, 50);
-
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(cText[0], cText[1], cText[2]);
-    doc.text(devolucion.clienteNombre || cliente?.nombre || "Consumidor Final", 20, 56);
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.text(`Doc: ${cliente?.documento || cliente?.numeroDocumento || "N/A"}`, 20, 62);
+    doc.setFontSize(9.5);
+    doc.setTextColor(...COLORS.secondary);
+    doc.text(`DEV-${devolucion.id}`, 196, 25, { align: "right" });
 
-    // Columna derecha: info devolución
-    doc.setFontSize(9);
-    doc.setTextColor(150);
-    doc.text("INFORMACIÓN DE DEVOLUCIÓN:", 110, 50);
+    // Badge estado (pastilla)
+    const badgeW  = doc.getTextWidth(estadoLabel) + 10;
+    const badgeX  = 196 - badgeW;
+    doc.setFillColor(...estadoColor);
+    doc.roundedRect(badgeX, 29, badgeW, 6, 1.5, 1.5, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7);
+    doc.setTextColor(255, 255, 255);
+    doc.text(estadoLabel, 196 - badgeW / 2, 33.2, { align: "center" });
+
+    const headerEnd = H + 1.5;
+
+    const infoEnd = drawInfoBlock(
+      doc,
+      headerEnd + 6,
+      {
+        label: "CLIENTE",
+        rows: [
+          devolucion.clienteNombre || cliente?.nombre || "Consumidor Final",
+          `Doc: ${cliente?.documento || cliente?.numeroDocumento || "N/A"}`,
+        ],
+      },
+      {
+        label: "DATOS DE DEVOLUCIÓN",
+        rows: [
+          `Fecha: ${devolucion.fecha}`,
+          devolucion.ventaId     ? `Venta ref: #${devolucion.ventaId}` : "",
+          devolucion.empleadoNombre ? `Procesada por: ${devolucion.empleadoNombre}` : "",
+        ].filter(Boolean),
+      },
+    );
+
+    // ── Bloque de motivo ──
+    const motivoLines = doc.splitTextToSize(devolucion.motivo || "Sin motivo", 166);
+    const motivoH     = motivoLines.length * 5 + 14;
+
+    doc.setFillColor(252, 244, 248);
+    doc.roundedRect(14, infoEnd, 182, motivoH, 2, 2, "F");
+    doc.setDrawColor(...COLORS.accent);
+    doc.setLineWidth(0.8);
+    doc.line(14, infoEnd, 14, infoEnd + motivoH);
 
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
-    doc.setTextColor(cText[0], cText[1], cText[2]);
-    doc.text(`Fecha: ${devolucion.fecha}`, 110, 56);
-    doc.setFont("helvetica", "normal");
-    if (devolucion.ventaId) {
-      doc.text(`Venta Ref: #${devolucion.ventaId}`, 110, 62);
-    }
-    if (devolucion.empleadoNombre) {
-      doc.text(`Procesada por: ${devolucion.empleadoNombre}`, 110, 68);
-    }
+    doc.setFontSize(7.5);
+    doc.setTextColor(...COLORS.accent);
+    doc.text("MOTIVO DE DEVOLUCIÓN", 20, infoEnd + 7);
 
-    // 3. MOTIVO
-    let currentY = 78;
-    doc.setFillColor(255, 240, 245); // #fff0f5
-    doc.rect(20, currentY, 170, 16, "F");
-    doc.setDrawColor(252, 232, 240);
-    doc.rect(20, currentY, 170, 16, "S");
-    doc.setFontSize(8);
-    doc.setTextColor(cAccent[0], cAccent[1], cAccent[2]);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
+    doc.setTextColor(...COLORS.text);
+    doc.text(motivoLines, 20, infoEnd + 13);
+
+    const afterMotivo = infoEnd + motivoH + 6;
+
     doc.setFont("helvetica", "bold");
-    doc.text("MOTIVO DE DEVOLUCIÓN:", 25, currentY + 6);
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(cText[0], cText[1], cText[2]);
-    const motivoLines = doc.splitTextToSize(devolucion.motivo || "Sin motivo", 160);
-    doc.text(motivoLines.slice(0, 2), 25, currentY + 12);
-    currentY += 20;
+    doc.setFontSize(7.5);
+    doc.setTextColor(...COLORS.accent);
+    doc.text("DETALLE DE PRODUCTOS", 14, afterMotivo + 2);
 
-    // 4. TABLA DE PRODUCTOS
-    let tableY = currentY + 4;
-
-    // Header tabla
-    doc.setFillColor(cPrimary[0], cPrimary[1], cPrimary[2]);
-    doc.rect(20, tableY, 170, 10, "F");
-    doc.setTextColor(255);
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "bold");
-    doc.text("PRODUCTO", 25, tableY + 6.5);
-    doc.text("CANT", 110, tableY + 6.5, { align: "center" });
-    doc.text("PRECIO UNIT.", 145, tableY + 6.5, { align: "center" });
-    doc.text("SUBTOTAL", 185, tableY + 6.5, { align: "right" });
-
-    tableY += 10;
-    doc.setTextColor(cText[0], cText[1], cText[2]);
-    doc.setFont("helvetica", "normal");
+    let tableY = drawTableHeader(doc, afterMotivo + 4, [
+      { label: "PRODUCTO",      x: 19 },
+      { label: "CANT",          x: 113, align: "center" },
+      { label: "PRECIO UNIT.",  x: 152, align: "center" },
+      { label: "SUBTOTAL",      x: 195, align: "right"  },
+    ]);
 
     (devolucion.productos || []).forEach((p: any, i: number) => {
-      const prod = productosDestino.find((pr: Producto) => pr.id === p.productoId);
-      const nombre = p.productoNombre || prod?.nombre || "Producto";
-      const nameLines = doc.splitTextToSize(nombre, 75);
-      const rowHeight = nameLines.length * 5 + 6;
-
-      // Fondo alternado
-      if (i % 2 !== 0) {
-        doc.setFillColor(cLightGray[0], cLightGray[1], cLightGray[2]);
-        doc.rect(20, tableY, 170, rowHeight, "F");
-      }
-
-      // Bordes
-      doc.setDrawColor(cBorder[0], cBorder[1], cBorder[2]);
-      doc.setLineWidth(0.1);
-      doc.line(20, tableY + rowHeight, 190, tableY + rowHeight);
-      doc.line(20, tableY, 20, tableY + rowHeight);
-      doc.line(190, tableY, 190, tableY + rowHeight);
-
-      doc.text(nameLines, 25, tableY + 6);
-      doc.text(String(p.cantidad || 0), 110, tableY + 6, { align: "center" });
-      doc.text(formatP(p.precioUnitario || 0), 145, tableY + 6, { align: "center" });
-      doc.setFont("helvetica", "bold");
+      const prod     = productosDestino.find((pr: Producto) => pr.id === p.productoId);
+      const nombre   = p.productoNombre || prod?.nombre || "Producto";
+      const lines    = doc.splitTextToSize(nombre, 88);
       const subtotal = p.subtotal || (p.cantidad || 0) * (p.precioUnitario || 0);
-      doc.text(formatP(subtotal), 185, tableY + 6, { align: "right" });
-      doc.setFont("helvetica", "normal");
 
-      tableY += rowHeight;
+      tableY = drawTableRow(doc, tableY, i, [
+        { text: lines[0],                  x: 19  },
+        { text: String(p.cantidad || 0),   x: 113, align: "center" },
+        { text: formatCOP(p.precioUnitario || 0), x: 152, align: "center" },
+        { text: formatCOP(subtotal),       x: 195, align: "right", bold: true },
+      ], lines);
     });
 
-    // 5. TOTAL
-    const footerY = Math.max(tableY + 15, 200);
+    const footerY = Math.max(tableY + 14, 210);
+    drawTotalsBlock(doc, footerY, [
+      { label: "TOTAL DEVUELTO", value: formatCOP(devolucion.totalDevuelto || 0), large: true },
+    ]);
 
-    doc.setDrawColor(cAccent[0], cAccent[1], cAccent[2]);
-    doc.setLineWidth(0.5);
-    doc.line(120, footerY, 190, footerY);
-
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(cPrimary[0], cPrimary[1], cPrimary[2]);
-    doc.text("TOTAL DEVUELTO:", 125, footerY + 10);
-
-    doc.setFontSize(16);
-    doc.setTextColor(cAccent[0], cAccent[1], cAccent[2]);
-    doc.text(formatP(devolucion.totalDevuelto || 0), 185, footerY + 10, { align: "right" });
-
-    // Sello de anulada si aplica
+    // Marca de agua ANULADA
     if (devolucion.estado === "anulada") {
-      doc.setFontSize(40);
-      doc.setTextColor(239, 68, 68);
+      doc.setFontSize(48);
+      doc.setTextColor(220, 60, 60);
       doc.setFont("helvetica", "bold");
-      doc.text("ANULADA", 105, 160, { align: "center", angle: 30 });
+      doc.text("ANULADA", 105, 170, { align: "center", angle: 30 });
     }
 
-    // 6. FOOTER
-    doc.setFontSize(8);
-    doc.setFont("helvetica", "italic");
-    doc.setTextColor(150);
-    doc.text("Este comprobante certifica la devolución registrada en el sistema.", 20, 275);
-    doc.text("GLAMOUR ML - Medellín, Colombia", 20, 280);
+    drawFooter(doc, "Este comprobante certifica la devolución registrada en el sistema.");
 
     doc.save(`GlamourML_Devolucion_DEV-${devolucion.id}.pdf`);
     toast.success("Comprobante de devolución generado correctamente");
@@ -617,6 +628,11 @@ export const generateDevolucionPDF = async (
   }
 };
 
+
+// ─────────────────────────────────────────────
+// COMPROBANTE DE COMPRA (PROVEEDOR)
+// ─────────────────────────────────────────────
+
 export const generateCompraPDF = async (
   compra: any,
   proveedor: any,
@@ -625,143 +641,66 @@ export const generateCompraPDF = async (
   try {
     const doc = new jsPDF() as any;
 
-    // COLORES
-    const cPrimary = [46, 16, 32];      // #2e1020
-    const cSecondary = [224, 146, 178]; // #e092b2
-    const cBorder = [220, 220, 220];
-    const cText = [40, 40, 40];
-    const cLightGray = [248, 248, 248];
+    const headerEnd = await drawHeader(
+      doc,
+      "COMPROBANTE DE COMPRA",
+      `# ${compra.id.slice(0, 8).toUpperCase()}`,
+    );
 
-    const formatP = (v: number) =>
-      new Intl.NumberFormat("es-CO", {
-        style: "currency",
-        currency: "COP",
-        minimumFractionDigits: 0,
-      }).format(isNaN(v) ? 0 : v);
-
-    // 1. BARRA SUPERIOR
-    doc.setFillColor(cPrimary[0], cPrimary[1], cPrimary[2]);
-    doc.rect(0, 0, 210, 4, "F");
-
-    // Logo
-    try {
-      const img = new Image();
-      img.src = "/logo.png";
-      await new Promise((resolve) => {
-        img.onload = () => { doc.addImage(img, "PNG", 20, 12, 18, 18); resolve(true); };
-        img.onerror = () => resolve(false);
-      });
-    } catch (e) {}
-
-    // Nombre empresa
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(20);
-    doc.setTextColor(cPrimary[0], cPrimary[1], cPrimary[2]);
-    doc.text("GLAMOUR ML", 45, 20);
-    doc.setFontSize(8);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(120);
-    doc.text("TIENDA DE BELLEZA & CUIDADO PERSONAL", 45, 25);
-
-    // Número de comprobante (derecha)
-    doc.setFontSize(14);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(cPrimary[0], cPrimary[1], cPrimary[2]);
-    doc.text("COMPROBANTE DE COMPRA", 190, 20, { align: "right" });
-    doc.setFontSize(10);
-    doc.setTextColor(cSecondary[0], cSecondary[1], cSecondary[2]);
-    doc.text(`#${compra.id.slice(0, 8).toUpperCase()}`, 190, 26, { align: "right" });
-
-    // 2. LÍNEA DIVISORA + INFO PROVEEDOR
-    doc.setDrawColor(cBorder[0], cBorder[1], cBorder[2]);
-    doc.line(20, 40, 190, 40);
-
-    doc.setFontSize(9);
-    doc.setTextColor(150);
-    doc.text("PROVEEDOR:", 20, 50);
-    doc.text("DETALLES DE LA ORDEN:", 110, 50);
-
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(cText[0], cText[1], cText[2]);
-    doc.text(proveedor?.nombre || "Proveedor Desconocido", 20, 56);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.text(`NIT: ${proveedor?.documento || proveedor?.numeroDocumento || "N/A"}`, 20, 62);
-    doc.text(`Tel: ${proveedor?.telefono || "N/A"}`, 20, 68);
+    const confirmada = compra.confirmada || compra.estado;
+    const infoEnd = drawInfoBlock(
+      doc,
+      headerEnd + 6,
+      {
+        label: "PROVEEDOR",
+        rows: [
+          proveedor?.nombre || "Proveedor Desconocido",
+          `NIT: ${proveedor?.documento || proveedor?.numeroDocumento || "N/A"}`,
+          `Tel: ${proveedor?.telefono || "N/A"}`,
+        ],
+      },
+      {
+        label: "DETALLES DE LA ORDEN",
+        rows: [
+          `Fecha: ${new Date(compra.fecha).toLocaleDateString("es-CO")}`,
+          `Estado: ${confirmada ? "Confirmada" : "Anulada"}`,
+        ],
+      },
+    );
 
     doc.setFont("helvetica", "bold");
-    doc.text(`Fecha: ${new Date(compra.fecha).toLocaleDateString()}`, 110, 56);
-    doc.setFont("helvetica", "normal");
-    doc.text(`Estado: ${compra.confirmada || compra.estado ? "Confirmada" : "Anulada"}`, 110, 62);
+    doc.setFontSize(7.5);
+    doc.setTextColor(...COLORS.accent);
+    doc.text("DETALLE DE PRODUCTOS", 14, infoEnd + 4);
 
-    // 3. TABLA DE PRODUCTOS
-    let tableY = 80;
-
-    // Header tabla
-    doc.setFillColor(cPrimary[0], cPrimary[1], cPrimary[2]);
-    doc.rect(20, tableY, 170, 10, "F");
-    doc.setTextColor(255);
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "bold");
-    doc.text("PRODUCTO / DESCRIPCIÓN", 25, tableY + 6.5);
-    doc.text("CANT", 115, tableY + 6.5, { align: "center" });
-    doc.text("PRECIO UNIT.", 148, tableY + 6.5, { align: "center" });
-    doc.text("TOTAL", 185, tableY + 6.5, { align: "right" });
-
-    tableY += 10;
-    doc.setTextColor(cText[0], cText[1], cText[2]);
-    doc.setFont("helvetica", "normal");
+    let tableY = drawTableHeader(doc, infoEnd + 6, [
+      { label: "PRODUCTO / DESCRIPCIÓN", x: 19 },
+      { label: "CANT",                  x: 118, align: "center" },
+      { label: "PRECIO UNIT.",          x: 152, align: "center" },
+      { label: "TOTAL",                 x: 195, align: "right"  },
+    ]);
 
     (compra.detalles || []).forEach((d: any, i: number) => {
-      const pName = d.nombre_producto || productosDestino.find(p => p.id === d.id_producto?.toString())?.nombre || `Item #${d.id_producto}`;
-      const nameLines = doc.splitTextToSize(pName, 80);
-      const rowHeight = nameLines.length * 5 + 6;
+      const pName = d.nombre_producto
+        || productosDestino.find((p) => p.id === d.id_producto?.toString())?.nombre
+        || `Item #${d.id_producto}`;
+      const lines = doc.splitTextToSize(pName, 88);
+      const total = (d.cantidad || 0) * (d.precio_unitario || 0);
 
-      // Fondo alternado
-      if (i % 2 !== 0) {
-        doc.setFillColor(cLightGray[0], cLightGray[1], cLightGray[2]);
-        doc.rect(20, tableY, 170, rowHeight, "F");
-      }
-
-      // Bordes
-      doc.setDrawColor(cBorder[0], cBorder[1], cBorder[2]);
-      doc.setLineWidth(0.1);
-      doc.line(20, tableY + rowHeight, 190, tableY + rowHeight);
-      doc.line(20, tableY, 20, tableY + rowHeight);
-      doc.line(190, tableY, 190, tableY + rowHeight);
-
-      doc.text(nameLines, 25, tableY + 6);
-      doc.text(String(d.cantidad || 0), 115, tableY + 6, { align: "center" });
-      doc.text(formatP(d.precio_unitario || 0), 148, tableY + 6, { align: "center" });
-      doc.setFont("helvetica", "bold");
-      doc.text(formatP((d.cantidad || 0) * (d.precio_unitario || 0)), 185, tableY + 6, { align: "right" });
-      doc.setFont("helvetica", "normal");
-
-      tableY += rowHeight;
+      tableY = drawTableRow(doc, tableY, i, [
+        { text: lines[0],                   x: 19  },
+        { text: String(d.cantidad || 0),    x: 118, align: "center" },
+        { text: formatCOP(d.precio_unitario || 0), x: 152, align: "center" },
+        { text: formatCOP(total),           x: 195, align: "right", bold: true },
+      ], lines);
     });
 
-    // 4. TOTALES
-    const footerY = Math.max(tableY + 15, 185);
+    const footerY = Math.max(tableY + 14, 195);
+    drawTotalsBlock(doc, footerY, [
+      { label: "TOTAL COMPRA", value: formatCOP(compra.total), large: true },
+    ]);
 
-    doc.setDrawColor(cPrimary[0], cPrimary[1], cPrimary[2]);
-    doc.setLineWidth(0.5);
-    doc.line(120, footerY, 190, footerY);
-
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(cPrimary[0], cPrimary[1], cPrimary[2]);
-    doc.text("TOTAL COMPRA:", 125, footerY + 10);
-
-    doc.setFontSize(16);
-    doc.text(formatP(compra.total), 185, footerY + 10, { align: "right" });
-
-    // 5. FOOTER
-    doc.setFontSize(8);
-    doc.setFont("helvetica", "italic");
-    doc.setTextColor(150);
-    doc.text("Este documento es un comprobante interno de recibo de mercancía.", 20, 275);
-    doc.text("GLAMOUR ML - Medellín, Colombia", 20, 280);
+    drawFooter(doc, "Este documento es un comprobante interno de recibo de mercancía.");
 
     doc.save(`GlamourML_Compra_${compra.id.slice(0, 8)}.pdf`);
     toast.success("Comprobante de compra generado");

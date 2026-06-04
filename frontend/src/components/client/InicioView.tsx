@@ -37,6 +37,7 @@ import { marcaService } from "../../services/marcaService";
 interface InicioViewProps {
   isPublic?: boolean;
   onNavigate?: (route: string, categoryId?: string) => void;
+  onViewProduct?: (productId: string) => void;
   onNavigateToLogin?: () => void;
   onNavigateToRegister?: () => void;
 }
@@ -66,11 +67,13 @@ const C = {
 export function InicioView({
   isPublic = false,
   onNavigate,
+  onViewProduct,
 }: InicioViewProps = {}) {
   const {
     productos,
     categorias,
     addToCarrito,
+    carrito,
     setProductos,
     setCategorias,
     setMarcas,
@@ -190,11 +193,19 @@ export function InicioView({
   // Get featured categories (first 6)
   const categoriasDestacadas = categorias.slice(0, 6);
 
-  // ALERT PARA AGREGAR AL CARRITO DE COMPRAS
-  const handleAddToCart = (productoId: string) => {
-    addToCarrito(productoId, 1);
+  const handleAddToCart = (productoId: string, quantity = 1) => {
+    const producto = productos.find((p) => p.id === productoId);
+    if (!producto) return;
+    const currentCartQty = carrito.find((item) => item.productoId === productoId)?.cantidad || 0;
+    if (currentCartQty + quantity > producto.stock) {
+      toast.error("Stock máximo alcanzado", {
+        description: `No puedes agregar más unidades de este producto.`,
+      });
+      return;
+    }
+    addToCarrito(productoId, quantity);
     toast.success("Producto agregado", {
-      description: "El producto se agregó a tu carrito",
+      description: `Se agregaron ${quantity} ${quantity === 1 ? "unidad" : "unidades"} al carrito`,
     });
   };
 
@@ -711,6 +722,8 @@ export function InicioView({
                     { label: "MÁS VENDIDO", color: C.accentDeep },
                     { label: "NUEVO", color: C.accent },
                   ];
+                  const currentCartQty = carrito.find((item) => item.productoId === producto.id)?.cantidad || 0;
+                  const isMaxStock = currentCartQty >= producto.stock;
                   return (
                     <ProductCard
                       key={producto.id}
@@ -718,7 +731,9 @@ export function InicioView({
                       categoryName={categoria?.nombre}
                       badge={badges[index]?.label}
                       badgeColor={badges[index]?.color}
+                      onCardClick={() => onViewProduct?.(producto.id)}
                       onAddToCart={() => handleAddToCart(producto.id)}
+                      isMaxStock={isMaxStock}
                     />
                   );
                 })}
