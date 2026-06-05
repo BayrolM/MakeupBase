@@ -10,8 +10,10 @@ import {
   SelectValue,
 } from "../ui/select";
 
-import { User, Lock, Camera, ShieldCheck, Save } from "lucide-react";
+import { User, Lock, Camera, ShieldCheck, Save, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
+import { authService } from "../../services/authService";
+import { validateField as validateUserField } from "../../utils/usuarioUtils";
 
 const D = {
   navy: "var(--luxury-pink)",
@@ -135,15 +137,17 @@ function SectionHead({
   );
 }
 
-/** Campo de formulario */
+/** Campo de formulario con error */
 function Field({
   label,
   children,
   full,
+  error,
 }: {
   label: string;
   children: React.ReactNode;
   full?: boolean;
+  error?: string;
 }) {
   return (
     <div
@@ -165,15 +169,28 @@ function Field({
         {label}
       </label>
       {children}
+      {error && (
+        <p
+          style={{
+            margin: 0,
+            fontSize: 11,
+            fontWeight: 600,
+            color: D.danger,
+            marginTop: 2,
+          }}
+        >
+          {error}
+        </p>
+      )}
     </div>
   );
 }
 
 /** Estilos para inputs */
-const inputStyle = (disabled: boolean): React.CSSProperties => ({
+const inputStyle = (disabled: boolean, hasError?: boolean): React.CSSProperties => ({
   height: 40,
   borderRadius: 8,
-  border: `1px solid ${disabled ? D.borderLight : D.border}`,
+  border: `1px solid ${hasError ? D.danger : disabled ? D.borderLight : D.border}`,
   background: disabled ? D.navyXlight : D.white,
   fontSize: 13,
   color: D.textPrimary,
@@ -296,12 +313,18 @@ function BtnGhost({
    Componente principal
 ───────────────────────────────────────── */
 export function PerfilUsuarioModule() {
-  const { currentUser, updateUser } = useStore();
+  const { currentUser, setCurrentUser } = useStore();
   const [isEditingInfo, setIsEditingInfo] = useState(false);
   const [isSavingInfo, setIsSavingInfo] = useState(false);
   const [isSavingPassword, setIsSavingPassword] = useState(false);
   const [isSavingPhoto, setIsSavingPhoto] = useState(false);
   const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Error states for field-level validation
+  const [infoErrors, setInfoErrors] = useState<Record<string, string>>({});
+  const [passwordErrors, setPasswordErrors] = useState<Record<string, string>>({});
 
   const [infoFormData, setInfoFormData] = useState({
     nombre: currentUser?.nombres || "",
@@ -330,9 +353,8 @@ export function PerfilUsuarioModule() {
         nombre: currentUser.nombres || "",
         apellido: currentUser.apellidos || "",
         tipoDocumento: currentUser.tipoDocumento || "CC",
-        // @ts-ignore
         numeroDocumento:
-          currentUser.numeroDocumento || currentUser.numeroDocumento || "",
+          currentUser.numeroDocumento || "",
         telefono: currentUser.telefono || "",
         direccion: currentUser.direccion || "",
         ciudad: currentUser.ciudad || "",
@@ -343,60 +365,84 @@ export function PerfilUsuarioModule() {
     }
   }, [currentUser]);
 
-  const validateEmail = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
+  // ── Field validation using the same rules as the Register page ──
+  const validateInfoField = (name: string, value: string): string => {
+    // Map the form field names to validateUserField names
+    const fieldMap: Record<string, string> = {
+      nombre: "nombres",
+      apellido: "apellidos",
+      numeroDocumento: "numeroDocumento",
+      email: "email",
+      telefono: "telefono",
+      direccion: "direccion",
+      ciudad: "ciudad",
+      departamento: "departamento",
+    };
+
+    const validationName = fieldMap[name];
+    if (!validationName) return "";
+
+    return validateUserField(validationName, value) || "";
   };
 
   const handleInfoChange = (field: string, value: string) => {
-    setInfoFormData((prev) => ({ ...prev, [field]: value }));
+    let finalValue = value;
+
+    // Input filtering (same as Register page)
+    if (field === "numeroDocumento") {
+      if (infoFormData.tipoDocumento === "PAS") {
+        finalValue = value.replace(/[^a-zA-Z0-9]/g, "");
+      } else {
+        finalValue = value.replace(/[^0-9]/g, "");
+      }
+    } else if (field === "telefono") {
+      finalValue = value.replace(/[^0-9]/g, "");
+    }
+
+    setInfoFormData((prev) => ({ ...prev, [field]: finalValue }));
+
+    // Real-time validation
+    const error = validateInfoField(field, finalValue);
+    setInfoErrors((prev) => ({ ...prev, [field]: error }));
   };
 
   const handleSaveInfo = async () => {
     if (!currentUser) return;
-    if (
-      !infoFormData.nombre.trim() ||
-      !infoFormData.apellido.trim() ||
-      !infoFormData.numeroDocumento.trim() ||
-      !infoFormData.telefono.trim() ||
-      !infoFormData.email.trim()
-    ) {
-      toast.error("Campos obligatorios");
-      return;
-    }
-    if (!validateEmail(infoFormData.email)) {
-      toast.error("Formato inválido");
+
+    // Validate all fields
+    const fieldsToValidate = [
+      "nombre", "apellido", "numeroDocumento",
+      "email", "telefono", "direccion", "ciudad", "departamento"
+    ];
+    const newErrors: Record<string, string> = {};
+
+    fieldsToValidate.forEach((field) => {
+      const value = (infoFormData as any)[field] || "";
+      const error = validateInfoField(field, value);
+      if (error) newErrors[field] = error;
+    });
+
+    if (Object.keys(newErrors).length > 0) {
+      setInfoErrors(newErrors);
+      toast.error("Corrige los errores antes de guardar");
       return;
     }
 
     setIsSavingInfo(true);
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/users/profile`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("gml_token")}`,
-          },
-          body: JSON.stringify({
-            nombres: infoFormData.nombre.trim(),
-            apellidos: infoFormData.apellido.trim(),
-            tipo_documento: infoFormData.tipoDocumento,
-            documento: infoFormData.numeroDocumento.trim(),
-            telefono: infoFormData.telefono.trim(),
-            direccion: infoFormData.direccion.trim(),
-            ciudad: infoFormData.ciudad.trim(),
-            departamento: infoFormData.departamento.trim(),
-            pais: infoFormData.pais.trim(),
-            email: infoFormData.email.trim(),
-          }),
-        },
-      );
+      await authService.updateProfile({
+        nombres: infoFormData.nombre.trim(),
+        apellidos: infoFormData.apellido.trim(),
+        telefono: infoFormData.telefono.trim(),
+        direccion: infoFormData.direccion.trim(),
+        ciudad: infoFormData.ciudad.trim(),
+        departamento: infoFormData.departamento.trim(),
+        documento: infoFormData.numeroDocumento.trim(),
+        tipo_documento: infoFormData.tipoDocumento,
+      } as any);
 
-      if (!response.ok) throw new Error("Error al actualizar");
-
-      updateUser(currentUser.id, {
+      setCurrentUser({
+        ...currentUser,
         nombres: infoFormData.nombre.trim(),
         apellidos: infoFormData.apellido.trim(),
         tipoDocumento: infoFormData.tipoDocumento as any,
@@ -409,50 +455,98 @@ export function PerfilUsuarioModule() {
         email: infoFormData.email.trim(),
       });
 
-      toast.success("Información actualizada");
+      toast.success("Información actualizada correctamente");
       setIsEditingInfo(false);
-    } catch (error) {
+      setInfoErrors({});
+    } catch (error: any) {
       console.error(error);
-      toast.error("Error al guardar en el servidor");
+      toast.error("Error al guardar", {
+        description: error.message || "No se pudo actualizar el perfil",
+      });
     } finally {
       setIsSavingInfo(false);
     }
   };
 
+  // ── Password validation (same rules as Register page) ──
+  const validatePasswordField = (name: string, value: string): string => {
+    if (name === "currentPassword") {
+      if (!value) return "La contraseña actual es obligatoria";
+      return "";
+    }
+    if (name === "newPassword") {
+      if (!value) return "La nueva contraseña es obligatoria";
+      if (value.length < 8) return "Mínimo 8 caracteres";
+      if (!/[a-z]/.test(value)) return "Debe tener al menos una minúscula";
+      if (!/[A-Z]/.test(value)) return "Debe tener al menos una mayúscula";
+      if (!/[!@#$%^&*(),.?":{}|<>]/.test(value)) return "Debe tener un carácter especial";
+      return "";
+    }
+    if (name === "confirmPassword") {
+      if (!value) return "Confirma tu contraseña";
+      if (value !== passwordFormData.newPassword) return "Las contraseñas no coinciden";
+      return "";
+    }
+    return "";
+  };
+
+  const handlePasswordChange = (field: string, value: string) => {
+    setPasswordFormData((prev) => ({ ...prev, [field]: value }));
+
+    // Real-time validation
+    const error = validatePasswordField(field, value);
+    setPasswordErrors((prev) => ({ ...prev, [field]: error }));
+
+    // If changing newPassword, also re-validate confirmPassword
+    if (field === "newPassword" && passwordFormData.confirmPassword) {
+      const confirmError =
+        value !== passwordFormData.confirmPassword
+          ? "Las contraseñas no coinciden"
+          : "";
+      setPasswordErrors((prev) => ({ ...prev, confirmPassword: confirmError }));
+    }
+  };
+
   const handleSavePassword = async () => {
     if (!currentUser) return;
-    if (
-      !passwordFormData.currentPassword ||
-      !passwordFormData.newPassword ||
-      !passwordFormData.confirmPassword
-    ) {
-      toast.error("Campos obligatorios");
-      return;
-    }
-    if (passwordFormData.newPassword.length < 8) {
-      toast.error("Contraseña débil");
-      return;
-    }
-    if (passwordFormData.newPassword !== passwordFormData.confirmPassword) {
-      toast.error("Las contraseñas no coinciden");
-      return;
-    }
-    if (
-      passwordFormData.currentPassword !== "admin123" &&
-      passwordFormData.currentPassword !== currentUser.passwordHash
-    ) {
-      toast.error("Contraseña actual incorrecta");
-      return;
-    }
-    setIsSavingPassword(true);
-    updateUser(currentUser.id, { passwordHash: passwordFormData.newPassword });
-    setIsSavingPassword(false);
-    setPasswordFormData({
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
+
+    // Validate all password fields
+    const newErrors: Record<string, string> = {};
+    const fields = ["currentPassword", "newPassword", "confirmPassword"];
+    fields.forEach((field) => {
+      const value = (passwordFormData as any)[field] || "";
+      const error = validatePasswordField(field, value);
+      if (error) newErrors[field] = error;
     });
-    toast.success("Contraseña actualizada");
+
+    if (Object.keys(newErrors).length > 0) {
+      setPasswordErrors(newErrors);
+      toast.error("Corrige los errores antes de continuar");
+      return;
+    }
+
+    setIsSavingPassword(true);
+    try {
+      await authService.changePassword(
+        passwordFormData.currentPassword,
+        passwordFormData.newPassword
+      );
+
+      setPasswordFormData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+      setPasswordErrors({});
+      toast.success("Contraseña actualizada correctamente");
+    } catch (error: any) {
+      console.error(error);
+      toast.error("Error al cambiar contraseña", {
+        description: error.message || "La contraseña actual es incorrecta",
+      });
+    } finally {
+      setIsSavingPassword(false);
+    }
   };
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -482,6 +576,23 @@ export function PerfilUsuarioModule() {
     setPreviewPhoto(null);
   };
 
+  // Password strength indicator
+  const getPasswordStrength = (password: string) => {
+    if (!password) return { level: 0, label: "", color: "" };
+    let score = 0;
+    if (password.length >= 8) score++;
+    if (/[a-z]/.test(password)) score++;
+    if (/[A-Z]/.test(password)) score++;
+    if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) score++;
+    if (password.length >= 12) score++;
+
+    if (score <= 1) return { level: score, label: "Muy débil", color: D.danger };
+    if (score === 2) return { level: score, label: "Débil", color: "#e67e22" };
+    if (score === 3) return { level: score, label: "Media", color: "#f1c40f" };
+    if (score === 4) return { level: score, label: "Fuerte", color: "#27ae60" };
+    return { level: score, label: "Muy fuerte", color: D.success };
+  };
+
   /* Iniciales del avatar */
   const initials =
     `${(currentUser?.nombres || "").charAt(0)}${(currentUser?.apellidos || "").charAt(0)}`.toUpperCase();
@@ -501,6 +612,8 @@ export function PerfilUsuarioModule() {
       </div>
     );
   }
+
+  const passwordStrength = getPasswordStrength(passwordFormData.newPassword);
 
   /* ── Render ── */
   return (
@@ -720,7 +833,25 @@ export function PerfilUsuarioModule() {
                     </BtnGhost>
                   ) : (
                     <div style={{ display: "flex", gap: 10 }}>
-                      <BtnGhost onClick={() => setIsEditingInfo(false)}>
+                      <BtnGhost onClick={() => {
+                        setIsEditingInfo(false);
+                        setInfoErrors({});
+                        // Reset form to current user data
+                        if (currentUser) {
+                          setInfoFormData({
+                            nombre: currentUser.nombres || "",
+                            apellido: currentUser.apellidos || "",
+                            tipoDocumento: currentUser.tipoDocumento || "CC",
+                            numeroDocumento: currentUser.numeroDocumento || "",
+                            telefono: currentUser.telefono || "",
+                            direccion: currentUser.direccion || "",
+                            ciudad: currentUser.ciudad || "",
+                            departamento: currentUser.departamento || "",
+                            pais: currentUser.pais || "Colombia",
+                            email: currentUser.email || "",
+                          });
+                        }
+                      }}>
                         Descartar
                       </BtnGhost>
                       <BtnNavy onClick={handleSaveInfo} disabled={isSavingInfo}>
@@ -740,36 +871,43 @@ export function PerfilUsuarioModule() {
                     gap: "16px 20px",
                   }}
                 >
-                  <Field label="Nombre *">
+                  <Field label="Nombre *" error={infoErrors.nombre}>
                     <Input
                       value={infoFormData.nombre}
                       onChange={(e) =>
                         handleInfoChange("nombre", e.target.value)
                       }
                       disabled={!isEditingInfo}
-                      style={inputStyle(!isEditingInfo)}
+                      style={inputStyle(!isEditingInfo, !!infoErrors.nombre)}
                       placeholder="Tu nombre"
+                      maxLength={30}
                     />
                   </Field>
 
-                  <Field label="Apellidos *">
+                  <Field label="Apellidos *" error={infoErrors.apellido}>
                     <Input
                       value={infoFormData.apellido}
                       onChange={(e) =>
                         handleInfoChange("apellido", e.target.value)
                       }
                       disabled={!isEditingInfo}
-                      style={inputStyle(!isEditingInfo)}
+                      style={inputStyle(!isEditingInfo, !!infoErrors.apellido)}
                       placeholder="Tus apellidos"
+                      maxLength={30}
                     />
                   </Field>
 
                   <Field label="Tipo de identificación *">
                     <Select
                       value={infoFormData.tipoDocumento}
-                      onValueChange={(v) =>
-                        handleInfoChange("tipoDocumento", v)
-                      }
+                      onValueChange={(v) => {
+                        handleInfoChange("tipoDocumento", v);
+                        // Re-filter document number when type changes
+                        if (v !== "PAS" && infoFormData.numeroDocumento) {
+                          const filtered = infoFormData.numeroDocumento.replace(/[^0-9]/g, "");
+                          setInfoFormData((prev) => ({ ...prev, tipoDocumento: v, numeroDocumento: filtered }));
+                        }
+                      }}
                       disabled={!isEditingInfo}
                     >
                       <SelectTrigger
@@ -793,76 +931,81 @@ export function PerfilUsuarioModule() {
                     </Select>
                   </Field>
 
-                  <Field label="Número de documento *">
+                  <Field label="Número de documento *" error={infoErrors.numeroDocumento}>
                     <Input
                       value={infoFormData.numeroDocumento}
                       onChange={(e) =>
                         handleInfoChange("numeroDocumento", e.target.value)
                       }
                       disabled={!isEditingInfo}
-                      style={inputStyle(!isEditingInfo)}
-                      placeholder="Número de documento"
+                      style={inputStyle(!isEditingInfo, !!infoErrors.numeroDocumento)}
+                      placeholder="8 a 15 caracteres"
+                      maxLength={15}
                     />
                   </Field>
 
-                  <Field label="Correo electrónico *">
+                  <Field label="Correo electrónico *" error={infoErrors.email}>
                     <Input
                       type="email"
                       value={infoFormData.email}
                       onChange={(e) =>
                         handleInfoChange("email", e.target.value)
                       }
-                      disabled={!isEditingInfo}
-                      style={inputStyle(!isEditingInfo)}
+                      disabled={true}
+                      style={inputStyle(true, !!infoErrors.email)}
                       placeholder="correo@empresa.co"
                     />
                   </Field>
 
-                  <Field label="Teléfono móvil *">
+                  <Field label="Teléfono móvil *" error={infoErrors.telefono}>
                     <Input
                       value={infoFormData.telefono}
                       onChange={(e) =>
                         handleInfoChange("telefono", e.target.value)
                       }
                       disabled={!isEditingInfo}
-                      style={inputStyle(!isEditingInfo)}
-                      placeholder="+57 300 000 0000"
+                      style={inputStyle(!isEditingInfo, !!infoErrors.telefono)}
+                      placeholder="3001234567"
+                      maxLength={20}
                     />
                   </Field>
 
-                  <Field label="Dirección" full>
+                  <Field label="Dirección *" full error={infoErrors.direccion}>
                     <Input
                       value={infoFormData.direccion}
                       onChange={(e) =>
                         handleInfoChange("direccion", e.target.value)
                       }
                       disabled={!isEditingInfo}
-                      style={inputStyle(!isEditingInfo)}
+                      style={inputStyle(!isEditingInfo, !!infoErrors.direccion)}
                       placeholder="Calle, carrera, número..."
+                      maxLength={30}
                     />
                   </Field>
 
-                  <Field label="Ciudad">
+                  <Field label="Ciudad *" error={infoErrors.ciudad}>
                     <Input
                       value={infoFormData.ciudad}
                       onChange={(e) =>
                         handleInfoChange("ciudad", e.target.value)
                       }
                       disabled={!isEditingInfo}
-                      style={inputStyle(!isEditingInfo)}
+                      style={inputStyle(!isEditingInfo, !!infoErrors.ciudad)}
                       placeholder="Tu ciudad"
+                      maxLength={50}
                     />
                   </Field>
 
-                  <Field label="Departamento">
+                  <Field label="Departamento *" error={infoErrors.departamento}>
                     <Input
                       value={infoFormData.departamento}
                       onChange={(e) =>
                         handleInfoChange("departamento", e.target.value)
                       }
                       disabled={!isEditingInfo}
-                      style={inputStyle(!isEditingInfo)}
+                      style={inputStyle(!isEditingInfo, !!infoErrors.departamento)}
                       placeholder="Antioquia, Cundinamarca..."
+                      maxLength={50}
                     />
                   </Field>
 
@@ -896,50 +1039,190 @@ export function PerfilUsuarioModule() {
                     gap: "16px 20px",
                   }}
                 >
-                  <Field label="Contraseña actual" full>
+                  <Field label="Contraseña actual *" full error={passwordErrors.currentPassword}>
                     <Input
                       type="password"
                       value={passwordFormData.currentPassword}
                       onChange={(e) =>
-                        setPasswordFormData({
-                          ...passwordFormData,
-                          currentPassword: e.target.value,
-                        })
+                        handlePasswordChange("currentPassword", e.target.value)
                       }
-                      style={inputStyle(false)}
+                      style={inputStyle(false, !!passwordErrors.currentPassword)}
                       placeholder="Ingresa tu contraseña actual"
                     />
                   </Field>
 
-                  <Field label="Nueva contraseña">
-                    <Input
-                      type="password"
-                      value={passwordFormData.newPassword}
-                      onChange={(e) =>
-                        setPasswordFormData({
-                          ...passwordFormData,
-                          newPassword: e.target.value,
-                        })
-                      }
-                      style={inputStyle(false)}
-                      placeholder="Mínimo 8 caracteres"
-                    />
+                  <Field label="Nueva contraseña *" error={passwordErrors.newPassword}>
+                    <div style={{ position: "relative" }}>
+                      <Input
+                        type={showNewPassword ? "text" : "password"}
+                        value={passwordFormData.newPassword}
+                        onChange={(e) =>
+                          handlePasswordChange("newPassword", e.target.value)
+                        }
+                        style={{
+                          ...inputStyle(false, !!passwordErrors.newPassword),
+                          paddingRight: 40,
+                        }}
+                        placeholder="Mínimo 8 caracteres"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        style={{
+                          position: "absolute",
+                          right: 10,
+                          top: "50%",
+                          transform: "translateY(-50%)",
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          color: D.textTertiary,
+                          padding: 4,
+                        }}
+                      >
+                        {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                    {/* Password strength bar */}
+                    {passwordFormData.newPassword && (
+                      <div style={{ marginTop: 6 }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: 4,
+                            marginBottom: 4,
+                          }}
+                        >
+                          {[1, 2, 3, 4, 5].map((i) => (
+                            <div
+                              key={i}
+                              style={{
+                                flex: 1,
+                                height: 4,
+                                borderRadius: 2,
+                                background:
+                                  i <= passwordStrength.level
+                                    ? passwordStrength.color
+                                    : D.borderLight,
+                                transition: "background 0.3s ease",
+                              }}
+                            />
+                          ))}
+                        </div>
+                        <p
+                          style={{
+                            margin: 0,
+                            fontSize: 11,
+                            fontWeight: 600,
+                            color: passwordStrength.color,
+                          }}
+                        >
+                          {passwordStrength.label}
+                        </p>
+                      </div>
+                    )}
                   </Field>
 
-                  <Field label="Confirmar contraseña">
-                    <Input
-                      type="password"
-                      value={passwordFormData.confirmPassword}
-                      onChange={(e) =>
-                        setPasswordFormData({
-                          ...passwordFormData,
-                          confirmPassword: e.target.value,
-                        })
-                      }
-                      style={inputStyle(false)}
-                      placeholder="Repite la nueva contraseña"
-                    />
+                  <Field label="Confirmar contraseña *" error={passwordErrors.confirmPassword}>
+                    <div style={{ position: "relative" }}>
+                      <Input
+                        type={showConfirmPassword ? "text" : "password"}
+                        value={passwordFormData.confirmPassword}
+                        onChange={(e) =>
+                          handlePasswordChange("confirmPassword", e.target.value)
+                        }
+                        style={{
+                          ...inputStyle(false, !!passwordErrors.confirmPassword),
+                          paddingRight: 40,
+                        }}
+                        placeholder="Repite la nueva contraseña"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        style={{
+                          position: "absolute",
+                          right: 10,
+                          top: "50%",
+                          transform: "translateY(-50%)",
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          color: D.textTertiary,
+                          padding: 4,
+                        }}
+                      >
+                        {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
                   </Field>
+                </div>
+
+                {/* Password requirements hint */}
+                <div
+                  style={{
+                    marginTop: 16,
+                    padding: "12px 16px",
+                    background: D.navyXlight,
+                    borderRadius: 8,
+                    border: `1px solid ${D.borderLight}`,
+                  }}
+                >
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: 11,
+                      fontWeight: 600,
+                      color: D.textSecond,
+                      marginBottom: 6,
+                    }}
+                  >
+                    La contraseña debe cumplir:
+                  </p>
+                  {[
+                    { rule: "Mínimo 8 caracteres", met: passwordFormData.newPassword.length >= 8 },
+                    { rule: "Al menos una letra minúscula", met: /[a-z]/.test(passwordFormData.newPassword) },
+                    { rule: "Al menos una letra mayúscula", met: /[A-Z]/.test(passwordFormData.newPassword) },
+                    { rule: "Al menos un carácter especial (!@#$%...)", met: /[!@#$%^&*(),.?":{}|<>]/.test(passwordFormData.newPassword) },
+                  ].map(({ rule, met }) => (
+                    <div
+                      key={rule}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                        marginTop: 3,
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: 6,
+                          height: 6,
+                          borderRadius: "50%",
+                          background: !passwordFormData.newPassword
+                            ? D.textTertiary
+                            : met
+                            ? D.success
+                            : D.danger,
+                          transition: "background 0.2s",
+                        }}
+                      />
+                      <span
+                        style={{
+                          fontSize: 11,
+                          color: !passwordFormData.newPassword
+                            ? D.textTertiary
+                            : met
+                            ? D.success
+                            : D.danger,
+                          fontWeight: met ? 500 : 400,
+                          transition: "color 0.2s",
+                        }}
+                      >
+                        {rule}
+                      </span>
+                    </div>
+                  ))}
                 </div>
 
                 <div
@@ -951,13 +1234,14 @@ export function PerfilUsuarioModule() {
                   }}
                 >
                   <BtnGhost
-                    onClick={() =>
+                    onClick={() => {
                       setPasswordFormData({
                         currentPassword: "",
                         newPassword: "",
                         confirmPassword: "",
-                      })
-                    }
+                      });
+                      setPasswordErrors({});
+                    }}
                   >
                     Cancelar
                   </BtnGhost>
