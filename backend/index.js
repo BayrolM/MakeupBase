@@ -33,6 +33,8 @@ const corsOptions = {
     // Permitir peticiones sin origin (Postman, curl, SSR)
     if (!origin) return callback(null, true);
     if (allowedOrigins.includes(origin)) return callback(null, true);
+    // Permitir cualquier localhost (Flutter web usa puertos random)
+    if (/^http:\/\/localhost:\d+$/.test(origin)) return callback(null, true);
     callback(new Error(`CORS: origen no permitido → ${origin}`));
   },
   credentials: true,
