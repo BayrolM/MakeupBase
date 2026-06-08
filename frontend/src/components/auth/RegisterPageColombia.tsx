@@ -77,12 +77,14 @@ interface RegisterPageProps {
     ciudad: string;
     departamento: string;
   }) => void | Promise<void>;
+  onVerifyEmail?: (email: string, code: string) => Promise<boolean>;
   onNavigateToLogin: () => void;
   onBack?: () => void;
 }
 
 export function RegisterPageColombia({
   onRegister,
+  onVerifyEmail,
   onNavigateToLogin,
   onBack,
 }: RegisterPageProps) {
@@ -105,6 +107,7 @@ export function RegisterPageColombia({
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
+  const [verificationCode, setVerificationCode] = useState("");
 
   const getFieldsForStep = (step: number) => {
     switch (step) {
@@ -212,19 +215,40 @@ export function RegisterPageColombia({
 
     setIsLoading(true);
     try {
-      await onRegister({
-        nombre: formData.nombres.trim(),
-        apellido: formData.apellidos.trim(),
-        email: formData.email.trim(),
-        telefono: formData.telefono.trim(),
-        password: formData.password,
-        rol: "cliente",
-        tipoDocumento: formData.tipoDocumento,
-        documento: formData.numeroDocumento.trim(),
-        direccion: formData.direccion.trim(),
-        ciudad: formData.ciudad.trim(),
-        departamento: formData.departamento.trim(),
-      });
+      if (currentStep === 4) {
+        if (!verificationCode || verificationCode.length !== 6) {
+          setErrors({ verificationCode: "Ingresa el código de 6 dígitos" });
+          setIsLoading(false);
+          return;
+        }
+        if (onVerifyEmail) {
+          const success = await onVerifyEmail(formData.email.trim(), verificationCode);
+          if (success) {
+            // Success handled by parent (auto-login)
+          } else {
+            setErrors({ verificationCode: "Código incorrecto. Intenta de nuevo." });
+          }
+        }
+      } else {
+        await onRegister({
+          nombre: formData.nombres.trim(),
+          apellido: formData.apellidos.trim(),
+          email: formData.email.trim(),
+          telefono: formData.telefono.trim(),
+          password: formData.password,
+          rol: "cliente",
+          tipoDocumento: formData.tipoDocumento,
+          documento: formData.numeroDocumento.trim(),
+          direccion: formData.direccion.trim(),
+          ciudad: formData.ciudad.trim(),
+          departamento: formData.departamento.trim(),
+        });
+        // Si no hay error, pasamos al paso 4 (verificación)
+        setCurrentStep(4);
+      }
+    } catch (error: any) {
+      // Los errores se manejan en el componente padre con Toast,
+      // pero si queremos prevenir avanzar, el try/catch ayuda.
     } finally {
       setIsLoading(false);
     }
@@ -1234,6 +1258,64 @@ export function RegisterPageColombia({
                   </>
                 )}
 
+                {currentStep === 4 && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "24px", alignItems: "center", textAlign: "center", padding: "20px 0" }}>
+                    <div style={{
+                      width: "64px",
+                      height: "64px",
+                      borderRadius: "50%",
+                      background: C.accentSoft,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: C.pink,
+                      marginBottom: "8px"
+                    }}>
+                      <Mail style={{ width: 32, height: 32 }} />
+                    </div>
+                    <div>
+                      <h3 style={{ fontSize: "20px", fontWeight: 700, color: C.textDark, marginBottom: "8px" }}>
+                        Verifica tu correo
+                      </h3>
+                      <p style={{ color: C.textMuted, fontSize: "14px", lineHeight: 1.6, maxWidth: "320px", margin: "0 auto" }}>
+                        Hemos enviado un código de 6 dígitos a <strong>{formData.email}</strong>. Ingrésalo para activar tu cuenta.
+                      </p>
+                    </div>
+
+                    <div style={{ width: "100%", maxWidth: "240px", marginTop: "12px" }}>
+                      <input
+                        type="text"
+                        value={verificationCode}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/[^0-9]/g, "").slice(0, 6);
+                          setVerificationCode(val);
+                          setErrors({});
+                        }}
+                        placeholder="000000"
+                        style={{
+                          width: "100%",
+                          height: "56px",
+                          borderRadius: "14px",
+                          border: `2px solid ${errors.verificationCode ? C.danger : C.pinkSoft}`,
+                          fontSize: "24px",
+                          letterSpacing: "8px",
+                          textAlign: "center",
+                          fontWeight: 700,
+                          color: C.pink,
+                          outline: "none",
+                          background: C.white,
+                          transition: "all 0.3s ease"
+                        }}
+                      />
+                      {errors.verificationCode && (
+                        <p style={{ color: C.danger, fontSize: "12px", fontWeight: 600, margin: 0, marginTop: "8px" }}>
+                          {errors.verificationCode}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 <div style={{ display: "flex", gap: "12px", marginTop: "16px" }}>
                   {currentStep > 1 && (
                     <button
@@ -1303,7 +1385,7 @@ export function RegisterPageColombia({
                     >
                       Siguiente
                     </button>
-                  ) : (
+                  ) : currentStep === 3 ? (
                     <button
                       type="submit"
                       disabled={isLoading}
@@ -1361,6 +1443,31 @@ export function RegisterPageColombia({
                       ) : (
                         "Crear mi cuenta"
                       )}
+                    </button>
+                  ) : (
+                    <button
+                      type="submit"
+                      disabled={isLoading || verificationCode.length !== 6}
+                      style={{
+                        flex: 1,
+                        height: "52px",
+                        borderRadius: "14px",
+                        background: "linear-gradient(135deg, #7b1347 0%, #a85d77 100%)",
+                        color: C.white,
+                        border: "none",
+                        cursor: isLoading || verificationCode.length !== 6 ? "not-allowed" : "pointer",
+                        fontSize: "14px",
+                        fontWeight: 600,
+                        letterSpacing: "0.5px",
+                        boxShadow: "0 8px 24px rgba(123, 19, 71, 0.2)",
+                        transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                        opacity: isLoading || verificationCode.length !== 6 ? 0.7 : 1,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      {isLoading ? "Verificando..." : "Verificar cuenta"}
                     </button>
                   )}
                 </div>

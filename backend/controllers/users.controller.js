@@ -1,5 +1,6 @@
 import sql from "../config/db.js";
 import bcrypt from "bcryptjs";
+import * as emailService from "../services/email.service.js";
 
 export const getProfile = async (req, res) => {
   try {
@@ -89,27 +90,55 @@ export const updateProfile = async (req, res) => {
   }
 };
 
-export const changePassword = async (req, res) => {
+export const requestPasswordChangeCode = async (req, res) => {
   try {
-    const { currentPassword, newPassword } = req.body;
-
     const result = await sql`
-      SELECT password_hash FROM usuarios 
+      SELECT id_usuario, nombre, email FROM usuarios 
       WHERE id_usuario = ${req.user.id_usuario}
     `;
-
     if (result.length === 0) {
       return res.status(404).json({ message: "Usuario no encontrado" });
     }
+    const user = result[0];
 
-    const isMatch = await bcrypt.compare(
-      currentPassword,
-      result[0].password_hash,
-    );
-    if (!isMatch) {
-      return res
-        .status(400)
-        .json({ message: "La contraseña actual es incorrecta" });
+    const codigo = Math.floor(100000 + Math.random() * 900000).toString();
+
+    await sql`
+      INSERT INTO usuario_verificaciones (id_usuario, codigo_verificacion, email_verificado)
+      VALUES (${user.id_usuario}, ${codigo}, true)
+      ON CONFLICT (id_usuario) DO UPDATE 
+      SET codigo_verificacion = EXCLUDED.codigo_verificacion
+    `;
+
+    await emailService.enviarCodigoCambioPassword({
+      email: user.email,
+      nombre: user.nombre,
+      codigo
+    });
+
+    return res.json({ message: "Código enviado correctamente" });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Error al enviar el código" });
+  }
+};
+
+export const changePassword = async (req, res) => {
+  try {
+    const { newPassword, verificationCode } = req.body;
+
+    const verif = await sql`
+      SELECT codigo_verificacion 
+      FROM usuario_verificaciones 
+      WHERE id_usuario = ${req.user.id_usuario}
+    `;
+
+    if (verif.length === 0) {
+      return res.status(400).json({ message: "No se ha solicitado un código de verificación" });
+    }
+
+    if (!verif[0].codigo_verificacion || verif[0].codigo_verificacion !== verificationCode) {
+      return res.status(400).json({ message: "Código de verificación incorrecto" });
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -120,6 +149,8 @@ export const changePassword = async (req, res) => {
       SET password_hash = ${hashedPassword}
       WHERE id_usuario = ${req.user.id_usuario}
     `;
+
+    await sql`UPDATE usuario_verificaciones SET codigo_verificacion = NULL WHERE id_usuario = ${req.user.id_usuario}`;
 
     return res.json({ message: "Contraseña actualizada correctamente" });
   } catch (error) {

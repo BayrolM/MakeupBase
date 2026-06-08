@@ -433,16 +433,79 @@ function AppContent() {
         departamento: data.departamento,
       });
 
-      toast.success("¡Registro exitoso!", {
-        description: "Ahora puedes iniciar sesión",
+      toast.success("¡Casi listo!", {
+        description: "Revisa tu correo para ingresar el código de verificación",
       });
 
-      // Redirigir a login
-      setAuthPage("login");
+      // Ya no redirigimos al login inmediatamente, el componente avanzará al paso 4
     } catch (error: any) {
       toast.error("Error al registrar", {
         description: error.message,
       });
+      throw error; // Re-lanzar para que RegisterPageColombia no avance al paso 4
+    }
+  };
+
+  const handleVerifyEmail = async (email: string, code: string) => {
+    try {
+      setAuthTransitionMessage("Verificando cuenta...");
+      setIsAuthTransitioning(true);
+
+      await authService.verifyEmail(email, code);
+
+      // Si la verificación fue exitosa, el token ya se guardó
+      // Ahora obtenemos el perfil como en el login
+      const profile = await authService.getProfile();
+
+      const user = {
+        id: profile.id_usuario.toString(),
+        nombres: profile.nombres,
+        apellidos: profile.apellidos,
+        email: profile.email,
+        telefono: profile.telefono,
+        direccion: profile.direccion || "",
+        ciudad: profile.ciudad || "",
+        departamento: profile.departamento || "",
+        id_rol: Number(profile.id_rol),
+        foto_perfil: profile.foto_perfil,
+        rol:
+          Number(profile.id_rol) === 1
+            ? ("admin" as const)
+            : Number(profile.id_rol) === 2
+            ? ("cliente" as const)
+            : ("vendedor" as const),
+        permisos: profile.permisos || [],
+        estado: "activo" as const,
+        tipoDocumento: "CC" as const,
+        numeroDocumento: "",
+        passwordHash: "",
+        fechaCreacion: new Date().toISOString(),
+      };
+
+      setCurrentUser(user);
+      setIsAuthenticated(true);
+      await loadPublicData();
+      await loadPrivateData(user.rol);
+
+      if (user.rol === "cliente") {
+        setCurrentRoute("inicio");
+      } else {
+        setCurrentRoute("dashboard");
+      }
+
+      setIsAuthTransitioning(false);
+      setShowAuthPage(false); // Cerramos el auth modal/page
+      toast.success("¡Cuenta activada!", {
+        description: `Bienvenido, ${user.nombres}`,
+      });
+
+      return true;
+    } catch (error: any) {
+      setIsAuthTransitioning(false);
+      toast.error("Error en verificación", {
+        description: error.message || "Código inválido",
+      });
+      return false;
     }
   };
 
@@ -583,6 +646,7 @@ function AppContent() {
         authContent = (
           <RegisterPageColombia
             onRegister={handleRegister}
+            onVerifyEmail={handleVerifyEmail}
             onNavigateToLogin={() => setAuthPage("login")}
             onBack={() => setShowAuthPage(false)}
           />

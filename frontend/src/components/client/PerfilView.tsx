@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useStore } from '../../lib/store';
-import { UserCircle, CheckCircle, Lock, Eye, EyeOff, Camera, Loader2, Save, X } from 'lucide-react';
+import { UserCircle, CheckCircle, Lock, Eye, EyeOff, Camera, Loader2, Save, X, Check, Mail } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog';
 import { authService } from '../../services/authService';
 import { supabase } from '../../lib/supabase';
@@ -23,6 +23,42 @@ const C = {
   success: '#10b981',
 };
 
+
+// Luxury UI Form Components
+const InputField = ({ label, id, value, onChange, disabled, error, type = "text", placeholder = "" }: any) => (
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+    <label htmlFor={id} style={{ fontSize: '13px', fontWeight: 600, color: C.textMuted }}>
+      {label} <span style={{ color: C.danger }}>*</span>
+    </label>
+    <input
+      id={id}
+      type={type}
+      value={value}
+      onChange={onChange}
+      disabled={disabled}
+      placeholder={placeholder}
+      style={{
+        width: '100%', height: '44px', borderRadius: '12px',
+        border: `1px solid ${error ? C.danger : C.accentDark}`,
+        padding: '0 16px', outline: 'none', fontSize: '14px',
+        color: disabled ? C.textMuted : C.textDark,
+        background: disabled ? '#f9fafb' : C.white,
+        boxSizing: 'border-box',
+        transition: 'all 0.2s',
+      }}
+      onFocus={(e) => {
+        if(!disabled) e.currentTarget.style.borderColor = C.accentDeep;
+        if(!disabled) e.currentTarget.style.boxShadow = `0 0 0 3px ${C.accent}`;
+      }}
+      onBlur={(e) => {
+        if(!disabled) e.currentTarget.style.borderColor = error ? C.danger : C.accentDark;
+        e.currentTarget.style.boxShadow = 'none';
+      }}
+    />
+    {error && <p style={{ color: C.danger, fontSize: '12px', margin: 0 }}>{error}</p>}
+  </div>
+);
+
 export function PerfilView() {
   const { currentUser, setCurrentUser } = useStore();
   const [isEditing, setIsEditing] = useState(false);
@@ -33,11 +69,12 @@ export function PerfilView() {
   
   // Password Change State
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
+  const [passwordStep, setPasswordStep] = useState(1);
+  const [isSendingCode, setIsSendingCode] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [passwordData, setPasswordData] = useState({
-    currentPassword: '',
+    codigoVerificacion: '',
     newPassword: '',
     confirmPassword: '',
   });
@@ -186,15 +223,30 @@ export function PerfilView() {
     }
   };
 
+  const handleSendCode = async () => {
+    setIsSendingCode(true);
+    try {
+      await authService.requestPasswordChangeCode();
+      toast.success('Código enviado al correo');
+      setPasswordStep(2);
+    } catch (error: any) {
+      toast.error('Error al solicitar código', {
+        description: error.message || 'Inténtalo de nuevo'
+      });
+    } finally {
+      setIsSendingCode(false);
+    }
+  };
+
   const handleChangePassword = async () => {
     const newErrors: Record<string, string> = {};
 
-    if (!passwordData.currentPassword) newErrors.currentPassword = 'La contraseña actual es obligatoria';
+    if (!passwordData.codigoVerificacion) newErrors.codigoVerificacion = 'El código es obligatorio';
     
     if (!passwordData.newPassword) {
       newErrors.newPassword = 'La nueva contraseña es obligatoria';
-    } else if (passwordData.newPassword.length < 6) {
-      newErrors.newPassword = 'La contraseña debe tener al menos 6 caracteres';
+    } else if (passwordData.newPassword.length < 8 || !/(?=.*[a-z])(?=.*[A-Z])(?=.*\W)/.test(passwordData.newPassword)) {
+      newErrors.newPassword = 'La contraseña no cumple con los requisitos';
     }
     
     if (passwordData.newPassword !== passwordData.confirmPassword) {
@@ -210,53 +262,21 @@ export function PerfilView() {
     setPasswordErrors({});
 
     try {
-      await authService.changePassword(passwordData.currentPassword, passwordData.newPassword);
+      await authService.changePassword(passwordData.newPassword, passwordData.codigoVerificacion);
       toast.success('Contraseña actualizada correctamente');
       setIsPasswordDialogOpen(false);
-      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setPasswordStep(1);
+      setPasswordData({ codigoVerificacion: '', newPassword: '', confirmPassword: '' });
     } catch (error: any) {
       toast.error('Error al cambiar contraseña', {
-        description: error.message || 'La contraseña actual es incorrecta'
+        description: error.message || 'El código es incorrecto o ha expirado'
       });
     } finally {
       setIsChangingPassword(false);
     }
   };
 
-  // Luxury UI Form Components
-  const InputField = ({ label, id, value, onChange, disabled, error, type = "text", placeholder = "" }: any) => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-      <label htmlFor={id} style={{ fontSize: '13px', fontWeight: 600, color: C.textMuted }}>
-        {label} <span style={{ color: C.danger }}>*</span>
-      </label>
-      <input
-        id={id}
-        type={type}
-        value={value}
-        onChange={onChange}
-        disabled={disabled}
-        placeholder={placeholder}
-        style={{
-          width: '100%', height: '44px', borderRadius: '12px',
-          border: `1px solid ${error ? C.danger : C.accentDark}`,
-          padding: '0 16px', outline: 'none', fontSize: '14px',
-          color: disabled ? C.textMuted : C.textDark,
-          background: disabled ? '#f9fafb' : C.white,
-          boxSizing: 'border-box',
-          transition: 'all 0.2s',
-        }}
-        onFocus={(e) => {
-          if(!disabled) e.currentTarget.style.borderColor = C.accentDeep;
-          if(!disabled) e.currentTarget.style.boxShadow = `0 0 0 3px ${C.accent}`;
-        }}
-        onBlur={(e) => {
-          if(!disabled) e.currentTarget.style.borderColor = error ? C.danger : C.accentDark;
-          e.currentTarget.style.boxShadow = 'none';
-        }}
-      />
-      {error && <p style={{ color: C.danger, fontSize: '12px', margin: 0 }}>{error}</p>}
-    </div>
-  );
+  // Removed inline InputField definition
 
   return (
     <div style={{ minHeight: '100vh', background: C.bgSoft, fontFamily: "'DM Sans', sans-serif" }}>
@@ -540,87 +560,198 @@ export function PerfilView() {
 
       {/* Password Change Dialog */}
       <Dialog open={isPasswordDialogOpen} onOpenChange={(open: boolean) => {
-        if (!open && !isChangingPassword) {
+        if (!open && !isChangingPassword && !isSendingCode) {
           setIsPasswordDialogOpen(false);
-          setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+          setPasswordStep(1);
+          setPasswordData({ codigoVerificacion: '', newPassword: '', confirmPassword: '' });
           setPasswordErrors({});
         }
       }}>
-        <DialogContent style={{ background: C.white, border: `1px solid ${C.accent}`, borderRadius: '24px' }}>
-          <DialogHeader>
-            <DialogTitle style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '24px', color: C.textDark }}>Cambiar Contraseña</DialogTitle>
-            <DialogDescription style={{ color: C.textMuted }}>
-              Ingresa tu contraseña actual y la nueva que deseas utilizar.
+        <DialogContent className="p-0 overflow-hidden shadow-2xl border-0" style={{ background: C.white, borderRadius: '24px', maxWidth: '450px', width: '95vw' }}>
+          {/* Header */}
+          <div style={{ background: `linear-gradient(135deg, ${C.textDark} 0%, ${C.accentDeep} 100%)`, padding: '32px 24px', textAlign: 'center' }}>
+            <div style={{ width: '56px', height: '56px', background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(10px)', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+              <Lock style={{ width: 28, height: 28, color: C.white }} />
+            </div>
+            <DialogTitle style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '28px', color: C.white, margin: 0, fontWeight: 600 }}>Cambiar Contraseña</DialogTitle>
+            <DialogDescription style={{ color: 'rgba(255,255,255,0.85)', fontSize: '14px', marginTop: '6px' }}>
+              {passwordStep === 1 ? 'Protege tu cuenta verificando tu identidad.' : 'Ingresa el código enviado y tu nueva contraseña segura.'}
             </DialogDescription>
-          </DialogHeader>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', paddingTop: '16px' }}>
-            <div style={{ position: 'relative' }}>
-              <InputField 
-                label="Contraseña Actual" id="currentPassword" 
-                type={showCurrentPassword ? "text" : "password"} 
-                value={passwordData.currentPassword} 
-                onChange={(e: any) => setPasswordData({ ...passwordData, currentPassword: e.target.value })} 
-                disabled={isChangingPassword} error={passwordErrors.currentPassword} 
-              />
-              <button
-                type="button"
-                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                style={{ position: 'absolute', right: '16px', top: '38px', background: 'none', border: 'none', cursor: 'pointer', color: C.textMuted }}
-              >
-                {showCurrentPassword ? <EyeOff style={{ width: 16, height: 16 }} /> : <Eye style={{ width: 16, height: 16 }} />}
-              </button>
-            </div>
-
-            <div style={{ position: 'relative' }}>
-              <InputField 
-                label="Nueva Contraseña" id="newPassword" 
-                type={showNewPassword ? "text" : "password"} 
-                value={passwordData.newPassword} 
-                onChange={(e: any) => setPasswordData({ ...passwordData, newPassword: e.target.value })} 
-                disabled={isChangingPassword} error={passwordErrors.newPassword} 
-              />
-              <button
-                type="button"
-                onClick={() => setShowNewPassword(!showNewPassword)}
-                style={{ position: 'absolute', right: '16px', top: '38px', background: 'none', border: 'none', cursor: 'pointer', color: C.textMuted }}
-              >
-                {showNewPassword ? <EyeOff style={{ width: 16, height: 16 }} /> : <Eye style={{ width: 16, height: 16 }} />}
-              </button>
-            </div>
-
-            <InputField 
-              label="Confirmar Nueva Contraseña" id="confirmPassword" 
-              type="password" value={passwordData.confirmPassword} 
-              onChange={(e: any) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })} 
-              disabled={isChangingPassword} error={passwordErrors.confirmPassword} 
-            />
           </div>
 
-          <DialogFooter style={{ marginTop: '24px', gap: '12px' }}>
-            <button
-              onClick={() => setIsPasswordDialogOpen(false)}
-              disabled={isChangingPassword}
-              style={{
-                background: 'none', color: C.textDark, border: `1px solid ${C.accentDark}`,
-                padding: '12px 24px', borderRadius: '10px', fontSize: '14px', fontWeight: 600, cursor: 'pointer'
-              }}
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={handleChangePassword}
-              disabled={isChangingPassword}
-              style={{
-                background: `linear-gradient(135deg, ${C.textDark} 0%, ${C.accentDeep} 100%)`,
-                color: C.white, border: 'none', padding: '12px 24px', borderRadius: '10px',
-                fontSize: '14px', fontWeight: 600, cursor: isChangingPassword ? 'not-allowed' : 'pointer',
-                display: 'flex', alignItems: 'center', gap: '8px'
-              }}
-            >
-              {isChangingPassword ? 'Cambiando...' : 'Cambiar Contraseña'}
-            </button>
-          </DialogFooter>
+          <div style={{ padding: '24px 32px 32px', background: C.white }}>
+            {passwordStep === 1 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', textAlign: 'center' }}>
+                <p style={{ color: C.textDark, fontSize: '15px', lineHeight: '1.6' }}>
+                  Para garantizar la seguridad de tu cuenta, te enviaremos un código de verificación de 6 dígitos a tu correo electrónico.
+                </p>
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '12px' }}>
+                  <button
+                    onClick={() => setIsPasswordDialogOpen(false)}
+                    disabled={isSendingCode}
+                    style={{
+                      flex: 1,
+                      background: 'none', color: C.textDark, border: `1px solid ${C.accentDark}`,
+                      padding: '14px 24px', borderRadius: '12px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = C.bgSoft}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleSendCode}
+                    disabled={isSendingCode}
+                    style={{
+                      flex: 1,
+                      background: `linear-gradient(135deg, ${C.textDark} 0%, ${C.accentDeep} 100%)`,
+                      color: C.white, border: 'none', padding: '14px 24px', borderRadius: '12px',
+                      fontSize: '14px', fontWeight: 600, cursor: isSendingCode ? 'not-allowed' : 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                      boxShadow: `0 4px 12px ${C.shadowSm}`, transition: 'all 0.2s', opacity: isSendingCode ? 0.7 : 1
+                    }}
+                  >
+                    {isSendingCode ? <Loader2 style={{ width: 16, height: 16 }} className="animate-spin" /> : <Mail style={{ width: 16, height: 16 }} />}
+                    {isSendingCode ? 'Enviando...' : 'Enviar Código'}
+                  </button>
+                </div>
+              </div>
+            ) : passwordStep === 2 ? (
+              <>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  <p style={{ color: C.textDark, fontSize: '15px', lineHeight: '1.6', textAlign: 'center', marginBottom: '8px' }}>
+                    Revisa tu bandeja de entrada e ingresa el código numérico.
+                  </p>
+                  <InputField 
+                    label="Código de Verificación" id="codigoVerificacion" 
+                    type="text" placeholder="Ej: 123456"
+                    value={passwordData.codigoVerificacion} 
+                    onChange={(e: any) => setPasswordData({ ...passwordData, codigoVerificacion: e.target.value.replace(/\D/g, '').slice(0, 6) })} 
+                    disabled={isChangingPassword} error={passwordErrors.codigoVerificacion} 
+                  />
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '32px' }}>
+                  <button
+                    onClick={() => {
+                      setPasswordStep(1);
+                      setPasswordData({ codigoVerificacion: '', newPassword: '', confirmPassword: '' });
+                      setPasswordErrors({});
+                    }}
+                    disabled={isChangingPassword}
+                    style={{
+                      flex: 1,
+                      background: 'none', color: C.textDark, border: `1px solid ${C.accentDark}`,
+                      padding: '14px 24px', borderRadius: '12px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = C.bgSoft}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+                  >
+                    Atrás
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (!passwordData.codigoVerificacion || passwordData.codigoVerificacion.length !== 6) {
+                        setPasswordErrors({ codigoVerificacion: 'El código debe tener 6 dígitos' });
+                      } else {
+                        setPasswordErrors({});
+                        setPasswordStep(3);
+                      }
+                    }}
+                    disabled={isChangingPassword}
+                    style={{
+                      flex: 1,
+                      background: `linear-gradient(135deg, ${C.textDark} 0%, ${C.accentDeep} 100%)`,
+                      color: C.white, border: 'none', padding: '14px 24px', borderRadius: '12px',
+                      fontSize: '14px', fontWeight: 600, cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                      boxShadow: `0 4px 12px ${C.shadowSm}`, transition: 'all 0.2s'
+                    }}
+                  >
+                    Continuar
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  <div style={{ position: 'relative' }}>
+                    <InputField 
+                      label="Nueva Contraseña" id="newPassword" 
+                      type={showNewPassword ? "text" : "password"} 
+                      value={passwordData.newPassword} 
+                      onChange={(e: any) => setPasswordData({ ...passwordData, newPassword: e.target.value })} 
+                      disabled={isChangingPassword} error={passwordErrors.newPassword} 
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      style={{ position: 'absolute', right: '16px', top: '24px', background: 'none', border: 'none', cursor: 'pointer', color: C.textMuted, height: '44px', display: 'flex', alignItems: 'center' }}
+                    >
+                      {showNewPassword ? <EyeOff style={{ width: 18, height: 18 }} /> : <Eye style={{ width: 18, height: 18 }} />}
+                    </button>
+                  </div>
+                  
+                  {/* Checklist */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '-8px', marginBottom: '4px' }}>
+                    {[
+                      { met: passwordData.newPassword.length >= 8, text: 'Mínimo 8 caracteres' },
+                      { met: /[A-Z]/.test(passwordData.newPassword), text: 'Al menos una mayúscula' },
+                      { met: /[a-z]/.test(passwordData.newPassword), text: 'Al menos una minúscula' },
+                      { met: /\W/.test(passwordData.newPassword), text: 'Carácter especial' }
+                    ].map((req, i) => (
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px', color: req.met ? C.success : C.textMuted, fontSize: '12px', transition: 'all 0.3s' }}>
+                        {req.met ? <Check style={{ width: 12, height: 12 }} /> : <div style={{ width: 12, height: 12, borderRadius: '50%', border: `1.5px solid ${C.textMuted}`, opacity: 0.4 }} />}
+                        <span style={{ fontWeight: req.met ? 600 : 400 }}>{req.text}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <InputField 
+                    label="Confirmar Nueva Contraseña" id="confirmPassword" 
+                    type="password" value={passwordData.confirmPassword} 
+                    onChange={(e: any) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })} 
+                    disabled={isChangingPassword} error={passwordErrors.confirmPassword} 
+                  />
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '32px' }}>
+                  <button
+                    onClick={() => {
+                      setPasswordStep(2);
+                      setPasswordErrors({});
+                    }}
+                    disabled={isChangingPassword}
+                    style={{
+                      flex: 1,
+                      background: 'none', color: C.textDark, border: `1px solid ${C.accentDark}`,
+                      padding: '14px 24px', borderRadius: '12px', fontSize: '14px', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = C.bgSoft}
+                    onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+                  >
+                    Atrás
+                  </button>
+                  <button
+                    onClick={handleChangePassword}
+                    disabled={isChangingPassword}
+                    style={{
+                      flex: 1,
+                      background: `linear-gradient(135deg, ${C.textDark} 0%, ${C.accentDeep} 100%)`,
+                      color: C.white, border: 'none', padding: '14px 24px', borderRadius: '12px',
+                      fontSize: '14px', fontWeight: 600, cursor: isChangingPassword ? 'not-allowed' : 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                      boxShadow: `0 4px 12px ${C.shadowSm}`, transition: 'all 0.2s', opacity: isChangingPassword ? 0.7 : 1
+                    }}
+                  >
+                    {isChangingPassword ? <Loader2 style={{ width: 16, height: 16 }} className="animate-spin" /> : <Lock style={{ width: 16, height: 16 }} />}
+                    {isChangingPassword ? 'Actualizando...' : 'Actualizar'}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>

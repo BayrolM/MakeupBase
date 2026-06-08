@@ -1,4 +1,6 @@
 import * as ordersService from "../services/orders.service.js";
+import * as emailService from "../services/email.service.js";
+import sql from "../config/db.js";
 
 // Controlador para que el cliente cancele su propio pedido
 export const cancelarOrdenPorCliente = async (req, res) => {
@@ -57,6 +59,19 @@ export const crearOrden = async (req, res) => {
       metodo_pago,
       items, 
     });
+
+    // Enviar email de confirmación de pedido
+    if (req.user.email) {
+      const [userData] = await sql`SELECT nombre FROM usuarios WHERE id_usuario = ${req.user.id_usuario}`;
+      emailService.enviarConfirmacionPedido({
+        email: req.user.email,
+        nombre: userData?.nombre || "Cliente",
+        idPedido: orden.id_pedido,
+        total: orden.total,
+        direccion,
+      }).catch(e => console.error("Error email confirmación:", e));
+    }
+
     return res.status(201).json({
       ok: true,
       message: "Orden creada exitosamente",
@@ -96,6 +111,22 @@ export const crearOrdenDirecta = async (req, res) => {
       metodo_pago: metodo_pago || 'efectivo',
       items,
     });
+
+    // Enviar email de confirmación al cliente
+    try {
+      const [clienteData] = await sql`SELECT email, nombre FROM usuarios WHERE id_usuario = ${id_cliente}`;
+      if (clienteData?.email) {
+        emailService.enviarConfirmacionPedido({
+          email: clienteData.email,
+          nombre: clienteData.nombre || "Cliente",
+          idPedido: orden.id_pedido,
+          total: orden.total,
+          direccion: direccion || 'N/A',
+        }).catch(e => console.error("Error email confirmación directa:", e));
+      }
+    } catch (e) {
+      console.error("Error preparando email confirmación directa:", e);
+    }
 
     return res.status(201).json({
       ok: true,
@@ -227,6 +258,23 @@ export const confirmarPago = async (req, res) => {
     const { pago_confirmado, id_usuario_empleado } = req.body;
 
     const orden = await ordersService.confirmarPago(parseInt(id, 10), pago_confirmado, id_usuario_empleado);
+
+    // Enviar email de pago confirmado
+    if (pago_confirmado && orden.id_usuario_cliente) {
+      try {
+        const [clienteData] = await sql`SELECT email, nombre FROM usuarios WHERE id_usuario = ${orden.id_usuario_cliente}`;
+        if (clienteData?.email) {
+          emailService.enviarPagoConfirmado({
+            email: clienteData.email,
+            nombre: clienteData.nombre || "Cliente",
+            idPedido: parseInt(id, 10),
+            total: orden.total,
+          }).catch(e => console.error("Error email pago confirmado:", e));
+        }
+      } catch (e) {
+        console.error("Error preparando email pago confirmado:", e);
+      }
+    }
 
     return res.json({ 
       ok: true, 

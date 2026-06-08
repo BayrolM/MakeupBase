@@ -77,6 +77,26 @@ export const authService = {
   },
 
   /**
+   * Verificar correo electrónico con código
+   */
+  async verifyEmail(email: string, code: string): Promise<any> {
+    try {
+      const response = await api.post("/auth/verify-email", { email, code });
+      const { token } = response.data;
+
+      if (token) {
+        localStorage.setItem("authToken", token);
+      }
+
+      return response.data;
+    } catch (error: any) {
+      const message =
+        error.response?.data?.message || "Error al verificar el correo";
+      throw new Error(message);
+    }
+  },
+
+  /**
    * Obtener perfil del usuario autenticado
    */
   async getProfile(): Promise<UserProfile> {
@@ -104,11 +124,24 @@ export const authService = {
   },
 
   /**
+   * Solicitar código para cambiar contraseña
+   */
+  async requestPasswordChangeCode(): Promise<void> {
+    try {
+      await api.post("/users/profile/password/code");
+    } catch (error: any) {
+      const message =
+        error.response?.data?.message || "Error al solicitar el código";
+      throw new Error(message);
+    }
+  },
+
+  /**
    * Cambiar contraseña
    */
-  async changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  async changePassword(newPassword: string, verificationCode: string): Promise<void> {
     try {
-      await api.put("/users/profile/password", { currentPassword, newPassword });
+      await api.put("/users/profile/password", { newPassword, verificationCode });
     } catch (error: any) {
       const message =
         error.response?.data?.message || "Error al cambiar la contraseña";

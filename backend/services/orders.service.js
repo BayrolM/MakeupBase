@@ -1,4 +1,5 @@
 import sql from "../config/db.js";
+import * as emailService from "./email.service.js";
 
 /**
  * Crear una nueva orden desde el carrito
@@ -379,11 +380,23 @@ export const actualizarEstadoPedido = async (
       ? parseInt(id_usuario_empleado, 10)
       : null;
 
-  return await sql.begin(async (sql) => {
-    // 1. Obtener datos del pedido
-    const [pedido] =
-      await sql`SELECT * FROM pedidos WHERE id_pedido = ${id_pedido}`;
+  let clienteEmail = null;
+  let clienteNombre = null;
+
+  const updatedPedido = await sql.begin(async (sql) => {
+    // 1. Obtener datos del pedido CON info del cliente
+    const [pedido] = await sql`
+      SELECT p.*, u.email as cliente_email,
+        CONCAT(COALESCE(u.nombre, ''), ' ', COALESCE(u.apellido, '')) as cliente_nombre
+      FROM pedidos p
+      LEFT JOIN usuarios u ON p.id_usuario_cliente = u.id_usuario
+      WHERE p.id_pedido = ${id_pedido}
+    `;
     if (!pedido) throw new Error("Pedido no encontrado");
+
+    clienteEmail = pedido.cliente_email;
+    clienteNombre = pedido.cliente_nombre?.trim();
+
     // 2. Si es cancelación, DEVOLVEMOS el stock reservado
     if (estado === "cancelado") {
       const items =
@@ -453,14 +466,49 @@ export const actualizarEstadoPedido = async (
       updateData.fecha_estimada = shippingData.fecha_estimada;
     }
 
-    const [updatedPedido] = await sql`
+    const [result] = await sql`
       UPDATE pedidos 
       SET ${sql(updateData)}
       WHERE id_pedido = ${id_pedido}
       RETURNING *
     `;
-    return updatedPedido;
+    return result;
   });
+
+  // ── Enviar email según el nuevo estado (fuera de la transacción) ──
+  if (clienteEmail) {
+    try {
+      if (estado === "procesando") {
+        emailService.enviarPedidoProcesando({
+          email: clienteEmail, nombre: clienteNombre, idPedido: id_pedido,
+        }).catch(e => console.error("Error email procesando:", e));
+      } else if (estado === "preparado") {
+        emailService.enviarPedidoPreparado({
+          email: clienteEmail, nombre: clienteNombre, idPedido: id_pedido,
+        }).catch(e => console.error("Error email preparado:", e));
+      } else if (estado === "enviado") {
+        emailService.enviarPedidoEnviado({
+          email: clienteEmail, nombre: clienteNombre, idPedido: id_pedido,
+          transportadora: shippingData?.transportadora,
+          numeroGuia: shippingData?.numero_guia,
+          trackingLink: shippingData?.tracking_link,
+          fechaEstimada: shippingData?.fecha_estimada,
+        }).catch(e => console.error("Error email enviado:", e));
+      } else if (estado === "entregado") {
+        emailService.enviarPedidoEntregado({
+          email: clienteEmail, nombre: clienteNombre, idPedido: id_pedido,
+        }).catch(e => console.error("Error email entregado:", e));
+      } else if (estado === "cancelado") {
+        emailService.enviarPedidoCancelado({
+          email: clienteEmail, nombre: clienteNombre, idPedido: id_pedido, motivo,
+        }).catch(e => console.error("Error email cancelado:", e));
+      }
+    } catch (e) {
+      console.error("Error preparando email de estado:", e);
+    }
+  }
+
+  return updatedPedido;
 };
 
 /**
@@ -468,10 +516,18 @@ export const actualizarEstadoPedido = async (
  * Solo se pueden cancelar pedidos en estado 'pendiente'
  */
 export const cancelarOrden = async (id_pedido, motivo) => {
-  return await sql.begin(async (sql) => {
+  let clienteEmail = null;
+  let clienteNombre = null;
+
+  const pedidoCancelado = await sql.begin(async (sql) => {
     // 1. Verificar que el pedido existe y está en estado pendiente
-    const [pedido] =
-      await sql`SELECT * FROM pedidos WHERE id_pedido = ${id_pedido}`;
+    const [pedido] = await sql`
+      SELECT p.*, u.email as cliente_email,
+        CONCAT(COALESCE(u.nombre, ''), ' ', COALESCE(u.apellido, '')) as cliente_nombre
+      FROM pedidos p
+      LEFT JOIN usuarios u ON p.id_usuario_cliente = u.id_usuario
+      WHERE p.id_pedido = ${id_pedido}
+    `;
     if (!pedido) {
       throw new Error("Pedido no encontrado");
     }
@@ -479,6 +535,9 @@ export const cancelarOrden = async (id_pedido, motivo) => {
     if (pedido.estado !== "pendiente") {
       throw new Error("Solo se pueden cancelar pedidos pendientes");
     }
+
+    clienteEmail = pedido.cliente_email;
+    clienteNombre = pedido.cliente_nombre?.trim();
 
     // 3. Devolver el stock reservado
     const items =
@@ -492,7 +551,7 @@ export const cancelarOrden = async (id_pedido, motivo) => {
     }
 
     // 4. Marcar el pedido como cancelado
-    const [pedidoCancelado] = await sql`
+    const [result] = await sql`
       UPDATE pedidos
       SET estado = 'cancelado',
           motivo_anulacion = ${motivo}
@@ -503,8 +562,17 @@ export const cancelarOrden = async (id_pedido, motivo) => {
     // 5. Anular cualquier venta asociada (por si acaso)
     await sql`UPDATE ventas SET estado = false WHERE id_pedido = ${id_pedido}`;
 
-    return pedidoCancelado;
+    return result;
   });
+
+  // Enviar email de cancelación
+  if (clienteEmail) {
+    emailService.enviarPedidoCancelado({
+      email: clienteEmail, nombre: clienteNombre, idPedido: id_pedido, motivo,
+    }).catch(e => console.error("Error email cancelación:", e));
+  }
+
+  return pedidoCancelado;
 };
 
 /**
@@ -633,24 +701,41 @@ export const actualizarPedido = async (id_pedido, datos) => {
  * Cancelar pedido por el cliente — solo si le pertenece y está en 'pendiente'
  */
 export const cancelarOrdenCliente = async (id_pedido, id_usuario) => {
-  const [pedido] =
-    await sql`SELECT * FROM pedidos WHERE id_pedido = ${id_pedido}`;
+  const [pedido] = await sql`
+    SELECT p.*, u.email as cliente_email,
+      CONCAT(COALESCE(u.nombre, ''), ' ', COALESCE(u.apellido, '')) as cliente_nombre
+    FROM pedidos p
+    LEFT JOIN usuarios u ON p.id_usuario_cliente = u.id_usuario
+    WHERE p.id_pedido = ${id_pedido}
+  `;
   if (!pedido) throw new Error("Pedido no encontrado");
   if (pedido.id_usuario_cliente !== id_usuario)
     throw new Error("No tienes permiso para cancelar este pedido");
   if (pedido.estado !== "pendiente")
     throw new Error("Solo puedes cancelar pedidos en estado pendiente");
 
-  return await sql.begin(async (sql) => {
+  const updated = await sql.begin(async (sql) => {
     const items =
       await sql`SELECT id_producto, cantidad FROM detalle_pedido WHERE id_pedido = ${id_pedido}`;
     for (const item of items) {
       await sql`UPDATE productos SET stock_actual = stock_actual + ${item.cantidad} WHERE id_producto = ${item.id_producto}`;
     }
-    const [updated] =
+    const [result] =
       await sql`UPDATE pedidos SET estado = 'cancelado', motivo_anulacion = 'Cancelado por el cliente' WHERE id_pedido = ${id_pedido} RETURNING *`;
-    return updated;
+    return result;
   });
+
+  // Enviar email de cancelación
+  if (pedido.cliente_email) {
+    emailService.enviarPedidoCancelado({
+      email: pedido.cliente_email,
+      nombre: pedido.cliente_nombre?.trim(),
+      idPedido: id_pedido,
+      motivo: "Cancelado por el cliente",
+    }).catch(e => console.error("Error email cancelación cliente:", e));
+  }
+
+  return updated;
 };
 
 /**

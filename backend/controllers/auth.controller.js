@@ -1,13 +1,8 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import sql from "../config/db.js";
-import { createRequire } from "module";
 import crypto from "crypto";
-const require = createRequire(import.meta.url);
-const { BrevoClient } = require("@getbrevo/brevo");
-
-// Inicializar el cliente de Brevo
-const brevoClient = new BrevoClient({ apiKey: process.env.BREVO_API_KEY || "" });
+import * as emailService from "../services/email.service.js";
 
 export const register = async (req, res) => {
   try {
@@ -96,44 +91,22 @@ export const register = async (req, res) => {
 
     console.log("✅ Usuario registrado exitosamente:", result[0].email);
 
-    // --- ENVIAR CORREO DE BIENVENIDA ---
-    try {
-      const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    // Generar código de verificación de 6 dígitos
+    const codigoVerificacion = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    // Insertar en usuario_verificaciones
+    await sql`
+      INSERT INTO usuario_verificaciones (id_usuario, codigo_verificacion, email_verificado)
+      VALUES (${result[0].id_usuario}, ${codigoVerificacion}, false)
+    `;
 
-      brevoClient.transactionalEmails.sendTransacEmail({
-        subject: "¡Bienvenida a Glamour ML! 💖",
-        htmlContent: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #fdf5f8; border-radius: 12px; border: 1px solid #f0d5e0;">
-            <div style="text-align: center; margin-bottom: 20px; background-color: #2e1020; padding: 30px; border-radius: 12px 12px 0 0;">
-              <img src="https://rjrafmgjtuuqtprmfhwc.supabase.co/storage/v1/object/public/comprobantes/logo.png" alt="Glamour ML Logo" style="width: 80px; height: 80px; border-radius: 16px; background-color: #000; box-shadow: 0 4px 10px rgba(0,0,0,0.3);" />
-              <h1 style="color: #fff; margin-top: 15px; margin-bottom: 0; font-size: 28px; letter-spacing: 2px;">GLAMOUR ML</h1>
-              <p style="color: #e092b2; font-size: 12px; margin-top: 5px; letter-spacing: 1px;">TIENDA DE BELLEZA & CUIDADO PERSONAL</p>
-            </div>
-            <div style="padding: 30px 20px; background-color: #fff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
-              <h2 style="color: #c47b96; text-align: center; font-size: 24px; margin-top: 0;">¡Hola, ${nombre}! ✨</h2>
-              <p style="color: #4a4a4a; font-size: 16px; line-height: 1.6;">Estamos muy felices de darte la bienvenida a <strong>Glamour ML</strong>.</p>
-              <p style="color: #4a4a4a; font-size: 16px; line-height: 1.6;">Tu cuenta ha sido creada exitosamente. A partir de ahora podrás explorar nuestro catálogo completo de belleza, realizar pedidos rápidos de tus productos favoritos y llevar un registro detallado de todas tus compras.</p>
-              <div style="text-align: center; margin: 40px 0;">
-                <a href="${frontendUrl}/" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #c47b96 0%, #a85d77 100%); color: #fff; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 15px rgba(196,123,150,0.4);">Explorar el Catálogo</a>
-              </div>
-              <p style="color: #666; font-size: 14px; margin-top: 30px; text-align: center; border-top: 1px solid #f0d5e0; padding-top: 20px;">
-                Con cariño,<br/>
-                <strong style="color: #2e1020; font-size: 16px; display: inline-block; margin-top: 8px;">El equipo de Glamour ML</strong>
-              </p>
-            </div>
-          </div>
-        `,
-        sender: { name: "Glamour ML", email: process.env.BREVO_SENDER_EMAIL || "tu-correo@gmail.com" },
-        to: [{ email: email, name: nombre }],
-      }).catch(e => console.error("Error enviando email de bienvenida:", e));
-      console.log("✉️  Correo de bienvenida despachado a Brevo");
-    } catch (emailError) {
-      console.error("💥 Error preparando correo de bienvenida:", emailError);
-    }
+    // Enviar correo con código de verificación
+    emailService.enviarCodigoVerificacion(email, nombre, codigoVerificacion).catch(e => console.error("💥 Error email verificación:", e));
 
     return res.status(201).json({
-      message: "Usuario registrado correctamente",
+      message: "Usuario registrado correctamente. Por favor verifica tu correo.",
       usuario: result[0],
+      requiresVerification: true
     });
   } catch (error) {
     console.error("💥 ERROR en register:", error);
@@ -190,6 +163,18 @@ export const login = async (req, res) => {
       "- id_usuario:",
       user.id_usuario,
     );
+
+    // ── Verificar correo ──
+    const [verificacion] = await sql`SELECT email_verificado FROM usuario_verificaciones WHERE id_usuario = ${user.id_usuario}`;
+    // Si existe el registro de verificación y no está verificado, denegar acceso
+    if (verificacion && !verificacion.email_verificado) {
+      console.log("❌ Usuario no ha verificado su correo:", email);
+      return res.status(403).json({
+        code: "EMAIL_NOT_VERIFIED",
+        message: "Por favor verifica tu correo electrónico para poder iniciar sesión.",
+      });
+    }
+
     console.log("🔐 Campos disponibles:", Object.keys(user));
 
     // Verificar que el campo de contraseña existe
@@ -291,25 +276,7 @@ export const forgotPassword = async (req, res) => {
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
     const resetLink = `${frontendUrl}/?token=${token}`;
 
-    await brevoClient.transactionalEmails.sendTransacEmail({
-      subject: "Recuperación de contraseña",
-      htmlContent: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="text-align: center; margin-bottom: 20px;">
-            <img src="https://rjrafmgjtuuqtprmfhwc.supabase.co/storage/v1/object/public/comprobantes/logo.png" alt="Glamour ML Logo" style="width: 80px; height: 80px; border-radius: 16px; background-color: #000;" />
-          </div>
-          <h2 style="color: #c47b96; text-align: center;">Recuperación de contraseña</h2>
-          <p>Hola <strong>${user.nombre}</strong>,</p>
-          <p>Has solicitado restablecer tu contraseña. Haz clic en el botón a continuación para crear una nueva contraseña. El enlace es válido por 15 minutos.</p>
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${resetLink}" style="display:inline-block;padding:12px 24px;background-color:#c47b96;color:#fff;text-decoration:none;border-radius:6px;font-weight:bold;">Restablecer Contraseña</a>
-          </div>
-          <p style="color: #666; font-size: 14px;">Si no solicitaste esto, puedes ignorar este correo.</p>
-        </div>
-      `,
-      sender: { name: "Glamour ML", email: process.env.BREVO_SENDER_EMAIL || "tu-correo@gmail.com" },
-      to: [{ email: email }],
-    });
+    await emailService.enviarRecuperacion(email, user.nombre, resetLink);
 
     return res.status(200).json({ message: "Correo de recuperación enviado" });
   } catch (error) {
@@ -362,13 +329,37 @@ export const resetPassword = async (req, res) => {
       WHERE id_usuario = ${user.id_usuario}
     `;
 
-    return res
-      .status(200)
-      .json({ message: "Contraseña actualizada exitosamente" });
+    return res.status(200).json({ message: "Contraseña actualizada exitosamente" });
   } catch (error) {
-    console.error("Error en resetPassword:", error);
-    return res
-      .status(500)
-      .json({ message: "Error al actualizar la contraseña" });
+    console.error("💥 ERROR en resetPassword:", error);
+    return res.status(500).json({ message: "Error en el servidor" });
+  }
+};
+
+export const verifyEmail = async (req, res) => {
+  try {
+    const { email, code } = req.body;
+    if (!email || !code) return res.status(400).json({ message: "Email y código son requeridos" });
+    const [user] = await sql`SELECT * FROM usuarios WHERE email = ${email}`;
+    if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
+    const [verificacion] = await sql`SELECT * FROM usuario_verificaciones WHERE id_usuario = ${user.id_usuario}`;
+    if (!verificacion) return res.status(400).json({ message: "No se encontró proceso de verificación" });
+    if (verificacion.email_verificado) return res.status(400).json({ message: "El correo ya está verificado" });
+    if (verificacion.codigo_verificacion !== code) return res.status(400).json({ message: "Código de verificación incorrecto" });
+    await sql`UPDATE usuario_verificaciones SET email_verificado = true, codigo_verificacion = NULL WHERE id_usuario = ${user.id_usuario}`;
+    let permisos = [];
+    if (user.id_rol === 1) {
+      const todos = await sql`SELECT nombre FROM permisos WHERE estado = true`;
+      permisos = todos.map(p => p.nombre);
+    } else {
+      const userPerms = await sql`SELECT p.nombre FROM roles_permisos rp JOIN permisos p ON rp.id_permiso = p.id_permiso WHERE rp.id_rol = ${user.id_rol} AND p.estado = true`;
+      permisos = userPerms.map(p => p.nombre);
+    }
+    const token = jwt.sign({ id_usuario: user.id_usuario, email: user.email, rol: user.id_rol, permisos }, process.env.JWT_SECRET, { expiresIn: "24h" });
+    emailService.enviarBienvenida(user.email, user.nombre).catch(e => console.error("💥 Error email bienvenida:", e));
+    return res.json({ message: "Correo verificado exitosamente", token, usuario: { id_usuario: user.id_usuario, nombre: user.nombre, apellido: user.apellido, email: user.email, id_rol: user.id_rol, estado: user.estado, permisos } });
+  } catch (error) {
+    console.error("💥 ERROR en verifyEmail:", error);
+    return res.status(500).json({ message: "Error en el servidor" });
   }
 };

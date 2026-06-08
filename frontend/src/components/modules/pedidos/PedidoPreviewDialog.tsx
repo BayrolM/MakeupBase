@@ -22,9 +22,9 @@ export function PedidoPreviewDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-white border border-gray-100 max-w-[900px] sm:max-w-[900px] w-[95vw] rounded-2xl shadow-2xl p-0 overflow-hidden">
+      <DialogContent className="bg-white border border-gray-100 max-w-[900px] sm:max-w-[900px] w-[95vw] max-h-[90vh] rounded-2xl shadow-2xl p-0 overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100 bg-white">
+        <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100 bg-white flex-shrink-0">
           <div className="flex items-center gap-4">
             <div
               className="flex items-center justify-center text-white font-bold text-lg flex-shrink-0"
@@ -68,22 +68,21 @@ export function PedidoPreviewDialog({
         </div>
 
         {/* Imagen */}
-        <div className="p-8 bg-gray-50/50 flex items-center justify-center min-h-[400px] max-h-[75vh] overflow-hidden">
-          <div className="relative group">
+        <div className="flex-1 p-6 bg-gray-50/50 overflow-y-auto min-h-0">
+          <div className="flex items-center justify-center min-h-full">
             <img 
               src={imageUrl} 
               alt="Comprobante de pago" 
-              className="max-w-full max-h-[65vh] object-contain rounded-2xl shadow-xl border border-white"
+              className="max-w-full h-auto object-contain rounded-2xl shadow-xl border border-white"
               onError={(e) => {
                 (e.target as HTMLImageElement).src = "https://placehold.co/600x400?text=Error+al+cargar+imagen";
               }}
             />
-            <div className="absolute inset-0 rounded-2xl shadow-[inset_0_0_0_1px_rgba(0,0,0,0.05)] pointer-events-none" />
           </div>
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-3 px-6 pb-6 pt-4 bg-white border-t border-gray-100">
+        <div className="flex justify-end gap-3 px-6 pb-6 pt-4 bg-white border-t border-gray-100 flex-shrink-0">
           <Button
             onClick={() => onOpenChange(false)}
             className="rounded-xl px-10 h-11 text-sm font-bold text-white transition-all shadow-md hover:shadow-lg active:scale-95 border-0"
