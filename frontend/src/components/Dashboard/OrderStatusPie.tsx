@@ -10,6 +10,7 @@ export const OrderStatusPie: React.FC<OrderStatusPieProps> = ({ data }) => {
   return (
     <div
       style={{
+        height: '100%',
         background: C.white,
         borderRadius: "20px",
         padding: "20px",

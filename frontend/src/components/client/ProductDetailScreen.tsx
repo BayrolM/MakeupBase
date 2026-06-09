@@ -97,300 +97,204 @@ export function ProductDetailScreen({ productId, onBack }: ProductDetailScreenPr
 
   return (
     <div
+      className="min-h-screen pb-24"
       style={{
-        minHeight: "100vh",
         background: C.bgSoft,
         fontFamily: "'DM Sans', sans-serif",
-        padding: "2rem",
       }}
     >
-      <div style={{ maxWidth: "1240px", margin: "0 auto" }}>
+      <div 
+        className="h-[40vh] w-full absolute top-0 left-0 z-0"
+        style={{
+          background: `linear-gradient(to bottom, ${C.accentSoft}40, transparent)`,
+        }}
+      />
+      
+      <div className="max-w-[1200px] mx-auto px-6 pt-10 relative z-10">
         <button
           onClick={onBack}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "0.75rem",
-            background: "rgba(255,255,255,0.9)",
-            border: `1px solid ${C.accentSoft}`,
-            color: C.textDark,
-            borderRadius: "16px",
-            padding: "12px 18px",
-            cursor: "pointer",
-            marginBottom: "1.5rem",
-          }}
+          className="group inline-flex items-center gap-2 px-5 py-2.5 bg-white/80 backdrop-blur-md border border-black/5 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 text-sm font-semibold text-gray-700 mb-10"
+          style={{ cursor: "pointer" }}
         >
-          <ArrowLeft className="w-4 h-4" /> Volver
+          <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" /> 
+          Volver al catálogo
         </button>
 
-        <div className="grid grid-cols-1 md:grid-cols-[1.2fr_0.8fr] gap-8">
-          <div
-            style={{
-              borderRadius: "28px",
-              overflow: "hidden",
-              background: C.white,
-              boxShadow: `0 30px 60px ${C.shadow}`,
-            }}
-          >
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[0.8fr_1.2fr] gap-8 lg:gap-16 items-start">
+          <div className="flex justify-center md:justify-end pr-0 md:pr-8">
+            <div
+              className="group relative w-full max-w-[400px] aspect-square rounded-[2rem] overflow-hidden bg-white shadow-xl"
+              style={{
+                boxShadow: `0 30px 60px -15px ${C.shadow}`,
+              }}
+            >
             {producto.imagenUrl ? (
               <img
                 src={producto.imagenUrl}
                 alt={producto.nombre}
-                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                className="w-full h-full object-contain p-8 transition-transform duration-700 ease-out group-hover:scale-105"
+                style={{ background: "#ffffff" }}
               />
             ) : (
-              <div
-                style={{
-                  width: "100%",
-                  minHeight: "520px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  background: C.bgSoft,
-                }}
-              >
-                <div
-                  style={{
-                    width: "120px",
-                    height: "120px",
-                    borderRadius: "24px",
-                    background: "rgba(255,255,255,0.7)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: C.accentDeep,
-                    fontSize: "3rem",
-                  }}
-                >
+              <div className="w-full h-full flex items-center justify-center bg-gray-50">
+                <div className="w-32 h-32 rounded-3xl bg-white shadow-sm border border-gray-100 flex items-center justify-center text-4xl">
                   💄
                 </div>
               </div>
             )}
+            
+            {/* Stock Badge on Image */}
+            {!stockAvailable && (
+              <div className="absolute top-6 right-6 bg-red-600 text-white px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg">
+                Agotado
+              </div>
+            )}
+            </div>
           </div>
 
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
-              gap: "1.5rem",
-            }}
-          >
-            <div>
-              <span
-                style={{
-                  display: "inline-flex",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.2em",
-                  fontSize: "12px",
-                  fontWeight: 700,
-                  color: C.accentDeep,
-                }}
-              >
-                {categoryName}
-              </span>
-              <h1
-                style={{
-                  margin: "1rem 0 0.75rem",
-                  fontFamily: "'Cormorant Garamond', serif",
-                  fontSize: "clamp(2rem, 3vw, 3rem)",
-                  fontWeight: 700,
-                  color: C.textDark,
-                }}
-              >
-                {producto.nombre}
-              </h1>
-              <p
-                style={{
-                  color: C.textMuted,
-                  fontSize: "15px",
-                  lineHeight: 1.75,
-                  marginBottom: "1.5rem",
-                }}
-              >
-                {producto.descripcion}
-              </p>
-            </div>
+          {/* Details Section */}
+          <div className="flex flex-col pt-4 md:pt-8 lg:pt-10">
+            <span
+              className="inline-block px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest mb-6 w-max"
+              style={{
+                color: C.accentDeep,
+                background: `${C.accent}20`,
+                border: `1px solid ${C.accent}40`
+              }}
+            >
+              {categoryName}
+            </span>
+            
+            <h1
+              className="text-4xl md:text-5xl lg:text-6xl leading-tight mb-6"
+              style={{
+                fontFamily: "'Cormorant Garamond', serif",
+                fontWeight: 700,
+                color: C.textDark,
+              }}
+            >
+              {producto.nombre}
+            </h1>
+            
+            <p
+              className="text-lg leading-relaxed mb-10"
+              style={{ color: C.textMuted }}
+            >
+              {producto.descripcion}
+            </p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4 mb-10">
               <div
-                style={{
-                  background: C.white,
-                  borderRadius: "20px",
-                  border: `1px solid ${C.accentSoft}`,
-                  padding: "1.5rem",
-                }}
+                className="bg-white p-6 rounded-3xl border transition-all hover:shadow-md"
+                style={{ borderColor: C.accentSoft }}
               >
-                <span
-                  style={{
-                    display: "block",
-                    fontSize: "12px",
-                    fontWeight: 700,
-                    color: C.textMuted,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.12em",
-                  }}
-                >
+                <span className="block text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">
                   Precio
                 </span>
                 <p
-                  style={{
-                    margin: "0.75rem 0 0",
-                    fontSize: "2rem",
-                    fontWeight: 800,
-                    color: C.accentDeep,
-                  }}
+                  className="text-3xl font-extrabold"
+                  style={{ color: C.accentDeep }}
                 >
                   {formatCurrency(producto.precioVenta)}
                 </p>
               </div>
 
               <div
-                style={{
-                  background: C.white,
-                  borderRadius: "20px",
-                  border: `1px solid ${C.accentSoft}`,
-                  padding: "1.5rem",
-                }}
+                className="bg-white p-6 rounded-3xl border transition-all hover:shadow-md"
+                style={{ borderColor: C.accentSoft }}
               >
-                <span
-                  style={{
-                    display: "block",
-                    fontSize: "12px",
-                    fontWeight: 700,
-                    color: C.textMuted,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.12em",
-                  }}
-                >
+                <span className="block text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">
                   Disponibilidad
                 </span>
                 <p
-                  style={{
-                    margin: "0.75rem 0 0",
-                    fontSize: "1rem",
-                    fontWeight: 700,
-                    color: stockAvailable ? "#16a34a" : "#dc2626",
-                  }}
+                  className="text-lg font-bold mt-2"
+                  style={{ color: stockAvailable ? "#16a34a" : "#dc2626" }}
                 >
                   {stockAvailable
-                    ? `${availableQuantity} unidades disponibles`
+                    ? `${availableQuantity} unidades`
                     : "Agotado"}
                 </p>
               </div>
             </div>
 
-            <div
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: "1rem",
-                alignItems: "center",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  borderRadius: "18px",
-                  border: `1px solid ${C.accentSoft}`,
-                  overflow: "hidden",
-                }}
-              >
-                <button
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  disabled={quantity <= 1}
-                  style={{
-                    width: "56px",
-                    height: "56px",
-                    border: "none",
-                    background: C.bgSoft,
-                    cursor: quantity <= 1 ? "not-allowed" : "pointer",
-                    fontSize: "22px",
-                    color: C.textDark,
-                  }}
-                >
-                  −
-                </button>
-                <span
-                  style={{
-                    width: "72px",
-                    textAlign: "center",
-                    fontSize: "18px",
-                    fontWeight: 700,
-                    color: C.textDark,
-                  }}
-                >
-                  {quantity}
+            <div className="flex flex-col sm:flex-row gap-6 items-end mb-8">
+              {/* Quantity Selector */}
+              <div className="flex flex-col gap-2">
+                <span className="text-[11px] font-bold uppercase tracking-widest text-gray-400 pl-2">
+                  Cantidad
                 </span>
-                <button
-                  onClick={() =>
-                    setQuantity(Math.min(availableQuantity || 1, quantity + 1))
-                  }
-                  disabled={!stockAvailable || quantity >= availableQuantity}
-                  style={{
-                    width: "56px",
-                    height: "56px",
-                    border: "none",
-                    background: C.bgSoft,
-                    cursor:
-                      !stockAvailable || quantity >= availableQuantity
-                        ? "not-allowed"
-                        : "pointer",
-                    fontSize: "22px",
-                    color: C.textDark,
-                  }}
+                <div
+                  className="flex items-center bg-gray-50 rounded-full p-1.5 border w-[130px]"
+                  style={{ borderColor: C.accentSoft }}
                 >
-                  +
-                </button>
+                  <button
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    disabled={quantity <= 1}
+                    className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-lg text-gray-600 hover:text-black hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    −
+                  </button>
+                  <span
+                    className="flex-1 text-center text-lg font-bold"
+                    style={{ color: C.textDark }}
+                  >
+                    {quantity}
+                  </span>
+                  <button
+                    onClick={() =>
+                      setQuantity(Math.min(availableQuantity || 1, quantity + 1))
+                    }
+                    disabled={!stockAvailable || quantity >= availableQuantity}
+                    className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-lg text-gray-600 hover:text-black hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    +
+                  </button>
+                </div>
               </div>
 
+              {/* Add to Cart Button */}
               <button
                 onClick={handleAddToCart}
                 disabled={!stockAvailable || availableQuantity === 0}
+                className="flex-1 group relative overflow-hidden rounded-full border-none text-white px-8 py-0 h-[52px] font-bold text-base flex items-center justify-center gap-3 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg active:scale-[0.98] whitespace-nowrap"
                 style={{
-                  flex: 1,
-                  minWidth: "220px",
-                  borderRadius: "18px",
-                  border: "none",
                   background: stockAvailable
                     ? `linear-gradient(135deg, ${C.accent}, ${C.accentDeep})`
-                    : "#e5e7eb",
-                  color: stockAvailable ? C.white : C.textMuted,
-                  padding: "16px 20px",
-                  fontSize: "14px",
-                  fontWeight: 700,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "10px",
-                  cursor: stockAvailable ? "pointer" : "not-allowed",
+                    : "#9ca3af",
+                  boxShadow: stockAvailable ? `0 10px 25px -5px ${C.accent}60` : 'none',
                 }}
               >
-                <ShoppingCart className="w-5 h-5" />
-                Agregar al carrito
+                <ShoppingCart className="w-5 h-5 transition-transform group-hover:scale-110" />
+                <span>Agregar al carrito</span>
+                
+                {/* Shine effect */}
+                {stockAvailable && (
+                  <div className="absolute inset-0 -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
+                )}
               </button>
             </div>
 
-            <div
-              style={{
-                marginTop: "1rem",
-                color: C.textMuted,
-                lineHeight: 1.75,
-              }}
-            >
-              <p style={{ margin: 0, fontSize: "13px" }}>
-                Envío exprés disponible en Medellín. Compra segura y apoyo
-                personalizado disponible.
+            {/* Info Footer */}
+            <div className="bg-white/50 backdrop-blur-sm rounded-2xl p-6 border border-white">
+              <p className="text-sm text-gray-600 mb-2 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-green-500" />
+                Envío exprés disponible en Medellín. Compra segura garantizada.
               </p>
-              <p style={{ margin: "0.85rem 0 0", fontSize: "13px" }}>
-                Para productos exclusivos y kits especiales, consulta con
-                nuestro equipo de atención.
+              <p className="text-sm text-gray-500 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-blue-400" />
+                Para productos exclusivos, consulta con atención al cliente.
               </p>
             </div>
+            
           </div>
         </div>
       </div>
+      
+      <style dangerouslySetInnerHTML={{__html: `
+        @keyframes shimmer {
+          100% { transform: translateX(100%); }
+        }
+      `}} />
     </div>
   );
 }

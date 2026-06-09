@@ -2,6 +2,7 @@ import { useStore } from "../../lib/store";
 import { PageHeader } from "../layout/PageHeader";
 import { 
   TrendingUp, 
+  TrendingDown,
   ShoppingCart, 
   RotateCcw, 
   LayoutDashboard,
@@ -13,6 +14,7 @@ import { C } from "../../styles/dashboardStyles";
 // Sub-components
 import { StatCard } from "./StatCard";
 import { SalesTrendChart } from "./SalesTrendChart";
+import { PerdidasTrendChart } from "./PerdidasTrendChart";
 import { VentasMesChart } from "./VentasMesChart";
 import { OrderStatusPie } from "./OrderStatusPie";
 import { RankingMesCard } from "./RankingMesCard";
@@ -27,6 +29,7 @@ export function Dashboard() {
     ordersByStatus, 
     productosStockCriticoList, 
     trendChartData, 
+    perdidasTrendChartData,
     ventasMesChartData,
     formatCurrency 
   } = useDashboardData();
@@ -104,6 +107,12 @@ export function Dashboard() {
             trend={crecimientoVentas} 
           />
           <StatCard 
+            title="Pérdidas Totales" 
+            value={formatCurrency(safeData.resumen.total_perdidas)} 
+            icon={TrendingDown} 
+            isNegative={safeData.resumen.total_perdidas > 0}
+          />
+          <StatCard 
             title="Pedidos Realizados" 
             value={safeData.resumen.total_ordenes} 
             icon={ShoppingCart} 
@@ -114,31 +123,31 @@ export function Dashboard() {
             icon={RotateCcw} 
             isNegative={safeData.resumen.devoluciones_pendientes > 0}
           />
-          <StatCard 
-            title="Alerta Stock Bajo" 
-            value={safeData.resumen.productos_bajo_stock} 
-            icon={Package} 
-            isNegative 
-          />
         </div>
 
         {/* Main Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <SalesTrendChart data={trendChartData} formatCurrency={formatCurrency} />
-          <VentasMesChart data={ventasMesChartData} formatCurrency={formatCurrency} />
+          <PerdidasTrendChart data={perdidasTrendChartData} formatCurrency={formatCurrency} />
         </div>
 
-        {/* Detailed Insights Row */}
+        {/* Third Row: Daily Sales & Order Status */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="h-full">
+            <VentasMesChart data={ventasMesChartData} formatCurrency={formatCurrency} />
+          </div>
+          <div className="h-full">
+            <OrderStatusPie data={ordersByStatus} />
+          </div>
+        </div>
+
+        {/* Fourth Row: Lists and Insights */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <RankingMesCard 
             products={safeData.productos_mas_vendidos} 
             allProducts={productos} 
           />
-          
-          <div className="space-y-6">
-            <OrderStatusPie data={ordersByStatus} />
-            <CriticalStockCard products={productosStockCriticoList} />
-          </div>
+          <CriticalStockCard products={productosStockCriticoList} />
         </div>
       </div>
 

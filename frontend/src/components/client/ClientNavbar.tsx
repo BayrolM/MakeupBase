@@ -434,13 +434,13 @@ export function ClientNavbar({
                 <div className="flex items-center gap-3 ml-2 h-10">
                   <button
                     onClick={() => onNavigate("login")}
-                    className="px-5 py-2 text-sm font-semibold text-primary/80 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors cursor-pointer h-full"
+                    className="px-3 sm:px-5 py-2 text-xs sm:text-sm font-semibold text-primary/80 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors cursor-pointer h-full whitespace-nowrap"
                   >
                     Entrar
                   </button>
                   <button
                     onClick={() => onNavigate("register")}
-                    className="hidden sm:block px-6 py-0 h-9 text-sm font-bold text-white rounded-xl transition-all shadow-md active:scale-95 hover:brightness-110 hover:shadow-lg cursor-pointer"
+                    className="px-4 sm:px-6 py-0 h-9 text-xs sm:text-sm font-bold text-white rounded-xl transition-all shadow-md active:scale-95 hover:brightness-110 hover:shadow-lg cursor-pointer whitespace-nowrap"
                     style={{
                       background: `linear-gradient(135deg, ${COLORS.accent} 0%, ${COLORS.accentDark} 100%)`,
                       boxShadow: `0 4px 12px ${COLORS.accent}40`,

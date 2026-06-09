@@ -19,6 +19,7 @@ export const SalesTrendChart: React.FC<SalesTrendChartProps> = ({ data, formatCu
   return (
     <div
       style={{
+        height: '100%',
         background: C.white,
         borderRadius: "20px",
         padding: "20px",

@@ -11,10 +11,11 @@ export const RankingMesCard: React.FC<RankingMesCardProps> = ({ products, allPro
   return (
     <div
       style={{
+        height: '100%',
         background: C.white,
         borderRadius: "20px",
         padding: "20px",
-        boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+        boxShadow: "0 10px 30px rgba(0,0,0,0.05)",
         border: `1px solid ${C.accent}`,
       }}
     >

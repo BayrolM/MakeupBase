@@ -51,6 +51,7 @@ export function useDashboardData() {
   const safeData = data || {
     resumen: {
       total_ventas: 0,
+      total_perdidas: 0,
       total_ordenes: 0,
       total_productos: 0,
       devoluciones_pendientes: 0,
@@ -60,6 +61,7 @@ export function useDashboardData() {
     pedidos_por_estado: [],
     productos_stock_critico: [],
     ventas_tendencia: [],
+    perdidas_tendencia: [],
     ventas_del_mes: [],
   };
 
@@ -107,6 +109,16 @@ export function useDashboardData() {
     }));
   }, [data?.ventas_tendencia]);
 
+  const perdidasTrendChartData = useMemo(() => {
+    if (!data?.perdidas_tendencia) return [];
+
+    return data.perdidas_tendencia.map((p) => ({
+      mes: p.mes_nombre,
+      total: parseFloat(p.total) || 0,
+      cantidad: parseInt(p.cantidad) || 0,
+    }));
+  }, [data?.perdidas_tendencia]);
+
   const ventasMesChartData = useMemo(() => {
     if (!safeData.ventas_del_mes) return [];
 
@@ -123,6 +135,7 @@ export function useDashboardData() {
     ordersByStatus,
     productosStockCriticoList,
     trendChartData,
+    perdidasTrendChartData,
     ventasMesChartData,
     formatCurrency,
     refresh: fetchDashboardData

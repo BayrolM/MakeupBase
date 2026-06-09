@@ -3,12 +3,19 @@ import api from "../lib/api";
 export interface DashboardData {
   resumen: {
     total_ventas: number;
+    total_perdidas: number;
     total_ordenes: number;
     total_productos: number;
     devoluciones_pendientes: number;
     productos_bajo_stock: number;
   };
   ventas_tendencia: Array<{
+    mes_id: string;
+    mes_nombre: string;
+    total: string;
+    cantidad: string;
+  }>;
+  perdidas_tendencia: Array<{
     mes_id: string;
     mes_nombre: string;
     total: string;

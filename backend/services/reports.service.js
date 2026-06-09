@@ -14,6 +14,14 @@ export const obtenerDashboard = async (options = {}) => {
     ${id_empleado ? sql`AND id_usuario_empleado = ${id_empleado}` : sql``}
   `;
 
+  // Total de pérdidas
+  const totalPerdidas = await sql`
+    SELECT COALESCE(SUM(total_perdida), 0) as total
+    FROM perdidas
+    WHERE estado = true
+    ${id_empleado ? sql`AND id_usuario_empleado = ${id_empleado}` : sql``}
+  `;
+
   // Total de órdenes (sin filtrar por empleado para que vean todos)
   const totalOrdenes = await sql`
     SELECT COUNT(*) as total
@@ -143,15 +151,47 @@ export const obtenerDashboard = async (options = {}) => {
     ORDER BY dia ASC
   `;
 
+  // Tendencia de pérdidas (últimos 24 meses)
+  const perdidasTendencia = await sql`
+    WITH meses AS (
+      SELECT generate_series(
+        DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '23 months', 
+        DATE_TRUNC('month', CURRENT_DATE), 
+        '1 month'::interval
+      )::date as mes_fecha
+    )
+    SELECT 
+      TO_CHAR(m.mes_fecha, 'YYYY-MM') as mes_id,
+      TO_CHAR(m.mes_fecha, 'Mon YY') as mes_nombre,
+      (
+        SELECT COALESCE(SUM(total_perdida), 0) 
+        FROM perdidas p 
+        WHERE TO_CHAR(p.fecha_perdida, 'YYYY-MM') = TO_CHAR(m.mes_fecha, 'YYYY-MM') 
+          AND p.estado = true
+          ${id_empleado ? sql`AND p.id_usuario_empleado = ${id_empleado}` : sql``}
+      ) as total,
+      (
+        SELECT COUNT(*) 
+        FROM perdidas p 
+        WHERE TO_CHAR(p.fecha_perdida, 'YYYY-MM') = TO_CHAR(m.mes_fecha, 'YYYY-MM') 
+          AND p.estado = true
+          ${id_empleado ? sql`AND p.id_usuario_empleado = ${id_empleado}` : sql``}
+      ) as cantidad
+    FROM meses m
+    ORDER BY m.mes_fecha ASC
+  `;
+
   return {
     resumen: {
       total_ventas: parseFloat(totalVentas[0].total),
+      total_perdidas: parseFloat(totalPerdidas[0].total),
       total_ordenes: parseInt(totalOrdenes[0].total),
       total_productos: parseInt(totalProductos[0].total),
       devoluciones_pendientes: parseInt(devolucionesPendientes[0].total),
       productos_bajo_stock: parseInt(productosBajoStock[0].total),
     },
     ventas_tendencia: ventasTendencia,
+    perdidas_tendencia: perdidasTendencia,
     productos_mas_vendidos: productosMasVendidos,
     pedidos_por_estado: pedidosPorEstado,
     productos_stock_critico: productosStockCriticoDetalle,

@@ -14,6 +14,7 @@ export const StatCard: React.FC<StatCardProps> = ({ title, value, icon: Icon, tr
   return (
     <div
       style={{
+        height: '100%',
         background: C.white,
         borderRadius: "20px",
         padding: "16px",
