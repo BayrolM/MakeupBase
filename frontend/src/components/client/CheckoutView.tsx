@@ -363,12 +363,12 @@ export function CheckoutView({ onBack, onComplete }: CheckoutViewProps) {
     return (
       <>
         <div
+          className="p-4 sm:p-6 lg:p-10"
           style={{
             height: "100vh",
             background: C.bgSoft,
             display: "flex",
             flexDirection: "column",
-            padding: "24px 40px",
             overflow: "hidden",
           }}
         >
@@ -426,16 +426,7 @@ export function CheckoutView({ onBack, onComplete }: CheckoutViewProps) {
           </div>
 
           {/* Two-column grid */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: "20px",
-              flex: 1,
-              width: "100%",
-              overflow: "hidden",
-            }}
-          >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 flex-1 w-full overflow-y-auto overflow-x-hidden md:overflow-hidden pb-20 md:pb-0">
             {/* LEFT: Bank accounts */}
             <div
               style={{
@@ -1081,12 +1072,12 @@ export function CheckoutView({ onBack, onComplete }: CheckoutViewProps) {
 
   return (
     <div
+      className="p-4 sm:p-6 lg:p-10"
       style={{
         height: "100vh",
         background: C.bgSoft,
         display: "flex",
         flexDirection: "column",
-        padding: "24px 40px",
         overflow: "hidden",
       }}
     >
@@ -1142,15 +1133,7 @@ export function CheckoutView({ onBack, onComplete }: CheckoutViewProps) {
         </div>
       </div>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: "28px",
-          flex: 1,
-          overflow: "hidden",
-        }}
-      >
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-7 flex-1 overflow-y-auto overflow-x-hidden md:overflow-hidden pb-20 md:pb-0">
         {/* ─ ORDER SUMMARY ─ */}
         <div
           style={{

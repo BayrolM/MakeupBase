@@ -10,9 +10,9 @@ export function PedidoHeader({ onOpenDialog }: PedidoHeaderProps) {
   const canCreate = hasPermission(currentUser, "crear_pedidos");
 
   return (
-    <div className="px-8 pt-8 pb-5">
+    <div className="px-4 md:px-8 pt-6 md:pt-8 pb-5">
       <div className="relative overflow-hidden rounded-2xl shadow-xl">
-        <div className="relative px-6 py-8 luxury-header-gradient">
+        <div className="relative px-4 md:px-6 py-8 luxury-header-gradient">
           <div className="relative flex flex-wrap gap-6 justify-between items-center z-10">
             <div className="space-y-2">
               <div className="flex items-center gap-3">

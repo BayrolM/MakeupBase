@@ -77,6 +77,8 @@ export function InicioView({
     setProductos,
     setCategorias,
     setMarcas,
+    favoritos,
+    toggleFavorito,
   } = useStore();
   const [activeSection, setActiveSection] = useState<Section>("inicio");
   const [api, setApi] = useState<CarouselApi>();
@@ -463,14 +465,12 @@ export function InicioView({
 
             {/* PROMO BANNER */}
             <div
+              className="flex flex-col md:flex-row items-center justify-between text-center md:text-left gap-6 md:gap-0"
               style={{
-                margin: "5rem 2rem 4rem",
+                margin: "3rem 1rem 2rem",
                 background: `linear-gradient(120deg, ${C.accentDeep} 0%, ${C.accent} 60%, ${C.accentDark} 100%)`,
-                borderRadius: "24px",
-                padding: "3rem 4rem",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
+                borderRadius: "20px",
+                padding: "2rem 1.5rem",
                 position: "relative",
                 overflow: "hidden",
               }}
@@ -538,19 +538,21 @@ export function InicioView({
             </div>
 
             {/* CATEGORÍAS */}
-            <section style={{ padding: "0 2rem 5rem" }}>
+            <section style={{ padding: "0 1rem 3rem" }} className="sm:!px-8 sm:!pb-20">
               <div
                 style={{
                   display: "flex",
                   alignItems: "baseline",
                   justifyContent: "space-between",
-                  marginBottom: "2.5rem",
+                  marginBottom: "1.5rem",
+                  flexWrap: "wrap",
+                  gap: "8px",
                 }}
               >
                 <h2
+                  className="text-2xl sm:text-4xl"
                   style={{
                     fontFamily: "'Cormorant Garamond', serif",
-                    fontSize: "36px",
                     fontWeight: 300,
                     color: C.textDark,
                   }}
@@ -589,7 +591,7 @@ export function InicioView({
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
                   gap: "20px",
                   justifyContent: "center",
                 }}
@@ -659,19 +661,21 @@ export function InicioView({
             </section>
 
             {/* PRODUCTOS DESTACADOS */}
-            <section style={{ padding: "0 2rem 5rem" }}>
+            <section style={{ padding: "0 1rem 3rem" }} className="sm:!px-8 sm:!pb-20">
               <div
                 style={{
                   display: "flex",
                   alignItems: "baseline",
                   justifyContent: "space-between",
-                  marginBottom: "2.5rem",
+                  marginBottom: "1.5rem",
+                  flexWrap: "wrap",
+                  gap: "8px",
                 }}
               >
                 <h2
+                  className="text-2xl sm:text-4xl"
                   style={{
                     fontFamily: "'Cormorant Garamond', serif",
-                    fontSize: "36px",
                     fontWeight: 300,
                     color: C.textDark,
                   }}
@@ -707,10 +711,11 @@ export function InicioView({
                   Ver todos →
                 </button>
               </div>
+              {/* Desktop Grid */}
               <div
+                className="products-desktop-grid"
                 style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
                   gap: "24px",
                 }}
               >
@@ -733,10 +738,73 @@ export function InicioView({
                       badgeColor={badges[index]?.color}
                       onCardClick={() => onViewProduct?.(producto.id)}
                       onAddToCart={() => handleAddToCart(producto.id)}
+                      isFavorite={favoritos.includes(producto.id)}
+                      onToggleFavorite={(e) => {
+                        e.stopPropagation();
+                        toggleFavorito(producto.id);
+                        toast.success(
+                          favoritos.includes(producto.id)
+                            ? "Eliminado de favoritos"
+                            : "Agregado a favoritos",
+                          {
+                            description: producto.nombre,
+                          }
+                        );
+                      }}
                       isMaxStock={isMaxStock}
                     />
                   );
                 })}
+              </div>
+
+              {/* Mobile Carousel */}
+              <div className="products-mobile-carousel">
+                <Carousel
+                  opts={{ align: "start", dragFree: true }}
+                  className="w-full"
+                >
+                  <CarouselContent>
+                    {productosDestacados.map((producto, index) => {
+                      const categoria = categorias.find(
+                        (c) => c.id === producto.categoriaId,
+                      );
+                      const badges = [
+                        { label: "MÁS VENDIDO", color: C.accentDeep },
+                        { label: "NUEVO", color: C.accent },
+                      ];
+                      const currentCartQty = carrito.find((item) => item.productoId === producto.id)?.cantidad || 0;
+                      const isMaxStock = currentCartQty >= producto.stock;
+                      return (
+                        <CarouselItem key={producto.id} className="basis-[60%] sm:basis-[42%]" style={{ paddingLeft: "16px" }}>
+                          <div style={{ padding: "16px 0" }}>
+                            <ProductCard
+                              producto={producto}
+                              categoryName={categoria?.nombre}
+                              badge={badges[index]?.label}
+                              badgeColor={badges[index]?.color}
+                              onCardClick={() => onViewProduct?.(producto.id)}
+                              onAddToCart={() => handleAddToCart(producto.id)}
+                              isFavorite={favoritos.includes(producto.id)}
+                              onToggleFavorite={(e) => {
+                                e.stopPropagation();
+                                toggleFavorito(producto.id);
+                                toast.success(
+                                  favoritos.includes(producto.id)
+                                    ? "Eliminado de favoritos"
+                                    : "Agregado a favoritos",
+                                  {
+                                    description: producto.nombre,
+                                  }
+                                );
+                              }}
+                              isMaxStock={isMaxStock}
+                            />
+                          </div>
+                        </CarouselItem>
+                      );
+                    })}
+                  </CarouselContent>
+                </Carousel>
               </div>
             </section>
 

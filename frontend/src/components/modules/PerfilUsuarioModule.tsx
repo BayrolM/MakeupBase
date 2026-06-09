@@ -625,22 +625,43 @@ export function PerfilUsuarioModule() {
         paddingBottom: 48,
       }}
     >
+      <style>{`
+        .perfil-wrapper {
+          padding: 16px 16px 0;
+        }
+        .perfil-container {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 20px;
+          align-items: start;
+        }
+        .perfil-form-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 16px;
+        }
+        @media (min-width: 768px) {
+          .perfil-wrapper {
+            padding: 32px 32px 0;
+          }
+          .perfil-container {
+            grid-template-columns: 240px 1fr;
+          }
+          .perfil-form-grid {
+            grid-template-columns: 1fr 1fr;
+            gap: 16px 20px;
+          }
+        }
+      `}</style>
       <PageHeader
         title="Mi perfil"
         subtitle="Administra tu información personal y credenciales de acceso"
         icon={User}
       />
 
-      <div style={{ padding: "32px 32px 0" }}>
+      <div className="perfil-wrapper">
         {/* ── Layout: sidebar + panel ── */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "240px 1fr",
-            gap: 20,
-            alignItems: "start",
-          }}
-        >
+        <div className="perfil-container">
           {/* ══════════════ SIDEBAR ══════════════ */}
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             {/* Avatar card */}
@@ -864,13 +885,7 @@ export function PerfilUsuarioModule() {
               />
 
               <div style={{ padding: "22px 24px" }}>
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
-                    gap: "16px 20px",
-                  }}
-                >
+                <div className="perfil-form-grid">
                   <Field label="Nombre *" error={infoErrors.nombre}>
                     <Input
                       value={infoFormData.nombre}
@@ -1032,13 +1047,7 @@ export function PerfilUsuarioModule() {
               />
 
               <div style={{ padding: "22px 24px" }}>
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
-                    gap: "16px 20px",
-                  }}
-                >
+                <div className="perfil-form-grid">
                   <Field label="Contraseña actual *" full error={passwordErrors.currentPassword}>
                     <Input
                       type="password"

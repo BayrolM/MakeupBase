@@ -150,10 +150,10 @@ export function NotificationBell({ currentRoute, onNavigate }: NotificationBellP
         </PopoverTrigger>
 
         <PopoverContent
-          className="p-0 overflow-hidden bg-white"
+          className="p-0 overflow-hidden bg-white w-[calc(100vw-32px)] md:w-[420px]"
           sideOffset={10}
           style={{
-            width: 420,
+            maxWidth: "calc(100vw - 32px)",
             borderRadius: 20,
             border: "1px solid rgba(0,0,0,0.07)",
             boxShadow: "0 24px 48px -12px rgba(123,19,71,0.18), 0 8px 16px -4px rgba(0,0,0,0.06)",

@@ -317,7 +317,7 @@ export function CategoriasModule() {
       />
 
       {categorias.length > 0 && (
-        <div className="px-8 pb-8">
+        <div className="px-4 md:px-8 pb-8">
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}

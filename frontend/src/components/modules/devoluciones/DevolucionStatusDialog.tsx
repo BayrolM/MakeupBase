@@ -36,7 +36,7 @@ export function DevolucionStatusDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-white border-0 w-[90vw] max-w-[800px] max-h-[90vh] flex flex-col rounded-2xl shadow-2xl p-0 overflow-hidden" style={{ '--input-background': '#ffffff' } as React.CSSProperties}>
-        <DialogHeader className="px-8 pt-8 pb-6 border-b border-gray-100 flex-shrink-0 bg-white z-10">
+        <DialogHeader className="px-4 md:px-8 pt-6 md:pt-8 pb-6 border-b border-gray-100 flex-shrink-0 bg-white z-10">
           <div className="flex items-center gap-4">
             <div className="flex items-center justify-center text-white font-bold text-lg flex-shrink-0" 
               style={{ width: 44, height: 44, borderRadius: 14, background: "linear-gradient(135deg,#c47b96,#e092b2)", boxShadow: "0 4px 12px rgba(196,123,150,0.3)" }}>
@@ -49,7 +49,7 @@ export function DevolucionStatusDialog({
           </div>
         </DialogHeader>
 
-        <div className="px-8 py-6 space-y-6 overflow-y-auto flex-1 no-scrollbar">
+        <div className="px-4 md:px-8 py-6 space-y-6 overflow-y-auto flex-1 no-scrollbar">
           <div className="space-y-4">
             <div className="space-y-2">
               <Label className="text-gray-700 font-bold text-sm">Nuevo Estado</Label>
@@ -68,7 +68,7 @@ export function DevolucionStatusDialog({
             {nuevoEstado === "aprobada" && (
               <div className="space-y-3 animate-in fade-in slide-in-from-top-2 pt-2">
                 <Label className="text-gray-700 font-bold text-sm">Estado Físico del Producto Devuelto <span className="text-rose-500">*</span></Label>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div 
                     onClick={() => onEsDefectuosoChange(false)}
                     className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex flex-col items-center justify-center gap-2 ${!esDefectuoso ? 'border-[#c47b96] bg-[#fff0f5] shadow-sm' : 'border-gray-100 bg-white hover:border-gray-200'}`}
@@ -122,7 +122,7 @@ export function DevolucionStatusDialog({
           </div>
         </div>
 
-        <div className="flex gap-3 px-8 pb-6 pt-5 border-t border-gray-100 bg-white flex-shrink-0 z-10">
+        <div className="flex gap-3 px-4 md:px-8 pb-6 pt-5 border-t border-gray-100 bg-white flex-shrink-0 z-10">
           <button
             onClick={() => onOpenChange(false)}
             disabled={isSaving}

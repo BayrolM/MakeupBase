@@ -24,7 +24,7 @@ export function PedidoPreviewDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-white border border-gray-100 max-w-[900px] sm:max-w-[900px] w-[95vw] max-h-[90vh] rounded-2xl shadow-2xl p-0 overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100 bg-white flex-shrink-0">
+        <div className="flex items-center justify-between px-4 md:px-6 pt-6 pb-5 border-b border-gray-100 bg-white flex-shrink-0">
           <div className="flex items-center gap-4">
             <div
               className="flex items-center justify-center text-white font-bold text-lg flex-shrink-0"
@@ -82,7 +82,7 @@ export function PedidoPreviewDialog({
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-3 px-6 pb-6 pt-4 bg-white border-t border-gray-100 flex-shrink-0">
+        <div className="flex justify-end gap-3 px-4 md:px-6 pb-6 pt-4 bg-white border-t border-gray-100 flex-shrink-0">
           <Button
             onClick={() => onOpenChange(false)}
             className="rounded-xl px-10 h-11 text-sm font-bold text-white transition-all shadow-md hover:shadow-lg active:scale-95 border-0"

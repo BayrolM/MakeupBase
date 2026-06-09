@@ -34,7 +34,7 @@ export function PedidoPaymentConfirmDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-white border border-gray-100 w-[95vw] max-w-[450px] sm:max-w-[450px] rounded-2xl shadow-2xl p-0 overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100 bg-white">
+        <div className="flex items-center justify-between px-4 md:px-6 pt-6 pb-5 border-b border-gray-100 bg-white">
           <div className="flex items-center gap-4">
             <div
               className="flex items-center justify-center text-white font-bold text-lg flex-shrink-0"
@@ -102,11 +102,11 @@ export function PedidoPaymentConfirmDialog({
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-3 px-6 pb-6 pt-2 bg-white">
+        <div className="flex justify-end gap-3 px-4 md:px-6 pb-6 pt-2 bg-white">
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
-            className="rounded-xl px-6 h-11 text-sm font-bold border-gray-200 text-gray-500 hover:bg-gray-50"
+            className="rounded-xl px-4 md:px-6 h-11 text-sm font-bold border-gray-200 text-gray-500 hover:bg-gray-50"
             disabled={isSaving}
           >
             Cancelar
@@ -114,7 +114,7 @@ export function PedidoPaymentConfirmDialog({
           <Button
             onClick={onConfirm}
             disabled={isSaving}
-            className="rounded-xl px-8 h-11 text-sm font-bold text-white transition-all shadow-md hover:shadow-lg active:scale-95 border-0"
+            className="rounded-xl px-4 md:px-8 h-11 text-sm font-bold text-white transition-all shadow-md hover:shadow-lg active:scale-95 border-0"
             style={{ 
               background: isCurrentlyConfirmed 
                 ? "linear-gradient(135deg, #ef4444, #f87171)" 

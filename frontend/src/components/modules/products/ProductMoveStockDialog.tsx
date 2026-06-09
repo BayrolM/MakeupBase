@@ -89,7 +89,7 @@ export function ProductMoveStockDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-white border-0 max-w-md rounded-2xl shadow-2xl p-0 overflow-hidden">
         {/* Encabezado */}
-        <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100">
+        <div className="flex items-center justify-between px-4 md:px-6 pt-6 pb-5 border-b border-gray-100">
           <div className="flex items-center gap-4">
             <div
               className="flex items-center justify-center text-white font-bold text-lg flex-shrink-0 luxury-icon-gradient"
@@ -115,7 +115,7 @@ export function ProductMoveStockDialog({
         </div>
 
         {/* Cuerpo */}
-        <div className="px-6 py-5 flex flex-col gap-4">
+        <div className="px-4 md:px-6 py-5 flex flex-col gap-4">
           {/* Comparativo de Stock */}
           <div className="bg-[#fdf2f6] rounded-xl p-4 border border-[#fce8f0]">
             <p className="text-[11px] font-bold text-[#c47b96] uppercase tracking-wider mb-3 text-center">
@@ -179,7 +179,7 @@ export function ProductMoveStockDialog({
         </div>
 
         {/* Acciones */}
-        <div className="flex justify-end gap-3 px-6 pb-6 pt-2">
+        <div className="flex justify-end gap-3 px-4 md:px-6 pb-6 pt-2">
           <button
             onClick={() => onOpenChange(false)}
             disabled={isSaving}

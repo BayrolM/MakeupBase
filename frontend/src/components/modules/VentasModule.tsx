@@ -334,7 +334,7 @@ export function VentasModule() {
       <div>
         <VentaHeader onOpenDialog={handleOpenDialog} />
 
-        <div className="px-8 mt-6">
+        <div className="px-4 md:px-8 mt-6">
           <VentaTable
             ventas={ventas}
             searchQuery={searchQuery}
@@ -375,7 +375,7 @@ export function VentasModule() {
       />
 
       {totalItems > 0 && (
-        <div className="px-8 pb-8">
+        <div className="px-4 md:px-8 pb-8">
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}

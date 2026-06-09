@@ -85,7 +85,7 @@ export function LoginPage({ onLogin, onNavigateToRegister, onNavigateToRecover, 
 
       {/* Back Button */}
       {onBack && (
-        <div style={{ position: 'absolute', top: '24px', left: '24px', zIndex: 10 }}>
+        <div className="hidden md:block" style={{ position: 'absolute', top: '24px', left: '24px', zIndex: 10 }}>
           <button
             onClick={onBack}
             style={{ 
@@ -120,7 +120,6 @@ export function LoginPage({ onLogin, onNavigateToRegister, onNavigateToRecover, 
           width: '100%', 
           maxWidth: '1040px', 
           display: 'flex', 
-          flexDirection: 'row', 
           background: C.white,
           borderRadius: '32px', 
           overflow: 'hidden',
@@ -137,14 +136,10 @@ export function LoginPage({ onLogin, onNavigateToRegister, onNavigateToRecover, 
           style={{ 
             flex: 1.1, 
             background: 'linear-gradient(158deg, #2e1020 0%, #3d1828 38%, #4a2035 62%, #2e1020 100%)',
-            padding: '60px 48px',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
             position: 'relative',
             overflow: 'hidden'
           }}
-          className="p-8 md:p-12"
+          className="hidden md:flex flex-col justify-between p-8 md:p-12"
         >
           {/* Subtle patterns/mesh in background */}
           <div style={{ position: 'absolute', top: '10%', right: '-10%', width: '300px', height: '300px', background: 'radial-gradient(circle, rgba(196, 123, 150, 0.25) 0%, transparent 70%)', filter: 'blur(50px)', pointerEvents: 'none' }} />
@@ -226,8 +221,60 @@ export function LoginPage({ onLogin, onNavigateToRegister, onNavigateToRecover, 
         </div>
 
         {/* Right Side: Professional Modern Login Form */}
-        <div style={{ flex: 1, padding: '60px 48px', display: 'flex', flexDirection: 'column', justifyContent: 'center', background: C.white }} className="p-8 md:p-12">
-          <div style={{ width: '100%', maxWidth: '380px', margin: '0 auto' }}>
+        <div 
+          style={{ flex: 1, maxHeight: "90vh", overflowY: "auto", display: 'flex', flexDirection: 'column', background: C.white }} 
+          className="p-8 md:p-12 lg:p-16"
+        >
+          {/* Mobile Header (Hidden on Desktop) */}
+          <div
+            className="md:hidden"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: "32px",
+            }}
+          >
+            {onBack ? (
+              <button
+                onClick={onBack}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  color: C.pink,
+                  background: "rgba(196, 123, 150, 0.1)",
+                  border: "1px solid rgba(196, 123, 150, 0.2)",
+                  cursor: "pointer",
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  padding: "6px 14px 6px 8px",
+                  borderRadius: "20px",
+                  transition: "all 0.2s"
+                }}
+              >
+                <ChevronLeft style={{ width: 18, height: 18 }} /> Volver
+              </button>
+            ) : <div />}
+            <div
+              style={{
+                width: "48px",
+                height: "48px",
+                borderRadius: "50%",
+                overflow: "hidden",
+                border: `1.5px solid ${C.pinkSoft}`,
+                background: "transparent",
+              }}
+            >
+              <img
+                src="/logo.png"
+                alt="Glamour ML"
+                style={{ width: "100%", height: "100%", objectFit: "contain" }}
+              />
+            </div>
+          </div>
+
+          <div style={{ width: '100%', maxWidth: '380px', margin: 'auto' }}>
             
             <div style={{ marginBottom: '36px' }}>
               <h2 style={{ 

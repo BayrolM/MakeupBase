@@ -54,7 +54,7 @@ export function CompraDetailDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-white border-0 max-w-2xl rounded-2xl shadow-2xl p-0 overflow-hidden">
         {/* Encabezado */}
-        <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100 bg-white">
+        <div className="flex items-center justify-between px-4 md:px-6 pt-6 pb-5 border-b border-gray-100 bg-white">
           <div className="flex items-center gap-4">
             <div
               className="flex items-center justify-center text-white font-bold text-xl flex-shrink-0"
@@ -103,8 +103,8 @@ export function CompraDetailDialog({
           </div>
         </div>
 
-        <div className="px-6 py-6 overflow-y-auto max-h-[65vh]">
-          <div className="grid grid-cols-2 gap-6 mb-6">
+        <div className="px-4 md:px-6 py-6 overflow-y-auto max-h-[65vh]">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div className="space-y-4">
               <h3 className="text-[11px] font-bold text-[#c47b96] uppercase tracking-wider">
                 Información de Compra
@@ -245,11 +245,11 @@ export function CompraDetailDialog({
           </div>
         </div>
 
-        <div className="px-6 pb-6 pt-4 border-t border-gray-100 flex items-center gap-3 bg-white">
+        <div className="px-4 md:px-6 pb-6 pt-4 border-t border-gray-100 flex items-center gap-3 bg-white">
           <Button
             variant="outline"
             onClick={handlePrint}
-            className="flex items-center gap-2 bg-[#fff0f5] border-[#f0d5e0] text-[#c47b96] hover:bg-[#fce8f0] rounded-xl px-6 h-11 text-sm font-semibold transition-all"
+            className="flex items-center gap-2 bg-[#fff0f5] border-[#f0d5e0] text-[#c47b96] hover:bg-[#fce8f0] rounded-xl px-4 md:px-6 h-11 text-sm font-semibold transition-all"
           >
             <Download className="w-4 h-4" /> Exportar PDF
           </Button>

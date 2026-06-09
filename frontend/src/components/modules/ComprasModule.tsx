@@ -321,7 +321,7 @@ export function ComprasModule() {
       <div>
         <CompraHeader onOpenDialog={handleOpenDialog} />
 
-        <div className="px-8 mt-6">
+        <div className="px-4 md:px-8 mt-6">
           <CompraTable
             compras={paginatedCompras}
             proveedores={proveedores}
@@ -378,7 +378,7 @@ export function ComprasModule() {
       />
 
       {filteredCompras.length > 0 && (
-        <div className="px-8 pb-8">
+        <div className="px-4 md:px-8 pb-8">
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}

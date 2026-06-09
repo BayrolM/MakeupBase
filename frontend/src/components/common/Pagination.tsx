@@ -59,19 +59,14 @@ export function Pagination({
     <div 
       style={{
         marginTop: '10px',
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        width: '100%',
         backgroundColor: '#ffffff',
         border: '1px solid #fbcfe8',
         borderRadius: '10px',
-        padding: '5px 12px',
+        padding: '12px',
         boxShadow: '0 1px 4px rgba(123, 19, 71, 0.01)',
         fontFamily: "'DM Sans', sans-serif"
       }}
-      className="flex flex-col sm:flex-row items-center justify-between gap-2"
+      className="flex flex-col lg:flex-row items-center justify-between gap-4 w-full text-center lg:text-left"
     >
       {/* Left side: Records Info */}
       <div style={{ fontSize: '13px', color: '#4b5563', fontWeight: 500 }}>
@@ -79,7 +74,7 @@ export function Pagination({
       </div>
 
       {/* Center: Navigation Controls */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}

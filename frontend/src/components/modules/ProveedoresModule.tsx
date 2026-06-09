@@ -346,7 +346,7 @@ export function ProveedoresModule() {
           isAdmin={isAdmin}
         />
 
-        <div className="px-8 mt-6">
+        <div className="px-4 md:px-8 mt-6">
           <ProveedorTable
             proveedores={paginatedProveedores}
             searchQuery={searchQuery}
@@ -402,7 +402,7 @@ export function ProveedoresModule() {
       />
 
       {filteredProveedores.length > 0 && (
-        <div className="px-8 pb-8">
+        <div className="px-4 md:px-8 pb-8">
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}

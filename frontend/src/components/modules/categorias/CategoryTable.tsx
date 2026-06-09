@@ -47,7 +47,7 @@ export function CategoryTable({
   onStatusChange,
 }: CategoryTableProps) {
   return (
-    <div className="px-8 mt-6 pb-8">
+    <div className="px-4 md:px-8 mt-6 pb-8">
       <div className="bg-white/80 backdrop-blur-sm border border-white/50 rounded-2xl overflow-hidden">
         {/* Barra de búsqueda */}
         <div className="p-4 border-b border-gray-100 bg-white">

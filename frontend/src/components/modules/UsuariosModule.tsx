@@ -453,7 +453,7 @@ export function UsuariosModule() {
       <div>
         <UsuarioHeader isAdmin={isAdmin} onOpenDialog={handleOpenDialog} />
 
-        <div className="px-8 mt-6">
+        <div className="px-4 md:px-8 mt-6">
           <UsuarioTable
             users={paginatedUsers}
             pedidos={pedidos}
@@ -504,7 +504,7 @@ export function UsuariosModule() {
       />
 
       {filteredUsers.length > 0 && (
-        <div className="px-8 pb-8">
+        <div className="px-4 md:px-8 pb-8">
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}

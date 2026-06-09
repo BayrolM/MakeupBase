@@ -48,6 +48,7 @@ export function ProductCard({
   return (
     <div
       onClick={onCardClick}
+      className="product-card-root"
       style={{
         background: C.white,
         borderRadius: "20px",
@@ -57,10 +58,12 @@ export function ProductCard({
         transition: "all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1)",
         position: "relative",
         boxShadow: `0 4px 20px ${C.shadow}`,
+        display: "flex",
+        flexDirection: "column",
       }}
       onMouseEnter={(e) => {
         const el = e.currentTarget;
-        el.style.transform = "translateY(-10px)";
+        el.style.transform = "translateY(-8px)";
         el.style.boxShadow = `0 25px 50px ${C.shadowSm}`;
         el.style.borderColor = C.accentDeep;
       }}
@@ -76,13 +79,13 @@ export function ProductCard({
         <div
           style={{
             position: "absolute",
-            top: "15px",
-            left: "15px",
+            top: "12px",
+            left: "12px",
             background: badgeColor || C.accentDeep,
             color: "white",
             fontSize: "10px",
             fontWeight: 700,
-            padding: "4px 12px",
+            padding: "4px 10px",
             borderRadius: "20px",
             zIndex: 1,
             letterSpacing: "0.5px",
@@ -105,7 +108,7 @@ export function ProductCard({
               color: "white",
               fontSize: "10px",
               fontWeight: 700,
-              padding: "4px 12px",
+              padding: "4px 10px",
               borderRadius: "20px",
               zIndex: 1,
               letterSpacing: "0.5px",
@@ -117,12 +120,13 @@ export function ProductCard({
 
       {/* Product Image */}
       <div
+        className="product-card-img"
         style={{
           width: "100%",
-          height: "220px",
           background: C.bgSoft,
           overflow: "hidden",
           position: "relative",
+          flexShrink: 0,
         }}
       >
         {producto.imagenUrl ? (
@@ -133,6 +137,7 @@ export function ProductCard({
               width: "100%",
               height: "100%",
               objectFit: "cover",
+              display: "block",
             }}
           />
         ) : (
@@ -147,16 +152,16 @@ export function ProductCard({
           >
             <Package
               style={{
-                width: 64,
-                height: 64,
+                width: 56,
+                height: 56,
                 color: C.accent,
-                opacity: 0.3,
+                opacity: 0.4,
               }}
             />
           </div>
         )}
 
-        {/* Favorite Button (Top Right) */}
+        {/* Favorite Button */}
         {onToggleFavorite && (
           <button
             onClick={(e) => {
@@ -165,18 +170,18 @@ export function ProductCard({
             }}
             style={{
               position: "absolute",
-              top: "12px",
-              right: "12px",
+              top: "10px",
+              right: "10px",
               width: "32px",
               height: "32px",
               borderRadius: "50%",
-              background: "rgba(255, 255, 255, 0.9)",
+              background: "rgba(255, 255, 255, 0.92)",
               border: "none",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               cursor: "pointer",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
               zIndex: 2,
               transition: "transform 0.2s",
             }}
@@ -187,8 +192,8 @@ export function ProductCard({
           >
             <Heart
               style={{
-                width: 18,
-                height: 18,
+                width: 16,
+                height: 16,
                 color: isFavorite ? C.accentDeep : C.textMuted,
                 fill: isFavorite ? C.accentDeep : "none",
                 transition: "all 0.2s",
@@ -199,26 +204,29 @@ export function ProductCard({
       </div>
 
       {/* Product Info */}
-      <div style={{ padding: "1.5rem" }}>
+      <div
+        className="product-card-info"
+        style={{ padding: "1.1rem 1.25rem 1.25rem", flex: 1 }}
+      >
         <div
           style={{
             fontSize: "10px",
             color: C.textMuted,
-            letterSpacing: "2px",
+            letterSpacing: "1.5px",
             textTransform: "uppercase",
-            marginBottom: "6px",
+            marginBottom: "4px",
             fontWeight: 700,
           }}
         >
           {categoryName || "BELLEZA"}
         </div>
         <h4
+          className="product-card-title"
           style={{
             fontFamily: "'Cormorant Garamond', serif",
-            fontSize: "20px",
             fontWeight: 700,
             color: C.textDark,
-            marginBottom: "8px",
+            marginBottom: "6px",
             overflow: "hidden",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
@@ -229,19 +237,12 @@ export function ProductCard({
         <div
           style={{
             color: "#f59e0b",
-            fontSize: "12px",
-            marginBottom: "15px",
+            fontSize: "11px",
+            marginBottom: "12px",
           }}
         >
           ★★★★★{" "}
-          <span
-            style={{
-              color: C.textMuted,
-              marginLeft: "6px",
-            }}
-          >
-            4.8
-          </span>
+          <span style={{ color: C.textMuted, marginLeft: "4px" }}>4.8</span>
         </div>
 
         <div
@@ -249,11 +250,12 @@ export function ProductCard({
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
+            gap: "8px",
           }}
         >
           <span
+            className="product-card-price"
             style={{
-              fontSize: "20px",
               fontWeight: 800,
               color: C.accentDeep,
             }}
@@ -266,20 +268,21 @@ export function ProductCard({
                 e.stopPropagation();
                 onAddToCart(e);
               }}
+              className="product-card-cart-btn"
               style={{
-                width: "40px",
-                height: "40px",
                 borderRadius: "50%",
-                background: isMaxStock ? "#e5e7eb" : `linear-gradient(135deg, ${C.accent}, ${C.accentDeep})`,
+                background: isMaxStock
+                  ? "#e5e7eb"
+                  : `linear-gradient(135deg, ${C.accent}, ${C.accentDeep})`,
                 color: isMaxStock ? "#9ca3af" : "white",
                 border: "none",
-                fontSize: "24px",
                 cursor: isMaxStock ? "not-allowed" : "pointer",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 transition: "transform 0.2s",
-                boxShadow: isMaxStock ? "none" : `0 5px 15px ${C.shadowLg}`,
+                boxShadow: isMaxStock ? "none" : `0 4px 12px ${C.shadowLg}`,
+                flexShrink: 0,
               }}
               onMouseEnter={(e) => {
                 if (!isMaxStock) e.currentTarget.style.transform = "scale(1.15)";

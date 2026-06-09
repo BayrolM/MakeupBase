@@ -58,10 +58,10 @@ export function FavoritosView({
         }}
       >
         <div
+          className="px-4 sm:px-8"
           style={{
             maxWidth: "1280px",
             margin: "0 auto",
-            padding: "0 32px",
             position: "relative",
             zIndex: 2,
           }}
@@ -91,9 +91,9 @@ export function FavoritosView({
               />
             </div>
             <h1
+              className="text-3xl sm:text-4xl lg:text-5xl"
               style={{
                 fontFamily: "'Cormorant Garamond', serif",
-                fontSize: "42px",
                 fontWeight: 600,
                 color: C.white,
                 margin: 0,
@@ -134,10 +134,10 @@ export function FavoritosView({
 
       {/* ── CONTENIDO PRINCIPAL ── */}
       <div
+        className="px-4 sm:px-8 pb-16 pt-6"
         style={{
           maxWidth: "1280px",
           margin: "0 auto",
-          padding: "24px 32px 64px 32px",
         }}
       >
         {favoritosProducts.length === 0 ? (
@@ -221,10 +221,9 @@ export function FavoritosView({
           </div>
         ) : (
           <div
+            className="grid gap-4 sm:gap-6"
             style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
-              gap: "24px",
+              gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
             }}
           >
             {favoritosProducts.map((producto) => {

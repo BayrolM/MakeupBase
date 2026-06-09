@@ -282,7 +282,6 @@ export function RegisterPageColombia({
           width: "100%",
           maxWidth: "1040px",
           display: "flex",
-          flexDirection: "row",
           background: C.white,
           borderRadius: "32px",
           overflow: "hidden",
@@ -439,7 +438,6 @@ export function RegisterPageColombia({
             overflowY: "auto",
             display: "flex",
             flexDirection: "column",
-            justifyContent: "center",
             background: C.white,
           }}
           className="sidebar-scroll p-8 md:p-12"
@@ -460,12 +458,15 @@ export function RegisterPageColombia({
                   display: "flex",
                   alignItems: "center",
                   gap: "6px",
-                  color: C.pinkSoft,
-                  background: "none",
-                  border: "none",
+                  color: C.pink,
+                  background: "rgba(196, 123, 150, 0.1)",
+                  border: "1px solid rgba(196, 123, 150, 0.2)",
                   cursor: "pointer",
                   fontSize: "13px",
                   fontWeight: 600,
+                  padding: "6px 14px 6px 8px",
+                  borderRadius: "20px",
+                  transition: "all 0.2s"
                 }}
               >
                 <ChevronLeft style={{ width: 16, height: 16 }} /> Volver
@@ -489,7 +490,7 @@ export function RegisterPageColombia({
             </div>
           </div>
 
-          <div style={{ width: "100%", maxWidth: "440px", margin: "0 auto" }}>
+          <div style={{ width: "100%", maxWidth: "440px", margin: "auto" }}>
             <div>
               <div style={{ marginBottom: "36px" }}>
                 <h1
@@ -611,13 +612,7 @@ export function RegisterPageColombia({
                       >
                         Identificación
                       </p>
-                      <div
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns: "1fr 1fr",
-                          gap: "16px",
-                        }}
-                      >
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div
                           style={{
                             display: "flex",
@@ -737,13 +732,7 @@ export function RegisterPageColombia({
                       >
                         Datos Personales
                       </p>
-                      <div
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns: "1fr 1fr",
-                          gap: "16px",
-                        }}
-                      >
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div
                           style={{
                             display: "flex",
@@ -847,13 +836,7 @@ export function RegisterPageColombia({
                       >
                         Contacto
                       </p>
-                      <div
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns: "1fr 1fr",
-                          gap: "16px",
-                        }}
-                      >
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div
                           style={{
                             display: "flex",
@@ -954,13 +937,7 @@ export function RegisterPageColombia({
                       >
                         Residencia
                       </p>
-                      <div
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns: "1fr 1fr",
-                          gap: "16px",
-                        }}
-                      >
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div
                           style={{
                             display: "flex",
@@ -1107,13 +1084,7 @@ export function RegisterPageColombia({
                       >
                         Seguridad
                       </p>
-                      <div
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns: "1fr 1fr",
-                          gap: "16px",
-                        }}
-                      >
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div
                           style={{
                             display: "flex",

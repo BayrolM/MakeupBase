@@ -302,9 +302,8 @@ export function PerfilView() {
             }}>
               <UserCircle style={{ width: 24, height: 24, color: C.white }} />
             </div>
-            <h1 style={{ 
+            <h1 className="text-3xl sm:text-4xl" style={{ 
               fontFamily: "'Cormorant Garamond', serif", 
-              fontSize: '42px', 
               fontWeight: 600, 
               color: C.white, 
               margin: 0 
@@ -323,7 +322,7 @@ export function PerfilView() {
         </div>
       </div>
 
-      <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '0 32px 80px 32px' }}>
+      <div className="px-4 sm:px-8 pb-20 max-w-5xl mx-auto">
         
         {/* Success Message */}
         {showSuccess && (
@@ -345,10 +344,10 @@ export function PerfilView() {
           </div>
         )}
 
-        <div style={{ background: C.white, borderRadius: '24px', padding: '40px', border: `1px solid ${C.accent}`, boxShadow: `0 8px 30px ${C.shadowSm}` }}>
+        <div className="p-5 sm:p-10" style={{ background: C.white, borderRadius: '24px', border: `1px solid ${C.accent}`, boxShadow: `0 8px 30px ${C.shadowSm}` }}>
           
           {/* Avatar Section */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '24px', paddingBottom: '32px', borderBottom: `1px solid ${C.accent}`, marginBottom: '32px' }}>
+          <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-6 pb-8 mb-8" style={{ borderBottom: `1px solid ${C.accent}` }}>
             <div style={{ position: 'relative' }} className="group">
               <div style={{ 
                 width: '96px', height: '96px', 
@@ -418,7 +417,7 @@ export function PerfilView() {
 
           {/* Form */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <InputField 
                 label="Nombres" id="nombres" value={formData.nombres} 
                 onChange={(e: any) => setFormData({ ...formData, nombres: e.target.value })} 

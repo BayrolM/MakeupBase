@@ -2,7 +2,7 @@ import { StoreProvider, useStore, UserRole, Cliente } from "./lib/store";
 import { ThemeProvider } from "./lib/theme-context";
 import { AppSidebar } from "./components/layout/AppSidebar";
 import { Dashboard } from "./components/Dashboard/DashboardMain";
-import { SidebarProvider } from "./components/ui/sidebar";
+import { SidebarProvider, SidebarTrigger } from "./components/ui/sidebar";
 import { useState, useEffect, useRef } from "react";
 import { UsuariosModule } from "./components/modules/UsuariosModule";
 import { ClientesViewModule } from "./components/modules/ClientesViewModule";
@@ -1077,8 +1077,22 @@ function AppContent() {
           currentRoute={currentRoute}
           onLogout={handleLogout}
         />
-        <main ref={scrollContainerRef} className="flex-1 overflow-auto">
-          {renderContent()}
+        <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
+          {/* Mobile Admin Header */}
+          <div className="md:hidden flex items-center justify-between p-3 bg-white border-b border-gray-100 z-10 shadow-sm shrink-0">
+            <div className="flex items-center gap-3">
+              <SidebarTrigger className="text-[#c47b96] hover:bg-[#fce8f0] w-9 h-9" />
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center bg-black border border-[#c47b96]">
+                  <img src="/logo.png" alt="Glamour ML" className="w-5 h-5 object-contain" />
+                </div>
+                <span className="font-semibold text-sm tracking-widest uppercase text-gray-800" style={{ fontFamily: "'Cormorant Garamond', serif" }}>Glamour ML</span>
+              </div>
+            </div>
+          </div>
+          <div ref={scrollContainerRef} className="flex-1 overflow-auto">
+            {renderContent()}
+          </div>
         </main>
       </div>
       <NotificationBell 

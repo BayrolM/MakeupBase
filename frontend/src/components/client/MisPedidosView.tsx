@@ -305,7 +305,7 @@ export function MisPedidosView({
     <div style={{ minHeight: "100vh", background: "#fdf5f8" }}>
       {/* Header */}
       <div style={{ background: "#fff8fb", borderBottom: "1px solid #f0d5e0" }}>
-        <div className="max-w-7xl mx-auto px-8 py-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 py-4 sm:py-6">
           <div className="flex items-center gap-3 mb-6">
             <Truck style={{ width: 28, height: 28, color: "#b06080" }} />
             <h1
@@ -321,7 +321,7 @@ export function MisPedidosView({
           </div>
 
           {/* Filters */}
-          <div className="flex gap-2 flex-wrap mb-4">
+          <div className="flex gap-2 overflow-x-auto pb-2 mb-4 no-scrollbar w-full whitespace-nowrap">
             <button
               onClick={() => setFilterStatus("all")}
               style={{
@@ -424,7 +424,7 @@ export function MisPedidosView({
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-8 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-8 py-8 sm:py-12">
         {filteredPedidos.length === 0 ? (
           <div
             style={{
@@ -503,11 +503,11 @@ export function MisPedidosView({
             {filteredPedidos.map((pedido) => (
               <div
                 key={pedido.id}
+                className="p-4 sm:p-6"
                 style={{
                   background: "#fff8fb",
                   border: "1px solid #f0d5e0",
                   borderRadius: "12px",
-                  padding: "24px",
                   boxShadow: "0 4px 12px rgba(196,123,150,0.08)",
                   transition: "all 0.3s ease",
                 }}
@@ -524,21 +524,8 @@ export function MisPedidosView({
                   e.currentTarget.style.transform = "none";
                 }}
               >
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    justifyContent: "space-between",
-                    marginBottom: "20px",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "16px",
-                    }}
-                  >
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-5">
+                  <div className="flex items-center sm:items-start gap-3 sm:gap-4">
                     <div
                       style={{
                         width: "48px",
@@ -567,13 +554,7 @@ export function MisPedidosView({
                       >
                         Pedido #{pedido.id.slice(0, 8).toUpperCase()}
                       </h3>
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "8px",
-                        }}
-                      >
+                      <div className="flex flex-wrap items-center gap-2 mt-1">
                         {!pedido.pago_confirmado ? (
                           <span
                             style={{
@@ -647,14 +628,7 @@ export function MisPedidosView({
                   )}
                 </div>
 
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "10px",
-                    marginTop: "20px",
-                  }}
-                >
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-5">
                   <button
                     onClick={() => handleViewDetail(pedido)}
                     disabled={isLoadingDetail}

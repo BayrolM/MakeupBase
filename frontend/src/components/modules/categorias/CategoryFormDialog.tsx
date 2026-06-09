@@ -30,7 +30,7 @@ export function CategoryFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-white border-0 max-w-md rounded-2xl shadow-2xl p-0 overflow-hidden" style={{ '--input-background': '#ffffff' } as React.CSSProperties}>
         {/* Encabezado */}
-        <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100">
+        <div className="flex items-center justify-between px-4 md:px-6 pt-6 pb-5 border-b border-gray-100">
           <div className="flex items-center gap-4">
             <div className="flex items-center justify-center text-white font-bold text-lg flex-shrink-0 luxury-icon-gradient" style={{ width: 44, height: 44, borderRadius: 12 }}>
               {editingCategoria ? (
@@ -59,7 +59,7 @@ export function CategoryFormDialog({
         </div>
 
         {/* Cuerpo */}
-        <div className="px-6 py-5 flex flex-col gap-3">
+        <div className="px-4 md:px-6 py-5 flex flex-col gap-3">
           <div className="bg-gray-50 rounded-xl p-4">
             <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">
               Nombre <span className="text-rose-500">*</span>
@@ -94,7 +94,7 @@ export function CategoryFormDialog({
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 px-6 pb-6">
+        <div className="flex justify-end gap-3 px-4 md:px-6 pb-6">
           <button
             onClick={() => onOpenChange(false)}
             disabled={isSaving}

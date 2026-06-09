@@ -66,7 +66,7 @@ export function PedidoFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-white border-0 rounded-2xl shadow-2xl p-0 overflow-hidden" style={{ '--input-background': '#ffffff', maxWidth: '800px', width: '90vw' } as React.CSSProperties}>
         {/* Header */}
-        <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100 bg-white z-10">
+        <div className="flex items-center justify-between px-4 md:px-6 pt-6 pb-5 border-b border-gray-100 bg-white z-10">
           <div className="flex items-center gap-4">
             <div
               className="flex items-center justify-center text-white font-bold text-lg flex-shrink-0 luxury-icon-gradient"
@@ -479,7 +479,7 @@ export function PedidoFormDialog({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 bg-white z-10">
+        <div className="flex items-center justify-between px-4 md:px-6 py-4 border-t border-gray-100 bg-white z-10">
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <span
               style={{ fontSize: "13px", fontWeight: 600, color: "#9ca3af" }}

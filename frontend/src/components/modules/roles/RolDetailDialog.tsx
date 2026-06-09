@@ -56,7 +56,7 @@ export function RolDetailDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-white border-0 max-w-4xl max-h-[90vh] overflow-hidden rounded-2xl shadow-2xl p-0 flex flex-col">
         {/* Encabezado Principal */}
-        <div className="px-6 pt-6 pb-4 border-b border-gray-100 bg-white">
+        <div className="px-4 md:px-6 pt-6 pb-4 border-b border-gray-100 bg-white">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-4">
               <div className="flex items-center justify-center text-white font-bold text-xl flex-shrink-0 luxury-icon-gradient"
@@ -88,13 +88,13 @@ export function RolDetailDialog({
 
           <Tabs defaultValue="general" className="w-full" onValueChange={setActiveTab}>
             <TabsList className="bg-gray-50/50 p-1 rounded-xl w-full sm:w-auto border border-gray-100">
-              <TabsTrigger value="general" className="rounded-lg text-xs font-bold px-6 data-[state=active]:bg-white data-[state=active]:text-[#c47b96] data-[state=active]:shadow-sm">
+              <TabsTrigger value="general" className="rounded-lg text-xs font-bold px-4 md:px-6 data-[state=active]:bg-white data-[state=active]:text-[#c47b96] data-[state=active]:shadow-sm">
                 Información
               </TabsTrigger>
-              <TabsTrigger value="permisos" className="rounded-lg text-xs font-bold px-6 data-[state=active]:bg-white data-[state=active]:text-[#c47b96] data-[state=active]:shadow-sm">
+              <TabsTrigger value="permisos" className="rounded-lg text-xs font-bold px-4 md:px-6 data-[state=active]:bg-white data-[state=active]:text-[#c47b96] data-[state=active]:shadow-sm">
                 Privilegios
               </TabsTrigger>
-              <TabsTrigger value="usuarios" className="rounded-lg text-xs font-bold px-6 data-[state=active]:bg-white data-[state=active]:text-[#c47b96] data-[state=active]:shadow-sm">
+              <TabsTrigger value="usuarios" className="rounded-lg text-xs font-bold px-4 md:px-6 data-[state=active]:bg-white data-[state=active]:text-[#c47b96] data-[state=active]:shadow-sm">
                 Personas ({usersForRole.length})
               </TabsTrigger>
             </TabsList>
@@ -223,7 +223,7 @@ export function RolDetailDialog({
           </Tabs>
         </div>
 
-        <div className="px-6 py-4 border-t border-gray-100 bg-white">
+        <div className="px-4 md:px-6 py-4 border-t border-gray-100 bg-white">
           <button
             onClick={() => onOpenChange(false)}
             className="w-full h-11 rounded-xl text-white font-bold text-sm luxury-button-modal shadow-lg shadow-[#c47b96]/20 active:scale-[0.98] transition-transform"

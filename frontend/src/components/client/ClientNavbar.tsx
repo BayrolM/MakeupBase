@@ -10,6 +10,10 @@ import {
   Trash2,
   AlertTriangle,
   Loader2,
+  Menu,
+  Instagram,
+  Facebook,
+  ChevronRight,
 } from "lucide-react";
 import { LogoutConfirmDialog } from "../layout/LogoutConfirmDialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "../ui/sheet";
@@ -54,6 +58,7 @@ export function ClientNavbar({
     Record<string, { available: number; requested: number }>
   >({});
   const [isValidating, setIsValidating] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -169,10 +174,19 @@ export function ClientNavbar({
   return (
     <>
       <header className="sticky top-0 z-40 w-full border-b border-border bg-white dark:bg-background">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-2">
-          <div className="flex items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
+          <div className="flex items-center justify-between gap-2 sm:gap-4">
             {/* Logo + Nav links juntos */}
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2 sm:gap-6">
+              {/* Botón menú móvil */}
+              <button
+                onClick={() => setIsMobileMenuOpen(true)}
+                className="md:hidden p-2 -ml-2 text-foreground-secondary hover:text-foreground transition-colors"
+                aria-label="Abrir menú"
+              >
+                <Menu className="w-6 h-6" />
+              </button>
+
               {/* Logo */}
               <button
                 onClick={() => onNavigate("inicio")}
@@ -222,25 +236,18 @@ export function ClientNavbar({
 
             {/* Íconos derecha */}
             <div className="flex items-center gap-1">
-              {/* Favoritos (Solo Logueado) */}
-              {currentUser && (
-                <button
-                  onClick={() => onNavigate("favoritos")}
-                  title="Favoritos"
-                  className={`relative p-2 rounded-lg transition-colors cursor-pointer ${
-                    isActive("favoritos")
-                      ? "bg-primary/10 text-primary"
-                      : "text-foreground-secondary hover:text-primary hover:bg-primary/5"
-                  }`}
-                >
-                  <Heart className="w-5 h-5" />
-                  {totalFavoritos > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">
-                      {totalFavoritos > 9 ? "9+" : totalFavoritos}
-                    </span>
-                  )}
-                </button>
-              )}
+              {/* Favoritos */}
+              <button
+                onClick={() => onNavigate("favoritos")}
+                title="Favoritos"
+                className={`relative p-2 rounded-lg transition-colors cursor-pointer ${
+                  isActive("favoritos")
+                    ? "bg-primary/10 text-primary"
+                    : "text-foreground-secondary hover:text-primary hover:bg-primary/5"
+                }`}
+              >
+                <Heart className="w-5 h-5" />
+              </button>
               {/* Carrito (Solo Logueado) */}
 
               <button
@@ -318,54 +325,104 @@ export function ClientNavbar({
                     <>
                       <style>{`
                         @keyframes dropdownFade {
-                          from { opacity: 0; transform: translateY(-10px) scale(0.98); }
+                          from { opacity: 0; transform: translateY(-10px) scale(0.95); }
                           to { opacity: 1; transform: translateY(0) scale(1); }
                         }
                       `}</style>
                       <div
-                        className="absolute right-0 top-full mt-2 w-52 rounded-xl shadow-xl overflow-hidden z-50"
+                        className="absolute right-0 top-full mt-3 w-64 rounded-2xl overflow-hidden z-50"
                         style={{
                           backgroundColor: "#ffffff",
-                          border: "1px solid var(--luxury-pink-soft)",
-                          animation:
-                            "dropdownFade 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+                          border: "1px solid #f0d5e0",
+                          boxShadow: "0 20px 40px -10px rgba(196,123,150,0.25)",
+                          animation: "dropdownFade 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards",
                           transformOrigin: "top right",
                         }}
                       >
-                        <div
-                          className="px-4 py-3 border-b"
-                          style={{ borderColor: "var(--luxury-pink-soft)" }}
+                        {/* Header Profile Area */}
+                        <div 
+                          className="px-5 py-4 flex items-center gap-3"
+                          style={{ 
+                            background: "linear-gradient(to right, #fff8fb, #ffffff)",
+                            borderBottom: "1px solid #f0d5e0" 
+                          }}
                         >
-                          <p className="text-sm font-semibold text-foreground truncate">
-                            {currentUser?.nombres} {currentUser?.apellidos}
-                          </p>
-                          <p className="text-xs text-foreground-secondary truncate">
-                            {currentUser?.email}
-                          </p>
+                          {currentUser?.foto_perfil ? (
+                            <img
+                              src={currentUser.foto_perfil}
+                              alt="avatar"
+                              className="w-10 h-10 rounded-full object-cover shadow-sm"
+                              style={{ border: "2px solid #ffffff" }}
+                            />
+                          ) : (
+                            <div 
+                              className="w-10 h-10 rounded-full flex items-center justify-center shadow-sm"
+                              style={{ background: "#f0d5e0", border: "2px solid #ffffff" }}
+                            >
+                              <span style={{ color: "#c47b96", fontWeight: "bold" }}>
+                                {currentUser?.nombres?.charAt(0)?.toUpperCase() || "U"}
+                              </span>
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p 
+                              className="text-sm font-bold truncate" 
+                              style={{ color: "#1a1a1a" }}
+                            >
+                              {currentUser?.nombres} {currentUser?.apellidos}
+                            </p>
+                            <p 
+                              className="text-xs truncate" 
+                              style={{ color: "#666666" }}
+                            >
+                              {currentUser?.email}
+                            </p>
+                          </div>
                         </div>
 
-                        <div className="py-1">
+                        {/* Menu Options */}
+                        <div className="p-2 flex flex-col gap-1 bg-white">
                           <button
                             onClick={() => {
                               onNavigate("perfil");
                               setDropdownOpen(false);
                             }}
-                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-foreground hover:bg-surface transition-colors text-left"
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-left font-medium group"
+                            style={{ color: "#1a1a1a" }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = "#fff8fb";
+                              e.currentTarget.style.color = "#c47b96";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = "transparent";
+                              e.currentTarget.style.color = "#1a1a1a";
+                            }}
                           >
-                            <User className="w-4 h-4 text-foreground-secondary" />
+                            <div className="p-1.5 rounded-lg transition-colors group-hover:bg-white group-hover:shadow-sm" style={{ color: "#666666" }}>
+                              <User className="w-4 h-4 transition-colors" />
+                            </div>
                             Mi Perfil
                           </button>
-                        </div>
-
-                        <div className="border-t border-border py-1">
+                          
                           <button
                             onClick={() => {
                               setShowLogoutConfirm(true);
                               setDropdownOpen(false);
                             }}
-                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-rose-600 hover:bg-rose-50 transition-colors text-left"
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-left font-medium group"
+                            style={{ color: "#1a1a1a" }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = "#fef2f2"; // red-50
+                              e.currentTarget.style.color = "#dc2626"; // red-600
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = "transparent";
+                              e.currentTarget.style.color = "#1a1a1a";
+                            }}
                           >
-                            <LogOut className="w-4 h-4" />
+                            <div className="p-1.5 rounded-lg transition-colors group-hover:bg-white group-hover:shadow-sm" style={{ color: "#666666" }}>
+                              <LogOut className="w-4 h-4 transition-colors" />
+                            </div>
                             Cerrar Sesión
                           </button>
                         </div>
@@ -383,7 +440,7 @@ export function ClientNavbar({
                   </button>
                   <button
                     onClick={() => onNavigate("register")}
-                    className="px-8 py-0 h-9 text-sm font-bold text-white rounded-xl transition-all shadow-md active:scale-95 hover:brightness-110 hover:shadow-lg cursor-pointer"
+                    className="hidden sm:block px-6 py-0 h-9 text-sm font-bold text-white rounded-xl transition-all shadow-md active:scale-95 hover:brightness-110 hover:shadow-lg cursor-pointer"
                     style={{
                       background: `linear-gradient(135deg, ${COLORS.accent} 0%, ${COLORS.accentDark} 100%)`,
                       boxShadow: `0 4px 12px ${COLORS.accent}40`,
@@ -397,6 +454,114 @@ export function ClientNavbar({
           </div>
         </div>
       </header>
+
+      {/* Menú Móvil Lateral */}
+      <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+        <SheetContent 
+          side="left" 
+          className="w-[320px] p-0 flex flex-col" 
+          style={{ 
+            background: "var(--luxury-bg-soft)", 
+            borderRight: "1px solid var(--luxury-accent-soft)" 
+          }}
+        >
+          <SheetHeader 
+            className="p-8 text-left" 
+            style={{ 
+              background: "var(--luxury-bg-header)", 
+              borderBottom: "1px solid var(--luxury-accent-soft)" 
+            }}
+          >
+            <div 
+              style={{ 
+                height: "3px", 
+                background: "linear-gradient(90deg, var(--luxury-pink-soft), var(--luxury-pink))", 
+                borderRadius: "4px", 
+                marginBottom: "16px", 
+                width: "40px" 
+              }} 
+            />
+            <SheetTitle 
+              className="font-serif text-2xl font-bold flex items-center gap-3" 
+              style={{ color: "var(--luxury-text-dark)" }}
+            >
+              <div className="w-10 h-10 rounded-xl overflow-hidden bg-black shrink-0 shadow-sm border border-border">
+                 <img src="/logo.png" alt="Logo" className="w-full h-full object-cover" />
+              </div>
+              GLAMOUR ML
+            </SheetTitle>
+            <SheetDescription style={{ color: "var(--luxury-text-muted)" }}>
+              Descubre tu belleza interior
+            </SheetDescription>
+          </SheetHeader>
+          
+          <div className="flex-1 overflow-y-auto py-6">
+            <nav className="flex flex-col px-4 gap-2">
+              {navLinks.map(({ label, route }) => {
+                const active = isActive(route);
+                return (
+                  <button
+                    key={route}
+                    onClick={() => {
+                      onNavigate(route);
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className={`flex items-center justify-between px-5 py-3.5 rounded-xl transition-all duration-300 text-left font-medium ${
+                      active
+                        ? "shadow-sm"
+                        : "hover:bg-white hover:shadow-sm hover:-translate-y-0.5"
+                    }`}
+                    style={{ 
+                      fontSize: "15px",
+                      background: active ? "var(--luxury-accent-soft)" : "transparent",
+                      color: active ? "var(--luxury-pink)" : "var(--luxury-text-dark)",
+                      border: active ? "1px solid var(--luxury-accent)" : "1px solid transparent"
+                    }}
+                  >
+                    {label}
+                    {active ? (
+                      <div className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--luxury-pink)" }} />
+                    ) : (
+                      <ChevronRight className="w-4 h-4 opacity-40" />
+                    )}
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
+          
+          {/* Menu Footer */}
+          <div 
+            className="p-8 mt-auto" 
+            style={{ 
+              borderTop: "1px dashed var(--luxury-accent-soft)", 
+              background: "rgba(255,255,255,0.4)" 
+            }}
+          >
+             <div className="flex items-center justify-center gap-4 mb-6">
+                <button 
+                  className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-gray-500 hover:scale-110 transition-all duration-300"
+                  style={{ border: "1px solid var(--luxury-accent-soft)" }}
+                  onMouseEnter={(e) => e.currentTarget.style.color = "var(--luxury-pink)"}
+                  onMouseLeave={(e) => e.currentTarget.style.color = "inherit"}
+                >
+                  <Instagram className="w-5 h-5" />
+                </button>
+                <button 
+                  className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-gray-500 hover:scale-110 transition-all duration-300"
+                  style={{ border: "1px solid var(--luxury-accent-soft)" }}
+                  onMouseEnter={(e) => e.currentTarget.style.color = "var(--luxury-pink)"}
+                  onMouseLeave={(e) => e.currentTarget.style.color = "inherit"}
+                >
+                  <Facebook className="w-5 h-5" />
+                </button>
+             </div>
+             <p className="text-center text-xs" style={{ color: "var(--luxury-text-muted)" }}>
+               © 2024 Glamour ML. Todos los derechos reservados.
+             </p>
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* Drawer del Carrito */}
       <Sheet open={isCartOpen} onOpenChange={setIsCartOpen}>

@@ -43,7 +43,7 @@ export function CatalogoView({
   onClearCategory?: () => void;
   onViewProduct?: (productId: string) => void;
 } = {}) {
-  const { productos, categorias, addToCarrito, carrito } = useStore();
+  const { productos, categorias, addToCarrito, carrito, favoritos, toggleFavorito } = useStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState(
     initialCategory || "all",
@@ -260,11 +260,11 @@ export function CatalogoView({
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-8">
-        <div className="flex gap-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex flex-col md:flex-row gap-8">
           {/* Filters Sidebar */}
           {showFilters && (
-            <div className="w-64 shrink-0">
+            <div className="w-full md:w-64 shrink-0">
               <div
                 className="sticky top-8"
                 style={{
@@ -540,7 +540,7 @@ export function CatalogoView({
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
                   gap: "24px",
                 }}
               >
@@ -570,6 +570,19 @@ export function CatalogoView({
                         });
                       }}
                       isMaxStock={isMaxStock}
+                      isFavorite={favoritos.includes(producto.id)}
+                      onToggleFavorite={(e) => {
+                        e.stopPropagation();
+                        toggleFavorito(producto.id);
+                        toast.success(
+                          favoritos.includes(producto.id)
+                            ? "Eliminado de favoritos"
+                            : "Agregado a favoritos",
+                          {
+                            description: producto.nombre,
+                          }
+                        );
+                      }}
                     />
                   );
                 })}

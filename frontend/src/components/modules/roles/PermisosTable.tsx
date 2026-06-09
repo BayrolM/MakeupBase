@@ -185,7 +185,7 @@ export function PermisosTable() {
       </Table>
 
       {totalItems > 0 && (
-        <div className="px-6 py-4 bg-white border-t border-gray-100">
+        <div className="px-4 md:px-6 py-4 bg-white border-t border-gray-100">
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}

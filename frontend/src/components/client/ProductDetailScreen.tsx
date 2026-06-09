@@ -123,13 +123,7 @@ export function ProductDetailScreen({ productId, onBack }: ProductDetailScreenPr
           <ArrowLeft className="w-4 h-4" /> Volver
         </button>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1.2fr 0.8fr",
-            gap: "2rem",
-          }}
-        >
+        <div className="grid grid-cols-1 md:grid-cols-[1.2fr_0.8fr] gap-8">
           <div
             style={{
               borderRadius: "28px",
@@ -218,13 +212,7 @@ export function ProductDetailScreen({ productId, onBack }: ProductDetailScreenPr
               </p>
             </div>
 
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                gap: "1rem",
-              }}
-            >
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div
                 style={{
                   background: C.white,

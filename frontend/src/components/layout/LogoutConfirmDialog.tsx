@@ -57,7 +57,8 @@ export function LogoutConfirmDialog({
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
-            className="border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-black rounded-lg px-6 h-10 text-sm font-medium transition-all cursor-pointer"
+            className="bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-black rounded-lg px-6 h-10 text-sm font-medium transition-all cursor-pointer"
+            style={{ background: "#ffffff" }}
           >
             Cancelar
           </Button>

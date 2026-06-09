@@ -18,7 +18,7 @@ export function CategoryDetailDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-white border-0 max-w-md rounded-2xl shadow-2xl p-0 overflow-hidden">
-        <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100">
+        <div className="flex items-center justify-between px-4 md:px-6 pt-6 pb-5 border-b border-gray-100">
           <div className="flex items-center gap-4">
             <div
               className="flex items-center justify-center text-white font-bold text-xl flex-shrink-0 luxury-icon-gradient"
@@ -43,8 +43,8 @@ export function CategoryDetailDialog({
           </button>
         </div>
 
-        <div className="px-6 py-5 flex flex-col gap-4">
-          <div className="grid grid-cols-2 gap-3">
+        <div className="px-4 md:px-6 py-5 flex flex-col gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="bg-gray-50 rounded-xl p-4">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
                 Nombre
@@ -81,7 +81,7 @@ export function CategoryDetailDialog({
           </div>
         </div>
 
-        <div className="px-6 pb-6 pt-2">
+        <div className="px-4 md:px-6 pb-6 pt-2">
           <button
             onClick={() => onOpenChange(false)}
             className="w-full h-11 rounded-xl text-white font-bold text-sm luxury-button-modal"

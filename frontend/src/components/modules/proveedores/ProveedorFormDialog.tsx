@@ -56,7 +56,7 @@ export function ProveedorFormDialog({
       }}
     >
       <DialogContent className="bg-white border-0 max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl p-0">
-        <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100 sticky top-0 bg-white z-10">
+        <div className="flex items-center justify-between px-4 md:px-6 pt-6 pb-5 border-b border-gray-100 sticky top-0 bg-white z-10">
           <div className="flex items-center gap-4">
             <div
               className="flex items-center justify-center text-white font-bold text-lg flex-shrink-0 luxury-icon-gradient"
@@ -89,8 +89,8 @@ export function ProveedorFormDialog({
           </button>
         </div>
 
-        <div className="px-6 py-6 space-y-6">
-          <div className="grid grid-cols-2 gap-4">
+        <div className="px-4 md:px-6 py-6 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">
                 <Building2 className="w-3.5 h-3.5 text-[#c47b96]" />
@@ -128,7 +128,7 @@ export function ProveedorFormDialog({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">
                 <FileText className="w-3.5 h-3.5 text-[#c47b96]" />
@@ -150,7 +150,7 @@ export function ProveedorFormDialog({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">
                 <Phone className="w-3.5 h-3.5 text-[#c47b96]" />
@@ -193,7 +193,7 @@ export function ProveedorFormDialog({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">
                 <MapPin className="w-3.5 h-3.5 text-[#c47b96]" />
@@ -242,7 +242,7 @@ export function ProveedorFormDialog({
           )}
         </div>
 
-        <div className="flex justify-end gap-3 px-6 pb-6 pt-5 bg-white border-t border-gray-100 sticky bottom-0 z-10 rounded-b-2xl">
+        <div className="flex justify-end gap-3 px-4 md:px-6 pb-6 pt-5 bg-white border-t border-gray-100 sticky bottom-0 z-10 rounded-b-2xl">
           <button
             onClick={() => onOpenChange(false)}
             disabled={isSaving}

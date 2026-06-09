@@ -30,7 +30,7 @@ export function DevolucionAnularDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-white border-0 max-w-md rounded-2xl shadow-2xl p-0 overflow-hidden" style={{ maxHeight: "90vh", display: "flex", flexDirection: "column" }}>
         {/* Header */}
-        <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100 bg-white">
+        <div className="flex items-center justify-between px-4 md:px-6 pt-6 pb-5 border-b border-gray-100 bg-white">
           <div className="flex items-center gap-4">
             <div 
               className="flex items-center justify-center text-white font-bold text-lg flex-shrink-0"
@@ -56,7 +56,7 @@ export function DevolucionAnularDialog({
         </div>
 
         {/* Body */}
-        <div className="px-6 py-5 space-y-5" style={{ flex: 1, overflowY: "auto" }}>
+        <div className="px-4 md:px-6 py-5 space-y-5" style={{ flex: 1, overflowY: "auto" }}>
           <div className="text-center">
             <p className="text-sm text-gray-600 leading-relaxed">
               ¿Estás seguro de que deseas anular esta devolución? Esta acción es{" "}
@@ -94,7 +94,7 @@ export function DevolucionAnularDialog({
         </div>
 
         {/* Footer */}
-        <div className="flex gap-3 px-6 pb-6 pt-2 border-t border-gray-100">
+        <div className="flex gap-3 px-4 md:px-6 pb-6 pt-2 border-t border-gray-100">
           <Button 
             variant="outline" 
             onClick={() => onOpenChange(false)} 

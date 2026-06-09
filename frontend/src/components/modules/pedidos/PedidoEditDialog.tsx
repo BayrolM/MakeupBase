@@ -57,7 +57,7 @@ export function PedidoEditDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-white border-0 w-[95vw] max-w-[1100px] sm:max-w-[1100px] max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl p-0 no-scrollbar" style={{ '--input-background': '#ffffff' } as React.CSSProperties}>
         {/* Header */}
-        <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100 sticky top-0 bg-white z-10">
+        <div className="flex items-center justify-between px-4 md:px-6 pt-6 pb-5 border-b border-gray-100 sticky top-0 bg-white z-10">
           <div className="flex items-center gap-4">
             <div className="flex items-center justify-center text-white font-bold text-lg flex-shrink-0 luxury-icon-gradient" style={{ width: 44, height: 44, borderRadius: 12 }}>
               <ClipboardList className="w-5 h-5" />
@@ -85,8 +85,8 @@ export function PedidoEditDialog({
         `}} />
 
         {/* Body */}
-        <div className="px-6 py-5">
-          <div className="grid grid-cols-2 gap-5 py-2">
+        <div className="px-4 md:px-6 py-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 py-2">
             {/* Cliente */}
             <div className="space-y-2">
               <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">
@@ -124,7 +124,7 @@ export function PedidoEditDialog({
                   <span className="micro-validation-error ml-1">{fieldErrors.direccionEnvio}</span>
                 )}
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label className="text-gray-700 font-semibold text-sm">Ciudad *</Label>
                   <Input
@@ -249,7 +249,7 @@ export function PedidoEditDialog({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-6 pb-6 pt-4 border-t border-gray-100 sticky bottom-0 bg-white z-10">
+        <div className="flex items-center justify-between px-4 md:px-6 pb-6 pt-4 border-t border-gray-100 sticky bottom-0 bg-white z-10">
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <span style={{ fontSize: "13px", fontWeight: 600, color: "#9ca3af" }}>Total:</span>
             <span style={{ fontSize: "22px", fontWeight: 900, color: "#c47b96", letterSpacing: "-0.5px" }}>

@@ -36,7 +36,7 @@ export function PedidoShippingDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-white border border-gray-100 max-w-md rounded-2xl shadow-2xl p-0 overflow-hidden">
         {/* Encabezado */}
-        <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100 bg-white">
+        <div className="flex items-center justify-between px-4 md:px-6 pt-6 pb-5 border-b border-gray-100 bg-white">
           <div className="flex items-center gap-4">
             <div
               className="flex items-center justify-center text-white font-bold text-lg flex-shrink-0 luxury-icon-gradient"
@@ -107,7 +107,7 @@ export function PedidoShippingDialog({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">
                 <Calendar className="w-3.5 h-3.5 text-[#c47b96]" /> Fecha Envío
@@ -153,7 +153,7 @@ export function PedidoShippingDialog({
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-3 px-6 pb-6 pt-5 bg-white border-t border-gray-100">
+        <div className="flex justify-end gap-3 px-4 md:px-6 pb-6 pt-5 bg-white border-t border-gray-100">
           <button
             onClick={() => onOpenChange(false)}
             disabled={isSaving}

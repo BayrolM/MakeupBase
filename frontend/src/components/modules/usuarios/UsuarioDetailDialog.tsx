@@ -40,7 +40,7 @@ export function UsuarioDetailDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-white border-0 max-w-2xl rounded-2xl shadow-2xl p-0 overflow-hidden">
         {/* Encabezado */}
-        <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100 bg-white">
+        <div className="flex items-center justify-between px-4 md:px-6 pt-6 pb-5 border-b border-gray-100 bg-white">
           <div className="flex items-center gap-4">
             <div
               className="flex items-center justify-center text-white font-bold text-xl flex-shrink-0 luxury-icon-gradient"
@@ -65,8 +65,8 @@ export function UsuarioDetailDialog({
           </button>
         </div>
 
-        <div className="px-6 py-6 overflow-y-auto max-h-[70vh]">
-          <div className="grid grid-cols-2 gap-6">
+        <div className="px-4 md:px-6 py-6 overflow-y-auto max-h-[70vh]">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Información Personal */}
             <div className="space-y-4">
               <h3 className="text-[11px] font-bold text-[#c47b96] tracking-wider">
@@ -165,7 +165,7 @@ export function UsuarioDetailDialog({
             <h3 className="text-[11px] font-bold text-[#c47b96] tracking-wider mb-4">
               Estado y Permisos
             </h3>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-[#fff0f5] border border-pink-100 rounded-xl p-4 text-center">
                 <Shield className="w-5 h-5 text-[#c47b96] mx-auto mb-2" />
                 <p className="text-xl font-bold text-gray-800">{rolNombre}</p>
@@ -191,7 +191,7 @@ export function UsuarioDetailDialog({
           </div>
         </div>
 
-        <div className="px-6 pb-6 pt-4">
+        <div className="px-4 md:px-6 pb-6 pt-4">
           <button
             onClick={() => onOpenChange(false)}
             className="w-full h-11 rounded-xl text-white font-bold text-sm luxury-button-modal shadow-lg shadow-[#c47b96]/20"
