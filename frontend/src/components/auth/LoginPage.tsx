@@ -36,6 +36,28 @@ export function LoginPage({ onLogin, onNavigateToRegister, onNavigateToRecover, 
     return emailRegex.test(email);
   };
 
+  const handleEmailChange = (val: string) => {
+    setEmail(val);
+    let errorMsg = '';
+    if (!val) {
+      errorMsg = 'El correo electrónico es obligatorio';
+    } else if (!validateEmail(val)) {
+      errorMsg = 'Formato de correo electrónico inválido';
+    }
+    setErrors(prev => ({ ...prev, email: errorMsg }));
+  };
+
+  const handlePasswordChange = (val: string) => {
+    setPassword(val);
+    let errorMsg = '';
+    if (!val) {
+      errorMsg = 'La contraseña es obligatoria';
+    } else if (val.length < 8) {
+      errorMsg = 'La contraseña debe tener al menos 8 caracteres';
+    }
+    setErrors(prev => ({ ...prev, password: errorMsg }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: { email?: string; password?: string } = {};
@@ -305,7 +327,7 @@ export function LoginPage({ onLogin, onNavigateToRegister, onNavigateToRecover, 
                     id="email"
                     type="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => handleEmailChange(e.target.value)}
                     placeholder="ejemplo@glamour.com"
                     style={{
                       width: '100%', 
@@ -361,7 +383,7 @@ export function LoginPage({ onLogin, onNavigateToRegister, onNavigateToRecover, 
                     id="password"
                     type={showPassword ? "text" : "password"}
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => handlePasswordChange(e.target.value)}
                     placeholder="••••••••"
                     style={{
                       width: '100%', 

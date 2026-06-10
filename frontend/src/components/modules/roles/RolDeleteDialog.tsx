@@ -94,6 +94,7 @@ export function RolDeleteDialog({
             variant="outline"
             onClick={() => onOpenChange(false)}
             className="border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg px-4 h-10 text-sm"
+            style={{ backgroundColor: "#ffffff" }}
             disabled={isDeleting}
           >
             Cancelar

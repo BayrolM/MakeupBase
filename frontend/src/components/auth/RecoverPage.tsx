@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { CheckCircle, Loader2, ChevronLeft, Eye, EyeOff } from 'lucide-react';
+import { toast } from 'sonner';
 import { authService } from '../../services/authService';
 
 /* ── Luxury CSS variable helpers ── */
@@ -76,6 +77,8 @@ export function RecoverPage({ initialToken, onRecover, onNavigateToLogin, onBack
   const [flowState, setFlowState] = useState<FlowState>('email');
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
+  const [code, setCode] = useState('');
+  const [codeError, setCodeError] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
@@ -95,35 +98,102 @@ export function RecoverPage({ initialToken, onRecover, onNavigateToLogin, onBack
     return emailRegex.test(email);
   };
 
+  const handleEmailChange = async (val: string) => {
+    setEmail(val);
+    if (!val) {
+      setError('El correo electrónico es obligatorio');
+      return;
+    }
+    if (!validateEmail(val)) {
+      setError('El correo debe contener un "@" y un dominio válido (ej: usuario@ejemplo.com)');
+      return;
+    }
+    setError('');
+    try {
+      const isRegistered = await authService.checkEmail(val);
+      if (!isRegistered) {
+        setError('¡Lo sentimos! Correo no registrado');
+      } else {
+        setError('');
+      }
+    } catch (err) {
+      // ignore check error or keep silent
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) {
-      setError('Por favor, ingresa un correo válido.');
+      setError('El correo electrónico es obligatorio');
       return;
     }
     if (!validateEmail(email)) {
-      setError('Por favor, ingresa un correo válido.');
+      setError('El correo debe contener un "@" y un dominio válido (ej: usuario@ejemplo.com)');
       return;
+    }
+    try {
+      const isRegistered = await authService.checkEmail(email);
+      if (!isRegistered) {
+        setError('¡Lo sentimos! Correo no registrado');
+        return;
+      }
+    } catch (err) {
+      // ignore
     }
     setError('');
     setFlowState('verifying');
     try {
       await authService.forgotPassword(email);
-      setFlowState('success');
+      setFlowState('code');
     } catch (err: any) {
       setError(err.message || 'Error al solicitar recuperación');
       setFlowState('email');
     }
   };
 
+  const handleVerifyCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!code) {
+      setCodeError('Por favor ingresa el código de verificación.');
+      return;
+    }
+    if (code.length !== 6) {
+      setCodeError('El código debe tener 6 dígitos.');
+      return;
+    }
+    setCodeError('');
+    setFlowState('verifying');
+    try {
+      const isValid = await authService.verifyResetCode(email, code);
+      if (isValid) {
+        setToken(code);
+        setFlowState('reset');
+      } else {
+        const errorMsg = '¡Lo sentimos! El código ingresado no es válido';
+        setCodeError(errorMsg);
+        toast.error(errorMsg);
+        setFlowState('code');
+      }
+    } catch (err: any) {
+      const errorMsg = '¡Lo sentimos! El código ingresado no es válido';
+      setCodeError(errorMsg);
+      toast.error(errorMsg);
+      setFlowState('code');
+    }
+  };
+
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPassword || !confirmPassword) {
-      setPasswordError('Ambos campos son obligatorios.');
+      const errorMsg = 'Falta información en algún campo.';
+      setPasswordError(errorMsg);
+      toast.error(errorMsg);
       return;
     }
     if (newPassword !== confirmPassword) {
-      setPasswordError('Las contraseñas no coinciden.');
+      const errorMsg = 'Las contraseñas no coinciden.';
+      setPasswordError(errorMsg);
+      toast.error(errorMsg);
       return;
     }
     if (newPassword.length < 8) {
@@ -139,7 +209,10 @@ export function RecoverPage({ initialToken, onRecover, onNavigateToLogin, onBack
     try {
       await authService.resetPassword(token!, newPassword);
       if (onRecover) onRecover(email);
-      setFlowState('complete');
+      toast.success('¡Proceso Completado! Ya puedes acceder nuevamente al sistema');
+      setTimeout(() => {
+        onNavigateToLogin();
+      }, 2000);
     } catch (err: any) {
       setPasswordError(err.message || 'Error al restablecer la contraseña');
       setFlowState('reset');
@@ -236,14 +309,31 @@ export function RecoverPage({ initialToken, onRecover, onNavigateToLogin, onBack
                 <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                   <InputField 
                     label="Correo electrónico" id="email" type="email" value={email} 
-                    onChange={(e: any) => setEmail(e.target.value)} 
+                    onChange={(e: any) => handleEmailChange(e.target.value)} 
                     error={error} placeholder="correo@ejemplo.com"
                   />
                   <button
                     type="submit"
-                    style={buttonStyle}
-                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = `0 12px 32px rgba(0,0,0,0.15)`; e.currentTarget.style.background = '#000000'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = `0 8px 24px rgba(0,0,0,0.1)`; e.currentTarget.style.background = C.textDark; }}
+                    disabled={!!error || !email}
+                    style={{
+                      ...buttonStyle,
+                      opacity: (!!error || !email) ? 0.5 : 1,
+                      cursor: (!!error || !email) ? 'not-allowed' : 'pointer'
+                    }}
+                    onMouseEnter={(e) => { 
+                      if (!error && email) {
+                        e.currentTarget.style.transform = 'translateY(-2px)'; 
+                        e.currentTarget.style.boxShadow = `0 12px 32px rgba(0,0,0,0.15)`; 
+                        e.currentTarget.style.background = '#000000'; 
+                      }
+                    }}
+                    onMouseLeave={(e) => { 
+                      if (!error && email) {
+                        e.currentTarget.style.transform = 'translateY(0)'; 
+                        e.currentTarget.style.boxShadow = `0 8px 24px rgba(0,0,0,0.1)`; 
+                        e.currentTarget.style.background = C.textDark; 
+                      }
+                    }}
                   >
                     ENVIAR INSTRUCCIONES
                   </button>
@@ -273,22 +363,58 @@ export function RecoverPage({ initialToken, onRecover, onNavigateToLogin, onBack
           </>
         )}
 
-        {flowState === 'success' && (
+        {flowState === 'code' && (
           <>
-            {renderLogoSection('Correo Enviado', 'Revisa tu bandeja de entrada o spam para continuar.')}
+            {renderLogoSection('Verificación', 'Introduce el código de 6 dígitos enviado a tu correo electrónico.')}
             {renderFormContainer(
-              <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px' }}>
-                  <CheckCircle style={{ width: 32, height: 32, color: C.success }} />
+              <>
+                <h2 style={{ fontSize: '24px', fontWeight: 600, color: C.textDark, marginBottom: '8px', fontFamily: "'Cormorant Garamond', serif" }}>Código de Verificación</h2>
+                <p style={{ fontSize: '14px', color: C.textMuted, marginBottom: '32px' }}>Ingresa el código que recibiste en tu correo para continuar.</p>
+                <form onSubmit={handleVerifyCode} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                  <InputField 
+                    label="Código de 6 dígitos" id="code" type="text" value={code} 
+                    onChange={(e: any) => {
+                      const cleanVal = e.target.value.replace(/[^0-9]/g, '').slice(0, 6);
+                      setCode(cleanVal);
+                      setCodeError('');
+                    }} 
+                    error={codeError} placeholder="123456"
+                  />
+                  <button
+                    type="submit"
+                    disabled={code.length !== 6}
+                    style={{
+                      ...buttonStyle,
+                      opacity: (code.length !== 6) ? 0.5 : 1,
+                      cursor: (code.length !== 6) ? 'not-allowed' : 'pointer'
+                    }}
+                    onMouseEnter={(e) => { 
+                      if (code.length === 6) {
+                        e.currentTarget.style.transform = 'translateY(-2px)'; 
+                        e.currentTarget.style.boxShadow = `0 12px 32px rgba(0,0,0,0.15)`; 
+                        e.currentTarget.style.background = '#000000'; 
+                      }
+                    }}
+                    onMouseLeave={(e) => { 
+                      if (code.length === 6) {
+                        e.currentTarget.style.transform = 'translateY(0)'; 
+                        e.currentTarget.style.boxShadow = `0 8px 24px rgba(0,0,0,0.1)`; 
+                        e.currentTarget.style.background = C.textDark; 
+                      }
+                    }}
+                  >
+                    VERIFICAR CÓDIGO
+                  </button>
+                </form>
+                <div style={{ marginTop: '32px', textAlign: 'center', paddingTop: '24px', borderTop: '1px solid rgba(0,0,0,0.05)', display: 'flex', justifyContent: 'space-between' }}>
+                  <button onClick={() => setFlowState('email')} style={{ background: 'none', border: 'none', color: C.textMuted, cursor: 'pointer', fontSize: '13px', fontWeight: 600, transition: 'color 0.2s' }}>
+                    Atrás
+                  </button>
+                  <button onClick={onNavigateToLogin} style={{ background: 'none', border: 'none', color: C.textDark, cursor: 'pointer', fontSize: '13px', fontWeight: 600, transition: 'color 0.2s' }}>
+                    Volver al login
+                  </button>
                 </div>
-                <h2 style={{ fontSize: '24px', fontWeight: 600, color: C.textDark, marginBottom: '16px', fontFamily: "'Cormorant Garamond', serif" }}>Enlace Enviado</h2>
-                <p style={{ fontSize: '14px', color: C.textMuted, lineHeight: 1.6, marginBottom: '32px' }}>
-                  Se ha enviado un enlace a <strong style={{ color: C.textDark }}>{email}</strong>. Por favor, revisa tu correo.
-                </p>
-                <button onClick={onNavigateToLogin} style={{ background: 'none', border: 'none', color: C.textDark, cursor: 'pointer', fontSize: '14px', fontWeight: 600, transition: 'color 0.2s' }}>
-                  Volver al login
-                </button>
-              </div>
+              </>
             )}
           </>
         )}

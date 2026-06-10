@@ -188,4 +188,28 @@ export const authService = {
       throw new Error(message);
     }
   },
+
+  /**
+   * Verificar si un correo está registrado
+   */
+  async checkEmail(email: string): Promise<boolean> {
+    try {
+      const response = await api.post("/auth/check-email", { email });
+      return !!response.data.registered;
+    } catch (error) {
+      return false;
+    }
+  },
+
+  /**
+   * Verificar código de recuperación de contraseña
+   */
+  async verifyResetCode(email: string, code: string): Promise<boolean> {
+    try {
+      const response = await api.post("/auth/verify-reset-code", { email, code });
+      return !!response.data.ok;
+    } catch (error) {
+      return false;
+    }
+  },
 };

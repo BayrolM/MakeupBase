@@ -264,26 +264,48 @@ export const forgotPassword = async (req, res) => {
       return res.status(403).json({ message: "La cuenta está inactiva" });
     }
 
-    const token = crypto.randomBytes(32).toString("hex");
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
     const expires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
 
     await sql`
       UPDATE usuarios 
-      SET reset_token = ${token}, reset_token_expires = ${expires}
+      SET reset_token = ${code}, reset_token_expires = ${expires}
       WHERE id_usuario = ${user.id_usuario}
     `;
 
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
-    const resetLink = `${frontendUrl}/?token=${token}`;
+    await emailService.enviarCodigoCambioPassword({ email, nombre: user.nombre, codigo: code });
 
-    await emailService.enviarRecuperacion(email, user.nombre, resetLink);
-
-    return res.status(200).json({ message: "Correo de recuperación enviado" });
+    return res.status(200).json({ message: "Código de recuperación enviado" });
   } catch (error) {
     console.error("Error en forgotPassword:", error);
     return res
       .status(500)
-      .json({ message: "Error enviando correo de recuperación" });
+      .json({ message: "Error enviando código de recuperación" });
+  }
+};
+
+export const verifyResetCode = async (req, res) => {
+  try {
+    const { email, code } = req.body;
+    if (!email || !code) {
+      return res.status(400).json({ message: "Email y código son requeridos" });
+    }
+
+    const result = await sql`
+      SELECT * FROM usuarios 
+      WHERE email = ${email.trim()} 
+      AND reset_token = ${code.trim()} 
+      AND reset_token_expires > NOW()
+    `;
+
+    if (result.length === 0) {
+      return res.status(400).json({ ok: false, message: "Código inválido o expirado" });
+    }
+
+    return res.status(200).json({ ok: true, message: "Código verificado" });
+  } catch (error) {
+    console.error("Error en verifyResetCode:", error);
+    return res.status(500).json({ message: "Error en el servidor" });
   }
 };
 
@@ -361,5 +383,17 @@ export const verifyEmail = async (req, res) => {
   } catch (error) {
     console.error("💥 ERROR en verifyEmail:", error);
     return res.status(500).json({ message: "Error en el servidor" });
+  }
+};
+
+export const checkEmail = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ registered: false, message: "Email es requerido" });
+    const result = await sql`SELECT id_usuario FROM usuarios WHERE email = ${email.trim()}`;
+    return res.status(200).json({ registered: result.length > 0 });
+  } catch (error) {
+    console.error("Error en checkEmail:", error);
+    return res.status(500).json({ registered: false, message: "Error en el servidor" });
   }
 };

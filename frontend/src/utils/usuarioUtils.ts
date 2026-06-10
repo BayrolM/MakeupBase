@@ -40,6 +40,8 @@ export const validateField = (
     case "apellidos": {
       const label = name === "nombres" ? "El nombre" : "El apellido";
       if (!value.trim()) return `${label} es obligatorio`;
+      if (value.trim().length < 2)
+        return `${label} debe tener al menos 2 caracteres`;
       if (value.trim().length > 30)
         return `${label} no puede superar 30 caracteres`;
       return "";

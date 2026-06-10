@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { register, login, forgotPassword, resetPassword, verifyEmail } from "../controllers/auth.controller.js";
+import { register, login, forgotPassword, resetPassword, verifyEmail, checkEmail, verifyResetCode } from "../controllers/auth.controller.js";
 import rateLimit from "express-rate-limit";
 
 // Login: máximo 10 intentos por IP cada 15 minutos
@@ -45,5 +45,7 @@ router.post("/login", loginLimiter, login);
 router.post("/verify-email", verifyEmail);
 router.post("/forgot-password", forgotPasswordLimiter, forgotPassword);
 router.post("/reset-password", resetPassword);
+router.post("/check-email", checkEmail);
+router.post("/verify-reset-code", verifyResetCode);
 
 export default router;
