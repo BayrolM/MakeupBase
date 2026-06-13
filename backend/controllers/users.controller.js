@@ -569,3 +569,54 @@ export const eliminarUsuario = async (req, res) => {
       .json({ ok: false, message: "Error al eliminar el usuario" });
   }
 };
+
+/**
+ * Obtener favoritos del usuario autenticado
+ */
+export const getFavoritos = async (req, res) => {
+  try {
+    const result = await sql`
+      SELECT favoritos FROM usuarios WHERE id_usuario = ${req.user.id_usuario}
+    `;
+    if (result.length === 0) {
+      return res.status(404).json({ ok: false, message: "Usuario no encontrado" });
+    }
+    const favoritos = result[0].favoritos || [];
+    return res.json({ ok: true, data: favoritos });
+  } catch (error) {
+    console.error("Error obteniendo favoritos:", error);
+    return res.status(500).json({ ok: false, message: "Error al obtener favoritos" });
+  }
+};
+
+/**
+ * Toggle favorito (agregar/quitar producto de favoritos)
+ */
+export const toggleFavorito = async (req, res) => {
+  try {
+    const { productoId } = req.params;
+    const id_usuario = req.user.id_usuario;
+
+    const result = await sql`SELECT favoritos FROM usuarios WHERE id_usuario = ${id_usuario}`;
+    if (result.length === 0) {
+      return res.status(404).json({ ok: false, message: "Usuario no encontrado" });
+    }
+
+    let favoritos = result[0].favoritos || [];
+    if (!Array.isArray(favoritos)) favoritos = [];
+
+    const idx = favoritos.indexOf(productoId);
+    if (idx > -1) {
+      favoritos.splice(idx, 1);
+    } else {
+      favoritos.push(productoId);
+    }
+
+    await sql`UPDATE usuarios SET favoritos = ${JSON.stringify(favoritos)} WHERE id_usuario = ${id_usuario}`;
+
+    return res.json({ ok: true, data: favoritos });
+  } catch (error) {
+    console.error("Error actualizando favoritos:", error);
+    return res.status(500).json({ ok: false, message: "Error al actualizar favoritos" });
+  }
+};

@@ -1,4 +1,4 @@
-import { AlertTriangle, X, Loader2 } from "lucide-react";
+import { AlertCircle, X, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "../../ui/dialog";
 import { Button } from "../../ui/button";
 import { Textarea } from "../../ui/textarea";
@@ -27,19 +27,30 @@ export function DevolucionAnularDialog({
   const esAprobada = devolucion.estado === "aprobada";
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-white border-0 max-w-md rounded-2xl shadow-2xl p-0 overflow-hidden" style={{ maxHeight: "90vh", display: "flex", flexDirection: "column" }}>
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 md:px-6 pt-6 pb-5 border-b border-gray-100 bg-white">
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        if (!o && !isSaving) onOpenChange(false);
+      }}
+    >
+      <DialogContent className="bg-white border border-gray-100 max-w-md rounded-2xl shadow-2xl p-0 overflow-hidden">
+        {/* Encabezado */}
+        <div className="flex items-center justify-between px-4 md:px-6 pt-6 pb-5 border-b border-gray-100">
           <div className="flex items-center gap-4">
-            <div 
-              className="flex items-center justify-center text-white font-bold text-lg flex-shrink-0"
-              style={{ width: 44, height: 44, borderRadius: 12, background: "linear-gradient(135deg,#c47b96,#e092b2)", boxShadow: "0 2px 8px rgba(196,123,150,0.3)" }}
+            <div
+              className="flex items-center justify-center shrink-0"
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 12,
+                background: "#fff1f2",
+                boxShadow: "0 2px 8px rgba(239,68,68,0.12)",
+              }}
             >
-              <AlertTriangle className="w-5 h-5" />
+              <AlertCircle className="w-5 h-5" style={{ color: "#ef4444" }} />
             </div>
             <div>
-              <DialogTitle className="text-base font-bold text-gray-900 leading-tight">
+              <DialogTitle className="text-base font-semibold text-gray-800 leading-tight">
                 Anular Devolución
               </DialogTitle>
               <DialogDescription className="text-xs text-gray-400 mt-0.5">
@@ -55,66 +66,79 @@ export function DevolucionAnularDialog({
           </button>
         </div>
 
-        {/* Body */}
-        <div className="px-4 md:px-6 py-5 space-y-5" style={{ flex: 1, overflowY: "auto" }}>
-          <div className="text-center">
-            <p className="text-sm text-gray-600 leading-relaxed">
-              ¿Estás seguro de que deseas anular esta devolución? Esta acción es{" "}
-              <strong className="text-red-500">irreversible</strong> y la devolución quedará registrada en el historial con estado{" "}
-              <strong>ANULADA</strong>.
-            </p>
+        {/* Cuerpo */}
+        <div
+          style={{
+            padding: "20px 24px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "12px",
+          }}
+        >
+          {/* Tarjeta de advertencia */}
+          <div className="bg-red-50 rounded-xl p-4 flex items-start gap-3">
+            <AlertCircle className="text-red-500 w-4.5 h-4.5 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm text-gray-700 leading-relaxed font-normal">
+                ¿Estás seguro que deseas anular esta devolución? Esta acción es{" "}
+                <span className="text-red-500">irreversible</span>.
+              </p>
+            </div>
           </div>
+        
 
-          {/* Info box */}
-          <div className="p-4 rounded-xl bg-red-50 border border-red-100 flex gap-3">
-            <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0" />
-            <span className="text-xs text-red-700 leading-relaxed">
-              {esAprobada
-                ? devolucion.esDefectuoso
-                  ? "Esta devolución fue aprobada como defectuosa. Al anularla, no se descontará stock y se eliminará el registro de pérdida correspondiente."
-                  : "Esta devolución fue aprobada. Al anularla, el stock será revertido (los productos se descontarán del inventario)."
-                : "El registro se conservará en el historial con estado ANULADA."}
-            </span>
-          </div>
-
-          {/* Motivo */}
+          {/* Campo de motivo */}
           <div className="space-y-2">
-            <label className="text-xs font-bold text-gray-600 uppercase tracking-wider">
-              Motivo de Anulación <span className="text-red-500">*</span>
+            <label className="text-xs font-semibold text-gray-600 uppercase tracking-wider">
+              Motivo de Anulación <span className="text-red-700">*</span>
             </label>
             <Textarea
               value={motivoAnulacion}
               onChange={(e) => onMotivoChange(e.target.value)}
               disabled={isSaving}
-              placeholder="Ingresa los motivos técnicos o legales de la anulación..."
-              className="min-h-[80px] bg-gray-50 border-gray-200 rounded-xl p-3 text-sm font-medium resize-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500"
+              placeholder="Describe el motivo de la anulación..."
+              maxLength={255}
+              className={`min-h-[80px] border-gray-200 rounded-xl p-3 text-sm font-normal resize-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 placeholder:text-gray-400/60 placeholder:font-normal ${motivoAnulacion.length >= 240 ? "border-amber-400" : ""}`}
+              style={{ backgroundColor: '#ffffff' }}
             />
-            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest text-right">Mínimo: 5 caracteres</p>
+            {motivoAnulacion.length >= 240 && motivoAnulacion.length < 255 && (
+              <span className="micro-validation-error" style={{ color: "#d97706" }}>
+                Te quedan {255 - motivoAnulacion.length} caracteres disponibles
+              </span>
+            )}
+            {motivoAnulacion.length === 255 && (
+              <span className="micro-validation-error">
+                Límite de caracteres alcanzado
+              </span>
+            )}
           </div>
         </div>
 
         {/* Footer */}
-        <div className="flex gap-3 px-4 md:px-6 pb-6 pt-2 border-t border-gray-100">
-          <Button 
-            variant="outline" 
-            onClick={() => onOpenChange(false)} 
-            className="flex-1 border-gray-200 text-gray-600 hover:bg-gray-50 rounded-xl h-11 font-bold text-sm"
+        <div className="flex justify-end gap-3 px-4 md:px-6 pb-6 pt-2 border-t border-gray-100">
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            className="border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg px-4 h-10 text-sm cursor-pointer"
+            style={{ backgroundColor: "#ffffff" }}
             disabled={isSaving}
           >
-            No, Mantener
+            Cancelar
           </Button>
-          <Button 
+          <Button
             onClick={onConfirm}
             disabled={isSaving || motivoAnulacion.trim().length < 5}
-            className="flex-1 rounded-xl font-bold h-11 text-sm border-0 shadow-lg text-white transition-all hover:opacity-90"
-            style={{ backgroundColor: "#c47b96", boxShadow: "0 4px 12px rgba(196,123,150,0.3)" }}
+            className="rounded-lg text-white font-semibold px-4 h-10 text-sm"
+            style={{ background: "#ef4444" }}
           >
             {isSaving ? (
-              <span className="flex items-center gap-2">
+              <span className="flex items-center gap-2 cursor-pointer">
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Procesando...
+                Anulando...
               </span>
-            ) : "Sí, Anular"}
+            ) : (
+              "Anular"
+            )}
           </Button>
         </div>
       </DialogContent>

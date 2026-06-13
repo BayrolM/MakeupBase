@@ -25,8 +25,8 @@ export const getEstadoColor = (estado: string) => {
       label: "Rechazada",
     },
     anulada: {
-      bg: "bg-gray-100",
-      text: "text-gray-500",
+      bg: "bg-red-50",
+      text: "text-red-600",
       label: "Anulada",
     },
   };

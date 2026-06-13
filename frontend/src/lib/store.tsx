@@ -8,6 +8,7 @@ import {
   useRef,
 } from "react";
 import api from "./api";
+import { userService } from "../services/userService";
 
 export const hasPermission = (user: any, permiso: string): boolean => {
   if (!user) return false;
@@ -169,6 +170,7 @@ export interface Pedido {
   comprobante_url?: string;
   motivoAnulacion?: string;
   id_usuario_empleado?: string;
+  estado_devolucion?: "pendiente" | "en_revision" | "aprobada" | "rechazada";
 }
 
 export interface Devolucion {
@@ -251,6 +253,7 @@ interface StoreActions {
   setCurrentUser: (user: User | null) => void;
   setUserType: (type: "admin" | "cliente") => void;
   toggleFavorito: (productoId: string) => void;
+  loadFavoritos: () => Promise<void>;
   addToCarrito: (productoId: string, cantidad: number) => void;
   removeFromCarrito: (productoId: string) => void;
   updateCarritoQuantity: (productoId: string, cantidad: number) => void;
@@ -311,6 +314,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     localStorage.setItem("gml_carrito", JSON.stringify(carrito));
   }, [carrito]);
+
+  // Cargar favoritos del backend cuando el usuario inicia sesión
+  useEffect(() => {
+    if (currentUser) {
+      userService.getFavoritos().then((res) => {
+        if (res.ok && Array.isArray(res.data)) {
+          setFavoritos(res.data);
+        }
+      }).catch(() => {});
+    }
+  }, [currentUser?.id]);
 
   // ─── Estado (se recalcula solo cuando cambia algún dato) ──────────────────
   const state: StoreState = {
@@ -405,7 +419,24 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setUserType: useCallback((type) => setUserType(type), []),
 
     // Carrito y favoritos
-    toggleFavorito: useCallback((productoId) => setFavoritos((prev) => prev.includes(productoId) ? prev.filter((id) => id !== productoId) : [...prev, productoId]), []),
+    toggleFavorito: useCallback((productoId) => {
+      setFavoritos((prev) => {
+        const next = prev.includes(productoId) ? prev.filter((id) => id !== productoId) : [...prev, productoId];
+        // Sync con backend (fire-and-forget)
+        userService.toggleFavorito(productoId).catch(() => {});
+        return next;
+      });
+    }, []),
+    loadFavoritos: useCallback(async () => {
+      try {
+        const res = await userService.getFavoritos();
+        if (res.ok && Array.isArray(res.data)) {
+          setFavoritos(res.data);
+        }
+      } catch {
+        // Mantener favoritos de localStorage como fallback
+      }
+    }, []),
     addToCarrito: useCallback((productoId, cantidad) => {
       const producto = productosRef.current.find((p) => p.id === productoId);
       if (!producto) return;

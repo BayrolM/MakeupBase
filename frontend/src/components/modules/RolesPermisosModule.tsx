@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useStore, Rol, Status } from "../../lib/store";
+import { usePagination } from "../../hooks/usePagination";
 import { Pagination } from "../common/Pagination";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -44,8 +45,39 @@ export function RolesPermisosModule() {
 
   // Filters & Pagination
   const [searchQuery, setSearchQuery] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  // Filtrado
+  const filteredRoles = useMemo(() => {
+    return roles.filter((rol) => {
+      if (!searchQuery) return true;
+      const query = searchQuery.toLowerCase();
+      return (
+        rol.nombre.toLowerCase().includes(query) ||
+        (rol.descripcion && rol.descripcion.toLowerCase().includes(query)) ||
+        rol.estado.toLowerCase().includes(query)
+      );
+    }).sort((a, b) => {
+      const idA = typeof a.id === 'string' ? parseInt(a.id) : a.id;
+      const idB = typeof b.id === 'string' ? parseInt(b.id) : b.id;
+      return idB - idA;
+    });
+  }, [roles, searchQuery]);
+
+  // Paginación
+  const {
+    currentPage,
+    itemsPerPage,
+    totalPages,
+    handlePageChange,
+    handleLimitChange,
+  } = usePagination({ totalItems: filteredRoles.length });
+
+  const paginatedRoles = useMemo(() => {
+    return filteredRoles.slice(
+      (currentPage - 1) * itemsPerPage,
+      currentPage * itemsPerPage,
+    );
+  }, [filteredRoles, currentPage, itemsPerPage]);
 
   // Form
   const [formData, setFormData] = useState({
@@ -340,24 +372,6 @@ export function RolesPermisosModule() {
     }));
   };
 
-   // ── Filtrado por búsqueda integral ──
-  const filteredRoles = roles.filter((rol) => {
-    if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
-    
-    return (
-      rol.nombre.toLowerCase().includes(query) ||
-      (rol.descripcion && rol.descripcion.toLowerCase().includes(query)) ||
-      rol.estado.toLowerCase().includes(query)
-    );
-  });
-
-  const totalPages = Math.ceil(filteredRoles.length / itemsPerPage);
-  const paginatedRoles = filteredRoles.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage,
-  );
-
   if (isLoading) {
     return (
       <div 
@@ -452,7 +466,7 @@ export function RolesPermisosModule() {
                 searchQuery={searchQuery}
                 onSearchChange={(q) => {
                   setSearchQuery(q);
-                  setCurrentPage(1);
+                  handlePageChange(1);
                 }}
                 onViewDetail={handleViewDetail}
                 onEdit={handleOpenDialog}
@@ -466,11 +480,8 @@ export function RolesPermisosModule() {
                   totalPages={totalPages}
                   totalItems={filteredRoles.length}
                   itemsPerPage={itemsPerPage}
-                  onPageChange={setCurrentPage}
-                  onItemsPerPageChange={(n) => {
-                    setItemsPerPage(n);
-                    setCurrentPage(1);
-                  }}
+                  onPageChange={handlePageChange}
+                  onItemsPerPageChange={handleLimitChange}
                 />
               )}
             </div>

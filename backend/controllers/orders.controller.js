@@ -41,6 +41,7 @@ export const crearOrden = async (req, res) => {
     if (
       !direccion ||
       !ciudad ||
+      !departamento ||
       !metodo_pago ||
       !items ||
       !Array.isArray(items) ||
@@ -49,7 +50,7 @@ export const crearOrden = async (req, res) => {
       return res.status(400).json({
         ok: false,
         message:
-          "Faltan datos requeridos para la orden (dirección, ciudad, método de pago e items).",
+          "Faltan datos requeridos para la orden (dirección, ciudad, departamento, método de pago e items).",
       });
     }
     const orden = await ordersService.crearOrden(req.user.id_usuario, {

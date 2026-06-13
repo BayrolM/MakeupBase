@@ -106,7 +106,7 @@ export function PedidoPaymentConfirmDialog({
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
-            className="rounded-xl px-4 md:px-6 h-11 text-sm font-bold border-gray-200 text-gray-500 hover:bg-gray-50"
+            className="rounded-xl px-4 md:px-6 h-11 text-sm font-bold border-gray-200 text-gray-500 hover:bg-gray-50 bg-white"
             disabled={isSaving}
           >
             Cancelar

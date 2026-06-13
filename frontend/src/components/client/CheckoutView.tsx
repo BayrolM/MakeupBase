@@ -81,6 +81,66 @@ export function CheckoutView({ onBack, onComplete }: CheckoutViewProps) {
   const [comprobanteFile, setComprobanteFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [finalTotal, setFinalTotal] = useState(0);
+  const [stockValidated, setStockValidated] = useState(false);
+
+  const colombianDepartments = [
+    "Amazonas","Antioquia","Arauca","Atlántico","Bolívar","Boyacá","Caldas","Caquetá","Casanare","Cauca",
+    "Cesar","Chocó","Córdoba","Cundinamarca","Guainía","Guaviare","Huila","La Guajira","Magdalena","Meta",
+    "Nariño","Norte de Santander","Putumayo","Quindío","Risaralda","Santander","Sucre","Tolima","Valle del Cauca","Vaupés","Vichada",
+  ];
+
+  const mainCities: Record<string, string[]> = {
+    "Antioquia": ["Medellín","Bello","Itagüí","Envigado","Apartadó","Turbo","Rionegro","Caldas","La Estrella","Copacabana"],
+    "Atlántico": ["Barranquilla","Soledad","Malambo","Sabanalarga","Puerto Colombia"],
+    "Bolívar": ["Cartagena","Turbaco","Arjona","Magangué","Tulúa"],
+    "Boyacá": ["Tunja","Duitama","Sogamoso","Chiquinquirá","Mora"],
+    "Caldas": ["Manizales","Villamaría","Chinchiná","La Dorada","Riosucio"],
+    "Cauca": ["Popayán","Santander de Quilichao","Puerto Tejada","Guapi","El Tambo"],
+    "Cesar": ["Valledupar","Aguachica","San Alberto","Chiriguaná","Bosconia"],
+    "Córdoba": ["Montería","Caucasia","Cereté","Sahagún","Montelíbano"],
+    "Cundinamarca": ["Soacha","Girardot","Facatativá","Zipaquirá","Fusagasugá","Chía","Cajicá","Mosquera","Funza","Madrid"],
+    "Huila": ["Neiva","Pitalito","Garzón","La Plata","Rivera"],
+    "La Guajira": ["Riohacha","Maicao","San Juan del Cesar","Uribia","Manaure"],
+    "Magdalena": ["Santa Marta","Ciénaga","Fundación","Aracataca","El Banco"],
+    "Meta": ["Villavicencio","Acacías","Granada","Puerto Gaitán","San Martín"],
+    "Nariño": ["Pasto","Tumaco","Ipiales","Buesaco","Samaniego"],
+    "Norte de Santander": ["Cúcuta","Ocaña","Pamplona","Villa del Rosario","Chitagá"],
+    "Quindío": ["Armenia","Montenegro","Circasia","Filandia","Salento"],
+    "Risaralda": ["Pereira","Dosquebradas","La Virginia","Santa Rosa de Cabal","Mistrató"],
+    "Santander": ["Bucaramanga","Floridablanca","Barrancabermeja","Girón","Piedecuesta"],
+    "Sucre": ["Sincelejo","Corozal","Sampués","Caucasia","Tolú"],
+    "Tolima": ["Ibagué","Melgar","Honda","Espinal","Chaparral"],
+    "Valle del Cauca": ["Cali","Palmira","Buenaventura","Tuluá","Buga","Jamundí","Yumbo"],
+  };
+
+  // Validar stock real de productos en carrito al montar checkout
+  useEffect(() => {
+    const validateStock = async () => {
+      for (const item of carrito) {
+        try {
+          const freshProduct = await productService.getById(parseInt(item.productoId, 10));
+          if (freshProduct.stock_actual <= 0) {
+            removeFromCarrito(item.productoId);
+            toast.error(`"${freshProduct.nombre}" se agotó`, {
+              description: "El producto fue retirado de tu carrito.",
+            });
+          } else if (item.cantidad > freshProduct.stock_actual) {
+            toast.warning(`Solo quedan ${freshProduct.stock_actual} unidades de "${freshProduct.nombre}"`, {
+              description: "Ajusta la cantidad antes de continuar.",
+            });
+          }
+        } catch {
+          // Se validará nuevamente al confirmar el pago
+        }
+      }
+      setStockValidated(true);
+    };
+    if (carrito.length > 0) {
+      validateStock();
+    } else {
+      setStockValidated(true);
+    }
+  }, []);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("es-CO", {
@@ -195,14 +255,36 @@ export function CheckoutView({ onBack, onComplete }: CheckoutViewProps) {
       if (comprobanteFile && idPedido) {
         setIsUploading(true);
         try {
-          const uploadResult = await uploadToSupabase(
-            comprobanteFile,
-            "comprobantes",
-          );
-          comprobanteUrl = uploadResult.secure_url;
-          await orderService.updateComprobanteUrl(idPedido, comprobanteUrl);
-        } catch (uploadError) {
-          console.error("Error upload:", uploadError);
+          // Guardar en localStorage primero como respaldo
+          const reader = new FileReader();
+          const base64Promise = new Promise<string>((resolve) => {
+            reader.onload = () => resolve(reader.result as string);
+            reader.readAsDataURL(comprobanteFile);
+          });
+          const base64Data = await base64Promise;
+          const pendingKey = `gml_pending_comprobante_${idPedido}`;
+          localStorage.setItem(pendingKey, JSON.stringify({
+            orderId: idPedido,
+            fileName: comprobanteFile.name,
+            fileType: comprobanteFile.type,
+            data: base64Data,
+            createdAt: Date.now(),
+          }));
+
+          // Intentar subir a Supabase
+          try {
+            const uploadResult = await uploadToSupabase(comprobanteFile, "comprobantes");
+            comprobanteUrl = uploadResult.secure_url;
+            await orderService.updateComprobanteUrl(idPedido, comprobanteUrl);
+            localStorage.removeItem(pendingKey);
+          } catch (uploadError) {
+            console.error("Upload failed, guardado en localStorage para reintento:", uploadError);
+            toast.info("Comprobante guardado localmente", {
+              description: "Se subirá automáticamente cuando vuelva la conexión.",
+            });
+          }
+        } catch (fileError) {
+          console.error("Error procesando archivo:", fileError);
         } finally {
           setIsUploading(false);
         }
@@ -426,7 +508,7 @@ export function CheckoutView({ onBack, onComplete }: CheckoutViewProps) {
           </div>
 
           {/* Two-column grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 flex-1 w-full overflow-y-auto overflow-x-hidden md:overflow-hidden pb-20 md:pb-0">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-16 flex-1 w-full overflow-y-auto overflow-x-hidden md:overflow-hidden pb-20 md:pb-0">
             {/* LEFT: Bank accounts */}
             <div
               style={{
@@ -1133,7 +1215,7 @@ export function CheckoutView({ onBack, onComplete }: CheckoutViewProps) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-7 flex-1 overflow-y-auto overflow-x-hidden md:overflow-hidden pb-20 md:pb-0">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-16 flex-1 overflow-y-auto overflow-x-hidden md:overflow-hidden pb-20 md:pb-0">
         {/* ─ ORDER SUMMARY ─ */}
         <div
           style={{
@@ -1348,10 +1430,19 @@ export function CheckoutView({ onBack, onComplete }: CheckoutViewProps) {
               </label>
               <input
                 value={departamentoEnvio}
-                onChange={(e) => setDepartamentoEnvio(e.target.value)}
+                onChange={(e) => {
+                  setDepartamentoEnvio(e.target.value);
+                  setCiudadEnvio("");
+                }}
+                list="deptos-list"
                 style={inputStyle}
-                placeholder="Antioquia"
+                placeholder="Escribe o selecciona..."
               />
+              <datalist id="deptos-list">
+                {colombianDepartments.map((d) => (
+                  <option key={d} value={d} />
+                ))}
+              </datalist>
             </div>
             <div>
               <label
@@ -1368,9 +1459,15 @@ export function CheckoutView({ onBack, onComplete }: CheckoutViewProps) {
               <input
                 value={ciudadEnvio}
                 onChange={(e) => setCiudadEnvio(e.target.value)}
+                list={`ciudades-${departamentoEnvio}`}
                 style={inputStyle}
-                placeholder="Medellín"
+                placeholder="Escribe o selecciona..."
               />
+              <datalist id={`ciudades-${departamentoEnvio}`}>
+                {(mainCities[departamentoEnvio] || []).map((c) => (
+                  <option key={c} value={c} />
+                ))}
+              </datalist>
             </div>
           </div>
           <div>
@@ -1514,17 +1611,17 @@ export function CheckoutView({ onBack, onComplete }: CheckoutViewProps) {
           {/* CTA */}
           <button
             onClick={handleContinuarPago}
-            disabled={!direccionEnvio}
+            disabled={!direccionEnvio || !ciudadEnvio || !departamentoEnvio}
             style={{
               width: "100%",
               height: "48px",
               borderRadius: "10px",
-              background: direccionEnvio
+              background: direccionEnvio && ciudadEnvio && departamentoEnvio
                 ? `linear-gradient(135deg, ${C.textDark} 0%, ${C.accentDeep} 100%)`
                 : "#e5e7eb",
-              color: direccionEnvio ? C.white : C.textMuted,
+              color: direccionEnvio && ciudadEnvio && departamentoEnvio ? C.white : C.textMuted,
               border: "none",
-              cursor: direccionEnvio ? "pointer" : "not-allowed",
+              cursor: direccionEnvio && ciudadEnvio && departamentoEnvio ? "pointer" : "not-allowed",
               fontSize: "14px",
               fontWeight: 700,
               letterSpacing: "0.5px",

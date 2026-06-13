@@ -16,7 +16,7 @@ export const listar = async (req, res) => {
     const result = await sql`
       SELECT * FROM proveedores p
       ${whereFragment}
-      ORDER BY p.id_proveedor ASC
+      ORDER BY p.id_proveedor DESC
       LIMIT ${parseInt(limit, 10)} OFFSET ${offset}
     `;
 

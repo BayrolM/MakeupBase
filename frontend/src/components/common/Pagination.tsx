@@ -62,11 +62,11 @@ export function Pagination({
         backgroundColor: '#ffffff',
         border: '1px solid #fbcfe8',
         borderRadius: '10px',
-        padding: '12px',
+        padding: '8px 16px',
         boxShadow: '0 1px 4px rgba(123, 19, 71, 0.01)',
         fontFamily: "'DM Sans', sans-serif"
       }}
-      className="flex flex-col lg:flex-row items-center justify-between gap-4 w-full text-center lg:text-left"
+      className="flex flex-col md:flex-row flex-wrap items-center justify-between gap-3 w-full text-center md:text-left"
     >
       {/* Left side: Records Info */}
       <div style={{ fontSize: '13px', color: '#4b5563', fontWeight: 500 }}>

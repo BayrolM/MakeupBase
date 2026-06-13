@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useStore, TipoDocumento, Status, UserRole } from "../../lib/store";
+import { usePagination } from "../../hooks/usePagination";
 import { Pagination } from "../common/Pagination";
 import { toast } from "sonner";
 import { userService } from "../../services/userService";
@@ -30,9 +31,35 @@ export function UsuariosModule() {
   const [roles, setRoles] = useState<any[]>([]);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
 
+  // Filtrado
+  const filteredUsers = useMemo(() => {
+    return users.filter((user) => {
+      if (!searchQuery || searchQuery.length < 2) return true;
+      const q = searchQuery.toLowerCase();
+      return (
+        user.nombres.toLowerCase().includes(q) ||
+        user.apellidos.toLowerCase().includes(q) ||
+        user.email.toLowerCase().includes(q) ||
+        user.numeroDocumento.includes(q)
+      );
+    });
+  }, [users, searchQuery]);
+
   // Paginación
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const {
+    currentPage,
+    itemsPerPage,
+    totalPages,
+    handlePageChange,
+    handleLimitChange,
+  } = usePagination({ totalItems: filteredUsers.length });
+
+  const paginatedUsers = useMemo(() => {
+    return filteredUsers.slice(
+      (currentPage - 1) * itemsPerPage,
+      currentPage * itemsPerPage,
+    );
+  }, [filteredUsers, currentPage, itemsPerPage]);
 
   // Formulario
   const [formData, setFormData] = useState({
@@ -373,23 +400,6 @@ export function UsuariosModule() {
     }
   };
 
-  const filteredUsers = users.filter((user) => {
-    if (!searchQuery || searchQuery.length < 2) return true;
-    const q = searchQuery.toLowerCase();
-    return (
-      user.nombres.toLowerCase().includes(q) ||
-      user.apellidos.toLowerCase().includes(q) ||
-      user.email.toLowerCase().includes(q) ||
-      user.numeroDocumento.includes(q)
-    );
-  });
-
-  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
-  const paginatedUsers = filteredUsers.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage,
-  );
-
   if (isInitialLoading) {
     return (
       <div 
@@ -460,7 +470,7 @@ export function UsuariosModule() {
             searchQuery={searchQuery}
             onSearchChange={(q) => {
               setSearchQuery(q);
-              setCurrentPage(1);
+              handlePageChange(1);
             }}
             onViewDetail={(u) => {
               setSelectedUser(u);
@@ -510,11 +520,8 @@ export function UsuariosModule() {
             totalPages={totalPages}
             totalItems={filteredUsers.length}
             itemsPerPage={itemsPerPage}
-            onPageChange={setCurrentPage}
-            onItemsPerPageChange={(n) => {
-              setItemsPerPage(n);
-              setCurrentPage(1);
-            }}
+            onPageChange={handlePageChange}
+            onItemsPerPageChange={handleLimitChange}
           />
         </div>
       )}

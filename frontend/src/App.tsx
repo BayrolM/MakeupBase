@@ -34,6 +34,8 @@ import { NotificationBell } from "./components/layout/NotificationBell";
 
 import { ClientNavbar } from "./components/client/ClientNavbar";
 import { Toaster, toast } from "sonner";
+import { uploadToSupabase } from "./lib/supabaseUpload";
+import { orderService } from "./services/orderService";
 import {
   Dialog,
   DialogContent,
@@ -42,7 +44,6 @@ import {
 } from "./components/ui/dialog";
 import { Lock, X } from "lucide-react";
 import { authService } from "./services/authService";
-import { orderService } from "./services/orderService";
 import { productService } from "./services/productService";
 import { categoryService } from "./services/categoryService";
 import { providerService } from "./services/providerService";
@@ -69,7 +70,6 @@ type Route =
   | "catalogo"
   | "favoritos"
   | "mis-pedidos"
-  | "historial"
   | "perfil"
   | "checkout"
   | "producto-detalle"
@@ -90,6 +90,7 @@ function AppContent() {
     setCompras,
     setClientes,
     setPedidos,
+    clearCarrito,
   } = useStore();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showInactiveModal, setShowInactiveModal] = useState(false);
@@ -319,6 +320,36 @@ function AppContent() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run once on mount
+
+  // Sincronizar comprobantes pendientes de upload
+  useEffect(() => {
+    const syncPendingComprobantes = async () => {
+      const keys = Object.keys(localStorage).filter((k) => k.startsWith("gml_pending_comprobante_"));
+      for (const key of keys) {
+        try {
+          const pending = JSON.parse(localStorage.getItem(key) || "{}");
+          if (!pending.orderId || !pending.data) continue;
+
+          // Convertir base64 a File
+          const res = await fetch(pending.data);
+          const blob = await res.blob();
+          const file = new File([blob], pending.fileName || "comprobante.jpg", { type: pending.fileType || "image/jpeg" });
+
+          const uploadResult = await uploadToSupabase(file, "comprobantes");
+          await orderService.updateComprobanteUrl(pending.orderId, uploadResult.secure_url);
+          localStorage.removeItem(key);
+        } catch {
+          // Seguirá pendiente para el próximo intento
+        }
+      }
+    };
+
+    // Ejecutar al montar y cuando vuelva la conexión
+    syncPendingComprobantes();
+    const handleOnline = () => syncPendingComprobantes();
+    window.addEventListener("online", handleOnline);
+    return () => window.removeEventListener("online", handleOnline);
+  }, []);
 
   // Update route when userType changes
   useEffect(() => {
@@ -1034,6 +1065,7 @@ function AppContent() {
     setIsAuthenticated(false);
     setAuthPage("login");
     setCurrentRoute("inicio");
+    clearCarrito();
 
     setIsAuthTransitioning(false);
     toast.info("Sesión cerrada", {

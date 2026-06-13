@@ -35,7 +35,7 @@ export function ClientDetailDialog({
         <div className="flex items-center justify-between px-4 md:px-6 pt-6 pb-5 border-b border-gray-100 bg-white">
           <div className="flex items-center gap-4">
             <div
-              className="flex items-center justify-center text-white font-bold text-xl flex-shrink-0 luxury-icon-gradient"
+              className="flex items-center justify-center text-white font-bold text-xl shrink-0 luxury-icon-gradient"
               style={{ width: 44, height: 44, borderRadius: 12 }}
             >
               {cliente.nombres.charAt(0).toUpperCase()}
@@ -51,121 +51,117 @@ export function ClientDetailDialog({
           </div>
           <button
             onClick={() => onOpenChange(false)}
-            className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="px-4 md:px-6 py-6 overflow-y-auto max-h-[70vh]">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Información Personal */}
-            <div className="space-y-4">
-              <h3 className="text-[11px] font-bold text-[#c47b96] uppercase tracking-wider">
-                Información Personal
-              </h3>
+        <div className="px-4 md:px-6 py-6 overflow-y-auto max-h-[70vh] space-y-5">
+          {/* Nombre Completo */}
+          <div className="bg-gray-50 rounded-xl p-4 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-[#fff0f5] flex items-center justify-center shrink-0">
+              <User className="w-5 h-5 text-[#c47b96]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] text-gray-400 font-semibold uppercase">Nombre Completo</p>
+              <p className="text-sm font-bold text-gray-800">{cliente.nombres} {cliente.apellidos}</p>
+            </div>
+          </div>
 
-              <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-                <div className="flex items-center gap-3">
-                  <User className="w-4 h-4 text-gray-400" />
-                  <div>
-                    <p className="text-[10px] text-gray-400 font-semibold uppercase">
-                      Nombre Completo
-                    </p>
-                    <p className="text-sm font-bold text-gray-800">
-                      {cliente.nombres} {cliente.apellidos}
-                    </p>
-                  </div>
-                </div>
+          {/* Documento */}
+          <div className="bg-gray-50 rounded-xl p-4 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-[#fff0f5] flex items-center justify-center flex-shrink-0">
+              <CreditCard className="w-5 h-5 text-[#c47b96]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] text-gray-400 font-semibold uppercase">{cliente.tipoDocumento || "Documento"}</p>
+              <p className="text-sm font-bold text-gray-800 font-mono">{cliente.numeroDocumento}</p>
+            </div>
+          </div>
 
-                <div className="flex items-center gap-3">
-                  <CreditCard className="w-4 h-4 text-gray-400" />
-                  <div>
-                    <p className="text-[10px] text-gray-400 font-semibold uppercase">
-                      {cliente.tipoDocumento}
-                    </p>
-                    <p className="text-sm font-bold text-gray-800">
-                      {cliente.numeroDocumento}
-                    </p>
-                  </div>
-                </div>
+          {/* Email */}
+          <div className="bg-gray-50 rounded-xl p-4 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-[#fff0f5] flex items-center justify-center flex-shrink-0">
+              <Mail className="w-5 h-5 text-[#c47b96]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] text-gray-400 font-semibold uppercase">Email</p>
+              <p className="text-sm font-bold text-gray-800 truncate">{cliente.email}</p>
+            </div>
+          </div>
 
-                <div className="flex items-center gap-3">
-                  <Calendar className="w-4 h-4 text-gray-400" />
-                  <div>
-                    <p className="text-[10px] text-gray-400 font-semibold uppercase">
-                      Fecha Registro
-                    </p>
-                    <p className="text-sm font-bold text-gray-800">
-                      {new Date(cliente.fechaRegistro).toLocaleDateString()}
-                    </p>
-                  </div>
-                </div>
+          {/* Teléfono */}
+          <div className="bg-gray-50 rounded-xl p-4 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-[#fff0f5] flex items-center justify-center flex-shrink-0">
+              <Phone className="w-5 h-5 text-[#c47b96]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] text-gray-400 font-semibold uppercase">Teléfono</p>
+              <p className="text-sm font-bold text-gray-800">{cliente.telefono || "No registrado"}</p>
+            </div>
+          </div>
+
+          {/* Dirección */}
+          <div className="bg-gray-50 rounded-xl p-4 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-[#fff0f5] flex items-center justify-center flex-shrink-0">
+              <MapPin className="w-5 h-5 text-[#c47b96]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] text-gray-400 font-semibold uppercase">Dirección</p>
+              <p className="text-sm font-bold text-gray-800">
+                {cliente.direccion || "No registrada"}
+                {cliente.ciudad ? `, ${cliente.ciudad}` : ""}
+              </p>
+            </div>
+          </div>
+
+          {/* Departamento / Ciudad */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-gray-50 rounded-xl p-4 flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-[#fff0f5] flex items-center justify-center flex-shrink-0">
+                <MapPin className="w-5 h-5 text-[#c47b96]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] text-gray-400 font-semibold uppercase">Ciudad</p>
+                <p className="text-sm font-bold text-gray-800">{cliente.ciudad || "N/A"}</p>
               </div>
             </div>
 
-            {/* Contacto y Ubicación */}
-            <div className="space-y-4">
-              <h3 className="text-[11px] font-bold text-[#c47b96] uppercase tracking-wider">
-                Contacto y Ubicación
-              </h3>
-
-              <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-                <div className="flex items-center gap-3">
-                  <Mail className="w-4 h-4 text-gray-400" />
-                  <div>
-                    <p className="text-[10px] text-gray-400 font-semibold uppercase">
-                      Email
-                    </p>
-                    <p className="text-sm font-bold text-gray-800 truncate max-w-[180px]">
-                      {cliente.email}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <Phone className="w-4 h-4 text-gray-400" />
-                  <div>
-                    <p className="text-[10px] text-gray-400 font-semibold uppercase">
-                      Teléfono
-                    </p>
-                    <p className="text-sm font-bold text-gray-800">
-                      {cliente.telefono}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <MapPin className="w-4 h-4 text-gray-400" />
-                  <div>
-                    <p className="text-[10px] text-gray-400 font-semibold uppercase">
-                      Ubicación
-                    </p>
-                    <p className="text-sm font-bold text-gray-800">
-                      {cliente.direccion ? `${cliente.direccion}, ` : ""}
-                      {cliente.ciudad || "N/A"}
-                    </p>
-                  </div>
-                </div>
+            <div className="bg-gray-50 rounded-xl p-4 flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-[#fff0f5] flex items-center justify-center flex-shrink-0">
+                <MapPin className="w-5 h-5 text-[#c47b96]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] text-gray-400 font-semibold uppercase">Departamento</p>
+                <p className="text-sm font-bold text-gray-800">{cliente.departamento || "N/A"}</p>
               </div>
             </div>
           </div>
 
-          {/* Estadísticas Rápidas */}
-          <div className="mt-6">
-            <h3 className="text-[11px] font-bold text-[#c47b96] uppercase tracking-wider mb-4">
-              Actividad del Cliente
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-gray-50 border border-gray-100 rounded-xl p-4 text-center">
-                <Activity className="w-5 h-5 text-gray-400 mx-auto mb-2" />
-                <p className="text-sm font-bold text-emerald-600 uppercase">
-                  Activo
-                </p>
-                <p className="text-[10px] text-gray-500 uppercase font-semibold">
-                  Estado Actual
-                </p>
-              </div>
+          {/* Fecha Registro */}
+          <div className="bg-gray-50 rounded-xl p-4 flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-[#fff0f5] flex items-center justify-center flex-shrink-0">
+              <Calendar className="w-5 h-5 text-[#c47b96]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] text-gray-400 font-semibold uppercase">Fecha de Registro</p>
+              <p className="text-sm font-bold text-gray-800">
+                {new Date(cliente.fechaRegistro).toLocaleDateString("es-CO", { year: "numeric", month: "long", day: "numeric" })}
+              </p>
+            </div>
+          </div>
+
+          {/* Estado */}
+          <div className={`rounded-xl p-4 flex items-center gap-4 ${cliente.estado === "activo" ? "bg-emerald-50 border border-emerald-100" : "bg-red-50 border border-red-100"}`}>
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${cliente.estado === "activo" ? "bg-emerald-100" : "bg-red-100"}`}>
+              <Activity className={`w-5 h-5 ${cliente.estado === "activo" ? "text-emerald-600" : "text-red-600"}`} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] text-gray-400 font-semibold uppercase">Estado</p>
+              <p className={`text-sm font-bold ${cliente.estado === "activo" ? "text-emerald-700" : "text-red-700"}`}>
+                {cliente.estado === "activo" ? "Activo" : "Inactivo"}
+              </p>
             </div>
           </div>
         </div>
@@ -173,9 +169,9 @@ export function ClientDetailDialog({
         <div className="px-4 md:px-6 pb-6 pt-4">
           <button
             onClick={() => onOpenChange(false)}
-            className="w-full h-11 rounded-xl text-white font-bold text-sm luxury-button-modal shadow-lg shadow-[#c47b96]/20"
+            className="w-full h-11 rounded-xl text-white font-bold text-sm luxury-button-modal shadow-lg shadow-[#c47b96]/20 cursor-pointer" 
           >
-            Cerrar Perfil
+            Cerrar Detalles
           </button>
         </div>
       </DialogContent>

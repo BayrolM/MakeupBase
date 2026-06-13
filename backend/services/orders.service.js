@@ -7,96 +7,20 @@ import * as emailService from "./email.service.js";
 export const crearOrden = async (id_usuario, datosEnvio) => {
   const { direccion, ciudad, metodo_pago, items: providedItems } = datosEnvio;
 
-  // Si el frontend envía los items directamente (Flujo de Carrito Local)
-  if (
-    providedItems &&
-    Array.isArray(providedItems) &&
-    providedItems.length > 0
-  ) {
-    console.log(
-      `🛒 Creando orden desde Carrito Local para usuario ${id_usuario}. Items: ${providedItems.length}`,
-    );
-    console.log("📦 Items recibidos:", JSON.stringify(providedItems));
-
-    // El id_empleado es null cuando el cliente compra solo
-    return await crearOrdenDirecta(id_usuario, null, {
-      direccion,
-      ciudad,
-      departamento: datosEnvio.departamento,
-      metodo_pago,
-      items: providedItems,
-    });
+  if (!providedItems || !Array.isArray(providedItems) || providedItems.length === 0) {
+    throw new Error("El pedido debe contener al menos un producto");
   }
 
-  // De lo contrario, buscar carrito guardado en BD (Flujo de Carrito en BD)
-  console.log(`📂 Buscando Carrito en BD para usuario ${id_usuario}`);
-  const carrito = await sql`
-    SELECT * FROM pedidos 
-    WHERE id_usuario_cliente = ${id_usuario} AND estado = 'carrito'
-    LIMIT 1
-  `;
+  console.log(
+    `🛒 Creando orden para usuario ${id_usuario}. Items: ${providedItems.length}`,
+  );
 
-  if (carrito.length === 0) {
-    throw new Error("No hay items en el carrito (BD-FALLBACK)");
-  }
-
-  const id_pedido = carrito[0].id_pedido;
-
-  // Obtener items del carrito
-  const items = await sql`
-    SELECT dp.*, p.stock_actual
-    FROM detalle_pedido dp
-    INNER JOIN productos p ON dp.id_producto = p.id_producto
-    WHERE dp.id_pedido = ${id_pedido}
-  `;
-
-  if (items.length === 0) {
-    throw new Error("El carrito está vacío");
-  }
-
-  // Verificar stock de todos los productos
-  for (const item of items) {
-    if (item.stock_actual < item.cantidad) {
-      throw new Error(
-        `Stock insuficiente para el producto ID ${item.id_producto}`,
-      );
-    }
-  }
-
-  // Calcular total
-  const total = items.reduce((sum, item) => sum + parseFloat(item.subtotal), 0);
-
-  // Usar transacción para asegurar que todo se guarde bien
-  return await sql.begin(async (sql) => {
-    // 1. Actualizar el pedido de 'carrito' a 'pendiente'
-    await sql`
-      UPDATE pedidos 
-      SET estado = 'pendiente',
-          direccion = ${direccion},
-          ciudad = ${ciudad},
-          departamento = ${datosEnvio.departamento || null},
-          total = ${total},
-          fecha_pedido = NOW()
-      WHERE id_pedido = ${id_pedido}
-    `;
-
-    // 2. Reducir stock (Reserva)
-    for (const item of items) {
-      console.log(
-        `📦 Reservando stock para Pedido ID ${id_pedido}: Producto ${item.id_producto}, Cantidad: ${item.cantidad}`,
-      );
-      await sql`
-        UPDATE productos 
-        SET stock_actual = stock_actual - ${item.cantidad}
-        WHERE id_producto = ${item.id_producto}
-      `;
-    }
-
-    return {
-      id_pedido,
-      total,
-      estado: "pendiente",
-    };
+  return await crearOrdenDirecta(id_usuario, null, {
+    direccion,
+    ciudad,
+    departamento: datosEnvio.departamento,
+    metodo_pago,
+    items: providedItems,
   });
 };
 
@@ -112,6 +36,18 @@ export const crearOrdenDirecta = async (
 
   if (!items || items.length === 0) {
     throw new Error("El pedido debe contener al menos un producto");
+  }
+
+  // Prevenir pedidos duplicados: verificar si el mismo usuario ya creó un pedido en los últimos 60 segundos
+  const duplicado = await sql`
+    SELECT id_pedido FROM pedidos
+    WHERE id_usuario_cliente = ${id_cliente}
+      AND estado = 'pendiente'
+      AND fecha_pedido > NOW() - INTERVAL '60 seconds'
+    LIMIT 1
+  `;
+  if (duplicado.length > 0) {
+    throw new Error("Ya tienes un pedido en proceso. Espera un momento antes de crear otro.");
   }
 
   // Verificar stock y calcular subtotales de todos los productos
@@ -240,7 +176,14 @@ export const obtenerOrdenes = async (id_usuario, rol = null, options = {}) => {
       v.fecha_venta,
       CONCAT(COALESCE(u.nombre, ''), ' ', COALESCE(u.apellido, '')) as nombre_usuario,
       CONCAT(COALESCE(e.nombre, ''), ' ', COALESCE(e.apellido, '')) as nombre_empleado,
-      u.email as email_usuario
+      u.email as email_usuario,
+      (
+        SELECT d.estado 
+        FROM devoluciones d
+        JOIN ventas v2 ON v2.id_venta = d.id_venta
+        WHERE v2.id_pedido = p.id_pedido AND d.estado != 'anulada'
+        ORDER BY d.fecha_devolucion DESC LIMIT 1
+      ) AS estado_devolucion
     FROM pedidos p
     LEFT JOIN ventas v ON p.id_pedido = v.id_pedido
     LEFT JOIN usuarios u ON p.id_usuario_cliente = u.id_usuario
@@ -303,7 +246,21 @@ export const obtenerDetalleOrden = async (
         v.fecha_venta,
         CONCAT(COALESCE(u.nombre, ''), ' ', COALESCE(u.apellido, '')) as nombre_usuario,
         CONCAT(COALESCE(e.nombre, ''), ' ', COALESCE(e.apellido, '')) as nombre_empleado,
-        u.email as email_usuario
+        u.email as email_usuario,
+        (
+          SELECT d.estado 
+          FROM devoluciones d
+          JOIN ventas v2 ON v2.id_venta = d.id_venta
+          WHERE v2.id_pedido = p.id_pedido AND d.estado != 'anulada'
+          ORDER BY d.fecha_devolucion DESC LIMIT 1
+        ) AS estado_devolucion,
+        (
+          SELECT row_to_json(d.*)
+          FROM devoluciones d
+          JOIN ventas v2 ON v2.id_venta = d.id_venta
+          WHERE v2.id_pedido = p.id_pedido AND d.estado != 'anulada'
+          ORDER BY d.fecha_devolucion DESC LIMIT 1
+        ) AS devolucion_info
       FROM pedidos p
       LEFT JOIN ventas v ON p.id_pedido = v.id_pedido
       LEFT JOIN usuarios u ON p.id_usuario_cliente = u.id_usuario
@@ -330,7 +287,21 @@ export const obtenerDetalleOrden = async (
         p.fecha_estimada,
         v.id_venta,
         v.metodo_pago,
-        v.fecha_venta
+        v.fecha_venta,
+        (
+          SELECT d.estado 
+          FROM devoluciones d
+          JOIN ventas v2 ON v2.id_venta = d.id_venta
+          WHERE v2.id_pedido = p.id_pedido AND d.estado != 'anulada'
+          ORDER BY d.fecha_devolucion DESC LIMIT 1
+        ) AS estado_devolucion,
+        (
+          SELECT row_to_json(d.*)
+          FROM devoluciones d
+          JOIN ventas v2 ON v2.id_venta = d.id_venta
+          WHERE v2.id_pedido = p.id_pedido AND d.estado != 'anulada'
+          ORDER BY d.fecha_devolucion DESC LIMIT 1
+        ) AS devolucion_info
       FROM pedidos p
 
       LEFT JOIN ventas v ON p.id_pedido = v.id_pedido

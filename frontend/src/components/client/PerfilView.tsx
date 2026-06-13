@@ -87,8 +87,6 @@ export function PerfilView() {
     telefono: currentUser?.telefono || '',
     direccion: currentUser?.direccion || '',
     ciudad: currentUser?.ciudad || '',
-    recibirOfertas: true,
-    notificacionesPush: false,
   });
 
   useEffect(() => {
@@ -452,34 +450,6 @@ export function PerfilView() {
             />
 
             {/* Preferences */}
-            <div style={{ paddingTop: '24px', borderTop: `1px solid ${C.accent}`, display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: 700, color: C.textDark, margin: 0 }}>
-                Preferencias
-              </h3>
-              
-              <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: isEditing ? 'pointer' : 'default', opacity: isEditing ? 1 : 0.6 }}>
-                <input
-                  type="checkbox"
-                  checked={formData.recibirOfertas}
-                  onChange={(e) => setFormData({ ...formData, recibirOfertas: e.target.checked })}
-                  disabled={!isEditing || isSaving}
-                  style={{ width: '18px', height: '18px', accentColor: C.accentDeep, cursor: isEditing ? 'pointer' : 'default' }}
-                />
-                <span style={{ fontSize: '14px', color: C.textDark }}>Recibir ofertas por email</span>
-              </label>
-
-              <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: isEditing ? 'pointer' : 'default', opacity: isEditing ? 1 : 0.6 }}>
-                <input
-                  type="checkbox"
-                  checked={formData.notificacionesPush}
-                  onChange={(e) => setFormData({ ...formData, notificacionesPush: e.target.checked })}
-                  disabled={!isEditing || isSaving}
-                  style={{ width: '18px', height: '18px', accentColor: C.accentDeep, cursor: isEditing ? 'pointer' : 'default' }}
-                />
-                <span style={{ fontSize: '14px', color: C.textDark }}>Notificaciones push</span>
-              </label>
-            </div>
-
             {/* Actions */}
             <div style={{ paddingTop: '32px', display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
               {isEditing ? (
@@ -510,8 +480,6 @@ export function PerfilView() {
                           telefono: currentUser.telefono,
                           direccion: currentUser.direccion || '',
                           ciudad: currentUser.ciudad || '',
-                          recibirOfertas: true,
-                          notificacionesPush: false,
                         });
                       }
                     }}

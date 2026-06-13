@@ -60,7 +60,7 @@ export function PedidoPreviewDialog({
             </a>
             <button
               onClick={() => onOpenChange(false)}
-              className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+              className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -68,7 +68,7 @@ export function PedidoPreviewDialog({
         </div>
 
         {/* Imagen */}
-        <div className="flex-1 p-6 bg-gray-50/50 overflow-y-auto min-h-0">
+        <div className="p-6 bg-gray-50/50 overflow-y-auto max-h-[60vh]">
           <div className="flex items-center justify-center min-h-full">
             <img 
               src={imageUrl} 
@@ -81,16 +81,7 @@ export function PedidoPreviewDialog({
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="flex justify-end gap-3 px-4 md:px-6 pb-6 pt-4 bg-white border-t border-gray-100 flex-shrink-0">
-          <Button
-            onClick={() => onOpenChange(false)}
-            className="rounded-xl px-10 h-11 text-sm font-bold text-white transition-all shadow-md hover:shadow-lg active:scale-95 border-0"
-            style={{ background: "#c47b96" }}
-          >
-            Cerrar Vista
-          </Button>
-        </div>
+
       </DialogContent>
     </Dialog>
   );

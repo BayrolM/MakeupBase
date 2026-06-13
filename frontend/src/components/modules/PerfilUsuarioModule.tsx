@@ -10,10 +10,11 @@ import {
   SelectValue,
 } from "../ui/select";
 
-import { User, Lock, Camera, ShieldCheck, Save, Eye, EyeOff } from "lucide-react";
+import { User, Lock, Camera, ShieldCheck, Save, Eye, EyeOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { authService } from "../../services/authService";
 import { validateField as validateUserField } from "../../utils/usuarioUtils";
+import { uploadToSupabase } from "../../lib/supabaseUpload";
 
 const D = {
   navy: "var(--luxury-pink)",
@@ -570,10 +571,18 @@ export function PerfilUsuarioModule() {
   const handleSavePhoto = async () => {
     if (!photoFile || !currentUser) return;
     setIsSavingPhoto(true);
-    toast.success("Foto actualizada");
-    setIsSavingPhoto(false);
-    setPhotoFile(null);
-    setPreviewPhoto(null);
+    try {
+      const { secure_url } = await uploadToSupabase(photoFile, "avatar");
+      await authService.updateProfile({ foto_perfil: secure_url });
+      setCurrentUser({ ...currentUser, foto_perfil: secure_url });
+      toast.success("Foto de perfil actualizada");
+      setPhotoFile(null);
+      setPreviewPhoto(null);
+    } catch (error: any) {
+      toast.error(error.message || "Error al subir la foto");
+    } finally {
+      setIsSavingPhoto(false);
+    }
   };
 
   // Password strength indicator

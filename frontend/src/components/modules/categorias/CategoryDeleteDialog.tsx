@@ -90,6 +90,7 @@ export function CategoryDeleteDialog({
             variant="outline"
             onClick={() => onOpenChange(false)}
             className="border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg px-4 h-9 text-sm"
+            style={{ backgroundColor: "#ffffff" }}
             disabled={isSaving}
           >
             Cancelar

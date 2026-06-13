@@ -1,7 +1,7 @@
 import { Status, OrderStatus } from '../lib/store';
 
 interface StatusBadgeProps {
-  status: Status | OrderStatus | 'pendiente' | 'confirmada' | 'anulada' | 'anulado' | 'aprobada' | 'rechazada' | 'en_revision' | 'creado' | 'preparado' | 'procesando' | 'en_proceso' | 'despachado' | 'cancelado' | 'enviado';
+  status: Status | OrderStatus | 'pendiente' | 'confirmada' | 'anulada' | 'anulado' | 'aprobada' | 'rechazada' | 'en_revision' | 'creado' | 'preparado' | 'procesando' | 'en_proceso' | 'despachado' | 'cancelado' | 'enviado' | 'devolucion_en_proceso' | 'devolucion_en_revision' | 'devolucion_aceptada' | 'devolucion_rechazada' | string;
   size?: 'sm' | 'md';
 }
 
@@ -38,6 +38,15 @@ export function StatusBadge({ status, size = 'md' }: StatusBadgeProps) {
       case 'despachado':
       case 'enviado':
         return { bg: '#eff6ff', text: '#2563eb', border: '1px solid #bfdbfe', label: 'En Camino' };
+      
+      case 'devolucion_en_proceso':
+        return { bg: '#fff7ed', text: '#ea580c', border: '1px solid #fed7aa', label: 'Devolución en proceso' };
+      case 'devolucion_en_revision':
+        return { bg: '#fffbeb', text: '#d97706', border: '1px solid #fde68a', label: 'En revisión' };
+      case 'devolucion_aceptada':
+        return { bg: '#f0fdf4', text: '#16a34a', border: '1px solid #bbf7d0', label: 'Devolución aceptada' };
+      case 'devolucion_rechazada':
+        return { bg: '#fef2f2', text: '#dc2626', border: '1px solid #fecaca', label: 'Devolución rechazada' };
       
       default:
         return { bg: '#f1f5f9', text: '#64748b', border: '1px solid #e2e8f0', label: String(status) };

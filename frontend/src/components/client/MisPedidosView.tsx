@@ -82,6 +82,7 @@ export function MisPedidosView({
             pago_confirmado: !!serverOrder.pago_confirmado,
             total: Number(serverOrder.total),
             direccionEnvio: serverOrder.direccion || "",
+            estado_devolucion: serverOrder.estado_devolucion,
           };
 
           if (existsLocally) {
@@ -101,6 +102,7 @@ export function MisPedidosView({
                 estado: serverOrder.estado,
                 pago_confirmado: !!serverOrder.pago_confirmado,
                 total: Number(serverOrder.total),
+                estado_devolucion: serverOrder.estado_devolucion,
               },
               ...pedidos,
             ]);
@@ -177,6 +179,16 @@ export function MisPedidosView({
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
     return diffDays <= 45;
+  };
+
+  const getDerivedStatus = (pedido: any) => {
+    if (pedido.estado_devolucion) {
+      if (pedido.estado_devolucion === "pendiente") return "devolucion_en_proceso";
+      if (pedido.estado_devolucion === "en_revision") return "devolucion_en_revision";
+      if (pedido.estado_devolucion === "aprobada") return "devolucion_aceptada";
+      if (pedido.estado_devolucion === "rechazada") return "devolucion_rechazada";
+    }
+    return pedido.estado;
   };
 
   const handleViewDetail = async (pedido: any) => {
@@ -573,7 +585,7 @@ export function MisPedidosView({
                             Verificando Pago
                           </span>
                         ) : (
-                          <StatusBadge status={pedido.estado} size="sm" />
+                          <StatusBadge status={getDerivedStatus(pedido)} size="sm" />
                         )}
                         <span
                           style={{ fontSize: "12px", color: "#999", margin: 0 }}
@@ -732,7 +744,7 @@ export function MisPedidosView({
                       Cancelar pedido
                     </button>
                   )}
-                  {canRequestReturn(pedido) && (
+                  {canRequestReturn(pedido) && !pedido.estado_devolucion && (
                     <button
                       onClick={() => {
                         setPedidoToReturn(pedido);
@@ -861,7 +873,7 @@ export function MisPedidosView({
                       flexWrap: "wrap",
                     }}
                   >
-                    <StatusBadge status={selectedPedido.estado} size="sm" />
+                    <StatusBadge status={getDerivedStatus(selectedPedido)} size="sm" />
                     {selectedPedido.pago_confirmado && (
                       <div
                         style={{
@@ -1206,6 +1218,8 @@ export function MisPedidosView({
                   </div>
                 </div>
 
+
+
                 {/* Total at bottom */}
                 <div
                   style={{
@@ -1405,6 +1419,47 @@ export function MisPedidosView({
                     );
                   })}
                 </div>
+
+                {selectedPedido.devolucion_info && (
+                  <div
+                    style={{
+                      padding: "16px",
+                      borderRadius: "10px",
+                      background: "#fff0f5",
+                      border: "1px solid #fce7f3",
+                      marginTop: "16px",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
+                      <AlertCircle style={{ width: 14, height: 14, color: "#c47b96" }} />
+                      <span style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "1px", color: "#c47b96", textTransform: "uppercase" }}>
+                        Información de Devolución
+                      </span>
+                    </div>
+
+                    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                      <div>
+                        <p style={{ fontSize: "9px", fontWeight: 900, color: "#c47b96", textTransform: "uppercase", letterSpacing: "1px", margin: "0 0 2px 0", opacity: 0.8 }}>
+                          Motivo Solicitado
+                        </p>
+                        <p style={{ fontSize: "12px", color: "#374151", margin: 0, lineHeight: 1.4 }}>
+                          {selectedPedido.devolucion_info.motivo}
+                        </p>
+                      </div>
+
+                      {selectedPedido.devolucion_info.motivo_decision && (
+                        <div style={{ marginTop: "4px", paddingTop: "10px", borderTop: "1px dashed rgba(196, 123, 150, 0.3)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                          <p style={{ fontSize: "9px", fontWeight: 900, color: "#c47b96", textTransform: "uppercase", letterSpacing: "1px", margin: 0, opacity: 0.8 }}>
+                            Respuesta de la Tienda
+                          </p>
+                          <p style={{ fontSize: "12px", color: "#374151", margin: 0, lineHeight: 1.4, fontWeight: 700, textTransform: "capitalize" }}>
+                            {selectedPedido.devolucion_info.estado.replace('_', ' ')}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {/* Close button */}
                 <div

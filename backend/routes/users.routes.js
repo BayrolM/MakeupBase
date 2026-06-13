@@ -2,6 +2,8 @@ import { Router } from "express";
 import {
   getProfile,
   updateProfile,
+  getFavoritos,
+  toggleFavorito,
   listarUsuarios,
   obtenerUsuario,
   crearUsuario,
@@ -21,6 +23,10 @@ router.get("/profile", authRequired, getProfile);
 router.put("/profile", authRequired, updateProfile);
 router.post("/profile/password/code", authRequired, requestPasswordChangeCode);
 router.put("/profile/password", authRequired, changePassword);
+
+// Rutas de favoritos
+router.get("/profile/favoritos", authRequired, getFavoritos);
+router.put("/profile/favoritos/:productoId", authRequired, toggleFavorito);
 
 // Rutas de administración de usuarios y clientes (requieren permisos dinámicos según el tipo de registro)
 router.get("/", authRequired, tienePermisoUsuarioOCliente('ver'), listarUsuarios);

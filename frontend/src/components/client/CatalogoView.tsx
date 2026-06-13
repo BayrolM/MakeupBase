@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useStore } from "../../lib/store";
 import { ProductCard } from "./ProductCard";
 import { Input } from "../ui/input";
@@ -10,10 +10,10 @@ import {
   SelectValue,
 } from "../ui/select";
 import { Slider } from "../ui/slider";
-import { Search, Filter, ShoppingCart } from "lucide-react";
+import { Search, Filter, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { productService, type Product } from "../../services/productService";
 
-/* ── Luxury CSS variable helpers (same pattern as InicioView) ── */
 const V = (name: string) => `var(--luxury-${name})`;
 const C = {
   accent: V("pink-soft"),
@@ -34,6 +34,8 @@ const C = {
   shadowLg: V("shadow-lg"),
 };
 
+const ITEMS_PER_PAGE = 20;
+
 export function CatalogoView({
   initialCategory = "all",
   onClearCategory,
@@ -43,13 +45,16 @@ export function CatalogoView({
   onClearCategory?: () => void;
   onViewProduct?: (productId: string) => void;
 } = {}) {
-  const { productos, categorias, addToCarrito, carrito, favoritos, toggleFavorito } = useStore();
+  const { addToCarrito, carrito, favoritos, toggleFavorito, categorias } = useStore();
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState(
-    initialCategory || "all",
-  );
+  const [selectedCategory, setSelectedCategory] = useState(initialCategory || "all");
   const [priceRange, setPriceRange] = useState([0, 150000]);
   const [showFilters, setShowFilters] = useState(true);
+
+  const [products, setProducts] = useState<Product[]>([]);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("es-CO", {
@@ -59,40 +64,49 @@ export function CatalogoView({
     }).format(value);
   };
 
-  // Filter products
-  const filteredProducts = productos.filter((p) => {
-    if (p.estado !== "activo") return false;
+  const fetchProducts = useCallback(async (page: number, search: string, category: string, price: number[]) => {
+    setIsLoading(true);
+    try {
+      const filters: Record<string, any> = {
+        page,
+        limit: ITEMS_PER_PAGE,
+        estado: "true",
+      };
+      if (search) filters.q = search;
+      if (category && category !== "all") filters.categoria = category;
+      if (price[0] > 0) filters.minPrice = price[0];
+      if (price[1] < 150000) filters.maxPrice = price[1];
 
-    // Search filter
-    if (
-      searchQuery &&
-      !p.nombre.toLowerCase().includes(searchQuery.toLowerCase())
-    ) {
-      return false;
+      const res = await productService.getAll(filters);
+      setProducts(res.data || []);
+      setTotalProducts(res.total || 0);
+    } catch {
+      toast.error("Error al cargar productos");
+    } finally {
+      setIsLoading(false);
     }
+  }, []);
 
-    // Category filter
-    if (selectedCategory !== "all" && p.categoriaId !== selectedCategory) {
-      return false;
-    }
+  useEffect(() => {
+    fetchProducts(currentPage, searchQuery, selectedCategory, priceRange);
+  }, [currentPage, fetchProducts]);
 
-    // Price range filter
-    if (p.precioVenta < priceRange[0] || p.precioVenta > priceRange[1]) {
-      return false;
-    }
+  // Debounced search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCurrentPage(1);
+      fetchProducts(1, searchQuery, selectedCategory, priceRange);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchQuery, selectedCategory, priceRange]);
 
-    // Stock filter
-    if (p.stock === 0) {
-      return false;
-    }
-
-    return true;
-  });
+  const totalPages = Math.ceil(totalProducts / ITEMS_PER_PAGE);
 
   const clearFilters = () => {
     setSearchQuery("");
     setSelectedCategory("all");
     setPriceRange([0, 150000]);
+    setCurrentPage(1);
     onClearCategory?.();
   };
 
@@ -104,7 +118,7 @@ export function CatalogoView({
         fontFamily: "'DM Sans', sans-serif",
       }}
     >
-      {/* Hero Header with Gradient */}
+      {/* Hero Header */}
       <div
         style={{
           background: `linear-gradient(135deg, #2e1020 0%, #4a1a30 30%, #7b1347 65%, #a85d77 100%)`,
@@ -113,7 +127,6 @@ export function CatalogoView({
           overflow: "hidden",
         }}
       >
-        {/* Decorative elements */}
         <div
           style={{
             position: "absolute",
@@ -135,16 +148,12 @@ export function CatalogoView({
             width: "300px",
             height: "300px",
             borderRadius: "50%",
-            background:
-              "radial-gradient(circle, rgba(196,123,150,0.15) 0%, transparent 70%)",
+            background: "radial-gradient(circle, rgba(196,123,150,0.15) 0%, transparent 70%)",
             pointerEvents: "none",
           }}
         />
 
-        <div
-          className="max-w-7xl mx-auto"
-          style={{ position: "relative", zIndex: 1 }}
-        >
+        <div className="max-w-7xl mx-auto" style={{ position: "relative", zIndex: 1 }}>
           <div style={{ marginBottom: "0.5rem" }}>
             <span
               style={{
@@ -177,11 +186,9 @@ export function CatalogoView({
               maxWidth: "420px",
             }}
           >
-            Descubre nuestra selección de cosméticos premium con ingredientes
-            exclusivos.
+            Descubre nuestra selección de cosméticos premium con ingredientes exclusivos.
           </p>
 
-          {/* Search Bar — glass effect, full width */}
           <div className="relative w-full">
             <Search
               className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5"
@@ -203,18 +210,11 @@ export function CatalogoView({
             />
           </div>
 
-          {/* Quick category chips */}
-          <div
-            style={{
-              display: "flex",
-              gap: "8px",
-              marginTop: "1rem",
-              flexWrap: "wrap",
-            }}
-          >
+          <div style={{ display: "flex", gap: "8px", marginTop: "1rem", flexWrap: "wrap" }}>
             <button
               onClick={() => {
                 setSelectedCategory("all");
+                setCurrentPage(1);
                 onClearCategory?.();
               }}
               style={{
@@ -223,10 +223,7 @@ export function CatalogoView({
                 fontSize: "12px",
                 fontWeight: 600,
                 border: "1px solid rgba(255,255,255,0.2)",
-                background:
-                  selectedCategory === "all"
-                    ? "rgba(255,255,255,0.2)"
-                    : "transparent",
+                background: selectedCategory === "all" ? "rgba(255,255,255,0.2)" : "transparent",
                 color: "rgba(255,255,255,0.8)",
                 cursor: "pointer",
                 transition: "all 0.2s",
@@ -237,17 +234,17 @@ export function CatalogoView({
             {categorias.slice(0, 5).map((cat) => (
               <button
                 key={cat.id}
-                onClick={() => setSelectedCategory(cat.id)}
+                onClick={() => {
+                  setSelectedCategory(cat.id);
+                  setCurrentPage(1);
+                }}
                 style={{
                   padding: "6px 16px",
                   borderRadius: "20px",
                   fontSize: "12px",
                   fontWeight: 600,
                   border: "1px solid rgba(255,255,255,0.2)",
-                  background:
-                    selectedCategory === cat.id
-                      ? "rgba(255,255,255,0.2)"
-                      : "transparent",
+                  background: selectedCategory === cat.id ? "rgba(255,255,255,0.2)" : "transparent",
                   color: "rgba(255,255,255,0.8)",
                   cursor: "pointer",
                   transition: "all 0.2s",
@@ -264,7 +261,7 @@ export function CatalogoView({
         <div className="flex flex-col md:flex-row gap-8">
           {/* Filters Sidebar */}
           {showFilters && (
-            <div className="w-full md:w-64 shrink-0">
+            <div className="shrink-0" style={{ width: "100%", maxWidth: "280px" }}>
               <div
                 className="sticky top-8"
                 style={{
@@ -284,13 +281,7 @@ export function CatalogoView({
                     marginBottom: "1.5rem",
                   }}
                 >
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                    }}
-                  >
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                     <div
                       style={{
                         width: "36px",
@@ -305,15 +296,7 @@ export function CatalogoView({
                     >
                       <Filter className="w-4 h-4" />
                     </div>
-                    <h3
-                      style={{
-                        fontSize: "16px",
-                        fontWeight: 700,
-                        color: C.textDark,
-                      }}
-                    >
-                      Filtros
-                    </h3>
+                    <h3 style={{ fontSize: "16px", fontWeight: 700, color: C.textDark }}>Filtros</h3>
                   </div>
                   <button
                     onClick={clearFilters}
@@ -332,21 +315,8 @@ export function CatalogoView({
                   </button>
                 </div>
 
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "1.5rem",
-                  }}
-                >
-                  {/* Category Filter */}
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "8px",
-                    }}
-                  >
+                <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                     <label
                       style={{
                         fontSize: "13px",
@@ -360,7 +330,10 @@ export function CatalogoView({
                     </label>
                     <Select
                       value={selectedCategory}
-                      onValueChange={setSelectedCategory}
+                      onValueChange={(v) => {
+                        setSelectedCategory(v);
+                        setCurrentPage(1);
+                      }}
                     >
                       <SelectTrigger
                         className="h-10 rounded-xl"
@@ -373,33 +346,18 @@ export function CatalogoView({
                       >
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent
-                        style={{
-                          background: C.white,
-                          border: `1px solid ${C.accentSoft}`,
-                        }}
-                      >
+                      <SelectContent style={{ background: C.white, border: `1px solid ${C.accentSoft}` }}>
                         <SelectItem value="all">Todas</SelectItem>
                         {categorias.map((cat) => (
-                          <SelectItem key={cat.id} value={cat.id}>
-                            {cat.nombre}
-                          </SelectItem>
+                          <SelectItem key={cat.id} value={cat.id}>{cat.nombre}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
 
-                  {/* Divider */}
                   <div style={{ height: "1px", background: C.accentSoft }} />
 
-                  {/* Price Range Filter */}
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "10px",
-                    }}
-                  >
+                  <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                     <label
                       style={{
                         fontSize: "13px",
@@ -414,7 +372,10 @@ export function CatalogoView({
                     <div className="px-1">
                       <Slider
                         value={priceRange}
-                        onValueChange={setPriceRange}
+                        onValueChange={(v) => {
+                          setPriceRange(v);
+                          setCurrentPage(1);
+                        }}
                         min={0}
                         max={150000}
                         step={5000}
@@ -434,8 +395,6 @@ export function CatalogoView({
                       <span>{formatCurrency(priceRange[1])}</span>
                     </div>
                   </div>
-
-                  {/* Stock Filter Removido ya que ahora es automático */}
                 </div>
               </div>
             </div>
@@ -451,17 +410,8 @@ export function CatalogoView({
                 marginBottom: "1.5rem",
               }}
             >
-              <p
-                style={{
-                  fontSize: "14px",
-                  color: C.textSecondary,
-                  fontWeight: 500,
-                }}
-              >
-                {filteredProducts.length}{" "}
-                {filteredProducts.length === 1
-                  ? "producto encontrado"
-                  : "productos encontrados"}
+              <p style={{ fontSize: "14px", color: C.textSecondary, fontWeight: 500 }}>
+                {totalProducts} {totalProducts === 1 ? "producto encontrado" : "productos encontrados"}
               </p>
               <button
                 onClick={() => setShowFilters(!showFilters)}
@@ -482,7 +432,12 @@ export function CatalogoView({
               </button>
             </div>
 
-            {filteredProducts.length === 0 ? (
+            {isLoading ? (
+              <div style={{ textAlign: "center", padding: "5rem 2rem" }}>
+                <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" style={{ color: C.accentDeep }} />
+                <p style={{ fontSize: "14px", color: C.textSecondary }}>Cargando productos...</p>
+              </div>
+            ) : products.length === 0 ? (
               <div
                 style={{
                   textAlign: "center",
@@ -504,13 +459,7 @@ export function CatalogoView({
                 >
                   No se encontraron productos
                 </h3>
-                <p
-                  style={{
-                    fontSize: "14px",
-                    color: C.textSecondary,
-                    marginBottom: "1.5rem",
-                  }}
-                >
+                <p style={{ fontSize: "14px", color: C.textSecondary, marginBottom: "1.5rem" }}>
                   Intenta ajustar los filtros de búsqueda
                 </p>
                 <button
@@ -526,72 +475,162 @@ export function CatalogoView({
                     cursor: "pointer",
                     transition: "transform 0.2s",
                   }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.transform = "scale(1.05)")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.transform = "scale(1)")
-                  }
+                  onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
                 >
                   Limpiar filtros
                 </button>
               </div>
             ) : (
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
-                  gap: "24px",
-                }}
-              >
-                {filteredProducts.map((producto) => {
-                  const categoria = categorias.find(
-                    (c) => c.id === producto.categoriaId,
-                  );
-                  const currentCartQty = carrito.find((item) => item.productoId === producto.id)?.cantidad || 0;
-                  const isMaxStock = currentCartQty >= producto.stock;
+              <>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
+                    gap: "24px",
+                  }}
+                >
+                  {products.map((producto) => {
+                    const categoria = categorias.find((c) => c.id === producto.categoriaId);
+                    const currentCartQty = carrito.find((item) => item.productoId === producto.id)?.cantidad || 0;
+                    const isMaxStock = currentCartQty >= producto.stock;
 
-                  return (
-                    <ProductCard
-                      key={producto.id}
-                      producto={producto}
-                      categoryName={categoria?.nombre}
-                      onCardClick={() => onViewProduct?.(producto.id)}
-                      onAddToCart={() => {
-                        if (isMaxStock) {
-                          toast.error("Stock máximo alcanzado", {
-                            description: `No puedes agregar más unidades de ${producto.nombre}.`,
-                          });
-                          return;
-                        }
-                        addToCarrito(producto.id, 1);
-                        toast.success("Producto agregado", {
-                          description: `${producto.nombre} se agregó al carrito`,
-                        });
-                      }}
-                      isMaxStock={isMaxStock}
-                      isFavorite={favoritos.includes(producto.id)}
-                      onToggleFavorite={(e) => {
-                        e.stopPropagation();
-                        toggleFavorito(producto.id);
-                        toast.success(
-                          favoritos.includes(producto.id)
-                            ? "Eliminado de favoritos"
-                            : "Agregado a favoritos",
-                          {
-                            description: producto.nombre,
+                    return (
+                      <ProductCard
+                        key={producto.id}
+                        producto={producto}
+                        categoryName={categoria?.nombre}
+                        onCardClick={() => onViewProduct?.(producto.id)}
+                        onAddToCart={() => {
+                          if (isMaxStock) {
+                            toast.error("Stock máximo alcanzado", {
+                              description: `No puedes agregar más unidades de ${producto.nombre}.`,
+                            });
+                            return;
                           }
-                        );
+                          addToCarrito(producto.id, 1);
+                          toast.success("Producto agregado", {
+                            description: `${producto.nombre} se agregó al carrito`,
+                          });
+                        }}
+                        isMaxStock={isMaxStock}
+                        isFavorite={favoritos.includes(producto.id)}
+                        onToggleFavorite={(e) => {
+                          e.stopPropagation();
+                          toggleFavorito(producto.id);
+                          toast.success(
+                            favoritos.includes(producto.id)
+                              ? "Eliminado de favoritos"
+                              : "Agregado a favoritos",
+                            { description: producto.nombre }
+                          );
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "8px",
+                      marginTop: "2rem",
+                    }}
+                  >
+                    <button
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      style={{
+                        width: "36px",
+                        height: "36px",
+                        borderRadius: "10px",
+                        border: `1px solid ${C.accentSoft}`,
+                        background: C.white,
+                        color: currentPage === 1 ? C.textMuted : C.accentDeep,
+                        cursor: currentPage === 1 ? "not-allowed" : "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        transition: "all 0.2s",
                       }}
-                    />
-                  );
-                })}
-              </div>
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+
+                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                      .filter((page) => {
+                        if (totalPages <= 7) return true;
+                        if (page === 1 || page === totalPages) return true;
+                        if (Math.abs(page - currentPage) <= 1) return true;
+                        return false;
+                      })
+                      .reduce<(number | "ellipsis")[]>((acc, page, idx, arr) => {
+                        if (idx > 0 && page - (arr[idx - 1] as number) > 1) {
+                          acc.push("ellipsis");
+                        }
+                        acc.push(page);
+                        return acc;
+                      }, [])
+                      .map((item, idx) =>
+                        item === "ellipsis" ? (
+                          <span key={`ellipsis-${idx}`} style={{ color: C.textMuted, padding: "0 4px" }}>...</span>
+                        ) : (
+                          <button
+                            key={item}
+                            onClick={() => setCurrentPage(item)}
+                            style={{
+                              width: "36px",
+                              height: "36px",
+                              borderRadius: "10px",
+                              border: currentPage === item ? "none" : `1px solid ${C.accentSoft}`,
+                              background: currentPage === item
+                                ? `linear-gradient(135deg, ${C.accent}, ${C.accentDeep})`
+                                : C.white,
+                              color: currentPage === item ? C.white : C.textDark,
+                              cursor: "pointer",
+                              fontSize: "13px",
+                              fontWeight: 600,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              transition: "all 0.2s",
+                            }}
+                          >
+                            {item}
+                          </button>
+                        )
+                      )}
+
+                    <button
+                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                      style={{
+                        width: "36px",
+                        height: "36px",
+                        borderRadius: "10px",
+                        border: `1px solid ${C.accentSoft}`,
+                        background: C.white,
+                        color: currentPage === totalPages ? C.textMuted : C.accentDeep,
+                        cursor: currentPage === totalPages ? "not-allowed" : "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        transition: "all 0.2s",
+                      }}
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
       </div>
-
     </div>
   );
 }

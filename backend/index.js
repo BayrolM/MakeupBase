@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
+import sql from "./config/db.js";
 import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/users.routes.js";
 import productsRoutes from "./routes/productos.routes.js";
@@ -72,9 +73,20 @@ app.get("/", (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 
+// Agregar columna favoritos si no existe
+async function ensureFavoritosColumn() {
+  try {
+    await sql`ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS favoritos jsonb DEFAULT '[]'::jsonb`;
+    console.log("✅ Columna 'favoritos' verificada/creada en tabla usuarios");
+  } catch (error) {
+    console.error("⚠️ Error al verificar columna favoritos:", error.message);
+  }
+}
+
 // Solo iniciar el servidor si no estamos en Vercel
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`🚀 Servidor corriendo en el puerto ${PORT}`);
+  await ensureFavoritosColumn();
 });
 
 process.on("uncaughtException", (err) => {

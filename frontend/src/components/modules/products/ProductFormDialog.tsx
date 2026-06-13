@@ -261,7 +261,7 @@ export function ProductFormDialog({
         >
           <div className="flex items-center gap-4">
             <div
-              className="flex items-center justify-center text-white font-bold text-lg flex-shrink-0 luxury-icon-gradient"
+              className="flex items-center justify-center text-white font-bold text-lg shrink-0 luxury-icon-gradient"
               style={{ width: 44, height: 44, borderRadius: 12 }}
             >
               {editingProduct ? (
@@ -283,14 +283,14 @@ export function ProductFormDialog({
           </div>
           <button
             onClick={() => onOpenChange(false)}
-            className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         <div className="px-4 md:px-6 py-5">
-          <div className="space-y-6 py-6">
+          <div className="space-y-8 py-6">
             {/* Fila 1: Nombre */}
             <div className="space-y-2">
               <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">
@@ -313,7 +313,7 @@ export function ProductFormDialog({
             </div>
 
             {/* Fila 2: Categoría | Marca */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-2">
                 <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">
                   <Layers className="w-3.5 h-3.5 text-[#c47b96]" />
@@ -379,7 +379,7 @@ export function ProductFormDialog({
             </div>
 
             {/* Fila 3: Precio Compra | Precio Venta */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-2">
                 <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">
                   <DollarSign className="w-3.5 h-3.5 text-[#c47b96]" />
@@ -389,7 +389,7 @@ export function ProductFormDialog({
                   type="number"
                   value={formData.precioCompra}
                   disabled
-                  className="bg-gray-100 border-gray-200 text-gray-500 rounded-xl cursor-not-allowed transition-all h-11"
+                  className="bg-gray-50 border-gray-100 text-gray-400 rounded-xl cursor-not-allowed transition-all h-11"
                   title="El precio de compra se actualiza automáticamente desde el módulo de Compras"
                 />
               </div>
@@ -427,9 +427,9 @@ export function ProductFormDialog({
             {/* Fila 4: Stock Físico | Stock Disponible | Stock Mínimo */}
             <div className="space-y-4">
               <div className="h-px bg-gray-100 my-2" />
-              <div className="flex gap-5">
+              <div className="flex gap-8">
                 <div className="flex-1 space-y-2">
-                  <Label className="text-gray-700 font-bold text-[11px] flex items-center gap-2 whitespace-nowrap uppercase tracking-widest">
+                  <Label className="text-gray-700 font-semibold text-[9px] flex items-center gap-2 whitespace-nowrap uppercase tracking-widest">
                     <Archive className="w-3.5 h-3.5 text-[#c47b96]" />
                     Stock Físico
                   </Label>
@@ -437,12 +437,12 @@ export function ProductFormDialog({
                     type="number"
                     value={formData.stockFisico}
                     disabled
-                    className="bg-gray-100 border-gray-200 text-gray-500 rounded-xl cursor-not-allowed transition-all h-11 text-center font-bold"
+                    className="bg-gray-50 border-gray-100 text-gray-400 rounded-xl cursor-not-allowed transition-all h-11 text-center font-bold"
                     title="Este campo se actualiza automáticamente desde Compras"
                   />
                 </div>
                 <div className="flex-1 space-y-2">
-                  <Label className="text-gray-700 font-bold text-[11px] flex items-center gap-2 whitespace-nowrap uppercase tracking-widest">
+                  <Label className="text-gray-700 font-semibold text-[9px] flex items-center gap-2 whitespace-nowrap uppercase tracking-widest">
                     <Boxes
                       className={`w-3.5 h-3.5 ${fieldErrors.stock ? "text-rose-500" : "text-[#c47b96]"}`}
                     />
@@ -478,7 +478,7 @@ export function ProductFormDialog({
                   )}
                 </div>
                 <div className="flex-1 space-y-2">
-                  <Label className="text-gray-700 font-bold text-[11px] flex items-center gap-2 whitespace-nowrap uppercase tracking-widest">
+                  <Label className="text-gray-700 font-semibold text-[9px] flex items-center gap-2 whitespace-nowrap uppercase tracking-widest">
                     <AlertCircle className="w-3.5 h-3.5 text-[#c47b96]" />
                     Stock Mínimo
                   </Label>
@@ -505,13 +505,26 @@ export function ProductFormDialog({
               </Label>
               <Textarea
                 value={formData.descripcion}
-                onChange={(e) =>
-                  setFormData({ ...formData, descripcion: e.target.value })
-                }
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val.length > 255) return;
+                  setFormData({ ...formData, descripcion: val });
+                }}
+                maxLength={255}
                 className="border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] min-h-[100px] transition-all"
                 style={{ backgroundColor: '#ffffff' }}
                 placeholder="Detalles sobre el producto..."
               />
+              {formData.descripcion.length >= 240 && formData.descripcion.length < 255 && (
+                <p className="text-amber-600 text-[10px] font-semibold">
+                  {formData.descripcion.length}/255 caracteres
+                </p>
+              )}
+              {formData.descripcion.length >= 255 && (
+                <p className="micro-validation-error">
+                  Límite de 255 caracteres alcanzado
+                </p>
+              )}
             </div>
 
             {/* Fila 6: Imagen */}

@@ -1,4 +1,5 @@
 import sql from "../config/db.js";
+import * as emailService from "../services/email.service.js";
 
 /**
  * Listar todas las devoluciones con datos de cliente y empleado.
@@ -139,6 +140,14 @@ export const crear = async (req, res) => {
         throw new Error("La venta está anulada y no permite devoluciones.");
       }
 
+      // Validar ventana de 45 días
+      const fechaVenta = new Date(venta.fecha_venta);
+      const hoy = new Date();
+      const diffDias = Math.floor((hoy - fechaVenta) / (1000 * 60 * 60 * 24));
+      if (diffDias > 45) {
+        throw new Error("No se pueden realizar devoluciones después de 45 días desde la fecha de compra.");
+      }
+
       // 2. Verificar que no haya devoluciones previas de los mismos productos
       const devolucionesExistentes = await sql`
         SELECT dd.id_producto FROM detalle_devoluciones dd
@@ -214,6 +223,7 @@ export const crear = async (req, res) => {
       "no pertenece a esta venta",
       "excede la cantidad",
       "mayor a 0",
+      "después de 45 días",
     ];
     const isKnown = knownErrors.some((msg) => error.message?.includes(msg));
     return res
@@ -272,6 +282,31 @@ export const cambiarEstado = async (req, res) => {
         }
       }
     });
+
+    // Enviar email de notificación al cliente
+    try {
+      const [devolucionCompleta] = await sql`
+        SELECT d.*, u.email, u.nombre AS nombre_cliente
+        FROM devoluciones d
+        LEFT JOIN usuarios u ON d.id_usuario_cliente = u.id_usuario
+        WHERE d.id_devolucion = ${id}
+      `;
+      if (devolucionCompleta?.email) {
+        const emailData = {
+          email: devolucionCompleta.email,
+          nombre: devolucionCompleta.nombre_cliente,
+          idDevolucion: id,
+          idVenta: devolucionCompleta.id_venta,
+        };
+        if (estado === "aprobada") {
+          await emailService.enviarDevolucionAprobada({ ...emailData, totalDevuelto: devolucionCompleta.total_devuelto });
+        } else if (estado === "rechazada") {
+          await emailService.enviarDevolucionRechazada({ ...emailData, motivoDecision: motivo_decision });
+        }
+      }
+    } catch (emailError) {
+      console.error("Error enviando email de devolución:", emailError);
+    }
 
     return res.json({ ok: true, message: "Estado actualizado correctamente." });
   } catch (error) {

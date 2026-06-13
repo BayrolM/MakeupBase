@@ -91,7 +91,6 @@ const clienteItems: NavItem[] = [
   { icon: Store, label: "Catálogo", route: "catalogo" },
   { icon: Heart, label: "Favoritos", route: "favoritos" },
   { icon: Truck, label: "Mis Pedidos", route: "mis-pedidos" },
-  { icon: Bell, label: "Historial", route: "historial" },
   { icon: User, label: "Mi Perfil", route: "perfil" },
 ];
 

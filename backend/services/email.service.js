@@ -248,3 +248,47 @@ export async function enviarCodigoVerificacion(email, nombre, codigo) {
   `;
   await sendEmail(email, nombre, "Tu código de verificación - Glamour ML 🔐", buildEmail("Verifica tu correo electrónico", body));
 }
+
+// ═══════════════════════════════════════════════════════════════════
+//  EMAILS DE DEVOLUCIONES
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Devolución aprobada
+ */
+export async function enviarDevolucionAprobada({ email, nombre, idDevolucion, idVenta, totalDevuelto }) {
+  const rows = [
+    { label: "N° Devolución", value: "#" + idDevolucion },
+    { label: "N° Venta", value: "#" + idVenta },
+    { label: "Total devuelto", value: formatCOP(totalDevuelto) },
+  ];
+
+  const body = `
+    <p style="color: #4a4a4a; font-size: 16px; line-height: 1.6;">¡Hola, <strong>${nombre || "Cliente"}</strong>!</p>
+    <p style="color: #4a4a4a; font-size: 16px; line-height: 1.6;">Tu solicitud de devolución ha sido <strong style="color: #16a34a;">aprobada</strong>. ✅</p>
+    ${infoTable(rows)}
+    <p style="color: #4a4a4a; font-size: 16px; line-height: 1.6;">El monto será reembolsado según el método de pago original. Si tienes alguna duda, contáctanos.</p>
+    ${buildButton("Ver mis devoluciones", FRONTEND_URL + "/")}
+  `;
+  await sendEmail(email, nombre, "Devolución #" + idDevolucion + " aprobada ✅", buildEmail("Devolución aprobada", body));
+}
+
+/**
+ * Devolución rechazada
+ */
+export async function enviarDevolucionRechazada({ email, nombre, idDevolucion, idVenta, motivoDecision }) {
+  const rows = [
+    { label: "N° Devolución", value: "#" + idDevolucion },
+    { label: "N° Venta", value: "#" + idVenta },
+    { label: "Motivo del rechazo", value: motivoDecision || "No especificado" },
+  ];
+
+  const body = `
+    <p style="color: #4a4a4a; font-size: 16px; line-height: 1.6;">Hola, <strong>${nombre || "Cliente"}</strong>,</p>
+    <p style="color: #4a4a4a; font-size: 16px; line-height: 1.6;">Lamentamos informarte que tu solicitud de devolución ha sido <strong style="color: #dc2626;">rechazada</strong>. ❌</p>
+    ${infoTable(rows)}
+    <p style="color: #4a4a4a; font-size: 16px; line-height: 1.6;">Si tienes alguna duda o deseas presentar un reclamo, no dudes en contactarnos.</p>
+    ${buildButton("Contactar soporte", FRONTEND_URL + "/")}
+  `;
+  await sendEmail(email, nombre, "Devolución #" + idDevolucion + " rechazada ❌", buildEmail("Devolución rechazada", body));
+}

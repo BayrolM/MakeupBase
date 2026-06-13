@@ -113,4 +113,32 @@ export const userService = {
       );
     }
   },
+
+  /**
+   * Obtener favoritos del usuario autenticado
+   */
+  async getFavoritos(): Promise<{ ok: boolean; data: string[] }> {
+    try {
+      const response = await api.get("/users/profile/favoritos");
+      return response.data;
+    } catch (error: any) {
+      throw new Error(
+        error.response?.data?.message || "Error al obtener favoritos",
+      );
+    }
+  },
+
+  /**
+   * Toggle favorito (agregar/quitar producto)
+   */
+  async toggleFavorito(productoId: string): Promise<{ ok: boolean; data: string[] }> {
+    try {
+      const response = await api.put(`/users/profile/favoritos/${productoId}`);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(
+        error.response?.data?.message || "Error al actualizar favorito",
+      );
+    }
+  },
 };
