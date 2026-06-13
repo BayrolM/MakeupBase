@@ -37,7 +37,7 @@ export function PedidoPaymentConfirmDialog({
         <div className="flex items-center justify-between px-4 md:px-6 pt-6 pb-5 border-b border-gray-100 bg-white">
           <div className="flex items-center gap-4">
             <div
-              className="flex items-center justify-center text-white font-bold text-lg flex-shrink-0"
+              className="flex items-center justify-center text-white font-bold text-lg shrink-0"
               style={{ 
                 width: 44, 
                 height: 44, 
@@ -63,7 +63,7 @@ export function PedidoPaymentConfirmDialog({
           </div>
           <button
             onClick={() => onOpenChange(false)}
-            className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -106,7 +106,8 @@ export function PedidoPaymentConfirmDialog({
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
-            className="rounded-xl px-4 md:px-6 h-11 text-sm font-bold border-gray-200 text-gray-500 hover:bg-gray-50 bg-white"
+            className="border-gray-200 text-gray-600 hover:bg-gray-50 rounded-xl px-4 md:px-6 h-11 text-sm font-bold cursor-pointer"
+            style={{ backgroundColor: "#ffffff" }}
             disabled={isSaving}
           >
             Cancelar
@@ -114,7 +115,7 @@ export function PedidoPaymentConfirmDialog({
           <Button
             onClick={onConfirm}
             disabled={isSaving}
-            className="rounded-xl px-4 md:px-8 h-11 text-sm font-bold text-white transition-all shadow-md hover:shadow-lg active:scale-95 border-0"
+            className="rounded-xl px-4 md:px-8 h-11 text-sm font-bold text-white transition-all shadow-md hover:shadow-lg active:scale-95 border-0 cursor-pointer"
             style={{ 
               background: isCurrentlyConfirmed 
                 ? "linear-gradient(135deg, #ef4444, #f87171)" 

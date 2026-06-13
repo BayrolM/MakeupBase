@@ -31,7 +31,7 @@ export function MarcaFormDialog({
         {/* Encabezado */}
         <div className="flex items-center justify-between px-4 md:px-6 pt-6 pb-5 border-b border-gray-100">
           <div className="flex items-center gap-4">
-            <div className="flex items-center justify-center text-white font-bold text-lg flex-shrink-0 luxury-icon-gradient" style={{ width: 44, height: 44, borderRadius: 12 }}>
+            <div className="flex items-center justify-center text-white font-bold text-lg shrink-0 luxury-icon-gradient" style={{ width: 44, height: 44, borderRadius: 12 }}>
               {editingMarca ? (
                 <Pencil className="w-5 h-5" />
               ) : (
@@ -51,7 +51,7 @@ export function MarcaFormDialog({
           </div>
           <button
             onClick={() => onOpenChange(false)}
-            className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -97,6 +97,7 @@ export function MarcaFormDialog({
           <button
             onClick={() => onOpenChange(false)}
             disabled={isSaving}
+            className="cursor-pointer"
             style={{
               padding: "10px 22px",
               borderRadius: "10px",
@@ -116,6 +117,7 @@ export function MarcaFormDialog({
           <button
             onClick={onSave}
             disabled={isSaving}
+            className="cursor-pointer"
             style={{
               padding: "10px 28px",
               borderRadius: "10px",

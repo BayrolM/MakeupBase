@@ -128,7 +128,7 @@ export function DevolucionAnularDialog({
           <Button
             onClick={onConfirm}
             disabled={isSaving || motivoAnulacion.trim().length < 5}
-            className="rounded-lg text-white font-semibold px-4 h-10 text-sm"
+            className="rounded-lg text-white font-semibold px-4 h-10 text-sm cursor-pointer"
             style={{ background: "#ef4444" }}
           >
             {isSaving ? (

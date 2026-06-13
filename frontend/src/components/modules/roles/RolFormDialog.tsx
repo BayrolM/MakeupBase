@@ -53,7 +53,7 @@ export function RolFormDialog({
         <div className="flex items-center justify-between px-4 md:px-6 pt-6 pb-5 border-b border-gray-100 sticky top-0 bg-white z-20">
           <div className="flex items-center gap-4">
             <div
-              className="flex items-center justify-center text-white font-bold text-lg flex-shrink-0 luxury-icon-gradient"
+              className="flex items-center justify-center text-white font-bold text-lg shrink-0 luxury-icon-gradient"
               style={{ width: 44, height: 44, borderRadius: 12 }}
             >
               {editingRol ? (
@@ -76,7 +76,7 @@ export function RolFormDialog({
           <button
             onClick={() => !isSaving && onOpenChange(false)}
             disabled={isSaving}
-            className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors disabled:opacity-40"
+            className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors disabled:opacity-40 cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -304,6 +304,7 @@ export function RolFormDialog({
           <button
             onClick={() => onOpenChange(false)}
             disabled={isSaving}
+            className="cursor-pointer"
             style={{
               padding: "10px 22px",
               borderRadius: "10px",
@@ -329,6 +330,7 @@ export function RolFormDialog({
           <button
             onClick={onSave}
             disabled={isSaving}
+            className="cursor-pointer"
             style={{
               padding: "10px 28px",
               borderRadius: "10px",

@@ -61,7 +61,7 @@ export function VentaFormDialog({
         <div className="flex items-center justify-between px-4 md:px-6 pt-6 pb-5 border-b border-gray-100 bg-white z-10">
           <div className="flex items-center gap-4">
             <div
-              className="flex items-center justify-center text-white font-bold text-lg flex-shrink-0"
+              className="flex items-center justify-center text-white font-bold text-lg shrink-0"
               style={{
                 width: 44,
                 height: 44,
@@ -83,7 +83,7 @@ export function VentaFormDialog({
           </div>
           <button
             onClick={() => onOpenChange(false)}
-            className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -224,7 +224,7 @@ export function VentaFormDialog({
                 type="button"
                 size="sm"
                 onClick={onAddProduct}
-                className="hover:opacity-90 rounded-lg font-bold text-xs h-7 px-3 border-0 flex items-center"
+                className="hover:opacity-90 rounded-lg font-bold text-xs h-7 px-3 border-0 flex items-center cursor-pointer"
                 style={{ backgroundColor: "#c47b96", color: "#ffffff" }}
               >
                 <Plus className="w-3.5 h-3.5 mr-1" /> Añadir
@@ -399,7 +399,7 @@ export function VentaFormDialog({
                           variant="ghost"
                           onClick={() => onRemoveProduct(index)}
                           style={{ height: "24px", width: "24px", padding: 0 }}
-                          className="bg-white border border-gray-200 rounded-full text-gray-400 hover:text-rose-500 hover:border-rose-200 transition-all shadow-sm"
+                          className="bg-white border border-gray-200 rounded-full text-gray-400 hover:text-rose-500 hover:border-rose-200 transition-all shadow-sm cursor-pointer"
                           title="Eliminar producto"
                         >
                           <Trash2 className="w-3 h-3" />
@@ -439,6 +439,7 @@ export function VentaFormDialog({
             <button
               onClick={() => onOpenChange(false)}
               disabled={isSaving}
+              className="cursor-pointer"
               style={{
                 padding: "10px 22px",
                 borderRadius: "10px",
@@ -464,6 +465,7 @@ export function VentaFormDialog({
             <button
               onClick={onSave}
               disabled={isSaving}
+              className="cursor-pointer"
               style={{
                 padding: "10px 28px",
                 borderRadius: "10px",

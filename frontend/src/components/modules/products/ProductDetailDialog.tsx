@@ -43,7 +43,7 @@ export function ProductDetailDialog({
         <div className="flex items-center justify-between px-4 md:px-6 pt-6 pb-5 border-b border-gray-100 bg-white">
           <div className="flex items-center gap-4">
             <div
-              className="flex items-center justify-center text-white font-bold text-xl flex-shrink-0 luxury-icon-gradient overflow-hidden"
+              className="flex items-center justify-center text-white font-bold text-xl shrink-0 luxury-icon-gradient overflow-hidden"
               style={{ width: 44, height: 44, borderRadius: 12 }}
             >
               {product.imagenUrl ? (
@@ -73,7 +73,7 @@ export function ProductDetailDialog({
           </div>
           <button
             onClick={() => onOpenChange(false)}
-            className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -226,7 +226,7 @@ export function ProductDetailDialog({
         <div className="px-4 md:px-6 pb-6 pt-4">
           <button
             onClick={() => onOpenChange(false)}
-            className="w-full h-11 rounded-xl text-white font-bold text-sm luxury-button-modal shadow-lg shadow-[#c47b96]/20 transition-all hover:scale-[1.01] active:scale-[0.99]"
+            className="w-full h-11 rounded-xl text-white font-bold text-sm luxury-button-modal shadow-lg shadow-[#c47b96]/20 transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
           >
             Cerrar Detalle
           </button>

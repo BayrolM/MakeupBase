@@ -69,7 +69,7 @@ export function PedidoFormDialog({
         <div className="flex items-center justify-between px-4 md:px-6 pt-6 pb-5 border-b border-gray-100 bg-white z-10">
           <div className="flex items-center gap-4">
             <div
-              className="flex items-center justify-center text-white font-bold text-lg flex-shrink-0 luxury-icon-gradient"
+              className="flex items-center justify-center text-white font-bold text-lg shrink-0 luxury-icon-gradient"
               style={{
                 width: 44,
                 height: 44,
@@ -89,7 +89,7 @@ export function PedidoFormDialog({
           </div>
           <button
             onClick={() => onOpenChange(false)}
-            className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>

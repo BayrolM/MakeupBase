@@ -72,6 +72,11 @@ export function PedidoStatusDialog({
     options.push({ value: "cancelado", label: "Cancelado" });
   }
 
+  const isPagoPendiente = !selectedPedido.pago_confirmado;
+  if (isPagoPendiente) {
+    options = options.filter(opt => opt.value === selectedPedido.estado || opt.value === "cancelado");
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-white border border-gray-100 max-w-md rounded-2xl shadow-2xl p-0 overflow-hidden">
@@ -79,7 +84,7 @@ export function PedidoStatusDialog({
         <div className="flex items-center justify-between px-4 md:px-6 pt-6 pb-5 border-b border-gray-100 bg-white">
           <div className="flex items-center gap-4">
             <div
-              className="flex items-center justify-center text-white font-bold text-lg flex-shrink-0 luxury-icon-gradient"
+              className="flex items-center justify-center text-white font-bold text-lg shrink-0 luxury-icon-gradient"
               style={{ width: 44, height: 44, borderRadius: 12 }}
             >
               <Activity className="w-5 h-5" />
@@ -95,7 +100,7 @@ export function PedidoStatusDialog({
           </div>
           <button
             onClick={() => onOpenChange(false)}
-            className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -114,6 +119,15 @@ export function PedidoStatusDialog({
               disabled={isSaving}
             />
           </div>
+
+          {isPagoPendiente && newStatus !== "cancelado" && (
+            <div className="bg-amber-50 rounded-xl p-3 flex gap-2 border border-amber-100">
+              <AlertCircle className="w-4 h-4 text-amber-500 shrink-0" />
+              <p className="text-xs text-amber-700 font-medium">
+                Debes <strong>Confirmar el Pago</strong> del pedido antes de poder avanzar su estado.
+              </p>
+            </div>
+          )}
 
           {newStatus === "cancelado" && (
             <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
@@ -168,7 +182,7 @@ export function PedidoStatusDialog({
           <Button
             onClick={onUpdateStatus}
             disabled={isSaving}
-            className="rounded-lg font-semibold h-10 text-sm shadow-lg transition-all text-white px-4"
+            className="rounded-lg font-semibold h-10 text-sm shadow-lg transition-all text-white px-4 cursor-pointer"
             style={{ 
               backgroundColor: newStatus === "cancelado" ? "#ef4444" : "#c47b96" 
             }}

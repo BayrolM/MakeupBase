@@ -686,6 +686,7 @@ export function DevolucionFormDialog({
             <button
               onClick={() => onOpenChange(false)}
               disabled={isSaving}
+              className="cursor-pointer"
               style={{
                 padding: "10px 22px",
                 borderRadius: "12px",
@@ -711,6 +712,7 @@ export function DevolucionFormDialog({
             <button
               onClick={onSave}
               disabled={isSaving || !ventaData || totalDevolucion === 0}
+              className="cursor-pointer"
               style={{
                 padding: "10px 32px",
                 borderRadius: "12px",

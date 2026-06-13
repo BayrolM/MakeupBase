@@ -32,7 +32,7 @@ export function CategoryDeleteDialog({
         <div className="flex items-center justify-between px-4 md:px-6 pt-6 pb-5 border-b border-gray-100">
           <div className="flex items-center gap-4">
             <div
-              className="flex items-center justify-center flex-shrink-0"
+              className="flex items-center justify-center shrink-0"
               style={{
                 width: 44,
                 height: 44,
@@ -54,7 +54,7 @@ export function CategoryDeleteDialog({
           </div>
           <button
             onClick={() => onOpenChange(false)}
-            className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -98,7 +98,7 @@ export function CategoryDeleteDialog({
           <Button
             onClick={onConfirm}
             disabled={isSaving}
-            className="rounded-lg text-white font-semibold px-4 h-9 text-sm"
+            className="rounded-lg text-white font-semibold px-4 h-9 text-sm cursor-pointer"
             style={{ background: "#ef4444" }}
           >
             {isSaving ? "Eliminando..." : "Eliminar Permanentemente"}

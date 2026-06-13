@@ -39,7 +39,7 @@ export function VentaDetailDialog({
         <div className="flex items-center justify-between px-4 md:px-6 pt-6 pb-5 border-b border-gray-100 bg-white">
           <div className="flex items-center gap-4">
             <div
-              className="flex items-center justify-center text-white font-bold text-xl flex-shrink-0 luxury-icon-gradient"
+              className="flex items-center justify-center text-white font-bold text-xl shrink-0 luxury-icon-gradient"
               style={{ width: 44, height: 44, borderRadius: 12 }}
             >
               <ShoppingBag className="w-5 h-5" />
@@ -69,7 +69,7 @@ export function VentaDetailDialog({
             </span>
             <button
               onClick={() => onOpenChange(false)}
-              className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+              className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -79,7 +79,7 @@ export function VentaDetailDialog({
         <div className="px-4 md:px-6 py-6 overflow-y-auto max-h-[70vh]">
           {selectedVenta.estado === "anulada" && (
             <div className="mb-6 bg-red-50 rounded-xl px-4 py-3 border border-red-200 flex items-center gap-3">
-              <AlertCircle className="w-4 h-4 text-rose-500 flex-shrink-0" />
+              <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
               <p className="text-sm text-red-700 font-medium">
                 Esta transacción ha sido anulada y no tiene validez contable.
               </p>
@@ -190,7 +190,7 @@ export function VentaDetailDialog({
                       className="grid grid-cols-12 gap-4 px-4 py-3.5 items-center hover:bg-gray-50/60 transition-colors"
                     >
                       <div className="col-span-6 flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                        <div className="w-9 h-9 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center shrink-0 overflow-hidden">
                           {producto?.imagenUrl ? (
                             <img
                               src={producto.imagenUrl}
@@ -231,7 +231,7 @@ export function VentaDetailDialog({
         <div className="px-4 md:px-6 pb-6 pt-4 border-t border-gray-100">
           <button
             onClick={() => onOpenChange(false)}
-            className="w-full h-11 rounded-xl text-white font-bold text-sm luxury-button-modal shadow-lg shadow-[#c47b96]/20"
+            className="w-full h-11 rounded-xl text-white font-bold text-sm luxury-button-modal shadow-lg shadow-[#c47b96]/20 cursor-pointer"
           >
             Cerrar Detalle
           </button>

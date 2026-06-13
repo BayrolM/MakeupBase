@@ -368,6 +368,10 @@ export const actualizarEstadoPedido = async (
     clienteEmail = pedido.cliente_email;
     clienteNombre = pedido.cliente_nombre?.trim();
 
+    if (!pedido.pago_confirmado && estado !== "cancelado" && estado !== pedido.estado) {
+      throw new Error("No se puede avanzar el estado de un pedido sin antes confirmar el pago.");
+    }
+
     // 2. Si es cancelación, DEVOLVEMOS el stock reservado
     if (estado === "cancelado") {
       const items =

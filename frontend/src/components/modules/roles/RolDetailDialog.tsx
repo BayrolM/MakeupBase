@@ -59,7 +59,7 @@ export function RolDetailDialog({
         <div className="px-4 md:px-6 pt-6 pb-4 border-b border-gray-100 bg-white">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-4">
-              <div className="flex items-center justify-center text-white font-bold text-xl flex-shrink-0 luxury-icon-gradient"
+              <div className="flex items-center justify-center text-white font-bold text-xl shrink-0 luxury-icon-gradient"
                 style={{ width: 48, height: 48, borderRadius: 14 }}>
                 <Shield className="w-6 h-6" />
               </div>
@@ -80,7 +80,7 @@ export function RolDetailDialog({
             </div>
             <button
               onClick={() => onOpenChange(false)}
-              className="p-2 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+              className="p-2 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -226,9 +226,9 @@ export function RolDetailDialog({
         <div className="px-4 md:px-6 py-4 border-t border-gray-100 bg-white">
           <button
             onClick={() => onOpenChange(false)}
-            className="w-full h-11 rounded-xl text-white font-bold text-sm luxury-button-modal shadow-lg shadow-[#c47b96]/20 active:scale-[0.98] transition-transform"
+            className="w-full h-11 rounded-xl text-white font-bold text-sm luxury-button-modal shadow-lg shadow-[#c47b96]/20 active:scale-[0.98] transition-transform cursor-pointer"
           >
-            Finalizar Consulta
+            Cerrar Detalle
           </button>
         </div>
       </DialogContent>

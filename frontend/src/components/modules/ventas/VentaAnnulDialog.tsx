@@ -36,7 +36,7 @@ export function VentaAnnulDialog({
         <div className="flex items-center justify-between px-4 md:px-6 pt-6 pb-5 border-b border-gray-100">
           <div className="flex items-center gap-4">
             <div
-              className="flex items-center justify-center flex-shrink-0"
+              className="flex items-center justify-center shrink-0"
               style={{
                 width: 44,
                 height: 44,
@@ -58,7 +58,7 @@ export function VentaAnnulDialog({
           </div>
           <button
             onClick={() => onOpenChange(false)}
-            className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -90,7 +90,7 @@ export function VentaAnnulDialog({
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
-            className="border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg px-4 h-10 text-sm"
+            className="border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg px-4 h-10 text-sm cursor-pointer"
             style={{ backgroundColor: "#ffffff" }}
             disabled={isSaving}
           >
@@ -99,7 +99,7 @@ export function VentaAnnulDialog({
           <Button
             onClick={onConfirm}
             disabled={isSaving}
-            className="rounded-lg text-white font-semibold px-4 h-10 text-sm"
+            className="rounded-lg text-white font-semibold px-4 h-10 text-sm cursor-pointer"
             style={{ background: "#ef4444" }}
           >
             {isSaving ? "Anulando..." : "Confirmar Anulación"}

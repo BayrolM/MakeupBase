@@ -59,7 +59,7 @@ export function PedidoEditDialog({
         {/* Header */}
         <div className="flex items-center justify-between px-4 md:px-6 pt-6 pb-5 border-b border-gray-100 sticky top-0 bg-white z-10">
           <div className="flex items-center gap-4">
-            <div className="flex items-center justify-center text-white font-bold text-lg flex-shrink-0 luxury-icon-gradient" style={{ width: 44, height: 44, borderRadius: 12 }}>
+            <div className="flex items-center justify-center text-white font-bold text-lg shrink-0 luxury-icon-gradient" style={{ width: 44, height: 44, borderRadius: 12 }}>
               <ClipboardList className="w-5 h-5" />
             </div>
             <div>
@@ -73,7 +73,7 @@ export function PedidoEditDialog({
           </div>
           <button
             onClick={() => onOpenChange(false)}
-            className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -228,7 +228,7 @@ export function PedidoEditDialog({
                     </div>
                     <div className="col-span-2">
                       <Label className="text-[10px] font-bold text-gray-400 uppercase mb-2 block tracking-widest text-[#c47b96]">Subtotal</Label>
-                      <div className="h-11 px-4 bg-[#fff0f5] border border-[#fad6e3] flex items-center text-sm font-black text-[#c47b96] rounded-xl">
+                      <div className="h-11 px-4 bg-[#fff0f5] border border-gray-200 flex items-center text-sm font-black text-[#c47b96] rounded-xl">
                         {formatCurrency(prod.cantidad * prod.precioUnitario)}
                       </div>
                     </div>

@@ -251,6 +251,7 @@ export function CompraFormDialog({
             <button
               onClick={() => onOpenChange(false)}
               disabled={isSaving}
+              className="cursor-pointer"
               style={{
                 padding: "10px 22px", borderRadius: "10px", fontSize: "13px", fontWeight: 700,
                 cursor: isSaving ? "not-allowed" : "pointer",
@@ -265,6 +266,7 @@ export function CompraFormDialog({
             <button
               onClick={onSave}
               disabled={isSaving || formData.detalles.length === 0}
+              className="cursor-pointer"
               style={{
                 padding: "10px 28px", borderRadius: "10px", fontSize: "13px", fontWeight: 700,
                 cursor: (isSaving || formData.detalles.length === 0) ? "not-allowed" : "pointer",

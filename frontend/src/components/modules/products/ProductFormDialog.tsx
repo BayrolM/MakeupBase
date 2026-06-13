@@ -599,6 +599,7 @@ export function ProductFormDialog({
           <button
             onClick={() => onOpenChange(false)}
             disabled={isSaving}
+            className="cursor-pointer"
             style={{
               padding: "10px 22px",
               borderRadius: "10px",
@@ -624,6 +625,7 @@ export function ProductFormDialog({
           <button
             onClick={handleSave}
             disabled={isSaving || isUploading}
+            className="cursor-pointer"
             style={{
               padding: "10px 28px",
               borderRadius: "10px",

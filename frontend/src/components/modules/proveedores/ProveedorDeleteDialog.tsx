@@ -97,7 +97,7 @@ export function ProveedorDeleteDialog({
           <Button
             onClick={onConfirm}
             disabled={isSaving}
-            className="rounded-lg text-white font-semibold px-4 h-9 text-sm"
+            className="rounded-lg text-white font-semibold px-4 h-9 text-sm cursor-pointer"
             style={{ background: "#ef4444" }}
           >
             {isSaving ? "Eliminando..." : "Eliminar Permanentemente"}

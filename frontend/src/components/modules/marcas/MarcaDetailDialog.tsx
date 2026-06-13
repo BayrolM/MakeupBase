@@ -21,7 +21,7 @@ export function MarcaDetailDialog({
         <div className="flex items-center justify-between px-4 md:px-6 pt-6 pb-5 border-b border-gray-100">
           <div className="flex items-center gap-4">
             <div
-              className="flex items-center justify-center text-white font-bold text-xl flex-shrink-0 luxury-icon-gradient"
+              className="flex items-center justify-center text-white font-bold text-xl shrink-0 luxury-icon-gradient"
               style={{ width: 44, height: 44, borderRadius: 12 }}
             >
               {marca.nombre.charAt(0).toUpperCase()}
@@ -37,7 +37,7 @@ export function MarcaDetailDialog({
           </div>
           <button
             onClick={() => onOpenChange(false)}
-            className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -84,7 +84,7 @@ export function MarcaDetailDialog({
         <div className="px-4 md:px-6 pb-6 pt-2">
           <button
             onClick={() => onOpenChange(false)}
-            className="w-full h-11 rounded-xl text-white font-bold text-sm luxury-button-modal"
+            className="w-full h-11 rounded-xl text-white font-bold text-sm luxury-button-modal cursor-pointer"
           >
             Cerrar
           </button>

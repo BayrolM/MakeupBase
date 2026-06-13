@@ -36,7 +36,7 @@ export function PedidoDetailDialog({
         <div className="flex items-center justify-between px-4 md:px-6 pt-6 pb-5 border-b border-gray-100 bg-white">
           <div className="flex items-center gap-4">
             <div
-              className="flex items-center justify-center text-white font-bold text-xl flex-shrink-0 luxury-icon-gradient"
+              className="flex items-center justify-center text-white font-bold text-xl shrink-0 luxury-icon-gradient"
               style={{ width: 44, height: 44, borderRadius: 12 }}
             >
               <ClipboardList className="w-5 h-5" />
@@ -74,7 +74,7 @@ export function PedidoDetailDialog({
             </span>
             <button
               onClick={() => onOpenChange(false)}
-              className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+              className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -197,7 +197,7 @@ export function PedidoDetailDialog({
                       className="grid grid-cols-12 gap-4 px-4 py-3.5 items-center hover:bg-gray-50/60 transition-colors"
                     >
                       <div className="col-span-6 flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                        <div className="w-9 h-9 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center shrink-0 overflow-hidden">
                           {producto?.imagenUrl ? (
                             <img
                               src={producto.imagenUrl}
@@ -238,7 +238,7 @@ export function PedidoDetailDialog({
         <div className="px-4 md:px-6 pb-6 pt-4 border-t border-gray-100">
           <button
             onClick={() => onOpenChange(false)}
-            className="w-full h-11 rounded-xl text-white font-bold text-sm luxury-button-modal shadow-lg shadow-[#c47b96]/20"
+            className="w-full h-11 rounded-xl text-white font-bold text-sm luxury-button-modal shadow-lg shadow-[#c47b96]/20 cursor-pointer"
           >
             Cerrar Detalle
           </button>
