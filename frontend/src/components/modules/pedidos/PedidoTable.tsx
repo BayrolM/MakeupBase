@@ -168,12 +168,12 @@ export function PedidoTable({
                   <TableCell className="py-2.5">
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => canEdit && onConfirmPayment(pedido)}
-                        disabled={!canEdit}
-                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase transition-all ${canEdit ? 'cursor-pointer' : 'cursor-not-allowed opacity-80'} ${
+                        onClick={() => canEdit && !pedido.pago_confirmado && onConfirmPayment(pedido)}
+                        disabled={!canEdit || pedido.pago_confirmado}
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase transition-all ${canEdit && !pedido.pago_confirmado ? 'cursor-pointer hover:bg-gray-200' : 'cursor-default'} ${
                           pedido.pago_confirmado 
-                            ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200" 
-                            : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                            ? "bg-emerald-100 text-emerald-700" 
+                            : "bg-gray-100 text-gray-500"
                         }`}
                       >
                         {pedido.pago_confirmado ? <CheckCircle2 className="w-3 h-3" /> : null}
