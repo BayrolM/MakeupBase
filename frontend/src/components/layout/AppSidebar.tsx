@@ -179,8 +179,8 @@ export function AppSidebar({
 
   const userInitial = currentUser?.nombres?.charAt(0) || "U";
   const userName = currentUser?.nombres || "Usuario";
-  const userRole =
-    userType === "admin" ? "Administrador" : currentUser?.rol || "Cliente";
+  const rawRole = currentUser?.rol || (userType === "admin" ? "admin" : "cliente");
+  const userRole = rawRole === "admin" ? "Administrador" : rawRole.charAt(0).toUpperCase() + rawRole.slice(1);
 
   return (
     <Sidebar
@@ -275,7 +275,7 @@ export function AppSidebar({
                     textTransform: "uppercase",
                   }}
                 >
-                  {userType === "admin" ? "Panel Admin" : "Cliente"}
+                  {userType === "admin" ? `Panel ${userRole}` : "Cliente"}
                 </span>
               </div>
             </div>
@@ -349,7 +349,7 @@ export function AppSidebar({
                 <div className="sidebar-profile-info">
                   <p className="sidebar-profile-name">{userName}</p>
                   <p className="sidebar-profile-role">
-                    {userRole === "admin" ? "Administrador" : userRole}
+                    {userRole}
                   </p>
                 </div>
 

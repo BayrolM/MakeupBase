@@ -6,6 +6,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "../ui/dialog";
 import { UserRole } from "../../lib/store";
 import {
   ChevronLeft,
@@ -100,12 +106,14 @@ export function RegisterPageColombia({
     direccion: "",
     password: "",
     confirmPassword: "",
+    acceptTerms: false,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [verificationCode, setVerificationCode] = useState("");
 
@@ -116,7 +124,7 @@ export function RegisterPageColombia({
       case 2:
         return ["email", "telefono", "departamento", "ciudad", "direccion"];
       case 3:
-        return ["password", "confirmPassword"];
+        return ["password", "confirmPassword", "acceptTerms"];
       default:
         return [];
     }
@@ -147,8 +155,17 @@ export function RegisterPageColombia({
     setCurrentStep((prev) => Math.max(1, prev - 1));
   };
 
-  const validateField = (name: string, value: string) => {
+  const validateField = (name: string, value: any) => {
+    if (name === "acceptTerms") {
+      if (!value) return "Debes aceptar los términos y condiciones";
+      return "";
+    }
     const fieldName = name === "password" ? "passwordHash" : name;
+    
+    if (["ciudad", "departamento", "direccion"].includes(name) && (!value || !value.trim())) {
+      return "";
+    }
+
     const error = validateUserField(fieldName, value);
     if (error) return error;
 
@@ -160,7 +177,7 @@ export function RegisterPageColombia({
     return "";
   };
 
-  const handleChange = (name: string, value: string) => {
+  const handleChange = (name: string, value: any) => {
     let finalValue = value;
     if (name === "numeroDocumento") {
       if (formData.tipoDocumento === "PAS") {
@@ -191,6 +208,12 @@ export function RegisterPageColombia({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (currentStep < 3) {
+      handleNextStep();
+      return;
+    }
+
     const fields = [
       "nombres",
       "apellidos",
@@ -199,6 +222,7 @@ export function RegisterPageColombia({
       "telefono",
       "password",
       "confirmPassword",
+      "acceptTerms",
       "direccion",
       "ciudad",
       "departamento",
@@ -1225,6 +1249,36 @@ export function RegisterPageColombia({
                           )}
                         </div>
                       </div>
+                      {/* T&C Checkbox */}
+                      <div style={{ marginTop: "16px", display: "flex", flexDirection: "column", gap: "6px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                          <input
+                            type="checkbox"
+                            id="acceptTerms"
+                            checked={formData.acceptTerms}
+                            onChange={(e) => handleChange("acceptTerms", e.target.checked)}
+                            style={{ width: "16px", height: "16px", accentColor: C.pink, cursor: "pointer" }}
+                          />
+                          <label htmlFor="acceptTerms" style={{ fontSize: "13px", color: C.textDark, cursor: "pointer", userSelect: "none" }}>
+                            He leído y acepto los{" "}
+                            <span
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setShowTermsModal(true);
+                              }}
+                              style={{ color: C.pink, fontWeight: 700, textDecoration: "underline" }}
+                            >
+                              términos y condiciones
+                            </span>
+                          </label>
+                        </div>
+                        {errors.acceptTerms && (
+                          <p style={{ color: C.danger, fontSize: "11px", fontWeight: 600, margin: 0 }}>
+                            {errors.acceptTerms}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </>
                 )}
@@ -1462,6 +1516,36 @@ export function RegisterPageColombia({
           </div>
         </div>
       </div>
+
+      <Dialog open={showTermsModal} onOpenChange={setShowTermsModal}>
+        <DialogContent className="sm:max-w-[500px] bg-white rounded-2xl p-6">
+          <DialogHeader>
+            <DialogTitle style={{ color: C.pink, fontSize: "20px", fontWeight: 700, fontFamily: "'Cormorant Garamond', serif" }}>Términos y Condiciones</DialogTitle>
+          </DialogHeader>
+          <div className="max-h-[60vh] overflow-y-auto pr-2 mt-4" style={{ fontSize: "14px", color: C.textDark, lineHeight: 1.6 }}>
+            <p className="mb-4">
+              <strong>1. Aceptación de los términos</strong><br/>
+              Al registrarse y crear una cuenta en Glamour ML, el usuario acepta de manera expresa, libre y voluntaria los siguientes términos y condiciones de uso y la política de tratamiento de datos personales.
+            </p>
+            <p className="mb-4">
+              <strong>2. Privacidad y Tratamiento de Datos</strong><br/>
+              De acuerdo con la Ley de Protección de Datos Personales, autorizo a Glamour ML para la recolección, almacenamiento y uso de mis datos personales con fines comerciales y de prestación de servicios. Glamour ML se compromete a no compartir, vender ni distribuir esta información con terceros no autorizados.
+            </p>
+            <p className="mb-4">
+              <strong>3. Uso de la Cuenta</strong><br/>
+              El usuario es responsable de mantener la confidencialidad de su contraseña y de todas las actividades que ocurran bajo su cuenta. La cuenta es personal e intransferible.
+            </p>
+            <p className="mb-4">
+              <strong>4. Políticas de Compra</strong><br/>
+              Todas las compras realizadas a través de la plataforma están sujetas a disponibilidad de inventario y confirmación de pago. Nos reservamos el derecho de cancelar cualquier pedido que presente irregularidades.
+            </p>
+            <p className="mb-4">
+              <strong>5. Modificaciones</strong><br/>
+              Glamour ML se reserva el derecho de modificar estos términos y condiciones en cualquier momento. Los cambios serán notificados y aplicarán para las actividades posteriores a su publicación.
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
