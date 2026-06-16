@@ -234,16 +234,7 @@ export function ProductCard({
         >
           {producto.nombre}
         </h4>
-        <div
-          style={{
-            color: "#f59e0b",
-            fontSize: "11px",
-            marginBottom: "12px",
-          }}
-        >
-          ★★★★★{" "}
-          <span style={{ color: C.textMuted, marginLeft: "4px" }}>4.8</span>
-        </div>
+
 
         <div
           style={{

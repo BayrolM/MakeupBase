@@ -1,4 +1,6 @@
-import { X, Search, Calendar, Package, Check, Info } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { X, Search, Calendar, Package, Check, Info, ChevronDown } from "lucide-react";
+import { useStore } from "../../../lib/store";
 import {
   Dialog,
   DialogContent,
@@ -69,9 +71,126 @@ export function DevolucionFormDialog({
     gap: 5,
   };
 
+  const { ventas, devoluciones } = useStore();
+  const ventasDisponibles = ventas.filter((v: any) => 
+    v.estado === "entregado" && 
+    !devoluciones.some(d => d.ventaId?.toString() === v.id?.toString())
+  );
+
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [inputValue, setInputValue] = useState("");
+  const [highlightedIndex, setHighlightedIndex] = useState(0);
+  const comboboxRef = useRef<HTMLDivElement>(null);
+
+  // Sync selection to input text
+  useEffect(() => {
+    if (ventaData) {
+      setInputValue(`Pedido #${ventaData.id} - ${ventaData.clienteNombre || ""}`);
+    } else if (formData.ventaId) {
+      const match = ventasDisponibles.find(v => v.id?.toString() === formData.ventaId?.toString()) as any;
+      if (match) {
+        setInputValue(`Pedido #${match.id} - ${match.clienteNombre || ""}`);
+      } else {
+        setInputValue(formData.ventaId.toString());
+      }
+    } else {
+      setInputValue("");
+    }
+  }, [ventaData, formData.ventaId, open]);
+
+  // Click outside to close dropdown and commit typed value if valid
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (comboboxRef.current && !comboboxRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+        if (inputValue.trim()) {
+          const currentRep = ventaData ? `Pedido #${ventaData.id} - ${ventaData.clienteNombre}` : "";
+          if (inputValue !== currentRep) {
+            // Check if input matches an option's representation or ID
+            const matchingOption = ventasDisponibles.find(
+              (v: any) => `Pedido #${v.id} - ${v.clienteNombre}`.toLowerCase() === inputValue.trim().toLowerCase() ||
+                          v.id?.toString() === inputValue.trim()
+            );
+            if (matchingOption) {
+              onVentaIdChange(matchingOption.id.toString());
+            } else {
+              onVentaIdChange(inputValue);
+            }
+          }
+        } else {
+          onVentaIdChange("");
+        }
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [inputValue, ventaData, ventasDisponibles, onVentaIdChange]);
+
+  const filteredOptions = ventasDisponibles.filter((v: any) => {
+    const searchLower = inputValue.toLowerCase();
+    const idStr = v.id?.toString() || "";
+    const clientStr = (v.clienteNombre || "").toLowerCase();
+    return idStr.includes(searchLower) || clientStr.includes(searchLower) ||
+           `pedido #${idStr}`.includes(searchLower) || `pedido #${idStr} - ${clientStr}`.includes(searchLower);
+  });
+
+  // Reset highlight index when filter changes
+  useEffect(() => {
+    setHighlightedIndex(0);
+  }, [inputValue]);
+
+  const handleInputChange = (val: string) => {
+    setInputValue(val);
+    setIsDropdownOpen(true);
+    
+    // Auto-select if there is an exact match for ID in available list
+    const exactMatch = ventasDisponibles.find(
+      v => v.id?.toString() === val.trim()
+    );
+    if (exactMatch) {
+      onVentaIdChange(exactMatch.id.toString());
+    } else if (val.trim() === "") {
+      onVentaIdChange("");
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!isDropdownOpen) {
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        setIsDropdownOpen(true);
+        e.preventDefault();
+      }
+      return;
+    }
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setHighlightedIndex(prev => 
+        prev < filteredOptions.length - 1 ? prev + 1 : prev
+      );
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setHighlightedIndex(prev => (prev > 0 ? prev - 1 : 0));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (filteredOptions[highlightedIndex]) {
+        const selected = filteredOptions[highlightedIndex];
+        onVentaIdChange(selected.id.toString());
+        setIsDropdownOpen(false);
+      } else {
+        onVentaIdChange(inputValue);
+        setIsDropdownOpen(false);
+      }
+    } else if (e.key === "Escape") {
+      setIsDropdownOpen(false);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-white border-0 !w-[95vw] !max-w-[900px] rounded-2xl shadow-2xl p-0 overflow-hidden" style={{ '--input-background': '#ffffff' } as React.CSSProperties}>
+      <DialogContent className="bg-white border-0 w-[95vw]! max-w-[900px]! rounded-2xl shadow-2xl p-0 overflow-hidden" style={{ '--input-background': '#ffffff' } as React.CSSProperties}>
         {/* Header */}
         <div
           style={{
@@ -117,7 +236,7 @@ export function DevolucionFormDialog({
           </div>
           <button
             onClick={() => onOpenChange(false)}
-            className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -174,24 +293,62 @@ export function DevolucionFormDialog({
                 <Search className="w-3.5 h-3.5" /> ID de Venta{" "}
                 <span style={{ color: "#f87171" }}>*</span>
               </p>
-              <div style={{ position: "relative" }}>
-                <Input
-                  value={formData.ventaId}
-                  onChange={(e) => {
-                    const cleanValue = e.target.value.replace(
-                      /[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s]/g,
-                      "",
-                    );
-                    onVentaIdChange(cleanValue);
-                  }}
-                  className={`h-10 rounded-xl pr-10 border-gray-200 focus:border-[#c47b96] focus:ring-[#c47b96]/10 text-sm ${fieldErrors?.ventaId ? "border-rose-400" : ""}`}
-                  placeholder="Ej: 6..."
-                  disabled={isSaving}
-                  style={{ fontSize: 13, color: "#374151", backgroundColor: '#ffffff' }}
-                />
-                <Search
-                  className={`w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none ${fieldErrors?.ventaId ? "text-rose-400" : "text-gray-400"}`}
-                />
+              <div ref={comboboxRef} className="relative w-full">
+                <div className="relative">
+                  <Input
+                    type="text"
+                    value={inputValue}
+                    onChange={(e) => handleInputChange(e.target.value)}
+                    onFocus={() => setIsDropdownOpen(true)}
+                    onKeyDown={handleKeyDown}
+                    disabled={isSaving}
+                    placeholder="Escribe el ID o nombre del cliente..."
+                    className={`h-10 pr-10 rounded-xl border-gray-200 focus:border-[#c47b96] focus:ring-[#c47b96]/10 text-sm w-full ${
+                      fieldErrors?.ventaId ? "border-rose-400" : ""
+                    }`}
+                    style={{ fontSize: 13, color: "#374151", backgroundColor: '#ffffff' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => !isSaving && setIsDropdownOpen(!isDropdownOpen)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors focus:outline-none"
+                    disabled={isSaving}
+                  >
+                    <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isDropdownOpen ? "rotate-180" : ""}`} />
+                  </button>
+                </div>
+
+                {isDropdownOpen && (
+                  <div className="absolute z-50 mt-1 w-full bg-white border border-gray-100 rounded-xl shadow-lg max-h-60 overflow-y-auto py-1 animate-in fade-in duration-100">
+                    {filteredOptions.length > 0 ? (
+                      filteredOptions.map((v: any, index: number) => {
+                        const isSelected = v.id?.toString() === formData.ventaId?.toString();
+                        const isHighlighted = index === highlightedIndex;
+                        return (
+                          <div
+                            key={v.id}
+                            onClick={() => {
+                              onVentaIdChange(v.id.toString());
+                              setIsDropdownOpen(false);
+                            }}
+                            className={`px-3 py-2 text-sm cursor-pointer flex justify-between items-center transition-colors ${
+                              isHighlighted ? "bg-[#c47b96]/5 text-[#c47b96]" : "text-gray-700 hover:bg-gray-50"
+                            }`}
+                          >
+                            <span className={isSelected ? "font-semibold" : ""}>
+                              Pedido #{v.id} - {v.clienteNombre}
+                            </span>
+                            {isSelected && <Check className="w-3.5 h-3.5 text-[#c47b96]" />}
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="p-3 text-sm text-gray-400 text-center">
+                        No se encontraron ventas
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
               {fieldErrors?.ventaId && (
                 <span className="micro-validation-error ml-1">

@@ -12,7 +12,8 @@ import {
 import { Slider } from "../ui/slider";
 import { Search, Filter, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { productService, type Product } from "../../services/productService";
+import { productService } from "../../services/productService";
+import { type Producto } from "../../lib/store";
 
 const V = (name: string) => `var(--luxury-${name})`;
 const C = {
@@ -51,7 +52,7 @@ export function CatalogoView({
   const [priceRange, setPriceRange] = useState([0, 150000]);
   const [showFilters, setShowFilters] = useState(true);
 
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<Producto[]>([]);
   const [totalProducts, setTotalProducts] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
@@ -78,7 +79,23 @@ export function CatalogoView({
       if (price[1] < 150000) filters.maxPrice = price[1];
 
       const res = await productService.getAll(filters);
-      setProducts(res.data || []);
+      const mappedProducts = (res.data || []).map((prod: any) => ({
+        id: prod.id_producto?.toString() || Math.random().toString(),
+        nombre: prod.nombre,
+        descripcion: prod.descripcion || "",
+        categoriaId: prod.id_categoria?.toString() || "",
+        marca: prod.nombre_marca || "Genérica",
+        precioCompra: Number(prod.costo_promedio) || 0,
+        precioVenta: Number(prod.precio_venta) || 0,
+        stock: prod.stock_actual || 0,
+        stockMinimo: prod.stock_min || 0,
+        stockMaximo: prod.stock_max || 100,
+        stockFisico: prod.stock_fisico || 0,
+        imagenUrl: prod.imagen_url || undefined,
+        estado: (prod.estado ? "activo" : "inactivo") as Producto["estado"],
+        fechaCreacion: new Date().toISOString(),
+      }));
+      setProducts(mappedProducts);
       setTotalProducts(res.total || 0);
     } catch {
       toast.error("Error al cargar productos");
@@ -410,9 +427,7 @@ export function CatalogoView({
                 marginBottom: "1.5rem",
               }}
             >
-              <p style={{ fontSize: "14px", color: C.textSecondary, fontWeight: 500 }}>
-                {totalProducts} {totalProducts === 1 ? "producto encontrado" : "productos encontrados"}
-              </p>
+              
               <button
                 onClick={() => setShowFilters(!showFilters)}
                 style={{

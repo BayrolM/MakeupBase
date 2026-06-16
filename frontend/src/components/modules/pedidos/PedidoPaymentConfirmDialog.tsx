@@ -89,12 +89,13 @@ export function PedidoPaymentConfirmDialog({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4 border-t border-gray-100">
+          <div className="flex gap-3 pt-4 border-t border-gray-100 w-full">
             <Button
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
-              className="w-full sm:w-1/2 justify-center h-11 text-gray-600 hover:bg-gray-50 border-gray-200 rounded-xl font-semibold shadow-sm transition-all"
+              className="flex-1 bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-black rounded-xl h-11 font-semibold shadow-sm transition-all cursor-pointer"
+              style={{ background: "#ffffff" }}
             >
               Cancelar
             </Button>
@@ -102,7 +103,7 @@ export function PedidoPaymentConfirmDialog({
               type="button"
               onClick={onConfirm}
               disabled={isSaving}
-              className="w-full sm:w-1/2 justify-center h-11 rounded-xl font-bold shadow-md transition-all text-white hover:-translate-y-0.5"
+              className="flex-1 justify-center h-11 rounded-xl font-bold shadow-md transition-all text-white hover:-translate-y-0.5 cursor-pointer"
               style={{
                 background: "linear-gradient(135deg, #10b981, #34d399)",
               }}

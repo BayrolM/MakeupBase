@@ -1,4 +1,5 @@
 import { ArrowLeft, Sparkles, Heart, Shield, Star } from "lucide-react";
+import { Footer } from "../layout/Footer";
 
 const V = (name: string) => `var(--luxury-${name})`;
 const C = {
@@ -24,13 +25,55 @@ export function NosotrosView({
         minHeight: "100vh",
         background: C.bgSoft,
         fontFamily: "'DM Sans', sans-serif",
+        position: "relative",
       }}
     >
+      {/* Back Button (Top Left Overlay) */}
+      {onNavigate && (
+        <button
+          onClick={() => onNavigate("inicio")}
+          style={{
+            position: "absolute",
+            top: "24px",
+            left: "24px",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            fontSize: "13px",
+            color: "rgba(255, 255, 255, 0.8)",
+            background: "rgba(0, 0, 0, 0.15)",
+            backdropFilter: "blur(8px)",
+            WebkitBackdropFilter: "blur(8px)",
+            padding: "8px 16px",
+            borderRadius: "30px",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
+            cursor: "pointer",
+            fontWeight: 600,
+            zIndex: 10,
+            transition: "all 0.3s ease",
+            letterSpacing: "0.5px",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = C.white;
+            e.currentTarget.style.background = "rgba(0,0,0,0.3)";
+            e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.3)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = "rgba(255, 255, 255, 0.8)";
+            e.currentTarget.style.background = "rgba(0,0,0,0.15)";
+            e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
+          }}
+        >
+          <ArrowLeft style={{ width: 16, height: 16 }} />
+          Volver al inicio
+        </button>
+      )}
+
       {/* ── HERO HEADER ── */}
       <div
         style={{
           background: `linear-gradient(135deg, ${C.textDark} 0%, ${C.accentDeep} 100%)`,
-          padding: "80px 0",
+          padding: "100px 0 80px",
           position: "relative",
           overflow: "hidden",
           marginBottom: "40px",
@@ -62,14 +105,13 @@ export function NosotrosView({
             style={{
               color: "rgba(255,255,255,0.8)",
               fontSize: "18px",
-              maxWidth: "600px",
+              maxWidth: "650px",
               margin: "0 auto",
               lineHeight: 1.6,
             }}
           >
-            En Glamour ML, creemos que el maquillaje no es solo un producto,
-            sino una herramienta para resaltar tu luz propia y empoderar tu día
-            a día.
+            En Glamour ML, concebimos el maquillaje no como un simple producto, 
+            sino como el arte de revelar tu esencia más pura y empoderar tu presencia con absoluta sofisticación.
           </p>
         </div>
 
@@ -110,28 +152,6 @@ export function NosotrosView({
           padding: "0 32px 80px 32px",
         }}
       >
-        {/* Back Button */}
-        {onNavigate && (
-          <button
-            onClick={() => onNavigate("inicio")}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              fontSize: "14px",
-              color: C.accentDeep,
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              fontWeight: 600,
-              marginBottom: "32px",
-            }}
-          >
-            <ArrowLeft style={{ width: 16, height: 16 }} />
-            Volver al inicio
-          </button>
-        )}
-
         {/* Misión y Visión */}
         <div
           style={{
@@ -180,10 +200,7 @@ export function NosotrosView({
             <p
               style={{ color: C.textMuted, fontSize: "15px", lineHeight: 1.7 }}
             >
-              Brindar acceso a productos de belleza de alta calidad que inspiren
-              confianza. Nos esforzamos por seleccionar cuidadosamente cada
-              artículo de nuestro catálogo, asegurando que cumpla con los
-              estándares más altos de excelencia y cuidado personal.
+              Ofrecer acceso exclusivo a alta cosmética internacional que inspire una profunda confianza y eleve el ritual diario de belleza. Curamos meticulosamente cada pieza de nuestra colección para garantizar fórmulas magistrales y estándares inquebrantables de excelencia.
             </p>
           </div>
 
@@ -224,10 +241,7 @@ export function NosotrosView({
             <p
               style={{ color: C.textMuted, fontSize: "15px", lineHeight: 1.7 }}
             >
-              Convertirnos en el referente líder en distribución de maquillaje a
-              nivel nacional, reconocidos por nuestro compromiso con la
-              innovación, la sostenibilidad y la satisfacción total de nuestra
-              exclusiva comunidad de clientes.
+              Consolidarnos como la boutique referente en el mercado del lujo y cuidado personal a nivel nacional, siendo reconocidos por una curaduría impecable, innovación constante y una devoción absoluta hacia nuestra selecta comunidad de clientes.
             </p>
           </div>
         </div>
@@ -244,7 +258,7 @@ export function NosotrosView({
               marginBottom: "8px",
             }}
           >
-            En qué creemos
+            Nuestros Pilares
           </p>
           <h2
             style={{
@@ -255,7 +269,7 @@ export function NosotrosView({
               marginBottom: "40px",
             }}
           >
-            Nuestros Valores
+            Valores de Marca
           </h2>
 
           <div
@@ -268,18 +282,18 @@ export function NosotrosView({
             {[
               {
                 icon: Heart,
-                title: "Pasión",
-                desc: "Amamos lo que hacemos y se refleja en cada entrega.",
+                title: "Excelencia",
+                desc: "Nuestra devoción por el detalle se refleja en cada experiencia y producto que entregamos.",
               },
               {
                 icon: Shield,
-                title: "Calidad",
-                desc: "Solo marcas 100% originales y garantizadas.",
+                title: "Autenticidad",
+                desc: "Garantizamos el origen, exclusividad y pureza de cada fórmula en nuestra boutique.",
               },
               {
                 icon: Sparkles,
-                title: "Innovación",
-                desc: "Siempre a la vanguardia de las últimas tendencias.",
+                title: "Vanguardia",
+                desc: "Anticipamos las tendencias globales de la alta cosmética para evolucionar tu rutina.",
               },
             ].map((valor, idx) => (
               <div
@@ -340,6 +354,9 @@ export function NosotrosView({
           </div>
         </div>
       </div>
+
+      {/* ── FOOTER ── */}
+      <Footer />
     </div>
   );
 }

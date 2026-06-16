@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ArrowLeft, Mail, Phone, MapPin, Send } from "lucide-react";
 import { toast } from "sonner";
+import { Footer } from "../layout/Footer";
 
 /* ── Luxury CSS variable helpers ── */
 const V = (name: string) => `var(--luxury-${name})`;
@@ -23,18 +24,105 @@ export function ContactoView({
 }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [fields, setFields] = useState({
+    nombre: "",
+    asunto: "",
+    mensaje: "",
+  });
+
+  const [errors, setErrors] = useState({
+    nombre: "",
+    asunto: "",
+    mensaje: "",
+  });
+
+  const [touched, setTouched] = useState({
+    nombre: false,
+    asunto: false,
+    mensaje: false,
+  });
+
+  const validateField = (name: string, value: string) => {
+    let error = "";
+    if (name === "nombre") {
+      if (!value.trim()) {
+        error = "El nombre completo es requerido.";
+      } else if (value.trim().length < 3) {
+        error = "El nombre debe tener al menos 3 caracteres.";
+      }
+    } else if (name === "asunto") {
+      if (!value.trim()) {
+        error = "El asunto es requerido.";
+      } else if (value.trim().length < 4) {
+        error = "El asunto debe tener al menos 4 caracteres.";
+      }
+    } else if (name === "mensaje") {
+      if (!value.trim()) {
+        error = "El mensaje es requerido.";
+      } else if (value.trim().length < 10) {
+        error = "El mensaje debe tener al menos 10 caracteres.";
+      }
+    }
+    return error;
+  };
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setFields((prev) => ({ ...prev, [name]: value }));
+
+    if (touched[name as keyof typeof touched]) {
+      const error = validateField(name, value);
+      setErrors((prev) => ({ ...prev, [name]: error }));
+    }
+  };
+
+  const handleBlur = (
+    e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setTouched((prev) => ({ ...prev, [name]: true }));
+    const error = validateField(name, value);
+    setErrors((prev) => ({ ...prev, [name]: error }));
+  };
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    const newTouched = { nombre: true, asunto: true, mensaje: true };
+    setTouched(newTouched);
+
+    const newErrors = {
+      nombre: validateField("nombre", fields.nombre),
+      asunto: validateField("asunto", fields.asunto),
+      mensaje: validateField("mensaje", fields.mensaje),
+    };
+    setErrors(newErrors);
+
+    const hasErrors = Object.values(newErrors).some((err) => err !== "");
+    if (hasErrors) {
+      toast.error("Por favor, corrige los errores en el formulario.");
+      return;
+    }
+
     setIsSubmitting(true);
 
-    // Simulate API call
+    const text = `Hola Glamour ML, me contacto desde la web.\n\n*Nombre:* ${fields.nombre}\n*Asunto:* ${fields.asunto}\n\n*Mensaje:*\n${fields.mensaje}`;
+    const phoneNumber = "573215257246";
+    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(text)}`;
+
     setTimeout(() => {
-      toast.success("¡Mensaje enviado!", {
-        description: "Nos pondremos en contacto contigo lo más pronto posible.",
+      window.open(whatsappUrl, "_blank");
+      toast.success("¡Redirigiendo a WhatsApp!", {
+        description: "Se abrirá el chat para enviar tu mensaje.",
       });
       setIsSubmitting(false);
-      (e.target as HTMLFormElement).reset();
-    }, 1500);
+      
+      setFields({ nombre: "", asunto: "", mensaje: "" });
+      setErrors({ nombre: "", asunto: "", mensaje: "" });
+      setTouched({ nombre: false, asunto: false, mensaje: false });
+    }, 800);
   };
 
   return (
@@ -43,8 +131,49 @@ export function ContactoView({
         minHeight: "100vh",
         background: C.bgSoft,
         fontFamily: "'DM Sans', sans-serif",
+        position: "relative",
       }}
     >
+      {/* Back Button (Top Left Overlay) */}
+      {onNavigate && (
+        <button
+          onClick={() => onNavigate("inicio")}
+          style={{
+            position: "absolute",
+            top: "24px",
+            left: "24px",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            fontSize: "13px",
+            color: "rgba(255, 255, 255, 0.8)",
+            background: "rgba(0, 0, 0, 0.15)",
+            backdropFilter: "blur(8px)",
+            WebkitBackdropFilter: "blur(8px)",
+            padding: "8px 16px",
+            borderRadius: "30px",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
+            cursor: "pointer",
+            fontWeight: 600,
+            zIndex: 10,
+            transition: "all 0.3s ease",
+            letterSpacing: "0.5px",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = C.white;
+            e.currentTarget.style.background = "rgba(0,0,0,0.3)";
+            e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.3)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = "rgba(255, 255, 255, 0.8)";
+            e.currentTarget.style.background = "rgba(0,0,0,0.15)";
+            e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
+          }}
+        >
+          <ArrowLeft style={{ width: 16, height: 16 }} />
+          Volver al inicio
+        </button>
+      )}
       {/* ── HERO HEADER ── */}
       <div
         style={{
@@ -75,7 +204,7 @@ export function ContactoView({
               lineHeight: 1.1,
             }}
           >
-            Ponte en Contacto
+            Atención Exclusiva
           </h1>
           <p
             style={{
@@ -86,8 +215,7 @@ export function ContactoView({
               lineHeight: 1.6,
             }}
           >
-            ¿Tienes alguna duda, sugerencia o quieres asesoría personalizada?
-            Escríbenos y con gusto te atenderemos.
+            Brindamos una experiencia de asesoría personalizada a la altura de tus expectativas. Nuestro equipo de expertos está a tu entera disposición.
           </p>
         </div>
       </div>
@@ -100,28 +228,6 @@ export function ContactoView({
           padding: "0 32px 80px 32px",
         }}
       >
-        {/* Back Button */}
-        {onNavigate && (
-          <button
-            onClick={() => onNavigate("inicio")}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              fontSize: "14px",
-              color: C.accentDeep,
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              fontWeight: 600,
-              marginBottom: "32px",
-            }}
-          >
-            <ArrowLeft style={{ width: 16, height: 16 }} />
-            Volver al inicio
-          </button>
-        )}
-
         <div
           style={{ display: "grid", gridTemplateColumns: "1fr", gap: "40px" }}
           className="md:grid-cols-2"
@@ -149,6 +255,7 @@ export function ContactoView({
             </h3>
             <form
               onSubmit={handleSubmit}
+              noValidate
               style={{ display: "flex", flexDirection: "column", gap: "20px" }}
             >
               <div>
@@ -164,48 +271,29 @@ export function ContactoView({
                   Nombre completo
                 </label>
                 <input
-                  required
                   type="text"
+                  name="nombre"
+                  value={fields.nombre}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
                   placeholder="Ej. María Pérez"
                   style={{
                     width: "100%",
                     height: "44px",
                     borderRadius: "12px",
-                    border: `1px solid ${C.accentDark}`,
+                    border: `1px solid ${touched.nombre && errors.nombre ? "#f43f5e" : C.accentDark}`,
                     padding: "0 16px",
                     outline: "none",
                     fontSize: "14px",
                     boxSizing: "border-box",
+                    transition: "border-color 0.2s ease",
                   }}
                 />
-              </div>
-              <div>
-                <label
-                  style={{
-                    display: "block",
-                    fontSize: "13px",
-                    fontWeight: 600,
-                    color: C.textMuted,
-                    marginBottom: "8px",
-                  }}
-                >
-                  Correo electrónico
-                </label>
-                <input
-                  required
-                  type="email"
-                  placeholder="maria@ejemplo.com"
-                  style={{
-                    width: "100%",
-                    height: "44px",
-                    borderRadius: "12px",
-                    border: `1px solid ${C.accentDark}`,
-                    padding: "0 16px",
-                    outline: "none",
-                    fontSize: "14px",
-                    boxSizing: "border-box",
-                  }}
-                />
+                {touched.nombre && errors.nombre && (
+                  <span style={{ color: "#f43f5e", fontSize: "12px", marginTop: "4px", display: "block" }}>
+                    {errors.nombre}
+                  </span>
+                )}
               </div>
               <div>
                 <label
@@ -220,20 +308,29 @@ export function ContactoView({
                   Asunto
                 </label>
                 <input
-                  required
                   type="text"
+                  name="asunto"
+                  value={fields.asunto}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
                   placeholder="¿En qué te podemos ayudar?"
                   style={{
                     width: "100%",
                     height: "44px",
                     borderRadius: "12px",
-                    border: `1px solid ${C.accentDark}`,
+                    border: `1px solid ${touched.asunto && errors.asunto ? "#f43f5e" : C.accentDark}`,
                     padding: "0 16px",
                     outline: "none",
                     fontSize: "14px",
                     boxSizing: "border-box",
+                    transition: "border-color 0.2s ease",
                   }}
                 />
+                {touched.asunto && errors.asunto && (
+                  <span style={{ color: "#f43f5e", fontSize: "12px", marginTop: "4px", display: "block" }}>
+                    {errors.asunto}
+                  </span>
+                )}
               </div>
               <div>
                 <label
@@ -248,20 +345,29 @@ export function ContactoView({
                   Mensaje
                 </label>
                 <textarea
-                  required
+                  name="mensaje"
+                  value={fields.mensaje}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
                   placeholder="Escribe tu mensaje aquí..."
                   style={{
                     width: "100%",
                     minHeight: "120px",
                     borderRadius: "12px",
-                    border: `1px solid ${C.accentDark}`,
+                    border: `1px solid ${touched.mensaje && errors.mensaje ? "#f43f5e" : C.accentDark}`,
                     padding: "16px",
                     outline: "none",
                     fontSize: "14px",
                     boxSizing: "border-box",
                     resize: "vertical",
+                    transition: "border-color 0.2s ease",
                   }}
                 />
+                {touched.mensaje && errors.mensaje && (
+                  <span style={{ color: "#f43f5e", fontSize: "12px", marginTop: "4px", display: "block" }}>
+                    {errors.mensaje}
+                  </span>
+                )}
               </div>
               <button
                 type="submit"
@@ -364,9 +470,9 @@ export function ContactoView({
                         lineHeight: 1.5,
                       }}
                     >
-                      Centro Comercial La Estación
+                      Calle 31C #89-35
                       <br />
-                      Local 104, Medellín, Colombia
+                      Medellín, Colombia
                     </p>
                   </div>
                 </div>
@@ -400,7 +506,7 @@ export function ContactoView({
                       Teléfono / WhatsApp
                     </h4>
                     <p style={{ fontSize: "14px", color: C.textMuted }}>
-                      +57 300 123 4567
+                      +57 321 525 7246
                     </p>
                   </div>
                 </div>
@@ -459,9 +565,15 @@ export function ContactoView({
                   Síguenos en redes sociales
                 </p>
                 <div style={{ display: "flex", gap: "12px" }}>
-                  {["Instagram", "Facebook", "TikTok"].map((social) => (
-                    <div
-                      key={social}
+                  {[
+                    { name: "Instagram", url: "https://www.instagram.com/glamourml_/" },
+                    { name: "TikTok", url: "https://www.tiktok.com/@glamourml_" }
+                  ].map((social) => (
+                    <a
+                      key={social.name}
+                      href={social.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       style={{
                         padding: "8px 16px",
                         borderRadius: "20px",
@@ -469,6 +581,8 @@ export function ContactoView({
                         fontSize: "13px",
                         color: C.textMuted,
                         cursor: "pointer",
+                        textDecoration: "none",
+                        transition: "all 0.2s ease",
                       }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.borderColor = C.accentDeep;
@@ -479,8 +593,8 @@ export function ContactoView({
                         e.currentTarget.style.color = C.textMuted;
                       }}
                     >
-                      {social}
-                    </div>
+                      {social.name}
+                    </a>
                   ))}
                 </div>
               </div>
@@ -488,6 +602,9 @@ export function ContactoView({
           </div>
         </div>
       </div>
+      
+      {/* ── FOOTER ── */}
+      <Footer />
     </div>
   );
 }

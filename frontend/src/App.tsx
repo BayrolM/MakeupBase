@@ -1,116 +1,47 @@
-import { StoreProvider, useStore, UserRole, Cliente } from "./lib/store";
-import { ThemeProvider } from "./lib/theme-context";
-import { AppSidebar } from "./components/layout/AppSidebar";
-import { Dashboard } from "./components/Dashboard/DashboardMain";
-import { SidebarProvider, SidebarTrigger } from "./components/ui/sidebar";
 import { useState, useEffect, useRef } from "react";
-import { UsuariosModule } from "./components/modules/UsuariosModule";
-import { ClientesViewModule } from "./components/modules/ClientesViewModule";
-import { ProductsModule } from "./components/modules/ProductsModule";
-import { CategoriasModule } from "./components/modules/CategoriasModule";
+import { StoreProvider, useStore } from "./lib/store";
+import { ThemeProvider } from "./lib/theme-context";
+import { Toaster } from "sonner";
 
-import { ProveedoresModule } from "./components/modules/ProveedoresModule";
-import { VentasModule } from "./components/modules/VentasModule";
-import { ComprasModule } from "./components/modules/ComprasModule";
-import { PedidosModule } from "./components/modules/PedidosModule";
-import { DevolucionesModule } from "./components/modules/DevolucionesModule";
-import { MarcasModule } from "./components/modules/MarcasModule";
-import { RolesPermisosModule } from "./components/modules/RolesPermisosModule";
-import { PerfilUsuarioModule } from "./components/modules/PerfilUsuarioModule";
-import { LoginPage } from "./components/auth/LoginPage";
-import { RegisterPageColombia } from "./components/auth/RegisterPageColombia";
-import { RecoverPage } from "./components/auth/RecoverPage";
-import { InicioView } from "./components/client/InicioView";
-import { CatalogoView } from "./components/client/CatalogoView";
-import { FavoritosView } from "./components/client/FavoritosView";
-import { MisPedidosView } from "./components/client/MisPedidosView";
-import { NosotrosView } from "./components/client/NosotrosView";
-import { ContactoView } from "./components/client/ContactoView";
-import { ProductDetailScreen } from "./components/client/ProductDetailScreen";
+// Hooks
+import { useAuthLogic } from "./hooks/useAuthLogic";
 
-import { PerfilView } from "./components/client/PerfilView";
-import { CheckoutView } from "./components/client/CheckoutView";
-import { NotificationBell } from "./components/layout/NotificationBell";
-
-import { ClientNavbar } from "./components/client/ClientNavbar";
-import { Toaster, toast } from "sonner";
-import { uploadToSupabase } from "./lib/supabaseUpload";
-import { orderService } from "./services/orderService";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogDescription,
-} from "./components/ui/dialog";
-import { Lock, X } from "lucide-react";
-import { authService } from "./services/authService";
-import { productService } from "./services/productService";
-import { categoryService } from "./services/categoryService";
-import { providerService } from "./services/providerService";
-import { purchaseService } from "./services/purchaseService";
-import { userService } from "./services/userService";
-import { marcaService } from "./services/marcaService";
-
-type Route =
-  | "dashboard"
-  | "usuarios"
-  | "clientes-view"
-  | "productos"
-  | "categorias"
-  | "marcas"
-  | "ventas"
-  | "pedidos"
-  | "devoluciones"
-  | "clientes"
-  | "proveedores"
-  | "compras"
-  | "configuracion"
-  | "roles"
-  | "inicio"
-  | "catalogo"
-  | "favoritos"
-  | "mis-pedidos"
-  | "perfil"
-  | "checkout"
-  | "producto-detalle"
-  | "nosotros"
-  | "contacto";
-
-type AuthPage = "login" | "register" | "recover";
+// Components
+import { GlobalLoader } from "./components/layout/GlobalLoader";
+import { AuthOverlay, AuthPageType } from "./components/auth/AuthOverlay";
+import { AppRouter, Route } from "./components/layout/AppRouter";
+import { ClientLayout } from "./components/layout/ClientLayout";
+import { AdminLayout } from "./components/layout/AdminLayout";
 
 function AppContent() {
-  const {
-    userType,
-    currentUser,
-    setCurrentUser,
-    setProductos,
-    setCategorias,
-    setMarcas,
-    setProveedores,
-    setCompras,
-    setClientes,
-    setPedidos,
-    clearCarrito,
-  } = useStore();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [showInactiveModal, setShowInactiveModal] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAuthTransitioning, setIsAuthTransitioning] = useState(false);
-  const [authTransitionMessage, setAuthTransitionMessage] = useState("");
-  const [showAuthPage, setShowAuthPage] = useState(false);
-  const [authPage, setAuthPage] = useState<AuthPage>("login");
-  const [recoverToken, setRecoverToken] = useState<string | undefined>(
-    undefined,
-  );
+  const { userType, currentUser } = useStore();
   const [currentRoute, setCurrentRoute] = useState<Route>(
-    userType === "admin" ? "dashboard" : "inicio",
+    userType === "admin" ? "dashboard" : "inicio"
   );
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [productDetailId, setProductDetailId] = useState<string | null>(null);
   const [productDetailOrigin, setProductDetailOrigin] = useState<Route>(
-    userType === "admin" ? "dashboard" : "inicio",
+    userType === "admin" ? "dashboard" : "inicio"
   );
+  
+  const [showAuthPage, setShowAuthPage] = useState(false);
+  const [authPage, setAuthPage] = useState<AuthPageType>("login");
+
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const {
+    isAuthenticated,
+    isLoading,
+    isAuthTransitioning,
+    authTransitionMessage,
+    showInactiveModal,
+    setShowInactiveModal,
+    checkAuth,
+    handleLogin,
+    handleRegister,
+    handleVerifyEmail,
+    handleLogout,
+  } = useAuthLogic();
 
   // Solucionar el bug de scroll al cambiar de página
   useEffect(() => {
@@ -120,1018 +51,91 @@ function AppContent() {
     }
   }, [currentRoute]);
 
-  const loadPublicData = async () => {
-    try {
-      const categoriesData = await categoryService.getAll({ limit: 100 });
-      const mappedCategories = categoriesData.data.map((cat: any) => ({
-        id: cat.id_categoria.toString(),
-        nombre: cat.nombre,
-        descripcion: cat.descripcion || "",
-        estado: cat.estado ? ("activo" as const) : ("inactivo" as const),
-      }));
-      setCategorias(mappedCategories);
-
-      const brandsData = await marcaService.getAll();
-      const mappedBrands = brandsData.data.map((brand: any) => ({
-        id: brand.id_marca.toString(),
-        nombre: brand.nombre,
-        descripcion: brand.descripcion || "",
-        estado: brand.estado ? ("activo" as const) : ("inactivo" as const),
-      }));
-      setMarcas(mappedBrands);
-
-      const productsResponse = await productService.getAll({ limit: 100 });
-      const mappedProducts = productsResponse.data.map((prod) => ({
-        id: prod.id_producto.toString(),
-        nombre: prod.nombre,
-        descripcion: prod.descripcion || "",
-        categoriaId: prod.id_categoria.toString(),
-        marca: (prod as any).nombre_marca || "Genérica",
-        precioCompra: Number(prod.costo_promedio) || 0,
-        precioVenta: Number(prod.precio_venta) || 0,
-        stock: prod.stock_actual || 0,
-        stockMinimo: prod.stock_min || 0,
-        stockMaximo: prod.stock_max || 100,
-        stockFisico: prod.stock_fisico || 0,
-        imagenUrl: prod.imagen_url || undefined,
-        estado: prod.estado ? ("activo" as const) : ("inactivo" as const),
-        fechaCreacion: new Date().toISOString(),
-      }));
-      setProductos(mappedProducts);
-    } catch (error) {
-      console.error("Error cargando datos públicos:", error);
-    }
-  };
-
-  const loadPrivateData = async (userRol?: string | number) => {
-    // If no role provided, use current or default to cliente
-    const role = userRol || currentUser?.rol || userType;
-    const isAdmin = role === "admin" || role === 1;
-
-    try {
-      if (isAdmin) {
-        const providersData = await providerService.getAll();
-        const mappedProviders = providersData.map((prov) => ({
-          id: prov.id_proveedor.toString(),
-          tipo_proveedor: prov.tipo_proveedor || "Persona Natural",
-          nombre: prov.nombre,
-          email: prov.email || "",
-          telefono: prov.telefono || "",
-          nit: prov.documento_nit || "",
-          direccion: prov.direccion || "",
-          estado: prov.estado ? ("activo" as const) : ("inactivo" as const),
-          fechaRegistro: prov.fecha_registro || new Date().toISOString(),
-        }));
-        setProveedores(mappedProviders);
-
-        const purchasesData = await purchaseService.getAll();
-        const purchasesArray = Array.isArray(purchasesData)
-          ? purchasesData
-          : (purchasesData as any).data || [];
-        const mappedPurchases = purchasesArray.map((purch: any) => ({
-          id: purch.id_compra.toString(),
-          proveedorId: purch.id_proveedor.toString(),
-          fecha: purch.fecha_compra,
-          total: Number(purch.total) || 0,
-          estado:
-            purch.estado === true || purch.estado === 1
-              ? ("confirmada" as const)
-              : ("anulada" as const),
-          confirmada: !!purch.estado,
-          observaciones: purch.observaciones || "",
-          productos: (purch.productos || []).map((p: any) => ({
-            productoId: p.id_producto.toString(),
-            cantidad: Number(p.cantidad),
-            precioUnitario: Number(p.precio_unitario),
-          })),
-        }));
-        setCompras(mappedPurchases);
-
-        // Cargar clientes REALES de la base de datos
-        const clientsData = await userService.getAll({ id_rol: 2 });
-        const mappedClients: Cliente[] = clientsData.data.map((c: any) => {
-          const nombres = c.nombres || c.nombre || "";
-          const apellidos = c.apellidos || c.apellido || "";
-          return {
-            id: c.id_usuario.toString(),
-            nombre: `${nombres} ${apellidos}`.trim() || "Sin Nombre",
-            nombres: nombres,
-            apellidos: apellidos,
-            email: c.email,
-            telefono: c.telefono || "",
-            documento: c.documento || "",
-            numeroDocumento: c.documento || "",
-            estado: c.estado ? ("activo" as const) : ("inactivo" as const),
-            totalCompras: Number(c.total_ventas) || 0,
-            foto_perfil: c.foto_perfil,
-            fechaRegistro:
-              c.get_fecha_creacion ||
-              c.fecha_creacion ||
-              new Date().toISOString(),
-          };
-        });
-        setClientes(mappedClients);
-      }
-
-      // Cargar Pedidos REALES
-      const ordersData = await orderService.getAll({ limit: 100 });
-      const mappedOrders = ordersData.data.map((o: any) => ({
-        id: o.id_pedido?.toString() || "0",
-        clienteId: (o.id_usuario_cliente || o.id_usuario)?.toString() || "0",
-        fecha: o.fecha_pedido,
-        total: Number(o.total) || 0,
-        subtotal: (Number(o.total) || 0) / 1.19,
-        iva: (Number(o.total) || 0) - (Number(o.total) || 0) / 1.19,
-        costoEnvio: 0,
-        estado: o.estado as any,
-        direccionEnvio: o.direccion || "",
-        pago_confirmado: !!o.pago_confirmado,
-        comprobante_url: o.comprobante_url || "",
-        fechaVenta: o.fecha_venta || null,
-        productos: (o.items || []).map((i: any) => ({
-          productoId: (i.id_producto || i.id_detalle_pedido)?.toString() || "0",
-          cantidad: i.cantidad || 0,
-          precioUnitario: Number(i.precio_unitario) || 0,
-        })),
-      }));
-      setPedidos(mappedOrders);
-    } catch (error) {
-      console.error("Error cargando datos privados:", error);
-    }
-  };
-
   // Verificar si hay sesión activa al cargar
-  const checkAuth = async () => {
-    if (authService.isAuthenticated()) {
-      try {
-        const profile = await authService.getProfile();
-        const user = {
-          id: profile.id_usuario.toString(),
-          nombres: profile.nombres,
-          apellidos: profile.apellidos,
-          email: profile.email,
-          telefono: profile.telefono,
-          direccion: profile.direccion || "",
-          ciudad: profile.ciudad || "",
-          departamento: profile.departamento || "",
-          id_rol: Number(profile.id_rol),
-          foto_perfil: profile.foto_perfil,
-          rol:
-            Number(profile.id_rol) === 1
-              ? ("admin" as const)
-              : Number(profile.id_rol) === 2
-              ? ("cliente" as const)
-              : ("vendedor" as const),
-          permisos: profile.permisos || [],
-          estado: "activo" as const,
-          tipoDocumento: "CC" as const,
-          numeroDocumento: "",
-          passwordHash: "",
-          fechaCreacion: new Date().toISOString(),
-        };
-
-        setCurrentUser(user);
-        setIsAuthenticated(true);
-        await loadPublicData();
-        await loadPrivateData(user.rol);
-      } catch (error) {
-        console.error("Error al verificar autenticación:", error);
-        authService.logout();
-        await loadPublicData(); // Load public even if private fails
-      }
-    } else {
-      await loadPublicData();
-    }
-    setIsLoading(false);
-  };
-
   useEffect(() => {
     checkAuth();
-
-    // Verificar si hay un token de recuperación en la URL
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get("token");
-    if (token) {
-      setRecoverToken(token);
-      setAuthPage("recover");
-      setShowAuthPage(true);
-      // Limpiar la URL sin recargar la página
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Only run once on mount
-
-  // Sincronizar comprobantes pendientes de upload
-  useEffect(() => {
-    const syncPendingComprobantes = async () => {
-      const keys = Object.keys(localStorage).filter((k) => k.startsWith("gml_pending_comprobante_"));
-      for (const key of keys) {
-        try {
-          const pending = JSON.parse(localStorage.getItem(key) || "{}");
-          if (!pending.orderId || !pending.data) continue;
-
-          // Convertir base64 a File
-          const res = await fetch(pending.data);
-          const blob = await res.blob();
-          const file = new File([blob], pending.fileName || "comprobante.jpg", { type: pending.fileType || "image/jpeg" });
-
-          const uploadResult = await uploadToSupabase(file, "comprobantes");
-          await orderService.updateComprobanteUrl(pending.orderId, uploadResult.secure_url);
-          localStorage.removeItem(key);
-        } catch {
-          // Seguirá pendiente para el próximo intento
-        }
-      }
-    };
-
-    // Ejecutar al montar y cuando vuelva la conexión
-    syncPendingComprobantes();
-    const handleOnline = () => syncPendingComprobantes();
-    window.addEventListener("online", handleOnline);
-    return () => window.removeEventListener("online", handleOnline);
   }, []);
 
-  // Update route when userType changes
+  // Sincronizar ruta cuando cambia el rol o autenticación
   useEffect(() => {
     if (isAuthenticated) {
       setCurrentRoute(userType === "admin" ? "dashboard" : "inicio");
     }
   }, [userType, isAuthenticated]);
 
-  const handleLogin = async (email: string, password: string) => {
-    try {
-      // 1. Llamar al backend primero para verificar las credenciales
-      await authService.login({ email, password });
-
-      // 2. Si las credenciales son correctas, activar el cargador premium
-      setAuthTransitionMessage("Iniciando sesión...");
-      setIsAuthTransitioning(true);
-
-      // Obtener perfil del usuario
-      const profile = await authService.getProfile();
-
-      await new Promise((resolve) => setTimeout(resolve, 800));
-
-      // Transformar al formato del frontend
-      const user = {
-        id: profile.id_usuario.toString(),
-        nombres: profile.nombres,
-        apellidos: profile.apellidos,
-        email: profile.email,
-        telefono: profile.telefono,
-        direccion: profile.direccion || "",
-        ciudad: profile.ciudad || "",
-        departamento: profile.departamento || "",
-        id_rol: Number(profile.id_rol),
-        foto_perfil: profile.foto_perfil,
-        rol:
-          Number(profile.id_rol) === 1
-            ? ("admin" as const)
-            : Number(profile.id_rol) === 2
-            ? ("cliente" as const)
-            : ("vendedor" as const),
-        permisos: profile.permisos || [],
-        estado: "activo" as const,
-        tipoDocumento: "CC" as const,
-        numeroDocumento: "",
-        passwordHash: "",
-        fechaCreacion: new Date().toISOString(),
-      };
-
-      setCurrentUser(user);
-      setIsAuthenticated(true);
-
-      // Load public and private data
-      await loadPublicData();
-      await loadPrivateData(user.rol);
-
-      // Establecer ruta inicial según rol
-      if (user.rol === "cliente") {
-        setCurrentRoute("inicio");
-      } else {
-        setCurrentRoute("dashboard");
-      }
-
-      setIsAuthTransitioning(false);
-      toast.success("¡Bienvenido!", {
-        description: `Has iniciado sesión como ${user.nombres}`,
-      });
-
-      return true;
-    } catch (error: any) {
-      setIsAuthTransitioning(false);
-      // Cuenta inactiva — mostrar modal específico
-      if (
-        error.response?.status === 403 &&
-        error.response?.data?.code === "USER_INACTIVE"
-      ) {
-        setShowInactiveModal(true);
-        return false;
-      }
-      toast.error("Error al iniciar sesión", {
-        description: error.response?.data?.message || "Credenciales incorrectas",
-      });
-      return false;
-    }
+  const handleAuthSuccess = (role: string) => {
+    setShowAuthPage(false);
+    setCurrentRoute(role === "cliente" ? "inicio" : "dashboard");
   };
 
-
-  const handleRegister = async (data: {
-    nombre: string;
-    apellido: string;
-    email: string;
-    telefono: string;
-    password: string;
-    rol: UserRole;
-    tipoDocumento: string;
-    documento: string;
-    direccion: string;
-    ciudad: string;
-    departamento: string;
-  }) => {
-    try {
-      await authService.register({
-        nombres: data.nombre,
-        apellidos: data.apellido,
-        email: data.email,
-        telefono: data.telefono,
-        password: data.password,
-        id_rol: data.rol === "admin" ? 1 : 2,
-        tipo_documento: data.tipoDocumento,
-        documento: data.documento,
-        direccion: data.direccion,
-        ciudad: data.ciudad,
-        departamento: data.departamento,
-      });
-
-      toast.success("¡Casi listo!", {
-        description: "Revisa tu correo para ingresar el código de verificación",
-      });
-
-      // Ya no redirigimos al login inmediatamente, el componente avanzará al paso 4
-    } catch (error: any) {
-      toast.error("Error al registrar", {
-        description: error.message,
-      });
-      throw error; // Re-lanzar para que RegisterPageColombia no avance al paso 4
-    }
-  };
-
-  const handleVerifyEmail = async (email: string, code: string) => {
-    try {
-      setAuthTransitionMessage("Verificando cuenta...");
-      setIsAuthTransitioning(true);
-
-      await authService.verifyEmail(email, code);
-
-      // Si la verificación fue exitosa, el token ya se guardó
-      // Ahora obtenemos el perfil como en el login
-      const profile = await authService.getProfile();
-
-      const user = {
-        id: profile.id_usuario.toString(),
-        nombres: profile.nombres,
-        apellidos: profile.apellidos,
-        email: profile.email,
-        telefono: profile.telefono,
-        direccion: profile.direccion || "",
-        ciudad: profile.ciudad || "",
-        departamento: profile.departamento || "",
-        id_rol: Number(profile.id_rol),
-        foto_perfil: profile.foto_perfil,
-        rol:
-          Number(profile.id_rol) === 1
-            ? ("admin" as const)
-            : Number(profile.id_rol) === 2
-            ? ("cliente" as const)
-            : ("vendedor" as const),
-        permisos: profile.permisos || [],
-        estado: "activo" as const,
-        tipoDocumento: "CC" as const,
-        numeroDocumento: "",
-        passwordHash: "",
-        fechaCreacion: new Date().toISOString(),
-      };
-
-      setCurrentUser(user);
-      setIsAuthenticated(true);
-      await loadPublicData();
-      await loadPrivateData(user.rol);
-
-      if (user.rol === "cliente") {
-        setCurrentRoute("inicio");
-      } else {
-        setCurrentRoute("dashboard");
-      }
-
-      setIsAuthTransitioning(false);
-      setShowAuthPage(false); // Cerramos el auth modal/page
-      toast.success("¡Cuenta activada!", {
-        description: `Bienvenido, ${user.nombres}`,
-      });
-
-      return true;
-    } catch (error: any) {
-      setIsAuthTransitioning(false);
-      toast.error("Error en verificación", {
-        description: error.message || "Código inválido",
-      });
-      return false;
-    }
-  };
-
-  const handleRecover = (email: string) => {
-    // Simulate password recovery
-    console.log("Recovering password for:", email);
-  };
-
-  // Mostrar loading mientras verifica autenticación o durante transiciones de login/logout
-  if (isLoading || isAuthTransitioning) {
-    const message = authTransitionMessage || "Cargando Makeup Base...";
-    return (
-      <div 
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          zIndex: 9999,
-          background: 'radial-gradient(circle at 50% 50%, #fffcfd 0%, #f7f0f3 100%)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontFamily: "'Outfit', 'DM Sans', sans-serif",
-          animation: 'fadeInOverlay 0.4s ease-out'
-        }}
-      >
-        <style>{`
-          @keyframes fadeInOverlay {
-            from { opacity: 0; }
-            to { opacity: 1; }
-          }
-          @keyframes softPulse {
-            0%, 100% { transform: scale(1); opacity: 0.95; }
-            50% { transform: scale(1.02); opacity: 1; }
-          }
-        `}</style>
-        
-        <div 
-          style={{
-            background: 'rgba(255, 255, 255, 0.6)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            border: '1px solid rgba(123, 19, 71, 0.08)',
-            borderRadius: '24px',
-            padding: '40px',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '24px',
-            maxWidth: '360px',
-            width: '90%',
-            textAlign: 'center',
-            boxShadow: '0 20px 40px rgba(123, 19, 71, 0.05)',
-            animation: 'softPulse 3s infinite ease-in-out'
-          }}
-        >
-          {/* Elegant system representative icon (smaller spinner with MB emblem) */}
-          <div 
-            style={{
-              position: 'relative',
-              width: '56px',
-              height: '56px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <div 
-              className="animate-spin"
-              style={{
-                position: 'absolute',
-                width: '100%',
-                height: '100%',
-                border: '3px solid rgba(123, 19, 71, 0.08)',
-                borderTopColor: '#7b1347',
-                borderRadius: '50%',
-                animationDuration: '1s'
-              }}
-            />
-            {/* Minimalist emblem inside */}
-            <span 
-              style={{
-                fontSize: '14px',
-                fontWeight: 800,
-                color: '#7b1347',
-                letterSpacing: '0.5px'
-              }}
-            >
-              MB
-            </span>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <h2 
-              style={{
-                fontSize: '17px',
-                fontWeight: 700,
-                color: '#7b1347',
-                letterSpacing: '0.5px'
-              }}
-            >
-              {message}
-            </h2>
-            <p 
-              style={{
-                fontSize: '11px',
-                color: 'rgba(123, 19, 71, 0.6)',
-                letterSpacing: '1.5px',
-                textTransform: 'uppercase',
-                fontWeight: 700
-              }}
-            >
-              Un momento por favor
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Show authentication pages if requested
-  if (showAuthPage && !isAuthenticated) {
-    let authContent;
-    switch (authPage) {
-      case "login":
-        authContent = (
-          <LoginPage
-            onLogin={handleLogin}
-            onNavigateToRegister={() => setAuthPage("register")}
-            onNavigateToRecover={() => setAuthPage("recover")}
-            onBack={() => setShowAuthPage(false)}
-          />
-        );
-        break;
-      case "register":
-        authContent = (
-          <RegisterPageColombia
-            onRegister={handleRegister}
-            onVerifyEmail={handleVerifyEmail}
-            onNavigateToLogin={() => setAuthPage("login")}
-            onBack={() => setShowAuthPage(false)}
-          />
-        );
-        break;
-      case "recover":
-        authContent = (
-          <RecoverPage
-            initialToken={recoverToken}
-            onRecover={handleRecover}
-            onNavigateToLogin={() => {
-              setAuthPage("login");
-              setRecoverToken(undefined);
-            }}
-            onBack={() => {
-              setShowAuthPage(false);
-              setRecoverToken(undefined);
-            }}
-          />
-        );
-        break;
-    }
-
-    return (
-      <>
-        {authContent}
-        {/* Modal: cuenta inactiva */}
-        <Dialog open={showInactiveModal} onOpenChange={setShowInactiveModal}>
-          <DialogContent className="bg-white border border-gray-100 max-w-md rounded-2xl shadow-2xl p-0 overflow-hidden">
-            <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100">
-              <div className="flex items-center gap-4">
-                <div
-                  className="flex items-center justify-center shrink-0"
-                  style={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: 12,
-                    background: "linear-gradient(135deg,#c47b96,#e092b2)",
-                    boxShadow: "0 2px 8px rgba(196,123,150,0.3)",
-                  }}
-                >
-                  <Lock className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <DialogTitle className="text-base font-bold text-gray-900 leading-tight">
-                    Cuenta inactiva
-                  </DialogTitle>
-                  <DialogDescription className="text-xs text-gray-400 mt-0.5">
-                    No puedes iniciar sesión en este momento
-                  </DialogDescription>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowInactiveModal(false)}
-                className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <div
-              style={{
-                padding: "20px 24px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "12px",
-              }}
-            >
-              <div
-                style={{
-                  background: "#fff0f5",
-                  borderRadius: "12px",
-                  padding: "16px",
-                  border: "1px solid #f0d5e0",
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: "12px",
-                }}
-              >
-                <Lock
-                  style={{
-                    color: "#c47b96",
-                    width: 18,
-                    height: 18,
-                    flexShrink: 0,
-                    marginTop: 2,
-                  }}
-                />
-                <div>
-                  <p
-                    style={{
-                      fontSize: "14px",
-                      color: "#374151",
-                      lineHeight: 1.5,
-                      fontWeight: 600,
-                      marginBottom: 4,
-                    }}
-                  >
-                    Tu cuenta ha sido desactivada
-                  </p>
-                  <p
-                    style={{
-                      fontSize: "13px",
-                      color: "#6b7280",
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    No tienes permiso para iniciar sesión. Si crees que esto es
-                    un error, comunícate con el administrador del sistema.
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="flex justify-end px-6 pb-6 pt-2">
-              <button
-                onClick={() => setShowInactiveModal(false)}
-                className="rounded-lg font-semibold px-6 h-10 text-sm text-white transition-opacity hover:opacity-90"
-                style={{ backgroundColor: "#c47b96" }}
-              >
-                Entendido
-              </button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </>
-    );
-  }
-
-  function AccesoDenegado() {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[80vh] px-4">
-        <div 
-          className="w-full max-w-md p-8 rounded-2xl text-center space-y-6"
-          style={{
-            background: "rgba(46, 16, 32, 0.4)",
-            backdropFilter: "blur(12px)",
-            border: "1px solid rgba(210, 140, 165, 0.2)",
-            boxShadow: "0 8px 32px 0 rgba(0, 0, 0, 0.3)",
-          }}
-        >
-          <div 
-            className="w-16 h-16 mx-auto rounded-full flex items-center justify-center animate-pulse"
-            style={{
-              background: "rgba(140, 70, 90, 0.2)",
-              border: "1.5px solid rgba(210, 140, 165, 0.4)",
-              boxShadow: "0 0 20px rgba(140, 60, 90, 0.3)",
-            }}
-          >
-            <Lock className="w-8 h-8 text-[#e0a0be]" />
-          </div>
-          
-          <div className="space-y-2">
-            <h2 
-              className="text-xl font-semibold text-white tracking-wider"
-              style={{ fontFamily: "'Cormorant Garamond', serif" }}
-            >
-              ACCESO RESTRINGIDO
-            </h2>
-            <p className="text-sm text-gray-300">
-              No tienes los permisos necesarios para visualizar este módulo.
-            </p>
-          </div>
-          
-          <div className="pt-2">
-            <p className="text-xs text-gray-400 italic">
-              Comunícate con el administrador del sistema si crees que esto es un error.
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const renderContent = () => {
-    const adminRoutes = [
-      "dashboard",
-      "usuarios",
-      "clientes-view",
-      "productos",
-      "categorias",
-      "marcas",
-      "ventas",
-      "pedidos",
-      "devoluciones",
-      "clientes",
-      "proveedores",
-      "compras",
-      "configuracion",
-      "roles",
-    ];
-
-    const routePermissions: Record<string, string> = {
-      dashboard: "ver_ventas",
-      usuarios: "ver_usuarios",
-      "clientes-view": "ver_clientes",
-      productos: "ver_productos",
-      categorias: "ver_productos",
-      marcas: "ver_productos",
-      ventas: "ver_ventas",
-      pedidos: "ver_pedidos",
-      devoluciones: "ver_devoluciones",
-      clientes: "ver_clientes",
-      proveedores: "ver_proveedores",
-      compras: "ver_compras",
-      configuracion: "ver_configuracion",
-    };
-
-    // If trying to access admin route but user is cliente, redirect to inicio
-    if (adminRoutes.includes(currentRoute)) {
-      if (userType === "cliente") {
-        setCurrentRoute("inicio");
-        return <InicioView />;
-      }
-
-      // Validar permisos dinámicos si no es Super Admin (rol === 1)
-      if (currentUser && currentUser.id_rol !== 1) {
-        if (currentRoute === "roles") {
-          return <AccesoDenegado />;
-        }
-
-        const requiredPerm = routePermissions[currentRoute];
-        if (requiredPerm && !currentUser.permisos?.includes(requiredPerm)) {
-          return <AccesoDenegado />;
-        }
-      }
-    }
-
-    switch (currentRoute) {
-      case "dashboard":
-        return <Dashboard />;
-      case "usuarios":
-        return <UsuariosModule />;
-      case "clientes-view":
-        return <ClientesViewModule />;
-      case "productos":
-        return <ProductsModule />;
-      case "categorias":
-        return <CategoriasModule />;
-      case "marcas":
-        return <MarcasModule />;
-      case "ventas":
-        return <VentasModule />;
-      case "pedidos":
-        return <PedidosModule />;
-      case "devoluciones":
-        return <DevolucionesModule />;
-      case "clientes":
-        return <ClientesViewModule />;
-      case "proveedores":
-        return <ProveedoresModule />;
-      case "compras":
-        return <ComprasModule />;
-      case "configuracion":
-        return <PerfilUsuarioModule />;
-      case "roles":
-        return <RolesPermisosModule />;
-      case "inicio":
-        return (
-          <InicioView
-            isPublic={!isAuthenticated}
-            onNavigate={(route, catId) => {
-              if (route === "login" || route === "register") {
-                setShowAuthPage(true);
-                setAuthPage(route as AuthPage);
-              } else {
-                if (catId) setActiveCategory(catId);
-                setCurrentRoute(route as Route);
-              }
-            }}
-            onViewProduct={(productId) => {
-              setProductDetailOrigin("inicio");
-              setProductDetailId(productId);
-              setCurrentRoute("producto-detalle");
-            }}
-          />
-        );
-      case "catalogo":
-        return (
-          <CatalogoView
-            initialCategory={activeCategory || "all"}
-            onClearCategory={() => setActiveCategory(null)}
-            onViewProduct={(productId) => {
-              setProductDetailOrigin("catalogo");
-              setProductDetailId(productId);
-              setCurrentRoute("producto-detalle");
-            }}
-          />
-        );
-      case "favoritos":
-        return (
-          <FavoritosView
-            onNavigate={(route) => setCurrentRoute(route as Route)}
-            onViewProduct={(productId) => {
-              setProductDetailOrigin("favoritos");
-              setProductDetailId(productId);
-              setCurrentRoute("producto-detalle");
-            }}
-          />
-        );
-      case "mis-pedidos":
-        if (!isAuthenticated) {
-          setShowAuthPage(true);
-          setAuthPage("login");
-          return null;
-        }
-        return (
-          <MisPedidosView
-            onNavigate={(route) => setCurrentRoute(route as Route)}
-          />
-        );
-      case "nosotros":
-        return (
-          <NosotrosView
-            onNavigate={(route) => setCurrentRoute(route as Route)}
-          />
-        );
-      case "contacto":
-        return (
-          <ContactoView
-            onNavigate={(route) => setCurrentRoute(route as Route)}
-          />
-        );
-
-      case "perfil":
-        if (!isAuthenticated) {
-          setShowAuthPage(true);
-          setAuthPage("login");
-          return null;
-        }
-        return <PerfilView />;
-      case "checkout":
-        if (!isAuthenticated) {
-          setShowAuthPage(true);
-          setAuthPage("login");
-          return null;
-        }
-        return (
-          <CheckoutView
-            onBack={() => setCurrentRoute("inicio")}
-            onComplete={() => setCurrentRoute("mis-pedidos")}
-          />
-        );
-      case "producto-detalle":
-        return (
-          <ProductDetailScreen
-            productId={productDetailId}
-            onBack={() => {
-              setCurrentRoute(productDetailOrigin);
-              setProductDetailId(null);
-            }}
-          />
-        );
-      default:
-        return userType === "admin" ? (
-          <Dashboard />
-        ) : (
-          <InicioView
-            isPublic={!isAuthenticated}
-            onNavigate={(route, catId) => {
-              if (route === "login" || route === "register") {
-                setShowAuthPage(true);
-                setAuthPage(route as AuthPage);
-              } else {
-                if (catId) setActiveCategory(catId);
-                setCurrentRoute(route as Route);
-              }
-            }}
-            onViewProduct={(productId) => {
-              setProductDetailOrigin("inicio");
-              setProductDetailId(productId);
-              setCurrentRoute("producto-detalle");
-            }}
-          />
-        );
-    }
-  };
-
-  const handleLogout = async () => {
-    setAuthTransitionMessage("Cerrando sesión...");
-    setIsAuthTransitioning(true);
-
-    await new Promise((resolve) => setTimeout(resolve, 800));
-
-    authService.logout();
-    setCurrentUser(null);
-    setIsAuthenticated(false);
+  const handleLogoutSuccess = () => {
     setAuthPage("login");
     setCurrentRoute("inicio");
-    clearCarrito();
-
-    setIsAuthTransitioning(false);
-    toast.info("Sesión cerrada", {
-      description: "Has cerrado sesión correctamente",
-    });
   };
 
-  // Layout cliente: navbar horizontal, sin sidebar
-  if (userType === "cliente") {
-    return (
-      <div className="min-h-screen bg-background flex flex-col">
-        <ClientNavbar
-          currentRoute={currentRoute}
-          onNavigate={(route) => {
-            if (route === "login" || route === "register") {
-              setShowAuthPage(true);
-              setAuthPage(route as AuthPage);
-            } else {
-              if (route === "catalogo") setActiveCategory(null);
-              setCurrentRoute(route as Route);
-            }
-          }}
-          onLogout={handleLogout}
-        />
-        <main ref={scrollContainerRef} className="flex-1">
-          {renderContent()}
-        </main>
-      </div>
-    );
+  if (isLoading || isAuthTransitioning) {
+    return <GlobalLoader message={authTransitionMessage} />;
   }
 
-  // Layout admin: sidebar
+  const routerContent = (
+    <AppRouter
+      currentRoute={currentRoute}
+      setCurrentRoute={setCurrentRoute}
+      userType={userType}
+      currentUser={currentUser}
+      isAuthenticated={isAuthenticated}
+      activeCategory={activeCategory}
+      setActiveCategory={setActiveCategory}
+      productDetailId={productDetailId}
+      setProductDetailId={setProductDetailId}
+      productDetailOrigin={productDetailOrigin}
+      setProductDetailOrigin={setProductDetailOrigin}
+      onRequireAuth={(page) => {
+        setShowAuthPage(true);
+        setAuthPage(page);
+      }}
+    />
+  );
+
   return (
-    <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-background">
-        <AppSidebar
-          onNavigate={(route) => {
-            if (route === "catalogo") setActiveCategory(null);
-            setCurrentRoute(route as Route);
-          }}
-          currentRoute={currentRoute}
-          onLogout={handleLogout}
-        />
-        <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-          {/* Mobile Admin Header */}
-          <div className="md:hidden flex items-center justify-between p-3 bg-white border-b border-gray-100 z-10 shadow-sm shrink-0">
-            <div className="flex items-center gap-3">
-              <SidebarTrigger className="text-[#c47b96] hover:bg-[#fce8f0] w-9 h-9" />
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center bg-black border border-[#c47b96]">
-                  <img src="/logo.png" alt="Glamour ML" className="w-5 h-5 object-contain" />
-                </div>
-                <span className="font-semibold text-sm tracking-widest uppercase text-gray-800" style={{ fontFamily: "'Cormorant Garamond', serif" }}>Glamour ML</span>
-              </div>
-            </div>
-          </div>
-          <div ref={scrollContainerRef} className="flex-1 overflow-auto">
-            {renderContent()}
-          </div>
-        </main>
-      </div>
-      <NotificationBell 
-        currentRoute={currentRoute}
-        onNavigate={(route) => setCurrentRoute(route as Route)}
+    <>
+      <AuthOverlay
+        show={showAuthPage}
+        initialPage={authPage}
+        onClose={() => setShowAuthPage(false)}
+        onLogin={handleLogin}
+        onRegister={handleRegister}
+        onVerifyEmail={handleVerifyEmail}
+        showInactiveModal={showInactiveModal}
+        setShowInactiveModal={setShowInactiveModal}
+        onAuthSuccess={handleAuthSuccess}
       />
-    </SidebarProvider>
+
+      {userType === "cliente" ? (
+        <ClientLayout
+          currentRoute={currentRoute}
+          setCurrentRoute={setCurrentRoute}
+          setActiveCategory={setActiveCategory}
+          setShowAuthPage={setShowAuthPage}
+          setAuthPage={setAuthPage}
+          onLogout={() => handleLogout(handleLogoutSuccess)}
+          scrollRef={scrollContainerRef}
+        >
+          {routerContent}
+        </ClientLayout>
+      ) : (
+        <AdminLayout
+          currentRoute={currentRoute}
+          setCurrentRoute={setCurrentRoute}
+          setActiveCategory={setActiveCategory}
+          onLogout={() => handleLogout(handleLogoutSuccess)}
+          scrollRef={scrollContainerRef}
+        >
+          {routerContent}
+        </AdminLayout>
+      )}
+    </>
   );
 }
 

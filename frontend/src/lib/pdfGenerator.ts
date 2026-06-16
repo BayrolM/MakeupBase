@@ -90,7 +90,7 @@ async function drawHeader(
   // Ciudad / contacto (opcional, siempre fijo)
   doc.setFontSize(7);
   doc.setTextColor(200, 170, 185);
-  doc.text("Medellín, Colombia", 42, 33);
+  doc.text("Calle 31C #89-35, Medellín, CO", 42, 33);
 
   // Título documento (derecha)
   doc.setFont("helvetica", "bold");
@@ -278,7 +278,7 @@ function drawFooter(doc: any, note: string) {
   doc.setFontSize(7.5);
   doc.setTextColor(...COLORS.textLight);
   doc.text(note, 22, 275);
-  doc.text("GLAMOUR ML  ·  Medellín, Colombia", 22, 281);
+  doc.text("GLAMOUR ML  ·  Calle 31C #89-35, Medellín", 22, 281);
 }
 
 
@@ -512,7 +512,7 @@ export const generateDevolucionPDF = async (
     doc.text("TIENDA DE BELLEZA & CUIDADO PERSONAL", 42, 24);
     doc.setFontSize(7);
     doc.setTextColor(200, 170, 185);
-    doc.text("Medellín, Colombia", 42, 33);
+    doc.text("Calle 31C #89-35, Medellín, CO", 42, 33);
 
     // Título + ref
     doc.setFont("helvetica", "bold");

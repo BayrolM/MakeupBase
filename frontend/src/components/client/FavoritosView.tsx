@@ -1,23 +1,11 @@
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useStore } from "../../lib/store";
 import { ProductCard } from "./ProductCard";
-import { Heart, Package } from "lucide-react";
+import { Heart, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
+import { Footer } from "../layout/Footer";
 
-/* ── Luxury CSS variable helpers ── */
-const V = (name: string) => `var(--luxury-${name})`;
-const C = {
-  bgHeader: V("bg-header"),
-  bgSoft: V("bg-soft"),
-  accent: V("pink-soft"),
-  accentDeep: V("pink"),
-  textDark: V("text-dark"),
-  textMuted: V("text-muted"),
-  shadowSm: V("shadow-sm"),
-  shadow: V("shadow"),
-  shadowLg: V("shadow-lg"),
-  white: "#ffffff",
-};
+import { C } from "../../lib/theme";
 
 export function FavoritosView({
   onNavigate,
@@ -29,15 +17,32 @@ export function FavoritosView({
   const { favoritos, toggleFavorito, addToCarrito, productos, categorias, carrito } =
     useStore();
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("es-CO", {
-      style: "currency",
-      currency: "COP",
-      minimumFractionDigits: 0,
-    }).format(value);
-  };
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 12;
 
-  const favoritosProducts = productos.filter((p) => favoritos.includes(p.id));
+  // Filtrado de favoritos
+  const filteredFavorites = useMemo(() => {
+    let list = productos.filter((p) => favoritos.includes(p.id));
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter((p) => p.nombre.toLowerCase().includes(q) || (p.descripcion && p.descripcion.toLowerCase().includes(q)));
+    }
+    return list;
+  }, [productos, favoritos, searchQuery]);
+
+  // Resetear paginación al buscar
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
+  const totalPages = Math.ceil(filteredFavorites.length / ITEMS_PER_PAGE) || 1;
+  const paginatedFavorites = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredFavorites.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredFavorites, currentPage]);
+
+  const hasAnyFavorites = favoritos.length > 0;
 
   return (
     <div
@@ -45,6 +50,8 @@ export function FavoritosView({
         minHeight: "100vh",
         background: C.bgSoft,
         fontFamily: "'DM Sans', sans-serif",
+        display: "flex",
+        flexDirection: "column",
       }}
     >
       {/* ── HERO HEADER LUXURY ── */}
@@ -109,10 +116,7 @@ export function FavoritosView({
               margin: "0 0 0 64px",
             }}
           >
-            {favoritosProducts.length}{" "}
-            {favoritosProducts.length === 1
-              ? "producto guardado"
-              : "productos guardados"}
+            {favoritos.length} {favoritos.length === 1 ? "producto guardado" : "productos guardados"}
           </p>
         </div>
 
@@ -134,13 +138,15 @@ export function FavoritosView({
 
       {/* ── CONTENIDO PRINCIPAL ── */}
       <div
-        className="px-4 sm:px-8 pb-16 pt-6"
+        className="px-4 sm:px-8 pt-6 flex-1"
         style={{
           maxWidth: "1280px",
+          width: "100%",
           margin: "0 auto",
+          paddingBottom: "160px", // Forced explicit spacing
         }}
       >
-        {favoritosProducts.length === 0 ? (
+        {!hasAnyFavorites ? (
           <div
             style={{
               background: C.white,
@@ -220,52 +226,151 @@ export function FavoritosView({
             </button>
           </div>
         ) : (
-          <div
-            className="grid gap-4 sm:gap-6"
-            style={{
-              gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
-            }}
-          >
-            {favoritosProducts.map((producto) => {
-              const categoria = categorias.find(
-                (c) => c.id === producto.categoriaId,
-              );
-              const currentCartQty = carrito.find((item) => item.productoId === producto.id)?.cantidad || 0;
-              const isMaxStock = currentCartQty >= producto.stock;
-              return (
-                <ProductCard
-                  key={producto.id}
-                  producto={producto}
-                  categoryName={categoria?.nombre}
-                  isFavorite={true} // Por estar en esta vista, siempre es favorito
-                  onToggleFavorite={() => {
-                    toggleFavorito(producto.id);
-                    toast.success("Favoritos actualizado", {
-                      description: `Se eliminó ${producto.nombre} de tu lista.`,
-                    });
+          <>
+            {/* Barra de Búsqueda */}
+            <div className="mb-12 relative w-full">
+              <Search 
+                style={{
+                  position: "absolute",
+                  left: "16px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  color: "#9ca3af",
+                  width: "20px",
+                  height: "20px",
+                  pointerEvents: "none",
+                }}
+              />
+              <input
+                type="text"
+                placeholder="Buscar en mis favoritos..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "14px 16px 14px 44px",
+                  borderRadius: "16px",
+                  border: `1px solid ${C.accentSoft}`,
+                  background: C.white,
+                  fontSize: "15px",
+                  color: C.textDark,
+                  outline: "none",
+                  boxShadow: `0 4px 15px ${C.shadowSm}`,
+                  transition: "border-color 0.3s, box-shadow 0.3s"
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = C.accentDeep;
+                  e.currentTarget.style.boxShadow = `0 4px 20px rgba(196,123,150,0.2)`;
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = C.accentSoft;
+                  e.currentTarget.style.boxShadow = `0 4px 15px ${C.shadowSm}`;
+                }}
+              />
+            </div>
+
+            {filteredFavorites.length === 0 ? (
+              <div className="text-center py-12">
+                <p style={{ color: C.textMuted, fontSize: "16px" }}>
+                  No se encontraron productos que coincidan con "{searchQuery}".
+                </p>
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="mt-4 text-sm underline"
+                  style={{ color: C.accentDeep }}
+                >
+                  Limpiar búsqueda
+                </button>
+              </div>
+            ) : (
+              <>
+                <div
+                  className="grid gap-4 sm:gap-6"
+                  style={{
+                    gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
                   }}
-                  onCardClick={() => onViewProduct?.(producto.id)}
-                  onAddToCart={() => {
+                >
+                  {paginatedFavorites.map((producto) => {
+                    const categoria = categorias.find(
+                      (c) => c.id === producto.categoriaId,
+                    );
                     const currentCartQty = carrito.find((item) => item.productoId === producto.id)?.cantidad || 0;
-                    if (currentCartQty >= producto.stock) {
-                      toast.error("Stock máximo alcanzado", {
-                        description: `No puedes agregar más unidades de ${producto.nombre}.`,
-                      });
-                      return;
-                    }
-                    addToCarrito(producto.id, 1);
-                    toast.success("Producto agregado", {
-                      description: `${producto.nombre} se agregó al carrito`,
-                    });
-                  }}
-                  isMaxStock={isMaxStock}
-                />
-              );
-            })}
-          </div>
+                    const isMaxStock = currentCartQty >= producto.stock;
+                    return (
+                      <ProductCard
+                        key={producto.id}
+                        producto={producto}
+                        categoryName={categoria?.nombre}
+                        isFavorite={true}
+                        onToggleFavorite={(e) => {
+                          e.stopPropagation();
+                          toggleFavorito(producto.id);
+                          toast.success("Favoritos actualizado", {
+                            description: `Se eliminó ${producto.nombre} de tu lista.`,
+                          });
+                        }}
+                        onCardClick={() => onViewProduct?.(producto.id)}
+                        onAddToCart={(e) => {
+                          e.stopPropagation();
+                          const currentCartQty = carrito.find((item) => item.productoId === producto.id)?.cantidad || 0;
+                          if (currentCartQty >= producto.stock) {
+                            toast.error("Stock máximo alcanzado", {
+                              description: `No puedes agregar más unidades de ${producto.nombre}.`,
+                            });
+                            return;
+                          }
+                          addToCarrito(producto.id, 1);
+                          toast.success("Producto agregado", {
+                            description: `${producto.nombre} se agregó al carrito`,
+                          });
+                        }}
+                        isMaxStock={isMaxStock}
+                      />
+                    );
+                  })}
+                </div>
+
+                {/* Paginación */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-center gap-4 mt-12">
+                    <button
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                      className="p-2 rounded-xl transition-all disabled:opacity-50"
+                      style={{
+                        background: currentPage === 1 ? C.bgSoft : C.white,
+                        border: `1px solid ${C.accentSoft}`,
+                        color: C.textDark,
+                        boxShadow: `0 2px 8px ${C.shadowSm}`,
+                      }}
+                    >
+                      <ChevronLeft className="w-5 h-5" />
+                    </button>
+                    <span style={{ color: C.textMuted, fontSize: "14px", fontWeight: 500 }}>
+                      Página {currentPage} de {totalPages}
+                    </span>
+                    <button
+                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                      className="p-2 rounded-xl transition-all disabled:opacity-50"
+                      style={{
+                        background: currentPage === totalPages ? C.bgSoft : C.white,
+                        border: `1px solid ${C.accentSoft}`,
+                        color: C.textDark,
+                        boxShadow: `0 2px 8px ${C.shadowSm}`,
+                      }}
+                    >
+                      <ChevronRight className="w-5 h-5" />
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </>
         )}
       </div>
 
+      <Footer />
     </div>
   );
 }
