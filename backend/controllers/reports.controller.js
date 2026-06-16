@@ -6,8 +6,10 @@ export const obtenerDashboard = async (req, res) => {
     if (req.user && req.user.rol !== 1) {
       id_empleado = req.user.id_usuario;
     }
+
+    const { fecha_inicio, fecha_fin } = req.query;
     
-    const dashboard = await reportsService.obtenerDashboard({ id_empleado });
+    const dashboard = await reportsService.obtenerDashboard({ id_empleado, fecha_inicio, fecha_fin });
     return res.json({ ok: true, data: dashboard });
   } catch (error) {
     console.error(error);

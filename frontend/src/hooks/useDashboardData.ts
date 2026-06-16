@@ -1,20 +1,31 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { reportService, DashboardData, SalesComparisonData } from "../services/reportService";
 import { toast } from "sonner";
+
+export interface DateRange {
+  from?: Date;
+  to?: Date;
+}
 
 export function useDashboardData() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [salesComparison, setSalesComparison] = useState<SalesComparisonData | null>(null);
+  const [dateRange, setDateRange] = useState<DateRange>({});
 
-  const fetchDashboardData = async () => {
+  const toISODate = (date?: Date) => date ? date.toISOString().split("T")[0] : undefined;
+
+  const fetchDashboardData = useCallback(async (range: DateRange = {}) => {
     try {
-      const res = await reportService.getDashboard();
+      const params: { fecha_inicio?: string; fecha_fin?: string } = {};
+      if (range.from) params.fecha_inicio = toISODate(range.from);
+      if (range.to)   params.fecha_fin   = toISODate(range.to);
+      const res = await reportService.getDashboard(params);
       setData(res);
     } catch (error: any) {
       console.error(error);
       toast.error("Error al cargar datos del dashboard");
     }
-  };
+  }, []);
 
   const fetchSalesComparison = async () => {
     try {
@@ -25,20 +36,18 @@ export function useDashboardData() {
     }
   };
 
-  // Carga inicial y Polling cada 30 segundos
+  // Carga inicial y Polling cada 30 segundos — se reinicia al cambiar el rango
   useEffect(() => {
-    fetchDashboardData();
+    fetchDashboardData(dateRange);
     fetchSalesComparison();
 
     const intervalId = setInterval(() => {
-      fetchDashboardData();
+      fetchDashboardData(dateRange);
       fetchSalesComparison();
-    }, 30000); // 30 segundos
+    }, 30000);
 
     return () => clearInterval(intervalId);
-  }, []);
-
-
+  }, [dateRange, fetchDashboardData]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("es-CO", {
@@ -75,9 +84,6 @@ export function useDashboardData() {
         { estado: "Cancelado", cantidad: 0 },
       ];
     }
-    
-    // Mapear los datos de la BD a un formato amigable si es necesario, 
-    // o simplemente usarlos directamente capitalizando el estado
     return safeData.pedidos_por_estado.map(p => ({
       estado: p.estado ? p.estado.charAt(0).toUpperCase() + p.estado.slice(1) : "Desconocido",
       cantidad: parseInt(p.cantidad) || 0
@@ -86,8 +92,6 @@ export function useDashboardData() {
 
   const productosStockCriticoList = useMemo(() => {
     if (!safeData.productos_stock_critico) return [];
-    
-    // Mapear al formato que espera CriticalStockCard (que era el de Producto del store)
     return safeData.productos_stock_critico.map(p => ({
       id: p.id_producto.toString(),
       nombre: p.nombre,
@@ -101,7 +105,6 @@ export function useDashboardData() {
 
   const trendChartData = useMemo(() => {
     if (!data?.ventas_tendencia) return [];
-
     return data.ventas_tendencia.map((v) => ({
       mes: v.mes_nombre,
       total: parseFloat(v.total) || 0,
@@ -111,7 +114,6 @@ export function useDashboardData() {
 
   const perdidasTrendChartData = useMemo(() => {
     if (!data?.perdidas_tendencia) return [];
-
     return data.perdidas_tendencia.map((p) => ({
       mes: p.mes_nombre,
       total: parseFloat(p.total) || 0,
@@ -121,7 +123,6 @@ export function useDashboardData() {
 
   const ventasMesChartData = useMemo(() => {
     if (!safeData.ventas_del_mes) return [];
-
     return safeData.ventas_del_mes.map((v) => ({
       dia: v.dia,
       total: parseFloat(v.total) || 0,
@@ -138,6 +139,8 @@ export function useDashboardData() {
     perdidasTrendChartData,
     ventasMesChartData,
     formatCurrency,
-    refresh: fetchDashboardData
+    dateRange,
+    setDateRange,
+    refresh: () => fetchDashboardData(dateRange),
   };
 }

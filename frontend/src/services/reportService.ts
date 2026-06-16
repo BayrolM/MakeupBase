@@ -63,9 +63,9 @@ export const reportService = {
   /**
    * Obtener datos para el dashboard
    */
-  async getDashboard(): Promise<DashboardData> {
+  async getDashboard(params: { fecha_inicio?: string; fecha_fin?: string } = {}): Promise<DashboardData> {
     try {
-      const response = await api.get("/reports/dashboard");
+      const response = await api.get("/reports/dashboard", { params });
       return response.data.data;
     } catch (error: any) {
       throw new Error(

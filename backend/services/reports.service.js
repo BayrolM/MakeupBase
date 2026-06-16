@@ -4,13 +4,51 @@ import sql from '../config/db.js';
  * Obtener estadísticas para el dashboard
  */
 export const obtenerDashboard = async (options = {}) => {
-  const { id_empleado } = options;
+  const { id_empleado, fecha_inicio, fecha_fin } = options;
+
+  // --- Helpers de fecha ---
+  // Cuando hay rango, normalizamos: inicio = 00:00:00, fin = 23:59:59
+  const fi = fecha_inicio ? `${fecha_inicio}T00:00:00` : null;
+  const ff = fecha_fin   ? `${fecha_fin}T23:59:59`   : null;
+
+  const fechaFiltroVentas = fi && ff
+    ? sql`AND fecha_venta >= ${fi}::timestamp AND fecha_venta <= ${ff}::timestamp`
+    : fi
+    ? sql`AND fecha_venta >= ${fi}::timestamp`
+    : ff
+    ? sql`AND fecha_venta <= ${ff}::timestamp`
+    : sql``;
+
+  const fechaFiltroPerdidas = fi && ff
+    ? sql`AND fecha_perdida >= ${fi}::timestamp AND fecha_perdida <= ${ff}::timestamp`
+    : fi
+    ? sql`AND fecha_perdida >= ${fi}::timestamp`
+    : ff
+    ? sql`AND fecha_perdida <= ${ff}::timestamp`
+    : sql``;
+
+  const fechaFiltroPedidos = fi && ff
+    ? sql`AND fecha_pedido >= ${fi}::timestamp AND fecha_pedido <= ${ff}::timestamp`
+    : fi
+    ? sql`AND fecha_pedido >= ${fi}::timestamp`
+    : ff
+    ? sql`AND fecha_pedido <= ${ff}::timestamp`
+    : sql``;
+
+  const fechaFiltroDevoluciones = fi && ff
+    ? sql`AND fecha_devolucion >= ${fi}::timestamp AND fecha_devolucion <= ${ff}::timestamp`
+    : fi
+    ? sql`AND fecha_devolucion >= ${fi}::timestamp`
+    : ff
+    ? sql`AND fecha_devolucion <= ${ff}::timestamp`
+    : sql``;
 
   // Total de ventas
   const totalVentas = await sql`
     SELECT COALESCE(SUM(total), 0) as total
     FROM ventas
     WHERE estado = true
+    ${fechaFiltroVentas}
     ${id_empleado ? sql`AND id_usuario_empleado = ${id_empleado}` : sql``}
   `;
 
@@ -19,17 +57,19 @@ export const obtenerDashboard = async (options = {}) => {
     SELECT COALESCE(SUM(total_perdida), 0) as total
     FROM perdidas
     WHERE estado = true
+    ${fechaFiltroPerdidas}
     ${id_empleado ? sql`AND id_usuario_empleado = ${id_empleado}` : sql``}
   `;
 
-  // Total de órdenes (sin filtrar por empleado para que vean todos)
+  // Total de órdenes
   const totalOrdenes = await sql`
     SELECT COUNT(*) as total
     FROM pedidos
     WHERE estado != 'carrito'
+    ${fechaFiltroPedidos}
   `;
 
-  // Total de productos
+  // Total de productos (estático, no se filtra por fecha)
   const totalProductos = await sql`
     SELECT COUNT(*) as total
     FROM productos
@@ -41,52 +81,30 @@ export const obtenerDashboard = async (options = {}) => {
     SELECT COUNT(*) as total
     FROM devoluciones
     WHERE estado = 'pendiente'
+    ${fechaFiltroDevoluciones}
   `;
 
-  // Productos con bajo stock
+  // Productos con bajo stock (estático, no se filtra por fecha)
   const productosBajoStock = await sql`
     SELECT COUNT(*) as total
     FROM productos
     WHERE stock_actual <= stock_min AND estado = true
   `;
 
-  // Ventas por mes (últimos 6 meses) - Mantener para compatibilidad
-  const ventasPorMes = await sql`
-    SELECT 
-      TO_CHAR(fecha_venta, 'YYYY-MM') as mes,
-      COUNT(*) as cantidad,
-      SUM(total) as total
-    FROM ventas
-    WHERE fecha_venta >= NOW() - INTERVAL '6 months'
-      AND estado = true
-      ${id_empleado ? sql`AND id_usuario_empleado = ${id_empleado}` : sql``}
-    GROUP BY TO_CHAR(fecha_venta, 'YYYY-MM')
-    ORDER BY mes DESC
-  `;
+  // Rangos para generate_series de tendencias
+  const seriesStartExpr = fi
+    ? `'${fi}'::timestamp`
+    : `DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '23 months'`;
+  const seriesEndExpr = ff
+    ? `'${ff}'::timestamp`
+    : `DATE_TRUNC('month', CURRENT_DATE)`;
 
-  // Productos más vendidos
-  const productosMasVendidos = await sql`
-    SELECT 
-      p.id_producto,
-      p.nombre,
-      SUM(dv.cantidad) as total_vendido
-    FROM detalle_ventas dv
-    INNER JOIN productos p ON dv.id_producto = p.id_producto
-    INNER JOIN ventas v ON dv.id_venta = v.id_venta
-    WHERE v.estado = true
-      AND v.fecha_venta >= DATE_TRUNC('month', CURRENT_DATE)
-      ${id_empleado ? sql`AND v.id_usuario_empleado = ${id_empleado}` : sql``}
-    GROUP BY p.id_producto, p.nombre
-    ORDER BY total_vendido DESC
-    LIMIT 10
-  `;
-
-  // Tendencia de ventas (últimos 24 meses) - Lógica Robusta
+  // Tendencia de ventas
   const ventasTendencia = await sql`
     WITH meses AS (
       SELECT generate_series(
-        DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '23 months', 
-        DATE_TRUNC('month', CURRENT_DATE), 
+        DATE_TRUNC('month', ${fi ? sql`${fi}::timestamp` : sql`CURRENT_DATE - INTERVAL '23 months'`}),
+        DATE_TRUNC('month', ${ff ? sql`${ff}::timestamp` : sql`CURRENT_DATE`}),
         '1 month'::interval
       )::date as mes_fecha
     )
@@ -111,52 +129,35 @@ export const obtenerDashboard = async (options = {}) => {
     ORDER BY m.mes_fecha ASC
   `;
 
-  // Pedidos por estado
-  const pedidosPorEstado = await sql`
-    SELECT 
-      estado,
-      COUNT(*) as cantidad
-    FROM pedidos
-    GROUP BY estado
-  `;
-
-  // Productos con stock crítico detallado
-  const productosStockCriticoDetalle = await sql`
+  // Productos más vendidos
+  const productosMasVendidos = await sql`
     SELECT 
       p.id_producto,
       p.nombre,
-      p.stock_actual,
-      p.stock_min,
-      p.precio_venta,
-      c.nombre as categoria,
-      m.nombre as marca
-    FROM productos p
-    LEFT JOIN categorias c ON p.id_categoria = c.id_categoria
-    LEFT JOIN marcas m ON p.id_marca = m.id_marca
-    WHERE p.stock_actual <= p.stock_min AND p.estado = true
-    ORDER BY p.stock_actual ASC
-    LIMIT 20
+      SUM(dv.cantidad) as total_vendido
+    FROM detalle_ventas dv
+    INNER JOIN productos p ON dv.id_producto = p.id_producto
+    INNER JOIN ventas v ON dv.id_venta = v.id_venta
+    WHERE v.estado = true
+      ${fi && ff
+        ? sql`AND v.fecha_venta >= ${fi}::timestamp AND v.fecha_venta <= ${ff}::timestamp`
+        : fi
+        ? sql`AND v.fecha_venta >= ${fi}::timestamp`
+        : ff
+        ? sql`AND v.fecha_venta <= ${ff}::timestamp`
+        : sql`AND v.fecha_venta >= DATE_TRUNC('month', CURRENT_DATE)`}
+      ${id_empleado ? sql`AND v.id_usuario_empleado = ${id_empleado}` : sql``}
+    GROUP BY p.id_producto, p.nombre
+    ORDER BY total_vendido DESC
+    LIMIT 10
   `;
 
-  // Ventas por día del mes actual
-  const ventasDelMes = await sql`
-    SELECT 
-      TO_CHAR(fecha_venta, 'DD') as dia,
-      COALESCE(SUM(total), 0) as total
-    FROM ventas
-    WHERE fecha_venta >= DATE_TRUNC('month', CURRENT_DATE)
-      AND estado = true
-      ${id_empleado ? sql`AND id_usuario_empleado = ${id_empleado}` : sql``}
-    GROUP BY TO_CHAR(fecha_venta, 'DD')
-    ORDER BY dia ASC
-  `;
-
-  // Tendencia de pérdidas (últimos 24 meses)
+  // Tendencia de pérdidas
   const perdidasTendencia = await sql`
     WITH meses AS (
       SELECT generate_series(
-        DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '23 months', 
-        DATE_TRUNC('month', CURRENT_DATE), 
+        DATE_TRUNC('month', ${fi ? sql`${fi}::timestamp` : sql`CURRENT_DATE - INTERVAL '23 months'`}),
+        DATE_TRUNC('month', ${ff ? sql`${ff}::timestamp` : sql`CURRENT_DATE`}),
         '1 month'::interval
       )::date as mes_fecha
     )
@@ -180,6 +181,61 @@ export const obtenerDashboard = async (options = {}) => {
     FROM meses m
     ORDER BY m.mes_fecha ASC
   `;
+
+  // Pedidos por estado
+  const pedidosPorEstado = await sql`
+    SELECT 
+      estado,
+      COUNT(*) as cantidad
+    FROM pedidos
+    WHERE 1=1
+    ${fechaFiltroPedidos}
+    GROUP BY estado
+  `;
+
+  // Productos con stock crítico detallado (estático)
+  const productosStockCriticoDetalle = await sql`
+    SELECT 
+      p.id_producto,
+      p.nombre,
+      p.stock_actual,
+      p.stock_min,
+      p.precio_venta,
+      c.nombre as categoria,
+      m.nombre as marca
+    FROM productos p
+    LEFT JOIN categorias c ON p.id_categoria = c.id_categoria
+    LEFT JOIN marcas m ON p.id_marca = m.id_marca
+    WHERE p.stock_actual <= p.stock_min AND p.estado = true
+    ORDER BY p.stock_actual ASC
+    LIMIT 20
+  `;
+
+  // Ventas por día — rango seleccionado o mes actual
+  const ventasDelMes = fi && ff
+    ? await sql`
+        SELECT 
+          TO_CHAR(fecha_venta, 'DD/MM') as dia,
+          COALESCE(SUM(total), 0) as total
+        FROM ventas
+        WHERE fecha_venta >= ${fi}::timestamp
+          AND fecha_venta <= ${ff}::timestamp
+          AND estado = true
+          ${id_empleado ? sql`AND id_usuario_empleado = ${id_empleado}` : sql``}
+        GROUP BY TO_CHAR(fecha_venta, 'DD/MM'), TO_CHAR(fecha_venta, 'YYYY-MM-DD')
+        ORDER BY TO_CHAR(fecha_venta, 'YYYY-MM-DD') ASC
+      `
+    : await sql`
+        SELECT 
+          TO_CHAR(fecha_venta, 'DD') as dia,
+          COALESCE(SUM(total), 0) as total
+        FROM ventas
+        WHERE fecha_venta >= DATE_TRUNC('month', CURRENT_DATE)
+          AND estado = true
+          ${id_empleado ? sql`AND id_usuario_empleado = ${id_empleado}` : sql``}
+        GROUP BY TO_CHAR(fecha_venta, 'DD')
+        ORDER BY dia ASC
+      `;
 
   return {
     resumen: {

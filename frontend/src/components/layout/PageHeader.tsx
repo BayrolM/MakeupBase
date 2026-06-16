@@ -1,3 +1,4 @@
+import React from "react";
 import { LucideIcon } from "lucide-react";
 
 interface PageHeaderProps {
@@ -10,6 +11,7 @@ interface PageHeaderProps {
     onClick: () => void;
     disabled?: boolean;
   };
+  children?: React.ReactNode;
   className?: string;
 }
 
@@ -18,6 +20,7 @@ export function PageHeader({
   subtitle,
   icon: Icon,
   actionButton,
+  children,
   className,
 }: PageHeaderProps) {
   return (
@@ -45,25 +48,30 @@ export function PageHeader({
               </div>
             </div>
 
-            {actionButton && (
-              <button
-                onClick={actionButton.onClick}
-                disabled={actionButton.disabled}
-                className={`luxury-button-premium ${
-                  actionButton.disabled ? "opacity-50 cursor-not-allowed grayscale" : ""
-                }`}
-                title={
-                  actionButton.disabled
-                    ? "Solo administradores pueden realizar esta acción"
-                    : undefined
-                }
-              >
-                {actionButton.icon && (
-                  <actionButton.icon className="w-5 h-5 relative top-[1px]" />
-                )}
-                {actionButton.label}
-              </button>
-            )}
+            {/* Right side: children (e.g., DatePicker) and/or actionButton */}
+            <div className="flex items-center gap-3">
+              {children}
+
+              {actionButton && (
+                <button
+                  onClick={actionButton.onClick}
+                  disabled={actionButton.disabled}
+                  className={`luxury-button-premium ${
+                    actionButton.disabled ? "opacity-50 cursor-not-allowed grayscale" : ""
+                  }`}
+                  title={
+                    actionButton.disabled
+                      ? "Solo administradores pueden realizar esta acción"
+                      : undefined
+                  }
+                >
+                  {actionButton.icon && (
+                    <actionButton.icon className="w-5 h-5 relative top-[1px]" />
+                  )}
+                  {actionButton.label}
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>

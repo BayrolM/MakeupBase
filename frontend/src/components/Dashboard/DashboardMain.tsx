@@ -6,10 +6,13 @@ import {
   ShoppingCart, 
   RotateCcw, 
   LayoutDashboard,
-  Package
+  FileSpreadsheet
 } from "lucide-react";
 import { useDashboardData } from "../../hooks/useDashboardData";
 import { C } from "../../styles/dashboardStyles";
+import { DashboardDatePicker } from "./DashboardDatePicker";
+import { exportDashboardToExcel } from "../../utils/excelExport";
+import { toast } from "sonner";
 
 // Sub-components
 import { StatCard } from "./StatCard";
@@ -31,7 +34,9 @@ export function Dashboard() {
     trendChartData, 
     perdidasTrendChartData,
     ventasMesChartData,
-    formatCurrency 
+    formatCurrency,
+    dateRange,
+    setDateRange,
   } = useDashboardData();
 
   const formatCrecimiento = (valor: number | undefined) => {
@@ -41,6 +46,19 @@ export function Dashboard() {
   };
 
   const crecimientoVentas = formatCrecimiento(salesComparison?.resumen?.crecimiento);
+
+  const handleExportExcel = async () => {
+    if (safeData) {
+      toast.promise(
+        exportDashboardToExcel(safeData, dateRange),
+        {
+          loading: 'Generando reporte de Excel...',
+          success: '¡Reporte exportado correctamente!',
+          error: 'Error al generar el reporte',
+        }
+      );
+    }
+  };
 
   if (data === null) {
     return (
@@ -94,7 +112,21 @@ export function Dashboard() {
           title="Panel de Control"
           subtitle="Métricas estratégicas y estado del negocio"
           icon={LayoutDashboard}
-        />
+        >
+          {/* Botón de Exportar Excel y DatePicker viven dentro del header */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleExportExcel}
+              className="luxury-button-premium"
+              style={{ padding: "9px 16px", fontSize: "13px" }}
+              title="Exportar información del dashboard a Excel"
+            >
+              <FileSpreadsheet className="w-4 h-4 mr-2 relative top-[1px]" />
+              Exportar
+            </button>
+            <DashboardDatePicker dateRange={dateRange} setDateRange={setDateRange} />
+          </div>
+        </PageHeader>
       </div>
 
       <div className="px-8 pb-8 pt-2 space-y-6">
@@ -134,7 +166,11 @@ export function Dashboard() {
         {/* Third Row: Daily Sales & Order Status */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="h-full">
-            <VentasMesChart data={ventasMesChartData} formatCurrency={formatCurrency} />
+            <VentasMesChart
+              data={ventasMesChartData}
+              formatCurrency={formatCurrency}
+              hasDateFilter={!!(dateRange.from || dateRange.to)}
+            />
           </div>
           <div className="h-full">
             <OrderStatusPie data={ordersByStatus} />

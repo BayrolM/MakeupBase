@@ -13,9 +13,19 @@ import { C, V } from "../../styles/dashboardStyles";
 interface VentasMesChartProps {
   data: any[];
   formatCurrency: (value: number) => string;
+  hasDateFilter?: boolean;
 }
 
-export const VentasMesChart: React.FC<VentasMesChartProps> = ({ data, formatCurrency }) => {
+export const VentasMesChart: React.FC<VentasMesChartProps> = ({
+  data,
+  formatCurrency,
+  hasDateFilter = false,
+}) => {
+  const title    = hasDateFilter ? "Ventas Diarias" : "Ventas del Mes";
+  const subtitle = hasDateFilter
+    ? "Ingresos diarios en el período seleccionado"
+    : "Ingresos diarios durante el mes actual";
+
   return (
     <div
       style={{
@@ -30,10 +40,10 @@ export const VentasMesChart: React.FC<VentasMesChartProps> = ({ data, formatCurr
       <div className="flex items-center justify-between mb-8">
         <div>
           <h3 style={{ fontSize: "18px", fontWeight: 800, color: C.textDark, margin: 0 }}>
-            Ventas del Mes
+            {title}
           </h3>
           <p style={{ fontSize: "12px", color: C.textMuted, margin: 0 }}>
-            Ingresos diarios durante el mes actual
+            {subtitle}
           </p>
         </div>
       </div>
@@ -71,7 +81,9 @@ export const VentasMesChart: React.FC<VentasMesChartProps> = ({ data, formatCurr
                 background: C.white,
               }}
               formatter={(value: any) => [formatCurrency(value), "Ventas"]}
-              labelFormatter={(label) => `Día ${label}`}
+              labelFormatter={(label) =>
+                hasDateFilter ? `Fecha: ${label}` : `Día ${label}`
+              }
               labelStyle={{ fontWeight: 600, color: C.textDark, marginBottom: "4px" }}
             />
             <Bar

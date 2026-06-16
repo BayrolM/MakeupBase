@@ -710,7 +710,7 @@ function AppContent() {
             <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100">
               <div className="flex items-center gap-4">
                 <div
-                  className="flex items-center justify-center flex-shrink-0"
+                  className="flex items-center justify-center shrink-0"
                   style={{
                     width: 44,
                     height: 44,
