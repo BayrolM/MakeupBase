@@ -77,20 +77,20 @@ export function ProveedoresModule() {
     } else if (field === "email") {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (value && !emailRegex.test(value.trim())) {
-        error = "Formato inválido";
+        error = "Formato de correo electrónico inválido";
       } else {
         const duplicateEmail = proveedores.find(
           (p) =>
             p.email.toLowerCase() === value.trim().toLowerCase() &&
             p.id !== editingProveedor?.id,
         );
-        if (duplicateEmail) error = "Ya en uso";
+        if (duplicateEmail) error = "Este email ya está registrado";
       }
     } else if (field === "nit") {
       const duplicateNit = proveedores.find(
         (p) => p.nit === value.trim() && p.id !== editingProveedor?.id,
       );
-      if (duplicateNit) error = "Ya registrado";
+      if (duplicateNit) error = "Este NIT ya está registrado";
     }
 
     setFieldErrors((prev) => ({ ...prev, [field]: error }));
@@ -165,16 +165,20 @@ export function ProveedoresModule() {
     }
     if (!formData.nit.trim()) {
       errors.nit = "El NIT/Documento es requerido";
+    } else if (formData.nit.trim().length < 10) {
+      errors.nit = "El NIT/Documento debe tener al menos 10 caracteres";
     } else {
       const duplicateNit = proveedores.find(
         (p) => p.nit === formData.nit.trim() && p.id !== editingProveedor?.id,
       );
       if (duplicateNit) {
-        errors.nit = "Ya existe un proveedor registrado con este NIT";
+        errors.nit = "Este NIT ya está registrado";
       }
     }
     if (!formData.telefono.trim()) {
       errors.telefono = "El teléfono es requerido";
+    } else if (formData.telefono.trim().length < 10 || formData.telefono.trim().length > 15) {
+      errors.telefono = "El teléfono debe tener entre 10 y 15 dígitos";
     }
     if (!formData.email.trim()) {
       errors.email = "El correo electrónico es requerido";
@@ -189,12 +193,14 @@ export function ProveedoresModule() {
             p.id !== editingProveedor?.id,
         );
         if (duplicateEmail) {
-          errors.email = "Este correo electrónico ya está en uso";
+          errors.email = "Este email ya está registrado";
         }
       }
     }
     if (!formData.direccion.trim()) {
       errors.direccion = "La dirección es requerida";
+    } else if (formData.direccion.trim().length < 5) {
+      errors.direccion = "La dirección debe tener al menos 5 caracteres";
     }
 
     if (Object.keys(errors).length > 0) {

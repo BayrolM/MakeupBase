@@ -98,7 +98,10 @@ export function ProveedorFormDialog({
               </Label>
               <Input
                 value={formData.nombre}
-                onChange={(e) => onChange("nombre", e.target.value)}
+                onChange={(e) => {
+                  let val = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s\.]/g, "");
+                  onChange("nombre", val.slice(0, 40));
+                }}
                 className={`bg-white border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${fieldErrors.nombre ? "border-rose-400" : ""}`}
                 placeholder="Ej: Suministros Cosméticos S.A.S"
                 disabled={isSaving}
@@ -116,7 +119,10 @@ export function ProveedorFormDialog({
               </Label>
               <Input
                 value={formData.nit}
-                onChange={(e) => onChange("nit", e.target.value)}
+                onChange={(e) => {
+                  let val = e.target.value.replace(/[^0-9\-]/g, "");
+                  onChange("nit", val.slice(0, 15));
+                }}
                 className={`bg-white border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${fieldErrors.nit ? "border-rose-400" : ""}`}
                 placeholder="Ej: 900123456-7"
                 disabled={isSaving}
@@ -165,7 +171,7 @@ export function ProveedorFormDialog({
                 className={`bg-white border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${fieldErrors.telefono ? "border-rose-400" : ""}`}
                 placeholder="Ej: 3001234567"
                 disabled={isSaving}
-                maxLength={20}
+                maxLength={15}
                 style={{ backgroundColor: '#ffffff' }}
               />
               {fieldErrors.telefono && (
@@ -181,7 +187,11 @@ export function ProveedorFormDialog({
               <Input
                 type="email"
                 value={formData.email}
-                onChange={(e) => onChange("email", e.target.value)}
+                onChange={(e) => {
+                  let val = e.target.value.slice(0, 40);
+                  val = val.replace(/(\.(com|org|co|net|gov|edu|mil|info)).*/i, "$1");
+                  onChange("email", val);
+                }}
                 className={`bg-white border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${fieldErrors.email ? "border-rose-400" : ""}`}
                 placeholder="Ej: contacto@empresa.com"
                 disabled={isSaving}
@@ -201,7 +211,7 @@ export function ProveedorFormDialog({
               </Label>
               <Input
                 value={formData.direccion}
-                onChange={(e) => onChange("direccion", e.target.value)}
+                onChange={(e) => onChange("direccion", e.target.value.slice(0, 40))}
                 className={`bg-white border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${fieldErrors.direccion ? "border-rose-400" : ""}`}
                 placeholder="Ej: Calle 50 #30-20"
                 disabled={isSaving}

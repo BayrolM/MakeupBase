@@ -24,6 +24,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../ui/select";
+import { Combobox } from "../../ui/combobox";
+import { colombianDepartments, mainCities } from "../../../utils/colombiaData";
 import { formatCurrency } from "../../../utils/pedidoUtils";
 import { CreditCard } from "lucide-react";
 
@@ -157,7 +159,7 @@ export function PedidoFormDialog({
             </p>
             <Input
               value={formData.direccionEnvio}
-              onChange={(e) => onFieldChange("direccionEnvio", e.target.value)}
+              onChange={(e) => onFieldChange("direccionEnvio", e.target.value.slice(0, 40))}
               placeholder="Ej: Carrera 50 # 10-20"
               className={`rounded-xl h-11 border-gray-200 bg-white text-sm focus:ring-2 focus:ring-[#c47b96]/20 focus:border-[#c47b96] ${fieldErrors.direccionEnvio ? "border-rose-400" : ""}`}
               style={{ backgroundColor: '#ffffff' }}
@@ -190,18 +192,22 @@ export function PedidoFormDialog({
                   gap: "4px",
                 }}
               >
-                Ciudad <span style={{ color: "#f87171" }}>*</span>
+                Departamento <span style={{ color: "#f87171" }}>*</span>
               </p>
-              <Input
-                value={formData.ciudad}
-                onChange={(e) => onFieldChange("ciudad", e.target.value)}
-                placeholder="Medellín"
-                className={`rounded-xl h-11 border-gray-200 bg-white text-sm ${fieldErrors.ciudad ? "border-rose-400" : ""}`}
+              <Combobox
+                value={formData.departamento}
+                onValueChange={(value) => {
+                  onFieldChange("departamento", value);
+                  onFieldChange("ciudad", "");
+                }}
+                options={colombianDepartments}
+                placeholder="Seleccionar..."
+                className={`rounded-xl h-11 border-gray-200 bg-white text-sm ${fieldErrors.departamento ? "border-rose-400" : ""}`}
                 style={{ backgroundColor: '#ffffff' }}
               />
-              {fieldErrors.ciudad && (
+              {fieldErrors.departamento && (
                 <span className="micro-validation-error ml-1">
-                  {fieldErrors.ciudad}
+                  {fieldErrors.departamento}
                 </span>
               )}
             </div>
@@ -218,18 +224,28 @@ export function PedidoFormDialog({
                   gap: "4px",
                 }}
               >
-                Departamento <span style={{ color: "#f87171" }}>*</span>
+                Ciudad <span style={{ color: "#f87171" }}>*</span>
               </p>
-              <Input
-                value={formData.departamento}
-                onChange={(e) => onFieldChange("departamento", e.target.value)}
-                placeholder="Antioquia"
-                className={`rounded-xl h-11 border-gray-200 bg-white text-sm ${fieldErrors.departamento ? "border-rose-400" : ""}`}
+              <Combobox
+                value={formData.ciudad}
+                onValueChange={(value) => onFieldChange("ciudad", value)}
+                options={
+                  formData.departamento && mainCities[formData.departamento]
+                    ? mainCities[formData.departamento]
+                    : []
+                }
+                placeholder={
+                  formData.departamento
+                    ? "Seleccionar ciudad..."
+                    : "Seleccione dpto primero"
+                }
+                className={`rounded-xl h-11 border-gray-200 bg-white text-sm ${fieldErrors.ciudad ? "border-rose-400" : ""}`}
                 style={{ backgroundColor: '#ffffff' }}
+                disabled={!formData.departamento}
               />
-              {fieldErrors.departamento && (
+              {fieldErrors.ciudad && (
                 <span className="micro-validation-error ml-1">
-                  {fieldErrors.departamento}
+                  {fieldErrors.ciudad}
                 </span>
               )}
             </div>

@@ -315,6 +315,7 @@ export function PedidosModule() {
     const errors: Record<string, string> = {};
     if (!formData.clienteId) errors.clienteId = "Requerido";
     if (!formData.direccionEnvio) errors.direccionEnvio = "Requerido";
+    else if (formData.direccionEnvio.trim().length < 5) errors.direccionEnvio = "Mínimo 5 caracteres";
     if (!formData.ciudad) errors.ciudad = "Requerido";
     if (!formData.departamento) errors.departamento = "Requerido";
     
@@ -391,6 +392,7 @@ export function PedidosModule() {
   const handleSaveEdit = async () => {
     const errors: Record<string, string> = {};
     if (!editFormData.direccionEnvio) errors.direccionEnvio = "Requerido";
+    else if (editFormData.direccionEnvio.trim().length < 5) errors.direccionEnvio = "Mínimo 5 caracteres";
     if (!editFormData.ciudad) errors.ciudad = "Requerido";
     if (!editFormData.departamento) errors.departamento = "Requerido";
 

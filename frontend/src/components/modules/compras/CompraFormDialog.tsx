@@ -23,6 +23,12 @@ interface CompraFormDialogProps {
 }
 
 // ── Componente principal ──────────────────────────────────────
+const formatNumberWithDots = (val: any) => {
+  if (!val) return "";
+  const raw = val.toString().replace(/\D/g, "");
+  return raw.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+};
+
 export function CompraFormDialog({
   open,
   onOpenChange,
@@ -185,10 +191,13 @@ export function CompraFormDialog({
                         <div className="col-span-2">
                           <p style={{ fontSize: "10px", fontWeight: 700, color: "#9ca3af", marginBottom: "6px" }}>Cant.</p>
                           <Input
-                            type="number"
-                            min="1"
+                            type="text"
+                            inputMode="numeric"
                             value={d.cantidad}
-                            onChange={(e) => updateRow(i, "cantidad", e.target.value)}
+                            onChange={(e) => {
+                              const raw = e.target.value.replace(/\D/g, "").slice(0, 3);
+                              updateRow(i, "cantidad", raw);
+                            }}
                             className={`h-9 rounded-xl transition-all ${hasCantError ? "border-rose-400 bg-rose-50 text-rose-600 focus:ring-rose-200" : "border-gray-200 text-gray-800 focus:ring-[#c47b96]/20"}`}
                             style={{ backgroundColor: '#ffffff' }}
                           />
@@ -198,10 +207,13 @@ export function CompraFormDialog({
                         <div className="col-span-3">
                           <p style={{ fontSize: "10px", fontWeight: 700, color: "#9ca3af", marginBottom: "6px" }}>Precio Costo</p>
                           <Input
-                            type="number"
-                            min="0"
-                            value={d.precioUnitario}
-                            onChange={(e) => updateRow(i, "precioUnitario", e.target.value)}
+                            type="text"
+                            inputMode="numeric"
+                            value={formatNumberWithDots(d.precioUnitario)}
+                            onChange={(e) => {
+                              const raw = e.target.value.replace(/\D/g, "").slice(0, 10);
+                              updateRow(i, "precioUnitario", raw);
+                            }}
                             className={`h-9 rounded-xl transition-all ${hasPriceError ? "border-rose-400 bg-rose-50 text-rose-600 focus:ring-rose-200" : "border-gray-200 text-gray-800 focus:ring-[#c47b96]/20"}`}
                             style={{ backgroundColor: '#ffffff' }}
                           />

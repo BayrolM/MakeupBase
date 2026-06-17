@@ -62,7 +62,7 @@ export function Combobox({
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0" style={{ zIndex: 100000 }}>
         <Command>
           <CommandInput placeholder={searchPlaceholder} />
-          <CommandList>
+          <CommandList style={{ maxHeight: "250px", overflowY: "auto" }}>
             <CommandEmpty>{emptyText}</CommandEmpty>
             <CommandGroup>
               {(options || []).map((option) => (
