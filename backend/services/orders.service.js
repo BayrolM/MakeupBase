@@ -165,6 +165,7 @@ export const obtenerOrdenes = async (id_usuario, rol = null, options = {}) => {
       p.direccion,
       p.ciudad,
       p.departamento,
+      p.valor_pedido,
       p.total,
       p.estado,
       p.motivo_anulacion,
@@ -231,6 +232,7 @@ export const obtenerDetalleOrden = async (
         p.direccion,
         p.ciudad,
         p.departamento,
+        p.valor_pedido,
         p.total,
         p.estado,
         p.motivo_anulacion,
@@ -278,6 +280,7 @@ export const obtenerDetalleOrden = async (
         p.direccion,
         p.ciudad,
         p.departamento,
+        p.valor_pedido,
         p.total,
         p.estado,
         p.motivo_anulacion,
@@ -441,6 +444,9 @@ export const actualizarEstadoPedido = async (
       updateData.tracking_link = shippingData.tracking_link;
       updateData.fecha_envio = shippingData.fecha_envio;
       updateData.fecha_estimada = shippingData.fecha_estimada;
+      if (shippingData.valor_pedido !== undefined) {
+        updateData.valor_pedido = shippingData.valor_pedido;
+      }
     }
 
     const [result] = await sql`

@@ -1,4 +1,4 @@
-import { X, Truck, Hash, Calendar, Clock } from "lucide-react";
+import { X, Truck, Hash, Calendar, Clock, DollarSign } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -30,7 +30,8 @@ export function PedidoShippingDialog({
   const isGuiaValid = shippingFormData.numero_guia && shippingFormData.numero_guia.trim().length > 0;
   const isEntregaValid = shippingFormData.fecha_estimada && shippingFormData.fecha_estimada.trim().length >= 3;
   const isTransportadoraValid = !!shippingFormData.transportadora;
-  const isValid = isGuiaValid && isEntregaValid && isTransportadoraValid;
+  const isValorValid = shippingFormData.valor_pedido && String(shippingFormData.valor_pedido).trim().length > 0;
+  const isValid = isGuiaValid && isEntregaValid && isTransportadoraValid && isValorValid;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -101,6 +102,29 @@ export function PedidoShippingDialog({
               placeholder="Ej: 1234567890"
               className={`bg-white text-gray-800 rounded-xl focus:ring-[#c47b96]/20 transition-all h-11 ${
                 !isGuiaValid ? "!border-rose-400 focus-visible:!ring-rose-400/20" : "border-gray-200 focus:border-[#c47b96]"
+              }`}
+              style={{ backgroundColor: '#ffffff' }}
+              disabled={isSaving}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">
+              <DollarSign className="w-3.5 h-3.5 text-[#c47b96]" /> Valor del Pedido{" "}
+              <span className="text-rose-500">*</span>
+            </Label>
+            <Input
+              value={shippingFormData.valor_pedido ? String(shippingFormData.valor_pedido).replace(/\B(?=(\d{3})+(?!\d))/g, ".") : ""}
+              onChange={(e) => {
+                const val = e.target.value.replace(/\D/g, "").slice(0, 10);
+                setShippingFormData({
+                  ...shippingFormData,
+                  valor_pedido: val,
+                });
+              }}
+              placeholder="Ej: 50.000"
+              className={`bg-white text-gray-800 rounded-xl focus:ring-[#c47b96]/20 transition-all h-11 ${
+                !isValorValid ? "!border-rose-400 focus-visible:!ring-rose-400/20" : "border-gray-200 focus:border-[#c47b96]"
               }`}
               style={{ backgroundColor: '#ffffff' }}
               disabled={isSaving}

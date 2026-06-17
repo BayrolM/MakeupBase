@@ -1011,6 +1011,31 @@ export function MisPedidosView({
                                 {selectedPedido.numero_guia}
                               </p>
                             </div>
+                            <div>
+                              <p
+                                style={{
+                                  fontSize: "9px",
+                                  fontWeight: 900,
+                                  color: "#9ca3af",
+                                  textTransform: "uppercase",
+                                  letterSpacing: "2px",
+                                  marginBottom: "4px",
+                                }}
+                              >
+                                V. Envío
+                              </p>
+                              <p
+                                style={{
+                                  fontSize: "13px",
+                                  fontWeight: 700,
+                                  color: "#c47b96",
+                                  fontFamily: "monospace",
+                                  margin: 0,
+                                }}
+                              >
+                                {selectedPedido.valor_pedido ? `$${Number(selectedPedido.valor_pedido).toLocaleString()}` : "N/A"}
+                              </p>
+                            </div>
                           </div>
                           {selectedPedido.tracking_link && (
                             <a

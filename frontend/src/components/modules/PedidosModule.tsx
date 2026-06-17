@@ -98,6 +98,7 @@ export function PedidosModule() {
     numero_guia: "",
     fecha_envio: new Date().toISOString().split("T")[0],
     fecha_estimada: "",
+    valor_pedido: "",
   });
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
@@ -214,6 +215,7 @@ export function PedidosModule() {
         motivo_anulacion: o.motivo_anulacion || "",
         ciudad: o.ciudad || "",
         departamento: o.departamento || "",
+        valor_pedido: o.valor_pedido || "",
       }));
       setPedidos(mappedOrders);
     } catch (error) {
@@ -587,6 +589,7 @@ export function PedidosModule() {
                 motivo_anulacion: f?.motivo_anulacion || p.motivo_anulacion || "",
                 ciudad: f?.ciudad || p.ciudad || "",
                 departamento: f?.departamento || p.departamento || "",
+                valor_pedido: f?.valor_pedido || p.valor_pedido || "",
                 direccionEnvio: f?.direccion || p.direccionEnvio || p.direccion || "",
                 productos: (f?.items || []).map((i: any) => ({
                   productoId: i.id_producto.toString(),
