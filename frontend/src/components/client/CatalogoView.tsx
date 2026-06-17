@@ -46,7 +46,7 @@ export function CatalogoView({
   onClearCategory?: () => void;
   onViewProduct?: (productId: string) => void;
 } = {}) {
-  const { addToCarrito, carrito, favoritos, toggleFavorito, categorias } = useStore();
+  const { currentUser, addToCarrito, carrito, favoritos, toggleFavorito, categorias } = useStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState(initialCategory || "all");
   const [priceRange, setPriceRange] = useState([0, 150000]);
@@ -533,12 +533,14 @@ export function CatalogoView({
                         onToggleFavorite={(e) => {
                           e.stopPropagation();
                           toggleFavorito(producto.id);
-                          toast.success(
-                            favoritos.includes(producto.id)
-                              ? "Eliminado de favoritos"
-                              : "Agregado a favoritos",
-                            { description: producto.nombre }
-                          );
+                          if (currentUser) {
+                            toast.success(
+                              favoritos.includes(producto.id)
+                                ? "Eliminado de favoritos"
+                                : "Agregado a favoritos",
+                              { description: producto.nombre }
+                            );
+                          }
                         }}
                       />
                     );

@@ -37,6 +37,20 @@ api.interceptors.response.use(
       error.config?.url?.includes("/cart") ||
       error.config?.url?.includes("/ventas");
 
+    // Manejar errores de red (sin internet o fallo de conexión)
+    if (error.code === "ERR_NETWORK" || !error.response) {
+      if (!navigator.onLine) {
+        toast.error("Sin conexión a Internet", {
+          description: "Por favor revisa tu conexión e intenta nuevamente.",
+        });
+      } else {
+        toast.error("Error de conexión", {
+          description: "No se pudo conectar con el servidor. Intenta de nuevo más tarde.",
+        });
+      }
+      return Promise.reject(error);
+    }
+
     if (error.response?.status === 401 && !isAuthRequired) {
       console.log("ℹ️ Error 401 en ruta pública, ignorando");
       return Promise.reject(error);

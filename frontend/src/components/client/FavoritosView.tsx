@@ -14,7 +14,7 @@ export function FavoritosView({
   onNavigate?: (route: string) => void;
   onViewProduct?: (productId: string) => void;
 } = {}) {
-  const { favoritos, toggleFavorito, addToCarrito, productos, categorias, carrito } =
+  const { currentUser, favoritos, toggleFavorito, addToCarrito, productos, categorias, carrito } =
     useStore();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -305,9 +305,11 @@ export function FavoritosView({
                         onToggleFavorite={(e) => {
                           e.stopPropagation();
                           toggleFavorito(producto.id);
-                          toast.success("Favoritos actualizado", {
-                            description: `Se eliminó ${producto.nombre} de tu lista.`,
-                          });
+                          if (currentUser) {
+                            toast.success("Favoritos actualizado", {
+                              description: `Se eliminó ${producto.nombre} de tu lista.`,
+                            });
+                          }
                         }}
                         onCardClick={() => onViewProduct?.(producto.id)}
                         onAddToCart={(e) => {

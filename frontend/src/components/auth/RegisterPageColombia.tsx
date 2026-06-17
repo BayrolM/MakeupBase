@@ -6,6 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import { Combobox } from "../ui/combobox";
 import {
   Dialog,
   DialogContent,
@@ -27,6 +28,8 @@ import {
   EyeOff,
 } from "lucide-react";
 import { validateField as validateUserField } from "../../utils/usuarioUtils";
+import { formatEmail } from "../../utils/emailFormatter";
+import { colombianDepartments, mainCities } from "../../utils/colombiaData";
 
 const C = {
   bgDeep: '#2e1020',
@@ -146,13 +149,26 @@ export function RegisterPageColombia({
 
     const clearedErrors = { ...errors };
     fieldsToValidate.forEach((f) => delete clearedErrors[f]);
+    
+    // Clear errors for the target step so they don't show up prematurely
+    const targetFields = getFieldsForStep(currentStep + 1);
+    targetFields.forEach((f) => delete clearedErrors[f]);
+    
     setErrors(clearedErrors);
-
     setCurrentStep((prev) => prev + 1);
   };
 
   const handlePrevStep = () => {
-    setCurrentStep((prev) => Math.max(1, prev - 1));
+    setCurrentStep((prev) => {
+      const targetStep = Math.max(1, prev - 1);
+      const targetFields = getFieldsForStep(targetStep);
+      setErrors((e) => {
+        const newErrs = { ...e };
+        targetFields.forEach((f) => delete newErrs[f]);
+        return newErrs;
+      });
+      return targetStep;
+    });
   };
 
   const validateField = (name: string, value: any) => {
@@ -181,12 +197,23 @@ export function RegisterPageColombia({
     let finalValue = value;
     if (name === "numeroDocumento") {
       if (formData.tipoDocumento === "PAS") {
-        finalValue = value.replace(/[^a-zA-Z0-9]/g, "");
+        finalValue = value.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
       } else {
         finalValue = value.replace(/[^0-9]/g, "");
       }
     } else if (name === "telefono") {
       finalValue = value.replace(/[^0-9]/g, "");
+    } else if (name === "nombres" || name === "apellidos") {
+      const cleaned = value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/g, "");
+      finalValue = cleaned
+        .split(" ")
+        .map((word: string) => {
+          if (word.length === 0) return "";
+          return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+        })
+        .join(" ");
+    } else if (name === "email") {
+      finalValue = formatEmail(value);
     }
 
     setFormData((prev) => ({ ...prev, [name]: finalValue }));
@@ -666,6 +693,8 @@ export function RegisterPageColombia({
                                   const updated = { ...p, tipoDocumento: v };
                                   if (v !== "PAS" && p.numeroDocumento) {
                                     updated.numeroDocumento = p.numeroDocumento.replace(/[^0-9]/g, "");
+                                  } else if (v === "PAS" && p.numeroDocumento) {
+                                    updated.numeroDocumento = p.numeroDocumento.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
                                   }
                                   return updated;
                                 });
@@ -929,7 +958,7 @@ export function RegisterPageColombia({
                             <input
                               {...fieldProps("telefono")}
                               placeholder="Mín 10 dígitos"
-                              maxLength={20}
+                              maxLength={15}
                               style={inputStyle(!!errors.telefono)}
                               onFocus={handleInputFocus}
                               onBlur={(e) =>
@@ -978,28 +1007,33 @@ export function RegisterPageColombia({
                               letterSpacing: "1px",
                             }}
                           >
-                            Ciudad
+                            Dpto (Opcional)
                           </label>
-                          <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-                            <Building2
-                              style={{ position: "absolute", left: "16px", color: C.pinkSoft, width: 18, height: 18 }}
+                          <div style={{ position: "relative" }}>
+                            <MapPin
+                              style={{ position: "absolute", left: "16px", top: "15px", color: C.pinkSoft, width: 18, height: 18, zIndex: 10 }}
                             />
-                            <input
-                              {...fieldProps("ciudad")}
-                              placeholder="Mín 10 caracteres"
-                              maxLength={50}
-                              style={inputStyle(!!errors.ciudad)}
-                              onFocus={handleInputFocus}
-                              onBlur={(e) =>
-                                handleInputBlur(e, !!errors.ciudad)
-                              }
+                            <Combobox
+                              value={formData.departamento}
+                              onValueChange={(value) => {
+                                handleChange("departamento", value);
+                                handleChange("ciudad", "");
+                              }}
+                              options={colombianDepartments}
+                              placeholder="Selecciona un departamento"
+                              style={{
+                                ...inputStyle(!!errors.departamento),
+                                paddingLeft: "44px",
+                                height: "48px",
+                                backgroundColor: "white",
+                              }}
                             />
                           </div>
-                          {errors.ciudad && (
+                          {errors.departamento && (
                             <p
                               style={{ color: C.danger, fontSize: "11px", fontWeight: 600, margin: 0, marginTop: "2px" }}
                             >
-                              {errors.ciudad}
+                              {errors.departamento}
                             </p>
                           )}
                         </div>
@@ -1020,28 +1054,31 @@ export function RegisterPageColombia({
                               letterSpacing: "1px",
                             }}
                           >
-                            Dpto
+                            Ciudad (Opcional)
                           </label>
-                          <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-                            <MapPin
-                              style={{ position: "absolute", left: "16px", color: C.pinkSoft, width: 18, height: 18 }}
+                          <div style={{ position: "relative" }}>
+                            <Building2
+                               style={{ position: "absolute", left: "16px", top: "15px", color: C.pinkSoft, width: 18, height: 18, zIndex: 10 }}
                             />
-                            <input
-                              {...fieldProps("departamento")}
-                              placeholder="Antioquia"
-                              maxLength={50}
-                              style={inputStyle(!!errors.departamento)}
-                              onFocus={handleInputFocus}
-                              onBlur={(e) =>
-                                handleInputBlur(e, !!errors.departamento)
-                              }
+                            <Combobox
+                              value={formData.ciudad}
+                              onValueChange={(value) => handleChange("ciudad", value)}
+                              disabled={!formData.departamento}
+                              options={formData.departamento ? mainCities[formData.departamento] : []}
+                              placeholder={formData.departamento ? "Selecciona una ciudad" : "Elige Dpto primero"}
+                              style={{
+                                ...inputStyle(!!errors.ciudad),
+                                paddingLeft: "44px",
+                                height: "48px",
+                                backgroundColor: !formData.departamento ? "#f3f4f6" : "white",
+                              }}
                             />
                           </div>
-                          {errors.departamento && (
+                          {errors.ciudad && (
                             <p
                               style={{ color: C.danger, fontSize: "11px", fontWeight: 600, margin: 0, marginTop: "2px" }}
                             >
-                              {errors.departamento}
+                              {errors.ciudad}
                             </p>
                           )}
                         </div>
@@ -1064,7 +1101,7 @@ export function RegisterPageColombia({
                             letterSpacing: "1px",
                           }}
                         >
-                          Dirección
+                          Dirección (Opcional)
                         </label>
                         <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
                           <MapPin
@@ -1518,7 +1555,7 @@ export function RegisterPageColombia({
       </div>
 
       <Dialog open={showTermsModal} onOpenChange={setShowTermsModal}>
-        <DialogContent className="sm:max-w-[500px] bg-white rounded-2xl p-6">
+        <DialogContent className="w-[90vw] max-w-[500px] bg-white rounded-2xl p-4 sm:p-6 max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle style={{ color: C.pink, fontSize: "20px", fontWeight: 700, fontFamily: "'Cormorant Garamond', serif" }}>Términos y Condiciones</DialogTitle>
           </DialogHeader>
@@ -1543,6 +1580,27 @@ export function RegisterPageColombia({
               <strong>5. Modificaciones</strong><br/>
               Glamour ML se reserva el derecho de modificar estos términos y condiciones en cualquier momento. Los cambios serán notificados y aplicarán para las actividades posteriores a su publicación.
             </p>
+          </div>
+          <div className="mt-6 flex justify-end">
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                setShowTermsModal(false);
+                handleChange("acceptTerms", true);
+              }}
+              className="w-full sm:w-auto"
+              style={{
+                backgroundColor: C.pink,
+                color: "white",
+                padding: "12px 24px",
+                borderRadius: "12px",
+                fontWeight: 600,
+                fontSize: "14px",
+                transition: "all 0.2s"
+              }}
+            >
+              Cerrar y Aceptar
+            </button>
           </div>
         </DialogContent>
       </Dialog>

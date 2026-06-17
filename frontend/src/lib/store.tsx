@@ -9,6 +9,7 @@ import {
 } from "react";
 import api from "./api";
 import { userService } from "../services/userService";
+import { toast } from "sonner";
 
 export const hasPermission = (user: any, permiso: string): boolean => {
   if (!user) return false;
@@ -420,13 +421,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
     // Carrito y favoritos
     toggleFavorito: useCallback((productoId) => {
+      if (!currentUser) {
+        toast.info("Inicia sesión", {
+          description: "Debes iniciar sesión para agregar productos a tus favoritos.",
+        });
+        return;
+      }
       setFavoritos((prev) => {
         const next = prev.includes(productoId) ? prev.filter((id) => id !== productoId) : [...prev, productoId];
         // Sync con backend (fire-and-forget)
         userService.toggleFavorito(productoId).catch(() => {});
         return next;
       });
-    }, []),
+    }, [currentUser]),
     loadFavoritos: useCallback(async () => {
       try {
         const res = await userService.getFavoritos();

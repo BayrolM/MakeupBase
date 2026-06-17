@@ -280,6 +280,8 @@ export const obtenerDetalleOrden = async (
         p.departamento,
         p.total,
         p.estado,
+        p.motivo_anulacion,
+        p.pago_confirmado,
         p.transportadora,
         p.numero_guia,
         p.tracking_link,
@@ -673,9 +675,9 @@ export const actualizarPedido = async (id_pedido, datos) => {
 };
 
 /**
- * Cancelar pedido por el cliente — solo si le pertenece y está en 'pendiente'
+ * Cancelar pedido por el cliente — solo si le pertenece y está en 'pendiente', 'preparado' o 'procesando'
  */
-export const cancelarOrdenCliente = async (id_pedido, id_usuario) => {
+export const cancelarOrdenCliente = async (id_pedido, id_usuario, motivo) => {
   const [pedido] = await sql`
     SELECT p.*, u.email as cliente_email,
       CONCAT(COALESCE(u.nombre, ''), ' ', COALESCE(u.apellido, '')) as cliente_nombre
@@ -686,8 +688,12 @@ export const cancelarOrdenCliente = async (id_pedido, id_usuario) => {
   if (!pedido) throw new Error("Pedido no encontrado");
   if (pedido.id_usuario_cliente !== id_usuario)
     throw new Error("No tienes permiso para cancelar este pedido");
-  if (pedido.estado !== "pendiente")
-    throw new Error("Solo puedes cancelar pedidos en estado pendiente");
+  
+  const estadosPermitidos = ["pendiente", "preparado", "procesando"];
+  if (!estadosPermitidos.includes(pedido.estado))
+    throw new Error("Solo puedes cancelar pedidos en estado pendiente, preparado o procesando");
+
+  const motivo_final = motivo || "Cancelado por el cliente";
 
   const updated = await sql.begin(async (sql) => {
     const items =
@@ -696,7 +702,7 @@ export const cancelarOrdenCliente = async (id_pedido, id_usuario) => {
       await sql`UPDATE productos SET stock_actual = stock_actual + ${item.cantidad} WHERE id_producto = ${item.id_producto}`;
     }
     const [result] =
-      await sql`UPDATE pedidos SET estado = 'cancelado', motivo_anulacion = 'Cancelado por el cliente' WHERE id_pedido = ${id_pedido} RETURNING *`;
+      await sql`UPDATE pedidos SET estado = 'cancelado', motivo_anulacion = ${motivo_final} WHERE id_pedido = ${id_pedido} RETURNING *`;
     return result;
   });
 
@@ -706,7 +712,7 @@ export const cancelarOrdenCliente = async (id_pedido, id_usuario) => {
       email: pedido.cliente_email,
       nombre: pedido.cliente_nombre?.trim(),
       idPedido: id_pedido,
-      motivo: "Cancelado por el cliente",
+      motivo: motivo_final,
     }).catch(e => console.error("Error email cancelación cliente:", e));
   }
 

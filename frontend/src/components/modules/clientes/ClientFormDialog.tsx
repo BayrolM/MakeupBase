@@ -30,6 +30,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../ui/select";
+import { Combobox } from "../../ui/combobox";
+import { colombianDepartments, mainCities } from "../../../utils/colombiaData";
+import { formatEmail } from "../../../utils/emailFormatter";
 
 interface ClientFormDialogProps {
   open: boolean;
@@ -199,7 +202,7 @@ export function ClientFormDialog({
               <Input
                 value={formData.email}
                 maxLength={40}
-                onChange={(e) => onFieldChange("email", e.target.value.slice(0, 40))}
+                onChange={(e) => onFieldChange("email", formatEmail(e.target.value).slice(0, 40))}
                 className={`border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${
                   fieldErrors.email ? "border-rose-400" : ""
                 }`}
@@ -319,7 +322,7 @@ export function ClientFormDialog({
             <div className="space-y-2">
               <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">
                 <MapPin className="w-3.5 h-3.5 text-[#c47b96]" />
-                Dirección <span className="text-rose-500">*</span>
+                Dirección (Opcional)
               </Label>
               <Input
                 value={formData.direccion}
@@ -340,18 +343,19 @@ export function ClientFormDialog({
             <div className="space-y-2">
               <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">
                 <Building2 className="w-3.5 h-3.5 text-[#c47b96]" />
-                Departamento <span className="text-rose-500">*</span>
+                Departamento (Opcional)
               </Label>
-              <Input
+              <Combobox
                 value={formData.departamento}
-                maxLength={50}
-                onChange={(e) => onFieldChange("departamento", e.target.value.slice(0, 50))}
-                className={`border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${
-                  fieldErrors.departamento ? "border-rose-400" : ""
-                }`}
-                style={{ backgroundColor: '#ffffff' }}
-                placeholder="Ej: Cundinamarca"
+                onValueChange={(val) => {
+                  onFieldChange("departamento", val);
+                  onFieldChange("ciudad", ""); // Reset city
+                }}
                 disabled={isSaving}
+                options={colombianDepartments}
+                placeholder="Seleccione departamento"
+                className={`border-gray-200 rounded-xl h-11 ${fieldErrors.departamento ? "border-rose-400" : ""}`}
+                style={{ backgroundColor: '#ffffff' }}
               />
               {fieldErrors.departamento && (
                 <span className="micro-validation-error">{fieldErrors.departamento}</span>
@@ -363,18 +367,16 @@ export function ClientFormDialog({
             <div className="space-y-2">
               <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">
                 <Building2 className="w-3.5 h-3.5 text-[#c47b96]" />
-                Ciudad <span className="text-rose-500">*</span>
+                Ciudad (Opcional)
               </Label>
-              <Input
+              <Combobox
                 value={formData.ciudad}
-                maxLength={50}
-                onChange={(e) => onFieldChange("ciudad", e.target.value.slice(0, 50))}
-                className={`border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${
-                  fieldErrors.ciudad ? "border-rose-400" : ""
-                }`}
-                style={{ backgroundColor: '#ffffff' }}
-                placeholder="Ej: Bogotá"
-                disabled={isSaving}
+                onValueChange={(val) => onFieldChange("ciudad", val)}
+                disabled={isSaving || !formData.departamento}
+                options={formData.departamento ? mainCities[formData.departamento] : []}
+                placeholder={formData.departamento ? "Seleccione ciudad" : "Elige Dpto primero"}
+                className={`border-gray-200 rounded-xl h-11 ${fieldErrors.ciudad ? "border-rose-400" : ""}`}
+                style={{ backgroundColor: !formData.departamento ? "#f3f4f6" : "#ffffff" }}
               />
               {fieldErrors.ciudad && (
                 <span className="micro-validation-error">{fieldErrors.ciudad}</span>

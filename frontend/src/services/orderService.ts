@@ -102,9 +102,9 @@ export const orderService = {
   /**
    * Cancelar pedido por el cliente
    */
-  async cancelByClient(id: number): Promise<any> {
+  async cancelByClient(id: number, motivo?: string): Promise<any> {
     try {
-      const response = await api.put(`/orders/${id}/cancel-client`);
+      const response = await api.put(`/orders/${id}/cancel-client`, { motivo });
       return response.data;
     } catch (error: any) {
       throw new Error(

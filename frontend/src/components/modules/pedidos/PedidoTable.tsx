@@ -10,7 +10,8 @@ import {
   Eye, 
   Edit, 
   Activity, 
-  CheckCircle2 
+  CheckCircle2,
+  X
 } from "lucide-react";
 import { 
   Table, 
@@ -168,16 +169,18 @@ export function PedidoTable({
                   <TableCell className="py-2.5">
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => canEdit && !pedido.pago_confirmado && onConfirmPayment(pedido)}
-                        disabled={!canEdit || pedido.pago_confirmado}
-                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase transition-all ${canEdit && !pedido.pago_confirmado ? 'cursor-pointer hover:bg-gray-200' : 'cursor-default'} ${
-                          pedido.pago_confirmado 
-                            ? "bg-emerald-100 text-emerald-700" 
-                            : "bg-gray-100 text-gray-500"
+                        onClick={() => canEdit && onConfirmPayment(pedido)}
+                        disabled={!canEdit}
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase transition-all ${canEdit ? 'cursor-pointer hover:bg-gray-200' : 'cursor-default'} ${
+                          pedido.estado === "cancelado"
+                            ? "bg-rose-100 text-rose-700"
+                            : pedido.pago_confirmado 
+                              ? "bg-emerald-100 text-emerald-700" 
+                              : "bg-gray-100 text-gray-500"
                         }`}
                       >
-                        {pedido.pago_confirmado ? <CheckCircle2 className="w-3 h-3" /> : null}
-                        {pedido.pago_confirmado ? "Confirmado" : "Pendiente"}
+                        {pedido.estado === "cancelado" ? <X className="w-3 h-3" /> : pedido.pago_confirmado ? <CheckCircle2 className="w-3 h-3" /> : null}
+                        {pedido.estado === "cancelado" ? "Cancelado" : pedido.pago_confirmado ? "Confirmado" : "Pendiente"}
                       </button>
                       {pedido.comprobante_url && (
                         <button

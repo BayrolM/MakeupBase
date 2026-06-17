@@ -21,6 +21,7 @@ export function FeaturedProducts({
   categorias,
   carrito,
   favoritos,
+  currentUser,
   handleAddToCart,
   toggleFavorito,
   onViewProduct,
@@ -109,14 +110,16 @@ export function FeaturedProducts({
               onToggleFavorite={(e) => {
                 e.stopPropagation();
                 toggleFavorito(producto.id);
-                toast.success(
-                  favoritos.includes(producto.id)
-                    ? "Eliminado de favoritos"
-                    : "Agregado a favoritos",
-                  {
-                    description: producto.nombre,
-                  }
-                );
+                if (currentUser) {
+                  toast.success(
+                    favoritos.includes(producto.id)
+                      ? "Eliminado de favoritos"
+                      : "Agregado a favoritos",
+                    {
+                      description: producto.nombre,
+                    }
+                  );
+                }
               }}
               isMaxStock={isMaxStock}
             />
@@ -155,14 +158,16 @@ export function FeaturedProducts({
                       onToggleFavorite={(e) => {
                         e.stopPropagation();
                         toggleFavorito(producto.id);
-                        toast.success(
-                          favoritos.includes(producto.id)
-                            ? "Eliminado de favoritos"
-                            : "Agregado a favoritos",
-                          {
-                            description: producto.nombre,
-                          }
-                        );
+                        if (currentUser) {
+                          toast.success(
+                            favoritos.includes(producto.id)
+                              ? "Eliminado de favoritos"
+                              : "Agregado a favoritos",
+                            {
+                              description: producto.nombre,
+                            }
+                          );
+                        }
                       }}
                       isMaxStock={isMaxStock}
                     />

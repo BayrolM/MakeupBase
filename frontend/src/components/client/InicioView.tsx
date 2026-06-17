@@ -41,6 +41,7 @@ export function InicioView({
     setMarcas,
     favoritos,
     toggleFavorito,
+    currentUser,
   } = useStore();
   
   const [activeSection, setActiveSection] = useState<Section>("inicio");
@@ -154,6 +155,7 @@ export function InicioView({
               categorias={categorias}
               carrito={carrito}
               favoritos={favoritos}
+              currentUser={currentUser}
               handleAddToCart={handleAddToCart}
               toggleFavorito={toggleFavorito}
               onViewProduct={onViewProduct}

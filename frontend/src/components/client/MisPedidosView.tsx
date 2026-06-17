@@ -51,6 +51,7 @@ export function MisPedidosView({
   const [isSavingDir, setIsSavingDir] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [pedidoToCancel, setPedidoToCancel] = useState<any>(null);
+  const [motivoCancelacion, setMotivoCancelacion] = useState("");
   const [isCancelling, setIsCancelling] = useState(false);
   const [showReturnDialog, setShowReturnDialog] = useState(false);
   const [pedidoToReturn, setPedidoToReturn] = useState<any>(null);
@@ -243,9 +244,13 @@ export function MisPedidosView({
   };
   const handleCancelPedido = async () => {
     if (!pedidoToCancel) return;
+    if (!motivoCancelacion) {
+      toast.error("Por favor selecciona un motivo de cancelación");
+      return;
+    }
     setIsCancelling(true);
     try {
-      await orderService.cancelByClient(Number(pedidoToCancel.id));
+      await orderService.cancelByClient(Number(pedidoToCancel.id), motivoCancelacion);
       toast.success("Pedido cancelado correctamente");
       // Refrescar pedidos
       const response = await orderService.getAll();
@@ -274,6 +279,7 @@ export function MisPedidosView({
       setPedidos(mapped);
       setShowCancelConfirm(false);
       setPedidoToCancel(null);
+      setMotivoCancelacion("");
     } catch (error: any) {
       toast.error(error.message || "Error al cancelar el pedido");
     } finally {
@@ -567,7 +573,7 @@ export function MisPedidosView({
                         Pedido #{pedido.id.slice(0, 8).toUpperCase()}
                       </h3>
                       <div className="flex flex-wrap items-center gap-2 mt-1">
-                        {!pedido.pago_confirmado ? (
+                        {(!pedido.pago_confirmado && pedido.estado !== "cancelado") ? (
                           <span
                             style={{
                               display: "inline-flex",
@@ -708,8 +714,8 @@ export function MisPedidosView({
                     <FileText style={{ width: 14, height: 14 }} />
                     PDF
                   </button>
-                  {/* Cancelar — solo pendiente */}
-                  {pedido.estado === "pendiente" && (
+                  {/* Cancelar — solo pendiente, preparado o procesando */}
+                  {(pedido.estado === "pendiente" || pedido.estado === "preparado" || pedido.estado === "procesando") && (
                     <button
                       onClick={() => {
                         setPedidoToCancel(pedido);
@@ -1216,6 +1222,57 @@ export function MisPedidosView({
                       </p>
                     </div>
                   </div>
+
+                  {/* Motivo de Cancelación */}
+                  {selectedPedido.estado === "cancelado" && selectedPedido.motivo_anulacion && (
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        gap: "12px",
+                        padding: "12px",
+                        borderRadius: "8px",
+                        background: "#fef2f2",
+                        border: "1px solid #fee2e2",
+                        marginTop: "12px",
+                      }}
+                    >
+                      <AlertCircle
+                        style={{
+                          width: 14,
+                          height: 14,
+                          color: "#ef4444",
+                          marginTop: "3px",
+                          flexShrink: 0,
+                        }}
+                      />
+                      <div>
+                        <p
+                          style={{
+                            fontSize: "10px",
+                            fontWeight: 700,
+                            color: "#ef4444",
+                            textTransform: "none",
+                            letterSpacing: "0.5px",
+                            marginBottom: "4px",
+                          }}
+                        >
+                          Motivo de Cancelación
+                        </p>
+                        <p
+                          style={{
+                            fontSize: "12px",
+                            color: "#1f2937",
+                            margin: 0,
+                            fontWeight: 600,
+                            lineHeight: 1.4,
+                          }}
+                        >
+                          {selectedPedido.motivo_anulacion}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
 
@@ -1521,7 +1578,10 @@ export function MisPedidosView({
               </div>
             </div>
             <button
-              onClick={() => setShowCancelConfirm(false)}
+              onClick={() => {
+                setShowCancelConfirm(false);
+                setMotivoCancelacion("");
+              }}
               className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
             >
               <X className="w-4 h-4" />
@@ -1574,21 +1634,43 @@ export function MisPedidosView({
                 </p>
               </div>
             </div>
+
+            <div className="mt-4">
+              <label className="text-sm font-semibold text-gray-700 block mb-2">
+                Motivo de cancelación <span className="text-rose-500">*</span>
+              </label>
+              <select
+                value={motivoCancelacion}
+                onChange={(e) => setMotivoCancelacion(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg h-10 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
+              >
+                <option value="" disabled>Selecciona un motivo...</option>
+                <option value="Encontré un precio mejor">Encontré un precio mejor</option>
+                <option value="Compré por error">Compré por error</option>
+                <option value="Demora en el envío">Demora en el envío</option>
+                <option value="Ya no lo necesito">Ya no lo necesito</option>
+                <option value="Otro">Otro</option>
+              </select>
+            </div>
           </div>
           <div className="flex justify-end gap-3 px-6 pb-6 pt-2">
             <Button
               variant="outline"
-              onClick={() => setShowCancelConfirm(false)}
-              className="border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg px-5 h-10 text-sm"
+              onClick={() => {
+                setShowCancelConfirm(false);
+                setMotivoCancelacion("");
+              }}
+              className="bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-black rounded-lg px-6 h-10 text-sm font-medium transition-all cursor-pointer"
+              style={{ background: "#ffffff" }}
               disabled={isCancelling}
             >
-              Volver
+              Cancelar
             </Button>
             <Button
               onClick={handleCancelPedido}
-              disabled={isCancelling}
-              style={{ backgroundColor: "#ef4444", color: "#ffffff" }}
-              className="rounded-lg font-semibold px-6 h-10 text-sm border-0"
+              disabled={isCancelling || !motivoCancelacion}
+              style={{ backgroundColor: "#ef4444", color: "#ffffff", opacity: (!motivoCancelacion || isCancelling) ? 0.6 : 1 }}
+              className="rounded-lg font-semibold px-6 h-10 text-sm border-0 transition-all cursor-pointer"
             >
               {isCancelling ? (
                 <div className="flex items-center gap-2">

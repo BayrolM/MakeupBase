@@ -6,8 +6,9 @@ import sql from "../config/db.js";
 export const cancelarOrdenPorCliente = async (req, res) => {
   try {
     const { id } = req.params;
+    const { motivo } = req.body;
     const id_usuario = req.user.id_usuario;
-    const orden = await ordersService.cancelarOrdenCliente(parseInt(id, 10), id_usuario);
+    const orden = await ordersService.cancelarOrdenCliente(parseInt(id, 10), id_usuario, motivo);
     return res.json({ ok: true, message: "Pedido cancelado correctamente", data: orden });
   } catch (error) {
     console.error(error);

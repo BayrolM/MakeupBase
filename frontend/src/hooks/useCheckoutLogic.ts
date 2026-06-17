@@ -163,13 +163,20 @@ export function useCheckoutLogic(onComplete: () => void) {
       const response = await orderService.create(orderData);
       const idPedido = response.id_pedido;
 
-      // Actualizar departamento por defecto si el cliente no lo tiene
-      if (currentUser && !currentUser.departamento && departamentoEnvio) {
-        try {
-          await userService.updateProfile({ departamento: departamentoEnvio });
-          setCurrentUser({ ...currentUser, departamento: departamentoEnvio });
-        } catch (updateError) {
-          console.error("Error al actualizar departamento por defecto:", updateError);
+      // Actualizar datos de envío por defecto si el cliente no los tiene
+      if (currentUser) {
+        const updateData: any = {};
+        if (!currentUser.direccion && direccionEnvio) updateData.direccion = direccionEnvio;
+        if (!currentUser.ciudad && ciudadEnvio) updateData.ciudad = ciudadEnvio;
+        if (!currentUser.departamento && departamentoEnvio) updateData.departamento = departamentoEnvio;
+
+        if (Object.keys(updateData).length > 0) {
+          try {
+            await userService.updateProfile(updateData);
+            setCurrentUser({ ...currentUser, ...updateData });
+          } catch (updateError) {
+            console.error("Error al actualizar perfil por defecto:", updateError);
+          }
         }
       }
 

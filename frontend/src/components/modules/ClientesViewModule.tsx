@@ -158,7 +158,37 @@ export function ClientesViewModule() {
   };
 
   const handleFieldChange = (name: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    let finalValue = value;
+    if (name === "nombres" || name === "apellidos") {
+      const cleaned = value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/g, "");
+      finalValue = cleaned
+        .split(" ")
+        .map((word: string) => {
+          if (word.length === 0) return "";
+          return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+        })
+        .join(" ");
+    } else if (name === "numeroDocumento") {
+      if (formData.tipoDocumento === "PAS") {
+        finalValue = value.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+      } else {
+        finalValue = value.replace(/[^0-9]/g, "");
+      }
+    } else if (name === "telefono") {
+      finalValue = value.replace(/[^0-9]/g, "");
+    } else if (name === "tipoDocumento") {
+      setFormData((prev) => {
+        let updatedDoc = prev.numeroDocumento || "";
+        if (value !== "PAS") {
+          updatedDoc = updatedDoc.replace(/[^0-9]/g, "");
+        } else {
+          updatedDoc = updatedDoc.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+        }
+        return { ...prev, tipoDocumento: value, numeroDocumento: updatedDoc };
+      });
+      return;
+    }
+    setFormData((prev) => ({ ...prev, [name]: finalValue }));
 
     if (name === "passwordHash") {
       const passwordError = validateClientField("passwordHash", value, editingCliente);

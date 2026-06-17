@@ -12,7 +12,6 @@ import {
   Building2,
   Hash as HashIcon,
   Shield,
-  Globe,
   Activity,
   Eye,
   EyeOff,
@@ -32,6 +31,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../ui/select";
+import { Combobox } from "../../ui/combobox";
+import { colombianDepartments, mainCities } from "../../../utils/colombiaData";
+import { formatEmail } from "../../../utils/emailFormatter";
 
 interface UsuarioFormDialogProps {
   open: boolean;
@@ -224,7 +226,7 @@ export function UsuarioFormDialog({
               <Input
                 type="email"
                 value={formData.email}
-                onChange={(e) => onFieldChange("email", e.target.value)}
+                onChange={(e) => onFieldChange("email", formatEmail(e.target.value))}
                 className={`border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${fieldErrors.email ? "border-rose-400" : ""}`}
                 style={{ backgroundColor: '#ffffff' }}
                 placeholder="Ej: usuario@correo.com"
@@ -313,7 +315,7 @@ export function UsuarioFormDialog({
             <div className="space-y-2">
               <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">
                 <MapPin className="w-3.5 h-3.5 text-[#c47b96]" />
-                Dirección <span className="text-rose-500">*</span>
+                Dirección (Opcional)
               </Label>
               <Input
                 value={formData.direccion}
@@ -332,16 +334,19 @@ export function UsuarioFormDialog({
             <div className="space-y-2">
               <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">
                 <Building2 className="w-3.5 h-3.5 text-[#c47b96]" />
-                Departamento <span className="text-rose-500">*</span>
+                Departamento (Opcional)
               </Label>
-              <Input
+              <Combobox
                 value={formData.departamento}
-                onChange={(e) => onFieldChange("departamento", e.target.value)}
-                className={`border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${fieldErrors.departamento ? "border-rose-400" : ""}`}
-                style={{ backgroundColor: '#ffffff' }}
-                placeholder="Ej: Antioquia"
+                onValueChange={(val) => {
+                  onFieldChange("departamento", val);
+                  onFieldChange("ciudad", ""); // Reset city
+                }}
                 disabled={isSaving}
-                maxLength={50}
+                options={colombianDepartments}
+                placeholder="Seleccione departamento"
+                className={`border-gray-200 rounded-xl h-11 ${fieldErrors.departamento ? "border-rose-400" : ""}`}
+                style={{ backgroundColor: '#ffffff' }}
               />
               {fieldErrors.departamento && (
                 <span className="micro-validation-error">{fieldErrors.departamento}</span>
@@ -353,20 +358,40 @@ export function UsuarioFormDialog({
             <div className="space-y-2">
               <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">
                 <Building2 className="w-3.5 h-3.5 text-[#c47b96]" />
-                Ciudad <span className="text-rose-500">*</span>
+                Ciudad (Opcional)
               </Label>
-              <Input
+              <Combobox
                 value={formData.ciudad}
-                onChange={(e) => onFieldChange("ciudad", e.target.value)}
-                className={`border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11 ${fieldErrors.ciudad ? "border-rose-400" : ""}`}
-                style={{ backgroundColor: '#ffffff' }}
-                placeholder="Ej: Medellín"
-                disabled={isSaving}
-                maxLength={50}
+                onValueChange={(val) => onFieldChange("ciudad", val)}
+                disabled={isSaving || !formData.departamento}
+                options={formData.departamento ? mainCities[formData.departamento] : []}
+                placeholder={formData.departamento ? "Seleccione ciudad" : "Elige Dpto primero"}
+                className={`border-gray-200 rounded-xl h-11 ${fieldErrors.ciudad ? "border-rose-400" : ""}`}
+                style={{ backgroundColor: !formData.departamento ? "#f3f4f6" : "#ffffff" }}
               />
               {fieldErrors.ciudad && (
                 <span className="micro-validation-error">{fieldErrors.ciudad}</span>
               )}
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">
+                <Activity className="w-3.5 h-3.5 text-[#c47b96]" />
+                Estado
+              </Label>
+              <Select
+                value={formData.estado}
+                onValueChange={(v) => onSelectChange("estado", v)}
+                disabled={isSaving}
+              >
+                <SelectTrigger className="border-gray-200 rounded-xl h-11" style={{ backgroundColor: '#ffffff' }}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-white border-gray-100 rounded-xl shadow-lg">
+                  <SelectItem value="activo">Activo</SelectItem>
+                  <SelectItem value="inactivo">Inactivo</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
@@ -399,53 +424,9 @@ export function UsuarioFormDialog({
                 <span className="micro-validation-error ml-1">Requerido</span>
               )}
             </div>
-            <div className="space-y-2">
-              <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">
-                <Globe className="w-3.5 h-3.5 text-[#c47b96]" />
-                País
-              </Label>
-              <Input
-                value={formData.pais}
-                onChange={(e) => onFieldChange("pais", e.target.value)}
-                className="border-gray-200 text-gray-800 rounded-xl focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all h-11"
-                style={{ backgroundColor: '#ffffff' }}
-                placeholder="Ej: Colombia"
-                disabled={isSaving}
-              />
-            </div>
           </div>
 
-          {editingUser && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-gray-700 font-semibold text-sm flex items-center gap-2">
-                  <Activity className="w-3.5 h-3.5 text-[#c47b96]" />
-                  Estado
-                </Label>
-                <Select
-                  value={formData.estado}
-                  onValueChange={(v) => onSelectChange("estado", v)}
-                  disabled={isSaving}
-                >
-                  <SelectTrigger className="border-gray-200 rounded-xl h-11" style={{ backgroundColor: '#ffffff' }}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border-gray-100 rounded-xl shadow-lg">
-                    <SelectItem value="activo">Activo</SelectItem>
-                    <SelectItem value="inactivo">Inactivo</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          )}
 
-          {!editingUser && (
-            <div className="p-4 rounded-xl bg-[#fff0f5] border border-[#f0d5e0]">
-              <p className="text-[#c47b96] text-[11px] font-medium">
-                El usuario se creará con estado "Activo" por defecto.
-              </p>
-            </div>
-          )}
         </div>
 
         <div className="flex justify-end gap-3 px-4 md:px-6 pb-6 pt-5 bg-white border-t border-gray-100 sticky bottom-0 z-10 rounded-b-2xl">

@@ -5,6 +5,7 @@ import {
   MapPin,
   Package,
   ClipboardList,
+  AlertCircle
 } from "lucide-react";
 import {
   Dialog,
@@ -125,6 +126,19 @@ export function PedidoDetailDialog({
                     </p>
                   </div>
                 </div>
+                {selectedPedido.estado === "cancelado" && selectedPedido.motivo_anulacion && (
+                  <div className="flex items-center gap-3">
+                    <AlertCircle className="w-4 h-4 text-rose-500" />
+                    <div>
+                      <p className="text-[10px] text-rose-500 font-bold uppercase">
+                        Motivo de Cancelación
+                      </p>
+                      <p className="text-sm font-bold text-gray-800">
+                        {selectedPedido.motivo_anulacion}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

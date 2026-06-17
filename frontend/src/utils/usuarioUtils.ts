@@ -44,6 +44,9 @@ export const validateField = (
         return `${label} debe tener al menos 2 caracteres`;
       if (value.trim().length > 30)
         return `${label} no puede superar 30 caracteres`;
+      if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/.test(value.trim())) {
+        return `${label} solo puede contener letras y espacios`;
+      }
       return "";
     }
     case "numeroDocumento":
@@ -68,20 +71,20 @@ export const validateField = (
     case "telefono":
       if (!value.trim()) return "El teléfono es obligatorio";
       if (value.trim().length < 10) return "Mínimo 10 caracteres";
-      if (value.trim().length > 20) return "Máximo 20 caracteres";
+      if (value.trim().length > 15) return "Máximo 15 caracteres";
       return "";
     case "direccion":
-      if (!value.trim()) return "La dirección es obligatoria";
-      if (value.trim().length < 10) return "Mínimo 10 caracteres";
+      if (!value.trim()) return "";
+      if (value.trim().length < 5) return "Mínimo 5 caracteres";
       if (value.trim().length > 30) return "Máximo 30 caracteres";
       return "";
     case "ciudad":
-      if (!value.trim()) return "La ciudad es obligatoria";
+      if (!value.trim()) return "";
       if (value.trim().length < 3) return "Mínimo 3 caracteres";
       if (value.trim().length > 50) return "Máximo 50 caracteres";
       return "";
     case "departamento":
-      if (!value.trim()) return "El departamento es obligatorio";
+      if (!value.trim()) return "";
       if (value.trim().length < 3) return "Mínimo 3 caracteres";
       if (value.trim().length > 50) return "Máximo 50 caracteres";
       // Allow letters, spaces and accents (Spanish)

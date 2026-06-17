@@ -9,11 +9,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import { Combobox } from "../ui/combobox";
 
 import { User, Lock, Camera, ShieldCheck, Save, Eye, EyeOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { authService } from "../../services/authService";
 import { validateField as validateUserField } from "../../utils/usuarioUtils";
+import { colombianDepartments, mainCities } from "../../utils/colombiaData";
+import { formatEmail } from "../../utils/emailFormatter";
 import { uploadToSupabase } from "../../lib/supabaseUpload";
 
 const D = {
@@ -390,14 +393,34 @@ export function PerfilUsuarioModule() {
     let finalValue = value;
 
     // Input filtering (same as Register page)
-    if (field === "numeroDocumento") {
+    if (field === "nombre" || field === "apellido") {
+      const cleaned = value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/g, "");
+      finalValue = cleaned
+        .split(" ")
+        .map((word: string) => {
+          if (word.length === 0) return "";
+          return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+        })
+        .join(" ");
+    } else if (field === "numeroDocumento") {
       if (infoFormData.tipoDocumento === "PAS") {
-        finalValue = value.replace(/[^a-zA-Z0-9]/g, "");
+        finalValue = value.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
       } else {
         finalValue = value.replace(/[^0-9]/g, "");
       }
     } else if (field === "telefono") {
       finalValue = value.replace(/[^0-9]/g, "");
+    } else if (field === "tipoDocumento") {
+      setInfoFormData((prev) => {
+        let updatedDoc = prev.numeroDocumento || "";
+        if (value !== "PAS") {
+          updatedDoc = updatedDoc.replace(/[^0-9]/g, "");
+        } else {
+          updatedDoc = updatedDoc.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+        }
+        return { ...prev, tipoDocumento: value as any, numeroDocumento: updatedDoc };
+      });
+      return;
     }
 
     setInfoFormData((prev) => ({ ...prev, [field]: finalValue }));
@@ -926,11 +949,6 @@ export function PerfilUsuarioModule() {
                       value={infoFormData.tipoDocumento}
                       onValueChange={(v) => {
                         handleInfoChange("tipoDocumento", v);
-                        // Re-filter document number when type changes
-                        if (v !== "PAS" && infoFormData.numeroDocumento) {
-                          const filtered = infoFormData.numeroDocumento.replace(/[^0-9]/g, "");
-                          setInfoFormData((prev) => ({ ...prev, tipoDocumento: v, numeroDocumento: filtered }));
-                        }
                       }}
                       disabled={!isEditingInfo}
                     >
@@ -973,7 +991,7 @@ export function PerfilUsuarioModule() {
                       type="email"
                       value={infoFormData.email}
                       onChange={(e) =>
-                        handleInfoChange("email", e.target.value)
+                        handleInfoChange("email", formatEmail(e.target.value))
                       }
                       disabled={true}
                       style={inputStyle(true, !!infoErrors.email)}
@@ -994,7 +1012,7 @@ export function PerfilUsuarioModule() {
                     />
                   </Field>
 
-                  <Field label="Dirección *" full error={infoErrors.direccion}>
+                  <Field label="Dirección (Opcional)" full error={infoErrors.direccion}>
                     <Input
                       value={infoFormData.direccion}
                       onChange={(e) =>
@@ -1007,29 +1025,28 @@ export function PerfilUsuarioModule() {
                     />
                   </Field>
 
-                  <Field label="Ciudad *" error={infoErrors.ciudad}>
-                    <Input
-                      value={infoFormData.ciudad}
-                      onChange={(e) =>
-                        handleInfoChange("ciudad", e.target.value)
-                      }
+                  <Field label="Departamento (Opcional)" error={infoErrors.departamento}>
+                    <Combobox
+                      value={infoFormData.departamento}
+                      onValueChange={(val) => {
+                        handleInfoChange("departamento", val);
+                        handleInfoChange("ciudad", ""); // Reset city
+                      }}
                       disabled={!isEditingInfo}
-                      style={inputStyle(!isEditingInfo, !!infoErrors.ciudad)}
-                      placeholder="Tu ciudad"
-                      maxLength={50}
+                      options={colombianDepartments}
+                      placeholder="Seleccione departamento"
+                      style={inputStyle(!isEditingInfo, !!infoErrors.departamento)}
                     />
                   </Field>
 
-                  <Field label="Departamento *" error={infoErrors.departamento}>
-                    <Input
-                      value={infoFormData.departamento}
-                      onChange={(e) =>
-                        handleInfoChange("departamento", e.target.value)
-                      }
-                      disabled={!isEditingInfo}
-                      style={inputStyle(!isEditingInfo, !!infoErrors.departamento)}
-                      placeholder="Antioquia, Cundinamarca..."
-                      maxLength={50}
+                  <Field label="Ciudad (Opcional)" error={infoErrors.ciudad}>
+                    <Combobox
+                      value={infoFormData.ciudad}
+                      onValueChange={(val) => handleInfoChange("ciudad", val)}
+                      disabled={!isEditingInfo || !infoFormData.departamento}
+                      options={infoFormData.departamento ? mainCities[infoFormData.departamento] : []}
+                      placeholder={infoFormData.departamento ? "Seleccione ciudad" : "Elige Dpto primero"}
+                      style={{ ...inputStyle(!isEditingInfo, !!infoErrors.ciudad), backgroundColor: !infoFormData.departamento && isEditingInfo ? "#f3f4f6" : "transparent" }}
                     />
                   </Field>
 

@@ -6,7 +6,10 @@ import { authService } from '../../services/authService';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'sonner';
 import { useRef } from 'react';
-
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Combobox } from '../ui/combobox';
+import { colombianDepartments, mainCities } from '../../utils/colombiaData';
+import { formatEmail } from "../../utils/emailFormatter";
 /* ── Luxury CSS variable helpers ── */
 const V = (name: string) => `var(--luxury-${name})`;
 const C = {
@@ -25,10 +28,10 @@ const C = {
 
 
 // Luxury UI Form Components
-const InputField = ({ label, id, value, onChange, disabled, error, type = "text", placeholder = "" }: any) => (
+const InputField = ({ label, id, value, onChange, disabled, error, type = "text", placeholder = "", optional = false }: any) => (
   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
     <label htmlFor={id} style={{ fontSize: '13px', fontWeight: 600, color: C.textMuted }}>
-      {label} <span style={{ color: C.danger }}>*</span>
+      {label} {!optional && <span style={{ color: C.danger }}>*</span>}
     </label>
     <input
       id={id}
@@ -53,6 +56,29 @@ const InputField = ({ label, id, value, onChange, disabled, error, type = "text"
       onBlur={(e) => {
         if(!disabled) e.currentTarget.style.borderColor = error ? C.danger : C.accentDark;
         e.currentTarget.style.boxShadow = 'none';
+      }}
+    />
+    {error && <p style={{ color: C.danger, fontSize: '12px', margin: 0 }}>{error}</p>}
+  </div>
+);
+
+const SelectField = ({ label, id, value, onValueChange, disabled, error, placeholder = "Seleccionar", optional = false, options = [] }: any) => (
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+    <label htmlFor={id} style={{ fontSize: '13px', fontWeight: 600, color: C.textMuted }}>
+      {label} {!optional && <span style={{ color: C.danger }}>*</span>}
+    </label>
+    <Combobox
+      value={value}
+      onValueChange={onValueChange}
+      disabled={disabled}
+      options={options}
+      placeholder={placeholder}
+      style={{
+        width: '100%', height: '44px', borderRadius: '12px',
+        border: `1px solid ${error ? C.danger : C.accentDark}`,
+        padding: '0 16px', outline: 'none', fontSize: '14px',
+        color: disabled ? C.textMuted : C.textDark,
+        background: disabled ? '#f9fafb' : C.white,
       }}
     />
     {error && <p style={{ color: C.danger, fontSize: '12px', margin: 0 }}>{error}</p>}
@@ -87,6 +113,7 @@ export function PerfilView() {
     telefono: currentUser?.telefono || '',
     direccion: currentUser?.direccion || '',
     ciudad: currentUser?.ciudad || '',
+    departamento: currentUser?.departamento || '',
   });
 
   useEffect(() => {
@@ -99,6 +126,7 @@ export function PerfilView() {
         telefono: currentUser.telefono,
         direccion: currentUser.direccion || '',
         ciudad: currentUser.ciudad || '',
+        departamento: currentUser.departamento || '',
       }));
     }
   }, [currentUser]);
@@ -113,8 +141,17 @@ export function PerfilView() {
   const handleSave = async () => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.nombres) newErrors.nombres = 'El nombre es obligatorio';
-    if (!formData.apellidos) newErrors.apellidos = 'El apellido es obligatorio';
+    if (!formData.nombres) {
+      newErrors.nombres = 'El nombre es obligatorio';
+    } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/.test(formData.nombres.trim())) {
+      newErrors.nombres = 'Solo se permiten letras y espacios';
+    }
+
+    if (!formData.apellidos) {
+      newErrors.apellidos = 'El apellido es obligatorio';
+    } else if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/.test(formData.apellidos.trim())) {
+      newErrors.apellidos = 'Solo se permiten letras y espacios';
+    }
     
     if (!formData.email) {
       newErrors.email = 'El email es obligatorio';
@@ -129,7 +166,7 @@ export function PerfilView() {
     }
 
     if (!formData.direccion) newErrors.direccion = 'La dirección es obligatoria';
-    if (!formData.ciudad) newErrors.ciudad = 'La ciudad es obligatoria';
+    // removed required validation for ciudad
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -146,6 +183,7 @@ export function PerfilView() {
         telefono: formData.telefono,
         direccion: formData.direccion,
         ciudad: formData.ciudad,
+        departamento: formData.departamento,
       });
 
       if (currentUser) {
@@ -156,6 +194,7 @@ export function PerfilView() {
           telefono: formData.telefono,
           direccion: formData.direccion,
           ciudad: formData.ciudad,
+          departamento: formData.departamento,
         });
       }
 
@@ -418,17 +457,37 @@ export function PerfilView() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <InputField 
                 label="Nombres" id="nombres" value={formData.nombres} 
-                onChange={(e: any) => setFormData({ ...formData, nombres: e.target.value })} 
+                onChange={(e: any) => {
+                  const cleaned = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/g, "");
+                  const capitalized = cleaned
+                    .split(" ")
+                    .map((word: string) => {
+                      if (word.length === 0) return "";
+                      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+                    })
+                    .join(" ");
+                  setFormData({ ...formData, nombres: capitalized });
+                }} 
                 disabled={!isEditing || isSaving} error={errors.nombres} 
               />
               <InputField 
                 label="Apellidos" id="apellidos" value={formData.apellidos} 
-                onChange={(e: any) => setFormData({ ...formData, apellidos: e.target.value })} 
+                onChange={(e: any) => {
+                  const cleaned = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/g, "");
+                  const capitalized = cleaned
+                    .split(" ")
+                    .map((word: string) => {
+                      if (word.length === 0) return "";
+                      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+                    })
+                    .join(" ");
+                  setFormData({ ...formData, apellidos: capitalized });
+                }} 
                 disabled={!isEditing || isSaving} error={errors.apellidos} 
               />
               <InputField 
                 label="Email" id="email" type="email" value={formData.email} 
-                onChange={(e: any) => setFormData({ ...formData, email: e.target.value })} 
+                onChange={(e: any) => setFormData({ ...formData, email: formatEmail(e.target.value) })} 
                 disabled={!isEditing || isSaving} error={errors.email} placeholder="correo@ejemplo.com"
               />
               <InputField 
@@ -436,17 +495,31 @@ export function PerfilView() {
                 onChange={(e: any) => setFormData({ ...formData, telefono: e.target.value })} 
                 disabled={!isEditing || isSaving} error={errors.telefono} placeholder="3001234567"
               />
-              <InputField 
-                label="Ciudad" id="ciudad" value={formData.ciudad} 
-                onChange={(e: any) => setFormData({ ...formData, ciudad: e.target.value })} 
-                disabled={!isEditing || isSaving} error={errors.ciudad} placeholder="Medellín"
+              <SelectField
+                label="Departamento (Opcional)" id="departamento"
+                value={formData.departamento}
+                onValueChange={(val: any) => {
+                  setFormData({ ...formData, departamento: val, ciudad: "" });
+                }}
+                disabled={!isEditing || isSaving} error={errors.departamento} placeholder="Seleccione departamento"
+                options={colombianDepartments}
+                optional={true}
+              />
+              <SelectField
+                label="Ciudad (Opcional)" id="ciudad"
+                value={formData.ciudad}
+                onValueChange={(val: any) => setFormData({ ...formData, ciudad: val })}
+                disabled={!isEditing || isSaving || !formData.departamento} error={errors.ciudad} placeholder={formData.departamento ? "Seleccione ciudad" : "Elige Dpto primero"}
+                options={formData.departamento ? mainCities[formData.departamento] : []}
+                optional={true}
               />
             </div>
 
             <InputField 
-              label="Dirección" id="direccion" value={formData.direccion} 
+              label="Dirección (Opcional)" id="direccion" value={formData.direccion} 
               onChange={(e: any) => setFormData({ ...formData, direccion: e.target.value })} 
               disabled={!isEditing || isSaving} error={errors.direccion} placeholder="Calle 31C #89-35"
+              optional={true}
             />
 
             {/* Preferences */}

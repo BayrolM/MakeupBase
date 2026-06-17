@@ -52,41 +52,57 @@ export function AuthOverlay({
     }
   }, []);
 
+  // Bloquear el scroll del body cuando el overlay está activo
+  useEffect(() => {
+    if (show) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [show]);
+
   if (!show && !showInactiveModal) return null;
 
   return (
     <>
-      {show && authPage === "login" && (
-        <LoginPage
-          onLogin={(email, pass) => onLogin(email, pass, onAuthSuccess)}
-          onNavigateToRegister={() => setAuthPage("register")}
-          onNavigateToRecover={() => setAuthPage("recover")}
-          onBack={onClose}
-        />
-      )}
-      {show && authPage === "register" && (
-        <RegisterPageColombia
-          onRegister={onRegister}
-          onVerifyEmail={(email, code) => onVerifyEmail(email, code, onAuthSuccess)}
-          onNavigateToLogin={() => setAuthPage("login")}
-          onBack={onClose}
-        />
-      )}
-      {show && authPage === "recover" && (
-        <RecoverPage
-          initialToken={recoverToken}
-          onRecover={(email) => {
-            onRecover(email);
-          }}
-          onNavigateToLogin={() => {
-            setAuthPage("login");
-            setRecoverToken(undefined);
-          }}
-          onBack={() => {
-            onClose();
-            setRecoverToken(undefined);
-          }}
-        />
+      {show && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 99999, overflowY: 'auto', backgroundColor: '#fff' }}>
+          {authPage === "login" && (
+            <LoginPage
+              onLogin={(email, pass) => onLogin(email, pass, onAuthSuccess)}
+              onNavigateToRegister={() => setAuthPage("register")}
+              onNavigateToRecover={() => setAuthPage("recover")}
+              onBack={onClose}
+            />
+          )}
+          {authPage === "register" && (
+            <RegisterPageColombia
+              onRegister={onRegister}
+              onVerifyEmail={(email, code) => onVerifyEmail(email, code, onAuthSuccess)}
+              onNavigateToLogin={() => setAuthPage("login")}
+              onBack={onClose}
+            />
+          )}
+          {authPage === "recover" && (
+            <RecoverPage
+              initialToken={recoverToken}
+              onRecover={(email) => {
+                onRecover(email);
+              }}
+              onNavigateToLogin={() => {
+                setAuthPage("login");
+                setRecoverToken(undefined);
+              }}
+              onBack={() => {
+                onClose();
+                setRecoverToken(undefined);
+              }}
+            />
+          )}
+        </div>
       )}
 
       {/* Modal: cuenta inactiva */}

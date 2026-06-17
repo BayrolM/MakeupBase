@@ -352,10 +352,30 @@ export function CartDrawer({ isOpen, onOpenChange, onNavigate }: CartDrawerProps
                               value={inputValue}
                               onChange={(e) => {
                                 const raw = e.target.value;
+                                
+                                // No permitir ceros a la izquierda ni el valor 0
+                                if (raw.startsWith("0")) return;
+                                
                                 if (/^\d*$/.test(raw)) {
+                                  let finalValue = raw;
+                                  
+                                  if (raw !== "") {
+                                    const parsed = parseInt(raw, 10);
+                                    if (parsed > producto.stock) {
+                                      toast.error(
+                                        `Sólo hay ${producto.stock} unidades disponibles de ${producto.nombre}`,
+                                        { id: `stock-limit-${producto.id}` }
+                                      );
+                                      finalValue = String(producto.stock);
+                                      updateCarritoQuantity(item.productoId, producto.stock);
+                                    } else {
+                                      updateCarritoQuantity(item.productoId, parsed);
+                                    }
+                                  }
+                                  
                                   setQuantityInputs((prev) => ({
                                     ...prev,
-                                    [item.productoId]: raw,
+                                    [item.productoId]: finalValue,
                                   }));
                                 }
                               }}
@@ -371,30 +391,6 @@ export function CartDrawer({ isOpen, onOpenChange, onNavigate }: CartDrawerProps
                                   }));
                                   return;
                                 }
-
-                                if (parsed > producto.stock) {
-                                  toast.error(
-                                    `Sólo hay ${producto.stock} unidades disponibles de ${producto.nombre}`,
-                                  );
-                                  updateCarritoQuantity(
-                                    item.productoId,
-                                    producto.stock,
-                                  );
-                                  setQuantityInputs((prev) => ({
-                                    ...prev,
-                                    [item.productoId]: String(producto.stock),
-                                  }));
-                                  return;
-                                }
-
-                                updateCarritoQuantity(
-                                  item.productoId,
-                                  parsed,
-                                );
-                                setQuantityInputs((prev) => ({
-                                  ...prev,
-                                  [item.productoId]: String(parsed),
-                                }));
                               }}
                             />
                             <button

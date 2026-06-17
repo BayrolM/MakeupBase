@@ -146,7 +146,8 @@ export function PedidoStatusDialog({
                   placeholder="Indica brevemente por qué se canceló el pedido..."
                   value={motivoAnulacion}
                   onChange={(e) => setMotivoAnulacion(e.target.value)}
-                  className="rounded-xl border-gray-200 focus:ring-[#c47b96]/20 focus:border-[#c47b96] resize-none min-h-[100px]"
+                  className="bg-white rounded-xl border-gray-200 focus:ring-[#c47b96]/20 focus:border-[#c47b96] resize-none min-h-[100px]"
+                  style={{ backgroundColor: '#ffffff' }}
                   disabled={isSaving}
                 />
               </div>

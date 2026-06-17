@@ -211,6 +211,9 @@ export function PedidosModule() {
         direccionEnvio: o.direccion || "N/A",
         pago_confirmado: !!o.pago_confirmado,
         comprobante_url: o.comprobante_url || "",
+        motivo_anulacion: o.motivo_anulacion || "",
+        ciudad: o.ciudad || "",
+        departamento: o.departamento || "",
       }));
       setPedidos(mappedOrders);
     } catch (error) {
@@ -579,6 +582,10 @@ export function PedidosModule() {
               const f = await orderService.getById(Number(p.id));
               setSelectedPedido({
                 ...p,
+                motivo_anulacion: f?.motivo_anulacion || p.motivo_anulacion || "",
+                ciudad: f?.ciudad || p.ciudad || "",
+                departamento: f?.departamento || p.departamento || "",
+                direccionEnvio: f?.direccion || p.direccionEnvio || p.direccion || "",
                 productos: (f?.items || []).map((i: any) => ({
                   productoId: i.id_producto.toString(),
                   cantidad: i.cantidad,
