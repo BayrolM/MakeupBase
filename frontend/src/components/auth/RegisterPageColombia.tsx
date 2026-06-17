@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Select,
   SelectContent,
@@ -30,6 +30,7 @@ import {
 import { validateField as validateUserField } from "../../utils/usuarioUtils";
 import { formatEmail } from "../../utils/emailFormatter";
 import { colombianDepartments, mainCities } from "../../utils/colombiaData";
+import { authService } from "../../services/authService";
 
 const C = {
   bgDeep: '#2e1020',
@@ -119,6 +120,36 @@ export function RegisterPageColombia({
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [verificationCode, setVerificationCode] = useState("");
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+
+  useEffect(() => {
+    const checkEmailDebounced = setTimeout(async () => {
+      if (formData.email && !errors.email && formData.email.includes("@")) {
+        setIsCheckingEmail(true);
+        try {
+          const isRegistered = await authService.checkEmail(formData.email);
+          if (isRegistered) {
+            setErrors((prev) => ({ ...prev, email: "Este correo ya está registrado" }));
+          } else {
+            setErrors((prev) => {
+              if (prev.email === "Este correo ya está registrado") {
+                const newErrors = { ...prev };
+                delete newErrors.email;
+                return newErrors;
+              }
+              return prev;
+            });
+          }
+        } catch (e) {
+          // Ignore
+        } finally {
+          setIsCheckingEmail(false);
+        }
+      }
+    }, 500);
+
+    return () => clearTimeout(checkEmailDebounced);
+  }, [formData.email]);
 
   const getFieldsForStep = (step: number) => {
     switch (step) {

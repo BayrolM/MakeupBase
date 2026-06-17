@@ -28,7 +28,8 @@ export function ComprasModule() {
   const [isSaving, setIsSaving] = useState(false);
 
   const filteredCompras = useMemo(() => {
-    return compras.filter((c) => {
+    const sorted = [...compras].sort((a, b) => Number(b.id) - Number(a.id));
+    return sorted.filter((c) => {
       const provee = proveedores.find((p) => p.id === c.proveedorId);
       return (
         c.id.includes(searchQuery) ||
