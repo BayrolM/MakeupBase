@@ -147,17 +147,10 @@ export function PedidoDetailDialog({
                 Resumen de Totales
               </h3>
               <div className="bg-[#fff0f5] border border-pink-100 rounded-xl p-4 space-y-3">
-                <div className="flex justify-between items-center text-sm">
+                <div className="flex justify-between items-center text-sm pb-3 border-b border-pink-100">
                   <span className="text-gray-500 font-medium">Subtotal</span>
                   <span className="font-bold text-gray-800">
                     {formatCurrency(selectedPedido.subtotal)}
-                  </span>
-                </div>
-
-                <div className="flex justify-between items-center text-sm pb-3 border-b border-pink-100">
-                  <span className="text-gray-500 font-medium">Envío</span>
-                  <span className="font-bold text-gray-800">
-                    {formatCurrency(selectedPedido.costoEnvio)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center pt-1">
