@@ -3,7 +3,6 @@ import {
   Building2,
   Calendar,
   FileText,
-  Download,
   Package,
   Hash,
   CheckCircle2,
@@ -17,7 +16,6 @@ import {
   DialogDescription,
 } from "../../ui/dialog";
 import { formatCurrency } from "../../../utils/compraUtils";
-import { generateCompraPDF } from "../../../lib/pdfGenerator";
 import { toast } from "sonner";
 import { Button } from "../../ui/button";
 
@@ -45,10 +43,6 @@ export function CompraDetailDialog({
 
   const detalles = selectedCompra.detalles || [];
   const itemCount = detalles.length;
-
-  const handlePrint = () => {
-    generateCompraPDF(selectedCompra, proveedor, productos);
-  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -96,7 +90,7 @@ export function CompraDetailDialog({
             </span>
             <button
               onClick={() => onOpenChange(false)}
-              className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+              className="p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -202,11 +196,13 @@ export function CompraDetailDialog({
               </div>
               <div className="divide-y divide-gray-50">
                 {detalles.map((d: any, i: number) => {
+                  const pData = productos.find((p) => p.id === d.id_producto?.toString());
                   const pName =
                     d.nombre_producto ||
-                    productos.find((p) => p.id === d.id_producto?.toString())
-                      ?.nombre ||
+                    pData?.nombre ||
                     `Item #${d.id_producto}`;
+                  const pImage = pData?.imagenUrl || d.imagen_url;
+
                   return (
                     <div
                       key={i}
@@ -214,7 +210,11 @@ export function CompraDetailDialog({
                     >
                       <div className="col-span-6 flex items-center gap-3">
                         <div className="w-9 h-9 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                          <Package className="w-4 h-4 text-gray-300" />
+                          {pImage ? (
+                            <img src={pImage} alt={pName} className="w-full h-full object-cover" />
+                          ) : (
+                            <Package className="w-4 h-4 text-gray-300" />
+                          )}
                         </div>
                         <span className="text-sm font-semibold text-gray-800 truncate">
                           {pName}
@@ -246,16 +246,9 @@ export function CompraDetailDialog({
         </div>
 
         <div className="px-4 md:px-6 pb-6 pt-4 border-t border-gray-100 flex items-center gap-3 bg-white">
-          <Button
-            variant="outline"
-            onClick={handlePrint}
-            className="flex items-center gap-2 bg-[#fff0f5] border-[#f0d5e0] text-[#c47b96] hover:bg-[#fce8f0] rounded-xl px-4 md:px-6 h-11 text-sm font-semibold transition-all"
-          >
-            <Download className="w-4 h-4" /> Exportar PDF
-          </Button>
           <button
             onClick={() => onOpenChange(false)}
-            className="flex-1 h-11 rounded-xl text-white font-bold text-sm transition-all hover:opacity-90"
+            className="flex-1 h-11 rounded-xl text-white font-bold text-sm transition-all hover:opacity-90 cursor-pointer"
             style={{
               backgroundColor: "#c47b96",
               boxShadow: "0 4px 12px rgba(196,123,150,0.3)",

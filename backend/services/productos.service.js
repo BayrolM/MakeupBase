@@ -165,28 +165,29 @@ export const actualizarProducto = async (id, data) => {
     }
   }
 
+  // Obtener producto actual
+  const current = await obtenerProductoPorId(id);
+  if (!current) throw new Error("Producto no encontrado");
+
   // Verificar duplicados si se actualiza nombre, marca o categoría
   if (nombre !== undefined || id_marca !== undefined || id_categoria !== undefined) {
-    const current = await obtenerProductoPorId(id);
-    if (current) {
-      const checkNombre = nombre !== undefined ? nombre : current.nombre;
-      const checkMarca = id_marca !== undefined ? id_marca : current.id_marca;
-      const checkCategoria = id_categoria !== undefined ? id_categoria : current.id_categoria;
+    const checkNombre = nombre !== undefined ? nombre : current.nombre;
+    const checkMarca = id_marca !== undefined ? id_marca : current.id_marca;
+    const checkCategoria = id_categoria !== undefined ? id_categoria : current.id_categoria;
 
-      const [duplicate] = await sql`
-        SELECT id_producto FROM productos 
-        WHERE LOWER(TRIM(nombre)) = LOWER(TRIM(${checkNombre})) 
-          AND id_marca = ${checkMarca} 
-          AND id_categoria = ${checkCategoria}
-          AND id_producto != ${id}
-      `;
+    const [duplicate] = await sql`
+      SELECT id_producto FROM productos 
+      WHERE LOWER(TRIM(nombre)) = LOWER(TRIM(${checkNombre})) 
+        AND id_marca = ${checkMarca} 
+        AND id_categoria = ${checkCategoria}
+        AND id_producto != ${id}
+    `;
 
-      if (duplicate) {
-        throw Object.assign(
-          new Error('Ya existe otro producto con este nombre en la misma marca y categoría.'),
-          { code: 'PRODUCT_DUPLICATE', status: 400 }
-        );
-      }
+    if (duplicate) {
+      throw Object.assign(
+        new Error('Ya existe otro producto con este nombre en la misma marca y categoría.'),
+        { code: 'PRODUCT_DUPLICATE', status: 400 }
+      );
     }
   }
 
@@ -198,12 +199,23 @@ export const actualizarProducto = async (id, data) => {
   if (descripcion !== undefined) updateData.descripcion = descripcion;
   if (costo_promedio !== undefined) updateData.costo_promedio = costo_promedio;
   if (precio_venta !== undefined) updateData.precio_venta = precio_venta;
-  if (stock_actual !== undefined) updateData.stock_actual = stock_actual;
   if (stock_max !== undefined) updateData.stock_max = stock_max;
   if (stock_min !== undefined) updateData.stock_min = stock_min;
-  if (stock_fisico !== undefined) updateData.stock_fisico = stock_fisico;
   if (imagen_url !== undefined) updateData.imagen_url = imagen_url;
   if (estado !== undefined) updateData.estado = estado;
+
+  if (stock_actual !== undefined) {
+    updateData.stock_actual = stock_actual;
+    const delta = stock_actual - current.stock_actual;
+    if (delta !== 0) {
+      updateData.stock_fisico = current.stock_fisico - delta;
+    } else if (stock_fisico !== undefined) {
+      updateData.stock_fisico = stock_fisico;
+    }
+  } else if (stock_fisico !== undefined) {
+    updateData.stock_fisico = stock_fisico;
+  }
+
 
   if (Object.keys(updateData).length === 0) return false;
 

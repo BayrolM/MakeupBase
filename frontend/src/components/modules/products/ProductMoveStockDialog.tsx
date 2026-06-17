@@ -87,18 +87,28 @@ export function ProductMoveStockDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
+      <style>{`
+        #cantidad::-webkit-inner-spin-button,
+        #cantidad::-webkit-outer-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+        #cantidad {
+          -moz-appearance: textfield;
+        }
+      `}</style>
       <DialogContent className="bg-white border-0 max-w-md rounded-2xl shadow-2xl p-0 overflow-hidden">
         {/* Encabezado */}
         <div className="flex items-center justify-between px-4 md:px-6 pt-6 pb-5 border-b border-gray-100">
           <div className="flex items-center gap-4">
             <div
-              className="flex items-center justify-center text-white font-bold text-lg shrink-0 luxury-icon-gradient"
+              className="flex items-center justify-center text-white font-semibold text-lg shrink-0 luxury-icon-gradient"
               style={{ width: 44, height: 44, borderRadius: 12 }}
             >
               <Package className="w-5 h-5" />
             </div>
             <div>
-              <DialogTitle className="text-base font-bold text-gray-900 leading-tight">
+              <DialogTitle className="text-base font-semibold text-gray-700 leading-tight">
                 Mover a Disponible
               </DialogTitle>
               <DialogDescription className="text-xs text-gray-400 mt-0.5">
@@ -118,15 +128,15 @@ export function ProductMoveStockDialog({
         <div className="px-4 md:px-6 py-5 flex flex-col gap-4">
           {/* Comparativo de Stock */}
           <div className="bg-[#fdf2f6] rounded-xl p-4 border border-[#fce8f0]">
-            <p className="text-[11px] font-bold text-[#c47b96] uppercase tracking-wider mb-3 text-center">
+            <p className="text-[11px] font-semibold text-[#c47b96] uppercase tracking-wider mb-3 text-center">
               Estado Actual del Inventario
             </p>
             <div className="flex items-center justify-between px-4">
               <div className="text-center">
-                <div className="flex items-center justify-center gap-1.5 text-[10px] font-bold text-gray-400 uppercase mb-1">
+                <div className="flex items-center justify-center gap-1.5 text-[10px] font-semibold text-gray-400 uppercase mb-1">
                   <Archive className="w-3 h-3" /> Físico
                 </div>
-                <div className="text-xl font-black text-gray-800">
+                <div className="text-xl font-semibold text-gray-700">
                   {product.stockFisico}
                 </div>
               </div>
@@ -136,10 +146,10 @@ export function ProductMoveStockDialog({
               </div>
 
               <div className="text-center">
-                <div className="flex items-center justify-center gap-1.5 text-[10px] font-bold text-[#c47b96] uppercase mb-1">
+                <div className="flex items-center justify-center gap-1.5 text-[10px] font-semibold text-[#c47b96] uppercase mb-1">
                   <Activity className="w-3 h-3" /> Disponible
                 </div>
-                <div className="text-xl font-black text-[#c47b96]">
+                <div className="text-xl font-semibold text-[#c47b96]">
                   {product.stock}
                 </div>
               </div>
@@ -148,7 +158,7 @@ export function ProductMoveStockDialog({
 
           {/* Input de Cantidad */}
           <div className="bg-[#fdf2f6] rounded-xl p-4 border border-[#fce8f0]">
-            <p className="text-[11px] font-bold text-[#c47b96] uppercase tracking-wider mb-2">
+            <p className="text-[11px] font-semibold text-[#c47b96] uppercase tracking-wider mb-2">
               Cantidad a mover <span className="text-rose-500">*</span>
             </p>
             <div className="relative">
@@ -158,13 +168,27 @@ export function ProductMoveStockDialog({
                 min="1"
                 max={product.stockFisico}
                 value={cantidad}
-                onChange={(e) => setCantidad(e.target.value)}
-                className={`h-10 text-base font-bold text-gray-800 rounded-lg border-gray-200 focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all ${
+                onChange={(e) => {
+                  let val = e.target.value;
+                  if (val !== "") {
+                    const num = parseInt(val, 10);
+                    if (!isNaN(num) && num > product.stockFisico) {
+                      val = product.stockFisico.toString();
+                    }
+                  }
+                  setCantidad(val);
+                }}
+                onKeyDown={(e) => {
+                  if (["-", "+", "e", "E", ".", ","].includes(e.key)) {
+                    e.preventDefault();
+                  }
+                }}
+                className={`h-10 text-base font-semibold text-gray-700 rounded-lg border-gray-200 focus:ring-[#c47b96]/20 focus:border-[#c47b96] transition-all [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield] ${
                   error ? "border-rose-400 ring-1 ring-rose-400/20" : ""
                 }`}
                 style={{ backgroundColor: '#ffffff' }}
               />
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#c47b96] bg-[#fce8f0] px-2 py-1 rounded-md">
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-[#c47b96] bg-[#fce8f0] px-2 py-1 rounded-md">
                 Unidades
               </div>
             </div>
@@ -187,7 +211,7 @@ export function ProductMoveStockDialog({
               padding: "10px 22px",
               borderRadius: "10px",
               fontSize: "13px",
-              fontWeight: 700,
+              fontWeight: 600,
               cursor: isSaving ? "not-allowed" : "pointer",
               border: "1.5px solid #f0d5e0",
               background: "#fff8fb",
@@ -212,7 +236,7 @@ export function ProductMoveStockDialog({
               padding: "10px 28px",
               borderRadius: "10px",
               fontSize: "13px",
-              fontWeight: 700,
+              fontWeight: 600,
               cursor: isSaving || !!error ? "not-allowed" : "pointer",
               border: "none",
               background:

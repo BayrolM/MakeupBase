@@ -162,7 +162,8 @@ export function ProductFormDialog({
     }
 
     // Validación de Inventario
-    if (Number(formData.stock) > Number(formData.stockFisico)) {
+    const deltaStock = Number(formData.stock) - (editingProduct ? Number(editingProduct.stock) : 0);
+    if (deltaStock > Number(formData.stockFisico)) {
       setFieldErrors((prev) => ({ ...prev, stock: "Excede el físico" }));
       toast.error("Error de Stock", { description: "Excede el fisico." });
       return;
@@ -456,7 +457,8 @@ export function ProductFormDialog({
                       if (Number(val) < 0) return;
                       setFormData({ ...formData, stock: val });
 
-                      if (Number(val) > Number(formData.stockFisico)) {
+                      const deltaVal = Number(val) - (editingProduct ? Number(editingProduct.stock) : 0);
+                      if (deltaVal > Number(formData.stockFisico)) {
                         setFieldErrors((prev) => ({
                           ...prev,
                           stock: "Excede el stock físico",
