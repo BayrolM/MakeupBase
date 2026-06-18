@@ -14,6 +14,8 @@ interface ClientLayoutProps {
   scrollRef: React.RefObject<HTMLDivElement | null>;
 }
 
+import { useDataLoaders } from "../../hooks/useDataLoaders";
+
 export function ClientLayout({
   currentRoute,
   setCurrentRoute,
@@ -24,6 +26,17 @@ export function ClientLayout({
   children,
   scrollRef,
 }: ClientLayoutProps) {
+  const { loadPublicData } = useDataLoaders();
+
+  React.useEffect(() => {
+    // Polling public data to keep categories and brands synced in "real time"
+    const interval = setInterval(() => {
+      loadPublicData();
+    }, 10000); // Poll every 10 seconds
+
+    return () => clearInterval(interval);
+  }, [loadPublicData]);
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <ClientNavbar

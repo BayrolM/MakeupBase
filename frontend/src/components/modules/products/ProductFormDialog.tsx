@@ -108,10 +108,46 @@ export function ProductFormDialog({
     setFieldErrors({});
   }, [editingProduct, open, categorias, marcas]);
 
+  // Validación en tiempo real para duplicados
+  useEffect(() => {
+    if (!formData.nombre || !formData.categoriaId || !formData.marcaId) return;
+
+    const isDuplicate = productos.some((p) => {
+      if (editingProduct && String(p.id) === String(editingProduct.id)) return false;
+      const sameName = p.nombre.trim().toLowerCase() === formData.nombre.trim().toLowerCase();
+      const sameMarca = String(p.marcaId) === String(formData.marcaId);
+      const sameCategoria = String(p.categoriaId) === String(formData.categoriaId);
+      return sameName && sameMarca && sameCategoria;
+    });
+
+    setFieldErrors((prev) => {
+      if (isDuplicate) {
+        return { ...prev, nombre: "Este producto (nombre, marca y categoría) ya existe." };
+      }
+      // Limpiar error de duplicado si ya no es duplicado y el error era sobre duplicidad
+      if (prev.nombre === "Este producto (nombre, marca y categoría) ya existe.") {
+        const rest = { ...prev };
+        delete rest.nombre;
+        return rest;
+      }
+      return prev;
+    });
+  }, [formData.nombre, formData.categoriaId, formData.marcaId, productos, editingProduct]);
+
   const handleFieldChange = (name: string, value: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
     const error = validateProductField(name, value);
-    setFieldErrors((prev) => ({ ...prev, [name]: error }));
+    if (error) {
+      setFieldErrors((prev) => ({ ...prev, [name]: error }));
+    } else {
+      setFieldErrors((prev) => {
+        const rest = { ...prev };
+        if (name !== "nombre" || rest.nombre !== "Este producto (nombre, marca y categoría) ya existe.") {
+          delete rest[name];
+        }
+        return rest;
+      });
+    }
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {

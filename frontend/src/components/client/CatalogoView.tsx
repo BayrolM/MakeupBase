@@ -72,6 +72,7 @@ export function CatalogoView({
         page,
         limit: ITEMS_PER_PAGE,
         estado: "true",
+        minStock: 0,
       };
       if (search) filters.q = search;
       if (category && category !== "all") filters.categoria = category;
@@ -248,7 +249,7 @@ export function CatalogoView({
             >
               Todos
             </button>
-            {categorias.slice(0, 5).map((cat) => (
+            {categorias.filter(c => c.estado === "activo").slice(0, 5).map((cat) => (
               <button
                 key={cat.id}
                 onClick={() => {
@@ -365,7 +366,7 @@ export function CatalogoView({
                       </SelectTrigger>
                       <SelectContent style={{ background: C.white, border: `1px solid ${C.accentSoft}` }}>
                         <SelectItem value="all">Todas</SelectItem>
-                        {categorias.map((cat) => (
+                        {categorias.filter(c => c.estado === "activo").map((cat) => (
                           <SelectItem key={cat.id} value={cat.id}>{cat.nombre}</SelectItem>
                         ))}
                       </SelectContent>

@@ -397,3 +397,23 @@ export const checkEmail = async (req, res) => {
     return res.status(500).json({ registered: false, message: "Error en el servidor" });
   }
 };
+
+export const checkDocument = async (req, res) => {
+  try {
+    const { tipoDocumento, documento } = req.body;
+    if (!documento) return res.status(400).json({ registered: false, message: "Documento es requerido" });
+    
+    // Si envían tipo, podemos buscar combinando ambos, sino solo por documento
+    let result;
+    if (tipoDocumento) {
+      result = await sql`SELECT id_usuario FROM usuarios WHERE documento = ${documento.trim()} AND tipo_documento = ${tipoDocumento}`;
+    } else {
+      result = await sql`SELECT id_usuario FROM usuarios WHERE documento = ${documento.trim()}`;
+    }
+    
+    return res.status(200).json({ registered: result.length > 0 });
+  } catch (error) {
+    console.error("Error en checkDocument:", error);
+    return res.status(500).json({ registered: false, message: "Error en el servidor" });
+  }
+};

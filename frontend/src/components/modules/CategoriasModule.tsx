@@ -17,6 +17,7 @@ import {
   validateCategoryNombre,
   getCategoryProductCount,
 } from "../../utils/categoryUtils";
+import { useDataLoaders } from "../../hooks/useDataLoaders";
 
 export function CategoriasModule() {
   const { categorias, productos, setCategorias, currentUser } = useStore();
@@ -33,6 +34,8 @@ export function CategoriasModule() {
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [totalItems, setTotalItems] = useState(0);
+
+  const { loadPublicData } = useDataLoaders();
 
   // Hook unificado de paginación
   const {
@@ -68,6 +71,8 @@ export function CategoriasModule() {
         descripcion: cat.descripcion || "",
         estado: cat.estado ? ("activo" as const) : ("inactivo" as const),
       }));
+      // We do not overwrite global setCategorias here because it ruins client view!
+      // We only use this for pagination info or let local store sync
       setCategorias(mapped);
     } catch (e) {
       console.error(e);
@@ -160,6 +165,7 @@ export function CategoriasModule() {
       }
 
       await refreshCategorias();
+      await loadPublicData(); // Update global store!
       setIsDialogOpen(false);
     } catch (error: any) {
       toast.error(error.message);
@@ -175,6 +181,7 @@ export function CategoriasModule() {
     try {
       await categoryService.delete(Number(selectedCategoria.id));
       await refreshCategorias();
+      await loadPublicData(); // Update global store!
       toast.success("Categoría eliminada");
       setIsDeleteDialogOpen(false);
       setSelectedCategoria(null);

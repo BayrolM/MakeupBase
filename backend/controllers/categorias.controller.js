@@ -69,6 +69,17 @@ export const actualizar = async (req, res) => {
     const { id } = req.params;
     const { nombre, descripcion, estado } = req.body;
     
+    // Si se intenta desactivar, verificar asociaciones
+    if (estado === false) {
+      const associatedProducts = await sql`SELECT id_producto FROM productos WHERE id_categoria = ${id}`;
+      if (associatedProducts.length > 0) {
+        return res.status(400).json({
+          ok: false,
+          message: "No se puede desactivar la categoría: está asociada a uno o más productos."
+        });
+      }
+    }
+
     // Construir objeto de actualización parcial
     const updateData = {};
     if (nombre !== undefined) updateData.nombre = nombre;
@@ -118,7 +129,7 @@ export const eliminar = async (req, res) => {
     if (error.code === '23503') {
       return res.status(400).json({ 
         ok: false, 
-        message: "No se puede eliminar la categoría porque tiene productos asociados. Prueba a desactivarla mejor." 
+        message: "No se puede eliminar la categoría: está asociada a uno o más productos." 
       });
     }
     

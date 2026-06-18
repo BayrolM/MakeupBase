@@ -12,10 +12,10 @@ import { MarcaFormDialog } from "./marcas/MarcaFormDialog";
 import { MarcaDetailDialog } from "./marcas/MarcaDetailDialog";
 import { MarcaDeleteDialog } from "./marcas/MarcaDeleteDialog";
 
-// Utils
 import {
   validateMarcaNombre,
 } from "../../utils/marcaUtils";
+import { useDataLoaders } from "../../hooks/useDataLoaders";
 
 export function MarcasModule() {
   const { marcas, productos, setMarcas, currentUser } = useStore();
@@ -28,6 +28,8 @@ export function MarcasModule() {
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [totalItems, setTotalItems] = useState(0);
+
+  const { loadPublicData } = useDataLoaders();
 
   // Hook unificado de paginación
   const {
@@ -151,6 +153,7 @@ export function MarcasModule() {
       }
 
       await refreshMarcas();
+      await loadPublicData(); // Update global store!
       setIsDialogOpen(false);
     } catch (error: any) {
       toast.error(error.message);
@@ -166,6 +169,7 @@ export function MarcasModule() {
     try {
       await marcaService.delete(Number(selectedMarca.id));
       await refreshMarcas();
+      await loadPublicData(); // Update global store!
       toast.success("Marca eliminada");
       setIsDeleteDialogOpen(false);
       setSelectedMarca(null);

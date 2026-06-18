@@ -43,6 +43,7 @@ export const listarProductos = async (filters = {}) => {
         ? sql`AND p.estado = ${estadoVal}`
         : sql``
     }
+    ${filters.minStock !== undefined ? sql`AND p.stock_actual > ${filters.minStock}` : sql``}
   `;
 
   // Contar total (Necesitamos los joins si filtramos por marca o categoría en 'q')

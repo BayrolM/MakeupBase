@@ -83,27 +83,15 @@ export const actualizar = async (req, res) => {
     const { id } = req.params;
     const { nombre, descripcion, estado } = req.body;
 
-    // Si se intenta desactivar, verificar asociaciones y procesos
+    // Si se intenta desactivar, verificar asociaciones
     if (estado === false) {
       const associatedProducts = await sql`SELECT id_producto FROM productos WHERE id_marca = ${id}`;
       
       if (associatedProducts.length > 0) {
-        const productIds = associatedProducts.map(p => p.id_producto);
-        const pendingOrders = await sql`
-          SELECT p.id_pedido 
-          FROM detalle_pedido dp
-          INNER JOIN pedidos p ON dp.id_pedido = p.id_pedido
-          WHERE dp.id_producto IN (${productIds})
-          AND p.estado NOT IN ('entregado', 'cancelado')
-          LIMIT 1
-        `;
-
-        if (pendingOrders.length > 0) {
-          return res.status(400).json({
-            ok: false,
-            message: "No se puede desactivar la marca: tiene pedidos pendientes en proceso."
-          });
-        }
+        return res.status(400).json({
+          ok: false,
+          message: "No se puede desactivar la marca: está asociada a uno o más productos."
+        });
       }
     }
 
@@ -156,35 +144,10 @@ export const eliminar = async (req, res) => {
       return res.json({ ok: true, message: "Marca eliminada permanentemente (sin asociaciones)." });
     }
 
-    // CASO B: Tiene productos, verificar procesos (pedidos)
-    const productIds = associatedProducts.map(p => p.id_producto);
-    
-    // Buscar pedidos que contengan estos productos y su estado
-    // Consideramos "pendiente" cualquier estado que no sea 'entregado' o 'cancelado'
-    const pendingOrders = await sql`
-      SELECT p.id_pedido, p.estado 
-      FROM detalle_pedido dp
-      INNER JOIN pedidos p ON dp.id_pedido = p.id_pedido
-      WHERE dp.id_producto IN (${productIds})
-      AND p.estado NOT IN ('entregado', 'cancelado')
-    `;
-
-    if (pendingOrders.length > 0) {
-      return res.status(400).json({
-        ok: false,
-        message: "No se puede eliminar ni desactivar la marca: tiene pedidos pendientes de proceso."
-      });
-    }
-
-    // Si llegamos aquí, o no tiene pedidos o todos están entregados/cancelados
-    // Pero como tiene productos, solo hacemos SOFT DELETE (desactivar)
-    const result = await sql`
-      UPDATE marcas SET estado = false WHERE id_marca = ${id} RETURNING *
-    `;
-    
-    return res.json({ 
-      ok: true, 
-      message: "Marca desactivada correctamente (tiene registros históricos)." 
+    // CASO B: Tiene productos, no permitir eliminar
+    return res.status(400).json({
+      ok: false,
+      message: "No se puede eliminar la marca: está asociada a uno o más productos."
     });
 
   } catch (error) {

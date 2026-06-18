@@ -121,6 +121,7 @@ export function RegisterPageColombia({
   const [currentStep, setCurrentStep] = useState(1);
   const [verificationCode, setVerificationCode] = useState("");
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+  const [isCheckingDocument, setIsCheckingDocument] = useState(false);
 
   useEffect(() => {
     const checkEmailDebounced = setTimeout(async () => {
@@ -140,16 +141,45 @@ export function RegisterPageColombia({
               return prev;
             });
           }
-        } catch (e) {
-          // Ignore
+        } catch (error) {
+          console.error("Error al verificar correo:", error);
         } finally {
           setIsCheckingEmail(false);
         }
       }
-    }, 500);
+    }, 800);
 
     return () => clearTimeout(checkEmailDebounced);
   }, [formData.email]);
+
+  useEffect(() => {
+    const checkDocumentDebounced = setTimeout(async () => {
+      if (formData.numeroDocumento && !errors.numeroDocumento && formData.numeroDocumento.length >= 6) {
+        setIsCheckingDocument(true);
+        try {
+          const isRegistered = await authService.checkDocument(formData.numeroDocumento, formData.tipoDocumento);
+          if (isRegistered) {
+            setErrors((prev) => ({ ...prev, numeroDocumento: "Este documento ya está registrado" }));
+          } else {
+            setErrors((prev) => {
+              if (prev.numeroDocumento === "Este documento ya está registrado") {
+                const newErrors = { ...prev };
+                delete newErrors.numeroDocumento;
+                return newErrors;
+              }
+              return prev;
+            });
+          }
+        } catch (error) {
+          console.error("Error al verificar documento:", error);
+        } finally {
+          setIsCheckingDocument(false);
+        }
+      }
+    }, 800);
+
+    return () => clearTimeout(checkDocumentDebounced);
+  }, [formData.numeroDocumento, formData.tipoDocumento]);
 
   const getFieldsForStep = (step: number) => {
     switch (step) {
@@ -717,9 +747,10 @@ export function RegisterPageColombia({
                             <CreditCard
                               style={{ position: "absolute", left: "16px", color: C.pinkSoft, width: 18, height: 18, zIndex: 10, pointerEvents: "none" }}
                             />
-                            <Select
+                            <select
                               value={formData.tipoDocumento}
-                              onValueChange={(v) => {
+                              onChange={(e) => {
+                                const v = e.target.value;
                                 setFormData((p) => {
                                   const updated = { ...p, tipoDocumento: v };
                                   if (v !== "PAS" && p.numeroDocumento) {
@@ -730,27 +761,15 @@ export function RegisterPageColombia({
                                   return updated;
                                 });
                               }}
+                              style={{ ...inputStyle(!!errors.tipoDocumento), appearance: "auto", paddingRight: "16px" }}
+                              onFocus={handleInputFocus}
+                              onBlur={(e) => handleInputBlur(e, !!errors.tipoDocumento)}
                             >
-                              <SelectTrigger
-                                style={inputStyle(!!errors.tipoDocumento)}
-                                onFocus={handleInputFocus}
-                                onBlur={(e) => handleInputBlur(e, !!errors.tipoDocumento)}
-                              >
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent
-                                style={{
-                                  background: C.white,
-                                  border: `1px solid ${C.accentSoft}`,
-                                  borderRadius: "14px",
-                                }}
-                              >
-                                <SelectItem value="CC">Cédula de Ciudadanía</SelectItem>
-                                <SelectItem value="TI">Tarjeta de Identidad</SelectItem>
-                                <SelectItem value="CE">Cédula de Extranjería</SelectItem>
-                                <SelectItem value="PAS">Pasaporte</SelectItem>
-                              </SelectContent>
-                            </Select>
+                                <option value="CC">Cédula de Ciudadanía</option>
+                                <option value="TI">Tarjeta de Identidad</option>
+                                <option value="CE">Cédula de Extranjería</option>
+                                <option value="PAS">Pasaporte</option>
+                            </select>
                           </div>
                           {errors.tipoDocumento && (
                             <p style={{ color: C.danger, fontSize: '11px', fontWeight: 600, margin: 0, marginTop: '2px' }}>

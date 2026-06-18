@@ -11,6 +11,7 @@ export const listar = async (req, res) => {
       minPrice: req.query.minPrice,
       maxPrice: req.query.maxPrice,
       estado: req.query.estado,
+      minStock: req.query.minStock !== undefined ? parseInt(req.query.minStock, 10) : undefined,
       page: req.query.page ?? 1,
       limit: req.query.limit ?? 10,
     };

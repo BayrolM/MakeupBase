@@ -212,4 +212,16 @@ export const authService = {
       return false;
     }
   },
+
+  /**
+   * Verificar si un documento está registrado
+   */
+  async checkDocument(documento: string, tipoDocumento?: string): Promise<boolean> {
+    try {
+      const response = await api.post("/auth/check-document", { documento, tipoDocumento });
+      return !!response.data.registered;
+    } catch (error) {
+      return false;
+    }
+  },
 };
