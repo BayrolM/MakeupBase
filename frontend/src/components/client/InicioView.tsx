@@ -106,7 +106,7 @@ export function InicioView({
 
   const productosDestacados = productos
     .filter((p) => p.estado === "activo" && p.stock > 0)
-    .slice(0, 8);
+    .slice(0, 6);
 
   const categoriasDestacadas = categorias.filter((c) => c.estado === "activo").slice(0, 6);
 
