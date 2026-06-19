@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { Instagram, MapPin, Phone, Mail } from "lucide-react";
+import { Dialog, DialogContent, DialogTitle } from "../ui/dialog";
 
 // Constantes de estilos reutilizables
 const COLORS = {
@@ -64,28 +66,6 @@ function SectionTitle({ children }: SectionTitleProps) {
   return <h4 className={SECTION_TITLE}>{children}</h4>;
 }
 
-// Componente: Lista de enlaces
-interface LinkItem {
-  href: string;
-  label: string;
-}
-interface LinkListProps {
-  items: LinkItem[];
-}
-function LinkList({ items }: LinkListProps) {
-  return (
-    <ul className="space-y-3 pt-2 lg:pt-6">
-      {items.map((item, idx) => (
-        <li key={idx}>
-          <a href={item.href} className={TEXT_MUTED}>
-            {item.label}
-          </a>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
 // Componente: Sección del footer
 interface FooterSectionProps {
   title: string;
@@ -120,16 +100,168 @@ function BrandSection() {
 
 // Componente: Información legal
 function LegalSection() {
+  const [openModal, setOpenModal] = useState<string | null>(null);
+
   const legalLinks = [
-    { label: "Políticas de Envío", href: "#" },
-    { label: "Cambios y Devoluciones", href: "#" },
-    { label: "Preguntas Frecuentes", href: "#" },
-    { label: "Términos y Condiciones", href: "#" },
+    { id: "envios", label: "Políticas de Envío" },
+    { id: "devoluciones", label: "Cambios y Devoluciones" },
+    { id: "terminos", label: "Términos y Condiciones" },
   ];
 
   return (
     <FooterSection title="Información Legal">
-      <LinkList items={legalLinks} />
+      <ul className="space-y-3 pt-2 lg:pt-6">
+        {legalLinks.map((item, idx) => (
+          <li key={idx}>
+            <button
+              onClick={() => setOpenModal(item.id)}
+              className={TEXT_MUTED}
+              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}
+            >
+              {item.label}
+            </button>
+          </li>
+        ))}
+      </ul>
+
+      {/* Modales */}
+      <Dialog open={openModal === "envios"} onOpenChange={(open) => !open && setOpenModal(null)}>
+        <DialogContent className="bg-white border-0 max-w-md rounded-2xl shadow-2xl p-0 overflow-hidden">
+          <div className="flex items-center justify-between px-4 md:px-6 pt-6 pb-5 border-b border-gray-100">
+            <div className="flex items-center gap-4">
+              <div
+                className="flex items-center justify-center text-white font-bold text-xl shrink-0 luxury-icon-gradient"
+                style={{ width: 44, height: 44, borderRadius: 12, background: 'linear-gradient(135deg, #7b1347 0%, #a85d77 100%)' }}
+              >
+                P
+              </div>
+              <div>
+                <DialogTitle className="text-base font-bold text-gray-900 leading-tight">
+                  Políticas de Envío
+                </DialogTitle>
+              </div>
+            </div>
+          </div>
+          <div className="px-4 md:px-6 py-5 flex flex-col gap-4">
+            <div className="bg-gray-50 rounded-xl p-4">
+              <p className="text-sm text-gray-700 leading-relaxed mb-3">
+                Todos nuestros envíos se realizan a través de empresas de mensajería de terceros especializadas en logística.
+              </p>
+              <p className="text-sm text-gray-700 leading-relaxed mb-3">
+                Una vez despachado el producto desde nuestras instalaciones, te proporcionaremos un número de guía oficial para que puedas rastrear tu paquete en tiempo real a través de la plataforma del transportista.
+              </p>
+              <p className="text-sm text-gray-700 leading-relaxed">
+                Los tiempos de entrega pueden variar dependiendo de la ciudad de destino y las políticas propias de la empresa transportadora. No nos hacemos responsables por retrasos ocasionados por factores externos a nuestra operación.
+              </p>
+            </div>
+          </div>
+          <div className="px-4 md:px-6 pb-6 pt-2">
+            <button
+              onClick={() => setOpenModal(null)}
+              className="w-full h-11 rounded-xl text-white font-bold text-sm cursor-pointer"
+              style={{ background: 'linear-gradient(135deg, #7b1347 0%, #a85d77 100%)' }}
+            >
+              Cerrar
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={openModal === "devoluciones"} onOpenChange={(open) => !open && setOpenModal(null)}>
+        <DialogContent className="bg-white border-0 max-w-md rounded-2xl shadow-2xl p-0 overflow-hidden">
+          <div className="flex items-center justify-between px-4 md:px-6 pt-6 pb-5 border-b border-gray-100">
+            <div className="flex items-center gap-4">
+              <div
+                className="flex items-center justify-center text-white font-bold text-xl shrink-0 luxury-icon-gradient"
+                style={{ width: 44, height: 44, borderRadius: 12, background: 'linear-gradient(135deg, #7b1347 0%, #a85d77 100%)' }}
+              >
+                C
+              </div>
+              <div>
+                <DialogTitle className="text-base font-bold text-gray-900 leading-tight">
+                  Cambios y Devoluciones
+                </DialogTitle>
+              </div>
+            </div>
+          </div>
+          <div className="px-4 md:px-6 py-5 flex flex-col gap-4">
+            <div className="bg-gray-50 rounded-xl p-4">
+              <p className="text-sm text-gray-700 leading-relaxed mb-3">
+                En Glamour ML, nos esforzamos por brindarte productos de la mejor calidad. Sin embargo, el producto solo podrá ser cambiado bajo las siguientes condiciones:
+              </p>
+              <ul className="list-disc pl-5 space-y-2 text-sm text-gray-700 leading-relaxed mb-3">
+                <li>Si se muestra evidencia clara de que el producto llegó dañado o defectuoso.</li>
+                <li>Si llegó un producto incorrecto (diferente al que aparece en tu orden de compra y comprobante).</li>
+              </ul>
+              <p className="text-sm text-gray-700 leading-relaxed">
+                Para iniciar un proceso de cambio, es indispensable que nos contactes en un plazo máximo de 48 horas tras haber recibido tu pedido, adjuntando fotografías legibles que evidencien el estado del paquete y del producto. Los productos deben permanecer sin uso y en su empaque original.
+              </p>
+            </div>
+          </div>
+          <div className="px-4 md:px-6 pb-6 pt-2">
+            <button
+              onClick={() => setOpenModal(null)}
+              className="w-full h-11 rounded-xl text-white font-bold text-sm cursor-pointer"
+              style={{ background: 'linear-gradient(135deg, #7b1347 0%, #a85d77 100%)' }}
+            >
+              Cerrar
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={openModal === "terminos"} onOpenChange={(open) => !open && setOpenModal(null)}>
+        <DialogContent className="bg-white border-0 max-w-lg rounded-2xl shadow-2xl p-0 overflow-hidden">
+          <div className="flex items-center justify-between px-4 md:px-6 pt-6 pb-5 border-b border-gray-100">
+            <div className="flex items-center gap-4">
+              <div
+                className="flex items-center justify-center text-white font-bold text-xl shrink-0 luxury-icon-gradient"
+                style={{ width: 44, height: 44, borderRadius: 12, background: 'linear-gradient(135deg, #7b1347 0%, #a85d77 100%)' }}
+              >
+                T
+              </div>
+              <div>
+                <DialogTitle className="text-base font-bold text-gray-900 leading-tight">
+                  Términos y Condiciones
+                </DialogTitle>
+              </div>
+            </div>
+          </div>
+          <div className="px-4 md:px-6 py-5 flex flex-col gap-4 max-h-[50vh] overflow-y-auto">
+            <div className="bg-gray-50 rounded-xl p-4 text-sm text-gray-700 leading-relaxed">
+              <p className="mb-4">
+                <strong>1. Aceptación de los términos</strong><br/>
+                Al registrarse y crear una cuenta en Glamour ML, el usuario acepta de manera expresa, libre y voluntaria los siguientes términos y condiciones de uso y la política de tratamiento de datos personales.
+              </p>
+              <p className="mb-4">
+                <strong>2. Privacidad y Tratamiento de Datos</strong><br/>
+                De acuerdo con la Ley de Protección de Datos Personales, autorizo a Glamour ML para la recolección, almacenamiento y uso de mis datos personales con fines comerciales y de prestación de servicios. Glamour ML se compromete a no compartir, vender ni distribuir esta información con terceros no autorizados.
+              </p>
+              <p className="mb-4">
+                <strong>3. Uso de la Cuenta</strong><br/>
+                El usuario es responsable de mantener la confidencialidad de su contraseña y de todas las actividades que ocurran bajo su cuenta. La cuenta es personal e intransferible.
+              </p>
+              <p className="mb-4">
+                <strong>4. Políticas de Compra</strong><br/>
+                Todas las compras realizadas a través de la plataforma están sujetas a disponibilidad de inventario y confirmación de pago. Nos reservamos el derecho de cancelar cualquier pedido que presente irregularidades.
+              </p>
+              <p className="mb-0">
+                <strong>5. Modificaciones</strong><br/>
+                Glamour ML se reserva el derecho de modificar estos términos y condiciones en cualquier momento. Los cambios serán notificados y aplicarán para las actividades posteriores a su publicación.
+              </p>
+            </div>
+          </div>
+          <div className="px-4 md:px-6 pb-6 pt-2">
+            <button
+              onClick={() => setOpenModal(null)}
+              className="w-full h-11 rounded-xl text-white font-bold text-sm cursor-pointer"
+              style={{ background: 'linear-gradient(135deg, #7b1347 0%, #a85d77 100%)' }}
+            >
+              Cerrar
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </FooterSection>
   );
 }

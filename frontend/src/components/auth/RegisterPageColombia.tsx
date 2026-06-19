@@ -761,15 +761,27 @@ export function RegisterPageColombia({
                                   return updated;
                                 });
                               }}
-                              style={{ ...inputStyle(!!errors.tipoDocumento), appearance: "auto", paddingRight: "16px" }}
+                              style={{ 
+                                ...inputStyle(!!errors.tipoDocumento), 
+                                appearance: "none", 
+                                WebkitAppearance: "none",
+                                paddingRight: "40px",
+                                backgroundColor: "rgba(255, 255, 255, 0.6)",
+                                cursor: "pointer"
+                              }}
                               onFocus={handleInputFocus}
                               onBlur={(e) => handleInputBlur(e, !!errors.tipoDocumento)}
                             >
-                                <option value="CC">Cédula de Ciudadanía</option>
-                                <option value="TI">Tarjeta de Identidad</option>
-                                <option value="CE">Cédula de Extranjería</option>
-                                <option value="PAS">Pasaporte</option>
+                                <option value="CC" style={{ color: "#1a1a1a", padding: "10px" }}>Cédula de Ciudadanía</option>
+                                <option value="TI" style={{ color: "#1a1a1a", padding: "10px" }}>Tarjeta de Identidad</option>
+                                <option value="CE" style={{ color: "#1a1a1a", padding: "10px" }}>Cédula de Extranjería</option>
+                                <option value="PAS" style={{ color: "#1a1a1a", padding: "10px" }}>Pasaporte</option>
                             </select>
+                            <div style={{ position: "absolute", right: "16px", pointerEvents: "none", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c47b96" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="m6 9 6 6 6-6"/>
+                              </svg>
+                            </div>
                           </div>
                           {errors.tipoDocumento && (
                             <p style={{ color: C.danger, fontSize: '11px', fontWeight: 600, margin: 0, marginTop: '2px' }}>
