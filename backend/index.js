@@ -27,6 +27,7 @@ const allowedOrigins = [
   process.env.FRONTEND_URL,
   "http://localhost:5173",
   "http://localhost:4173", // preview de Vite
+  "https://glamourml.vercel.app", // Producción en Vercel
 ].filter(Boolean);
 
 const corsOptions = {
